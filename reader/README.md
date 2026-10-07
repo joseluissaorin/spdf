@@ -23,7 +23,7 @@ la lectura funcionan igual.
 
 ### macOS (Apple Silicon)
 
-1. Descarga `Lector.SPDF_0.1.0_aarch64.dmg` y ábrelo; arrastra «Lector SPDF» a Aplicaciones.
+1. Descarga [`Lector.SPDF_0.1.0_aarch64.dmg`](https://github.com/joseluissaorin/spdf/releases/download/reader-v0.1.0/Lector.SPDF_0.1.0_aarch64.dmg) y ábrelo; arrastra «Lector SPDF» a Aplicaciones.
 2. La app está **firmada ad hoc, sin notarizar** (todavía no hay certificado de Developer
    ID). La primera vez, macOS dirá que no puede comprobar el desarrollador: abre
    Aplicaciones, haz **clic derecho en «Lector SPDF» › Abrir** y confirma. Si macOS 15 o
@@ -34,23 +34,25 @@ la lectura funcionan igual.
 
 ### Windows (x64)
 
-Descarga `Lector.SPDF_0.1.0_x64-setup.exe` (instalador) o el `.msi`. Como no está firmado
+Descarga [`Lector.SPDF_0.1.0_x64-setup.exe`](https://github.com/joseluissaorin/spdf/releases/download/reader-v0.1.0/Lector.SPDF_0.1.0_x64-setup.exe) (instalador) o
+[`Lector.SPDF_0.1.0_x64_es-ES.msi`](https://github.com/joseluissaorin/spdf/releases/download/reader-v0.1.0/Lector.SPDF_0.1.0_x64_es-ES.msi) (`_en-US.msi`, en inglés). Como no está firmado
 con un certificado de Authenticode, SmartScreen avisará: «Más información» › «Ejecutar de
 todas formas». Necesita WebView2, que viene con Windows 10 y 11 (si falta, el instalador lo
 descarga).
 
 ### Linux (x64)
 
-- **AppImage**: descarga `Lector.SPDF_0.1.0_amd64.AppImage`, dale permiso de ejecución
+- **AppImage**: descarga [`Lector.SPDF_0.1.0_amd64.AppImage`](https://github.com/joseluissaorin/spdf/releases/download/reader-v0.1.0/Lector.SPDF_0.1.0_amd64.AppImage), dale permiso de ejecución
   (`chmod +x Lector.SPDF_0.1.0_amd64.AppImage`) y ábrelo.
-- **Debian, Ubuntu y derivadas**: `sudo apt install ./lector-spdf_0.1.0_amd64.deb`.
+- **Debian, Ubuntu y derivadas**: descarga [`Lector.SPDF_0.1.0_amd64.deb`](https://github.com/joseluissaorin/spdf/releases/download/reader-v0.1.0/Lector.SPDF_0.1.0_amd64.deb) y
+  `sudo apt install ./Lector.SPDF_0.1.0_amd64.deb`.
 
 Necesita WebKitGTK 4.1 (viene en Ubuntu 22.04 y posteriores). La clave de Gemini se guarda en
 el llavero del escritorio (Secret Service: GNOME Keyring o KWallet).
 
 ### Android (8.0 o posterior)
 
-Descarga `lector-spdf-0.1.0-universal.apk` en el teléfono y ábrelo; Android pedirá permitir
+Descarga [`lector-spdf-0.1.0-universal.apk`](https://github.com/joseluissaorin/spdf/releases/download/reader-v0.1.0/lector-spdf-0.1.0-universal.apk) en el teléfono y ábrelo; Android pedirá permitir
 instalar apps de esa fuente. Para leer un `.spdf`, ábrelo desde Archivos o desde otra app con
 «Abrir con» › Lector SPDF, o usa el botón de importar. En esta versión, Android no lleva
 modelos locales: la búsqueda semántica y las preguntas funcionan con Gemini y tu clave.
