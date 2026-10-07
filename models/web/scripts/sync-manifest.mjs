@@ -2,7 +2,8 @@
 // so it loads in browsers and Node without JSON import attributes); --check fails on drift.
 import fs from "node:fs";
 import path from "node:path";
-const here = path.dirname(new URL(import.meta.url).pathname);
+import { fileURLToPath } from "node:url";
+const here = path.dirname(fileURLToPath(import.meta.url)); // not URL.pathname: it breaks on Windows drive letters
 const src = path.join(here, "..", "..", "manifest.json");
 const dst = path.join(here, "..", "src", "manifest.ts");
 const json = JSON.parse(fs.readFileSync(src, "utf8"));
