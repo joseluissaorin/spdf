@@ -85,8 +85,12 @@ jobs:
       - run: cargo build --release -p spdf-infer --lib --target ${{ matrix.target }}
 
   web:
-    name: spdf-infer-web
-    runs-on: ubuntu-latest
+    name: spdf-infer-web (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
     defaults:
       run:
         working-directory: models/web
@@ -97,7 +101,7 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npm run check-manifest
-      - run: npx tsc -p tsconfig.json
+      - run: npm run build
       - run: npx vitest run
 
   manifest:
