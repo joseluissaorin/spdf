@@ -92,11 +92,12 @@ def test_uri_page_with_chars() -> None:
 def test_uri_ranges_and_encoding() -> None:
     a = {"type": "page", "physical": 10, "printed": "fol. 1r", "region": {"x": 0.125, "y": 0.1, "w": 0.5, "h": 0.25}}
     e = {"type": "page", "physical": 11, "printed": "fol. 2v"}
-    uri = spdf.make_uri("doc%201", a, e)
+    uri = spdf.make_uri("doc 1", a, e)
     assert uri == "spdf:doc%201#p=10&pe=11&f=fol.%201r&fe=fol.%202v&xywh=percent:12.5,10,50,25"
     loc = parse_uri(uri)["locator"]
     assert loc["xywh"] == [0.125, 0.1, 0.5, 0.25]
-    assert format_uri("doc%201", loc) == uri
+    assert parse_uri(uri)["docref"] == "doc 1"
+    assert format_uri("doc 1", loc) == uri
 
 
 def test_uri_time_section_sheet_verse_canonical() -> None:

@@ -14,6 +14,7 @@ __all__ = [
     "Figure",
     "Fragment",
     "Issue",
+    "LexicalSearch",
     "Provenance",
     "SearchResult",
     "Section",
@@ -219,6 +220,15 @@ class SearchResult:
             "anchor": self.anchor.to_dict(),
             "anchor_uri": self.anchor_uri,
         }
+
+
+@dataclass(frozen=True)
+class LexicalSearch:
+    """A lexical search with its execution details (see :meth:`SpdfFile.search_details`)."""
+
+    route: str
+    match: str | None
+    results: list[SearchResult]
 
 
 @dataclass(frozen=True)

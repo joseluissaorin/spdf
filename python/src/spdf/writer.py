@@ -16,6 +16,7 @@ moves it into place. Usage::
 
 from __future__ import annotations
 
+import base64
 import contextlib
 import dataclasses
 import hashlib
@@ -23,6 +24,7 @@ import json
 import os
 import secrets
 import sqlite3
+import struct
 import unicodedata
 from collections.abc import Mapping, Sequence
 from datetime import datetime, timezone
@@ -40,7 +42,7 @@ from .reader import content_hash as _content_hash
 from .schema import APPLICATION_ID, DTYPE_SIZES, SCHEMA_50, TRIGRAM_DDL, USER_VERSION_50
 from .vectors import encode
 
-__all__ = ["Writer", "convert_legacy", "now_iso"]
+__all__ = ["Writer", "convert_legacy", "copy_into", "now_iso", "write_source"]
 
 GENERATOR = f"spdf-format/{__version__}"
 
@@ -150,8 +152,10 @@ class Writer:
         overwrite: bool = False,
         trigram: bool = False,
         page_size: int = 4096,
+        defaults: bool = True,
     ) -> None:
         _sqlite.require_fts5("writing SPDF files")
+        self._defaults = defaults
         self.path = Path(os.fspath(path))
         if self.path.exists() and not overwrite:
             raise FileExistsError(f"{self.path} exists (pass overwrite=True to replace it)")
@@ -160,6 +164,7 @@ class Writer:
         self.conn: sqlite3.Connection = _sqlite.driver.connect(str(self._tmp), isolation_level=None)
         self._document: dict[str, Any] | None = None
         self._meta: dict[str, str] = {}
+        self._integrity_meta: dict[str, str] = {}
         self._spaces: dict[str, tuple[int, str]] = {}
         self._next_n = 1
         self._units = 0
@@ -324,8 +329,9 @@ class Writer:
             "modalities, task_prefixes, created) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
             (
                 s["id"], s["provider"], s["model"], s.get("version"), int(s["dims"]), dtype,
-                1 if normalized else 0, s.get("truncated_from"), _json(list(s.get("modalities") or ["text"])),
-                _json(s.get("task_prefixes")), s.get("created") or now_iso(),
+                1 if normalized else 0, s.get("truncated_from"),
+                _json(list(s["modalities"]) if "modalities" in s else ["text"]),
+                _json(s.get("task_prefixes")), s["created"] if "created" in s else now_iso(),
             ),
         )
         self._spaces[str(s["id"])] = (int(s["dims"]), dtype)
@@ -424,7 +430,8 @@ class Writer:
             )
             if self._trigram:
                 c.execute("INSERT INTO fragments_fts_trigram(fragments_fts_trigram) VALUES ('rebuild')")
-            for k, v in sorted(self._final_meta().items()):
+            final_meta = self._final_meta() if self._defaults else {**self._meta, **self._integrity_meta}
+            for k, v in sorted(final_meta.items()):
                 c.execute("INSERT OR REPLACE INTO spdf_meta (key, value) VALUES (?, ?)", (k, v))
             c.execute("COMMIT")
             if content_hash or sign_key is not None:
@@ -498,6 +505,70 @@ class Writer:
                 profile.append("media")
             meta["profile"] = " ".join(profile)
         return meta
+
+
+def _pack_values(values: Sequence[Any], dtype: str) -> bytes:
+    """Pack vector values of a full dump: floats for f32/f16, raw integers (q) for i8."""
+    if dtype == "i8":
+        ints = [int(v) for v in values]
+        if any(not -127 <= v <= 127 for v in ints):
+            raise WriterError("i8 vector values in a full dump are integers in [-127, 127]")
+        return struct.pack(f"<{len(ints)}b", *ints)
+    fmt = {"f32": "f", "f16": "e"}.get(dtype)
+    if fmt is None:
+        raise WriterError(f"unknown dtype {dtype!r}")
+    return struct.pack(f"<{len(values)}{fmt}", *(float(v) for v in values))
+
+
+def write_source(
+    source: Mapping[str, Any],
+    destination: str | os.PathLike[str],
+    *,
+    overwrite: bool = True,
+    validate: bool = True,
+) -> Path:
+    """Write a SPDF 5.0 file from a *full dump*: the canonical dump plus vector values
+    (``vectors.<space>.items = [{"target", "id", "values"}]``, ``i8`` as raw integers) and
+    blob bytes (``blobs[].data_base64``). Everything is written verbatim, including
+    ``meta`` (integrity keys too), so dumping the result gives the source back without
+    the values and bytes. This is the format of ``conformance/sources``.
+    """
+    doc = dict(source["document"])
+    fts = source.get("fts") or {}
+    w = Writer(destination, overwrite=overwrite, trigram=bool(fts.get("trigram")), defaults=False)
+    try:
+        for k, v in (source.get("meta") or {}).items():
+            if k in ("content_sha256", "signature", "signer"):
+                w._integrity_meta[str(k)] = str(v)
+            else:
+                w._meta[str(k)] = str(v)
+        w.add_document(doc)
+        for u in source.get("units") or []:
+            w.add_unit(u)
+        for x in source.get("sections") or []:
+            w.add_section(x)
+        for f in source.get("fragments") or []:
+            w.add_fragment(f)
+        for g in source.get("figures") or []:
+            w.add_figure(g)
+        dtypes: dict[str, str] = {}
+        for sp in source.get("spaces") or []:
+            w.add_space(sp)
+            dtypes[str(sp["id"])] = str(sp.get("dtype") or "f32")
+        for space, v in (source.get("vectors") or {}).items():
+            dtype = dtypes.get(space, "f32")
+            for it in sorted(v.get("items") or [], key=lambda it: (it["target"], it["id"])):
+                w.add_vector(it["target"], it["id"], space, doc["id"], _pack_values(it["values"], dtype))
+        for b in source.get("blobs") or []:
+            w.add_blob(b["key"], b["mime"], base64.b64decode(b.get("data_base64") or ""))
+        for p in source.get("provenance") or []:
+            w.add_provenance(p)
+        for e in source.get("extensions") or []:
+            w.add_extension(e["name"], e["version"], bool(e.get("required")))
+        return w.finalize(content_hash=False, validate=validate)
+    except BaseException:
+        w.abort()
+        raise
 
 
 def convert_legacy(

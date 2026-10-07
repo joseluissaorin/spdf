@@ -16,7 +16,7 @@ from .anchors import Anchor
 
 __all__ = ["cite", "format_time", "locator_label", "names_label", "year_label"]
 
-_VOWELS = set("aeiouáéíóúàèìòùäëïöüâêîôû")
+_VOWELS = set("aeiouáéíóúü")
 
 _L10N: dict[str, dict[str, str]] = {
     "es": {
@@ -25,6 +25,7 @@ _L10N: dict[str, dict[str, str]] = {
         "np": "s. p.",
         "slide": "diap.",
         "rows": "filas",
+        "row": "fila",
         "para": "párr.",
         "bc": "a. C.",
     },
@@ -34,6 +35,7 @@ _L10N: dict[str, dict[str, str]] = {
         "np": "n. pag.",
         "slide": "slide",
         "rows": "rows",
+        "row": "row",
         "para": "para.",
         "bc": "BC",
     },
@@ -51,20 +53,18 @@ def _is_es(locale: str) -> bool:
 
 def _name(person: Any) -> str:
     if isinstance(person, str):
-        return person.strip()
+        return person
     if not isinstance(person, Mapping):
         return ""
     literal = person.get("literal")
-    if isinstance(literal, str) and literal.strip():
-        return literal.strip()
+    if literal:
+        return str(literal)
     family = person.get("family")
-    if isinstance(family, str) and family.strip():
+    if family:
         particle = person.get("non-dropping-particle")
-        if isinstance(particle, str) and particle.strip():
-            return f"{particle.strip()} {family.strip()}"
-        return family.strip()
+        return (f"{particle} " if particle else "") + str(family)
     given = person.get("given")
-    return given.strip() if isinstance(given, str) else ""
+    return str(given) if given else ""
 
 
 def _starts_with_i_sound(word: str) -> bool:
@@ -80,12 +80,10 @@ def _starts_with_i_sound(word: str) -> bool:
 
 def _short_title(metadata: Mapping[str, Any]) -> str:
     short = metadata.get("title-short")
-    if isinstance(short, str) and short.strip():
-        return short.strip()
-    title = metadata.get("title")
-    if isinstance(title, str):
-        return title.split(":", 1)[0].strip()
-    return ""
+    if short:
+        return str(short)
+    title = metadata.get("title") or ""
+    return str(title).split(":", 1)[0].strip()
 
 
 def names_label(metadata: Mapping[str, Any], locale: str = "es") -> str:
@@ -121,7 +119,7 @@ def year_label(metadata: Mapping[str, Any], locale: str = "es") -> str:
                 year = int(first.strip())
     if year is None:
         return words["nd"]
-    if year < 0:
+    if year <= 0:
         return f"{-year} {words['bc']}"
     return str(year)
 
@@ -143,19 +141,23 @@ def _anchor_dict(a: Anchor | Mapping[str, Any] | None) -> dict[str, Any] | None:
 
 
 def _folio(a: Mapping[str, Any]) -> str:
-    printed = a.get("printed")
-    assert isinstance(printed, str)
+    printed = str(a.get("printed"))
     return f"[{printed}]" if a.get("source") == "inferred" else printed
 
 
-def _page_label(a: Mapping[str, Any], e: Mapping[str, Any] | None, locale: str) -> str:
+def _page_label(a: Mapping[str, Any], e: Mapping[str, Any] | None, locale: str, page_only: bool = False) -> str:
     words = _l10n(locale)
-    if not isinstance(a.get("printed"), str):
+    if a.get("printed") is None:
         return words["np"]
-    foliation = a.get("foliation") or "page"
+    foliation = "page" if page_only else (a.get("foliation") or "page")
     single, plural = {"leaf": ("fol.", "fols."), "column": ("col.", "cols.")}.get(foliation, ("p.", "pp."))
     start = _folio(a)
-    if e is not None and isinstance(e.get("printed"), str) and e.get("printed") != a.get("printed"):
+    if (
+        e is not None
+        and e.get("type") == a.get("type")
+        and e.get("printed") is not None
+        and e.get("printed") != a.get("printed")
+    ):
         return f"{plural} {start}-{_folio(e)}"
     return f"{single} {start}"
 
@@ -171,7 +173,7 @@ def locator_label(
     words = _l10n(locale)
     t = a.get("type")
     if t == "page":
-        return _page_label(a, e if e is not None and e.get("type") == "page" else None, locale)
+        return _page_label(a, e, locale)
     if t == "time":
         t0 = a.get("t0")
         if not isinstance(t0, (int, float)) or isinstance(t0, bool):
@@ -181,22 +183,22 @@ def locator_label(
             label += "-" + format_time(e["t1"])
         return label
     if t in ("section", "web"):
-        if isinstance(a.get("printed"), str):
-            same = e if e is not None and isinstance(e.get("printed"), str) else None
-            return _page_label({**a, "foliation": "page"}, same, locale)
+        if a.get("printed") is not None:
+            return _page_label(a, e, locale, page_only=True)
+        parts = []
         path = a.get("path")
-        last = str(path[-1]) if isinstance(path, Sequence) and not isinstance(path, str) and path else ""
-        para = a.get("paragraph")
-        para_s = f"{words['para']} {para}" if isinstance(para, int) and not isinstance(para, bool) else ""
-        if last and para_s:
-            return f"§ {last}, {para_s}"
-        if last:
-            return f"§ {last}"
-        return para_s
+        if isinstance(path, Sequence) and not isinstance(path, str) and path:
+            parts.append(f"§ {path[-1]}")
+        if a.get("paragraph") is not None:
+            parts.append(f"{words['para']} {a.get('paragraph')}")
+        return ", ".join(parts)
     if t == "slide":
         return f"{words['slide']} {a.get('n')}"
     if t == "sheet":
-        return f"{a.get('sheet')}, {words['rows']} {a.get('row_from')}-{a.get('row_to')}"
+        rf, rt = a.get("row_from"), a.get("row_to")
+        if rf == rt:
+            return f"{a.get('sheet')}, {words['row']} {rf}"
+        return f"{a.get('sheet')}, {words['rows']} {rf}-{rt}"
     if t == "verse":
         lf, lt = a.get("line_from"), a.get("line_to")
         if lt is not None and lt != lf:

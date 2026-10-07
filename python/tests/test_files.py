@@ -157,7 +157,7 @@ def test_legacy_view(legacy41: Path) -> None:
         ext = d.metadata["spdf"]
         assert ext["orcid"] == {"Cervantes Saavedra, Miguel de": "0000-0000-0000-0000"}
         assert ext["undated"] == {"from": 1604, "to": 1605, "basis": "prueba"}
-        assert ext["provenance"] == {"titulo": {"source": "colofon", "confidence": 0.98}}
+        assert ext["provenance"] == {"title": {"source": "colophon", "confidence": 0.98}}
         assert ext["subtitle"] == "Primera parte"
         assert d.source_ref == "blob:original.pdf" and d.rights is None
         units = f.units()
@@ -166,7 +166,7 @@ def test_legacy_view(legacy41: Path) -> None:
         assert units[0].image == "blob:paginas/0001.png" and units[1].image is None
         assert f.meta["created"] == "2026-10-06T20:00:00.000Z" and f.meta["generator"] == "scholaris-nube/test"
         assert f.figures()[0].image == "" and f.figures()[0].anchor.type == "image"
-        assert f.spaces()[0].dtype == "f32" and f.spaces()[0].modalities == ["texto"]
+        assert f.spaces()[0].dtype == "f32" and f.spaces()[0].modalities == ["text"]
         assert [h.fragment_id for h in f.search("lanza")] == ["f1"]
         assert [h.fragment_id for h in f.search_vector([0, 0, 1, 0])] == ["f1", "f0", "f2"]
         assert f.cite(f.fragment("f1")) == "(Cervantes Saavedra, 1605, p. 23)"

@@ -27,9 +27,10 @@ from .container import (
     open_container,
 )
 from .errors import SpdfError, UnsupportedExtensionError
-from .legacy import map_anchor, map_kind, map_meta_key, map_metadata, map_target
+from .legacy import map_anchor, map_kind, map_meta_key, map_metadata, map_modalities, map_target
 from .model import (
     BlobInfo,
+    LexicalSearch,
     Document,
     Extension,
     Figure,
@@ -94,7 +95,7 @@ def open_spdf(
     (E020, size limits) or :class:`~spdf.errors.UnsupportedExtensionError` (E060).
     """
     container = open_container(source, max_blob_size=max_blob_size, max_decompressed_size=max_decompressed_size)
-    f = SpdfFile(container)
+    f = SpdfFile(container, owns=True)
     try:
         f._check_extensions()
     except BaseException:
@@ -106,8 +107,9 @@ def open_spdf(
 class SpdfFile:
     """An open SPDF file (read-only). Create it with :func:`spdf.open`."""
 
-    def __init__(self, container: Container) -> None:
+    def __init__(self, container: Container, *, owns: bool = False) -> None:
         self._c = container
+        self._owns = owns
         self.conn: sqlite3.Connection = container.conn
         self._columns: dict[str, list[str]] = {}
         self._tables: set[str] = {n for t, n, _ in container.schema_objects if t == "table"}
@@ -133,10 +135,11 @@ class SpdfFile:
         self.close()
 
     def __del__(self) -> None:  # pragma: no cover - best effort
-        try:
-            self.close()
-        except Exception:
-            pass
+        if getattr(self, "_owns", False):
+            try:
+                self.close()
+            except Exception:
+                pass
 
     def __repr__(self) -> str:
         return f"<SpdfFile {self._c.source!r} version={self.version}>"
@@ -299,6 +302,8 @@ class SpdfFile:
         elif table == "spaces":
             if "dtype" in r:
                 r["dtype"] = "f32"
+            if "modalities" in r:
+                r["modalities"] = map_modalities(r["modalities"])
         elif table == "vectors" and "target" in r and isinstance(r["target"], str):
             r["target"] = map_target(r["target"])
         return r
@@ -326,7 +331,7 @@ class SpdfFile:
         return self._unit_rank
 
     def _unit_order(self) -> str:
-        return '"orden", "id"' if self.legacy else '"ord"'
+        return '"orden", "id"' if self.legacy else '"ord", "id"'
 
     def _check_extensions(self) -> None:
         for ext in self.extensions():
@@ -614,7 +619,7 @@ class SpdfFile:
                 ms=r.get("ms"),
                 at=str(r.get("at") or ""),
             )
-            for r in self._rows("provenance", order=_PROVENANCE_ORDER)
+            for r in _sort_provenance(self._rows("provenance"))
         ]
 
     def extensions(self) -> list[Extension]:
@@ -704,10 +709,11 @@ class SpdfFile:
             fragment=f,
         )
 
-    def _lexical_ranked(self, query: str, limit: int) -> list[tuple[int, float]]:
+    def _lexical_ranked(self, query: str, limit: int) -> tuple[str, str | None, list[tuple[int, float]]]:
+        """``(route, match, [(n, score)])`` of the reference lexical algorithm."""
         parsed = parse_query(query)
-        if not parsed.terms or limit <= 0:
-            return []
+        if not parsed.terms:
+            return "fts", None, []
         q = parsed.match
         if is_cjk(query):
             trigram = "fragments_fts_trigram" in self._tables and not self.legacy
@@ -717,8 +723,8 @@ class SpdfFile:
                     "SELECT rowid, bm25(fragments_fts_trigram) AS r FROM fragments_fts_trigram "
                     "WHERE fragments_fts_trigram MATCH ? ORDER BY r, rowid LIMIT ?"
                 )
-                return [(int(n), -float(r)) for n, r in self.conn.execute(sql, (q, int(limit)))]
-            return self._substring_ranked(parsed.terms, parsed.phrases, limit)
+                return "trigram", q, [(int(n), -float(r)) for n, r in self.conn.execute(sql, (q, int(limit)))]
+            return "substring", None, self._substring_ranked(parsed.terms, parsed.phrases, limit)
         _sqlite.require_fts5("lexical search")
         fts = self._physical("fragments_fts")
         ncols = len(self._cols(fts)) or 4
@@ -727,30 +733,35 @@ class SpdfFile:
             f"SELECT rowid, bm25({_q(fts)}, {weights}) AS r FROM {_q(fts)} "
             f"WHERE {_q(fts)} MATCH ? ORDER BY r, rowid LIMIT ?"
         )
-        return [(int(n), -float(r)) for n, r in self.conn.execute(sql, (q, int(limit)))]
+        return "fts", q, [(int(n), -float(r)) for n, r in self.conn.execute(sql, (q, int(limit)))]
 
     def _substring_ranked(self, terms: Sequence[str], phrases: bool, limit: int) -> list[tuple[int, float]]:
-        if not terms:
-            return []
         tcol = _q(self._col("fragments", "text"))
         hits = " + ".join(f"(instr({tcol}, ?) > 0)" for _ in terms)
-        cond = f"({hits}) = {len(terms)}" if phrases else f"({hits}) > 0"
+        need = len(terms) if phrases else 1
         sql = (
-            f"SELECT n, ({hits}) AS h FROM {_q(self._physical('fragments'))} WHERE {cond} "
+            f"SELECT n, ({hits}) AS h FROM {_q(self._physical('fragments'))} WHERE ({hits}) >= ? "
             f"ORDER BY h DESC, n LIMIT ?"
         )
-        params = [*terms, *terms, int(limit)]
+        params = [*terms, *terms, need, int(limit)]
         return [(int(n), float(h)) for n, h in self.conn.execute(sql, params)]
 
     def search(self, query: str, *, limit: int = 10) -> list[SearchResult]:
         """Lexical search (BM25 over FTS5) with the reference algorithm.
 
         Words are OR-ed; quoted phrases (``"…"``, ``“…”``, ``«…»``, ``„…“``) are AND-ed and
-        then loose words are ignored. Diacritics and case are folded by the index.
+        then loose words are ignored. Diacritics and case are folded by the index. Queries
+        in Chinese, Japanese or Korean use the trigram index when the file has one, else a
+        substring scan.
         """
-        ranked = self._lexical_ranked(query, limit)
+        return self.search_details(query, limit=limit).results
+
+    def search_details(self, query: str, *, limit: int = 10) -> LexicalSearch:
+        """Lexical search plus how it ran: ``route`` (``fts``, ``trigram``, ``substring``) and the MATCH string."""
+        route, match, ranked = self._lexical_ranked(query, limit)
         frags = self._fragments_by_n([n for n, _ in ranked])
-        return [self._result(frags[n], s, ("lexical",)) for n, s in ranked if n in frags]
+        results = [self._result(frags[n], s, ("lexical",)) for n, s in ranked if n in frags]
+        return LexicalSearch(route=route, match=match, results=results)
 
     def _n_map(self) -> dict[str, int]:
         if self._n_by_id is None:
@@ -829,7 +840,7 @@ class SpdfFile:
     ) -> list[SearchResult]:
         """Hybrid search: lexical and vector lists (depth ``max(limit, 50)``) fused with RRF, k = 10."""
         depth = max(limit, 50)
-        lex = self._lexical_ranked(query, depth)
+        lex = self._lexical_ranked(query, depth)[2]
         vec = self._vector_ranked(vector, space, depth, "fragment")
         nmap = self._n_map()
         lex_ns = [n for n, _ in lex]
@@ -881,7 +892,7 @@ class SpdfFile:
             "spaces": self._rows("spaces", order='"id"'),
             "vectors": self._vector_digests(),
             "blobs": [dataclasses.asdict(b) for b in self.blobs()],
-            "provenance": strip(self._rows("provenance", order=_PROVENANCE_ORDER)),
+            "provenance": _sort_provenance(strip(self._rows("provenance"))),
             "extensions": [] if self.legacy else self._rows("extensions", order='"name"'),
         }
         if self.legacy:
@@ -910,6 +921,35 @@ class SpdfFile:
         if current is not None:
             out[current] = {"count": count, "sha256": h.hexdigest()}
         return out
+
+    def full_dump(self) -> dict[str, Any]:
+        """The dump plus vector values and blob bytes (``write_source`` rebuilds the file from it)."""
+        import base64
+
+        d = self.dump()
+        spaces = {s.id: s for s in self.spaces()}
+        for space_id, info in d["vectors"].items():
+            sp = spaces.get(space_id)
+            dtype = sp.dtype if sp else "f32"
+            items = []
+            tcol, scol = self._col("vectors", "target"), self._col("vectors", "space")
+            icol, dcol = self._col("vectors", "id"), self._col("vectors", "data")
+            sql = (
+                f"SELECT {_q(tcol)}, {_q(icol)}, {_q(dcol)} FROM {_q(self._physical('vectors'))} "
+                f"WHERE {_q(scol)} = ? ORDER BY {_q(tcol)}, {_q(icol)}"
+            )
+            for target, vid, data in self.conn.execute(sql, (space_id,)):
+                raw = bytes(data)
+                if dtype == "i8":
+                    values: list[Any] = list(raw[i] - 256 if raw[i] > 127 else raw[i] for i in range(len(raw)))
+                else:
+                    values = decode(raw, dtype)
+                t = map_target(str(target)) if self.legacy else str(target)
+                items.append({"target": t, "id": str(vid), "values": values})
+            info["items"] = sorted(items, key=lambda it: (it["target"], it["id"]))
+        for b in d["blobs"]:
+            b["data_base64"] = base64.b64encode(self.blob(b["key"]) or b"").decode("ascii")
+        return d
 
     def dump_json(self, *, canonical: bool = True, indent: int | None = None) -> str:
         """The dump as JSON text: canonical (RFC 8785) by default, or indented for reading."""
@@ -961,7 +1001,14 @@ class SpdfFile:
         return to_arrow(self, vectors=vectors)
 
 
-_PROVENANCE_ORDER = '"at", "stage", "provider", "model", "detail", "ms"'
+def _sort_provenance(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Order provenance entries by the UTF-8 bytes of their JCS form (contract §5, draft 1.1)."""
+
+    def key(r: dict[str, Any]) -> bytes:
+        entry = {k: v for k, v in r.items() if k != "document"}
+        return canonical_dumps(entry).encode("utf-8")
+
+    return sorted(rows, key=key)
 
 
 def content_hash(dump: Mapping[str, Any]) -> str:

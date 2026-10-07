@@ -13,7 +13,7 @@ from typing import Any
 
 from .schema import LEGACY_KINDS, LEGACY_TARGETS
 
-__all__ = ["map_anchor", "map_kind", "map_meta_key", "map_metadata", "map_target"]
+__all__ = ["default_type", "map_anchor", "map_kind", "map_meta_key", "map_metadata", "map_modalities", "map_target"]
 
 _ANCHOR_KEYS: dict[str, str] = {
     "tipo": "type",
@@ -72,90 +72,48 @@ def map_anchor(anchor: Any) -> Any:
 
 # --- Metadata (MetadatosDocumento -> CSL-JSON) -----------------------------
 
-_SIMPLE_META: dict[str, str] = {
-    "tituloOriginal": "original-title",
-    "editorial": "publisher",
-    "lugar": "publisher-place",
-    "revista": "container-title",
-    "coleccion": "collection-title",
-    "volumen": "volume",
-    "numero": "issue",
-    "paginas": "page",
-    "edicion": "edition",
-    "doi": "DOI",
-    "isbn": "ISBN",
-    "url": "URL",
-    "idioma": "language",
-    "tipoCSL": "type",
-    "resumen": "abstract",
+_SIMPLE_META: tuple[tuple[str, str], ...] = (
+    ("editorial", "publisher"),
+    ("lugar", "publisher-place"),
+    ("coleccion", "collection-title"),
+    ("volumen", "volume"),
+    ("numero", "issue"),
+    ("paginas", "page"),
+    ("edicion", "edition"),
+    ("doi", "DOI"),
+    ("isbn", "ISBN"),
+    ("url", "URL"),
+    ("idioma", "language"),
+    ("resumen", "abstract"),
+)
+
+# Field names used as provenance keys (legacy field -> CSL name; "spdf." prefixes dropped).
+_FIELD_NAMES: dict[str, str] = {
+    "titulo": "title", "subtitulo": "subtitle", "tituloOriginal": "original-title", "autores": "author",
+    "editores": "editor", "traductores": "translator", "entrevistadores": "interviewer", "anio": "issued",
+    "anioOriginal": "original-date", "editorial": "publisher", "lugar": "publisher-place",
+    "revista": "container-title", "contenedor": "container-title", "coleccion": "collection-title",
+    "volumen": "volume", "numero": "issue", "paginas": "page", "edicion": "edition", "doi": "DOI", "isbn": "ISBN",
+    "url": "URL", "idioma": "language", "tipoCSL": "type", "resumen": "abstract",
+    "idiomaOriginal": "original_language", "fecha": "issued", "sinFecha": "undated",
 }
 
-_NAME_LISTS: dict[str, str] = {
-    "autores": "author",
-    "editores": "editor",
-    "traductores": "translator",
-    "entrevistadores": "interviewer",
+_PROVENANCE_SOURCES: dict[str, str] = {
+    "lectura": "reading", "usuario": "user", "colofon": "colophon", "impresores": "printers",
 }
+
+_NAME_LISTS: tuple[tuple[str, str], ...] = (
+    ("autores", "author"),
+    ("editores", "editor"),
+    ("traductores", "translator"),
+    ("entrevistadores", "interviewer"),
+)
+
+_MODALITIES: dict[str, str] = {"texto": "text", "imagen": "image", "audio": "audio", "video": "video", "pdf": "pdf"}
+
+_META_KEYS: dict[str, str] = {"creado": "created", "generador": "generator"}
 
 _DATE_RE = re.compile(r"^(-?\d{1,4})(?:-(\d{1,2})(?:-(\d{1,2}))?)?")
-
-
-def _date_parts(value: Any) -> dict[str, Any] | None:
-    if isinstance(value, bool):
-        return None
-    if isinstance(value, int):
-        return {"date-parts": [[value]]}
-    if isinstance(value, float) and value.is_integer():
-        return {"date-parts": [[int(value)]]}
-    if isinstance(value, str):
-        m = _DATE_RE.match(value.strip())
-        if m:
-            return {"date-parts": [[int(g) for g in m.groups() if g is not None]]}
-        if value.strip():
-            return {"literal": value.strip()}
-    return None
-
-
-def _person(p: Any, orcids: dict[str, str]) -> dict[str, str] | None:
-    if isinstance(p, str):
-        return {"literal": p} if p.strip() else None
-    if not isinstance(p, Mapping):
-        return None
-    family = str(p.get("apellidos") or "").strip()
-    given = str(p.get("nombre") or "").strip()
-    name: dict[str, str] = {}
-    if family:
-        name["family"] = family
-    if given:
-        name["given"] = given
-    if not name:
-        return None
-    orcid = p.get("orcid")
-    if isinstance(orcid, str) and orcid.strip():
-        key = f"{family}, {given}" if family and given else (family or given)
-        orcids[key] = orcid.strip()
-    return name
-
-
-def _default_type(kind: str | None, meta: Mapping[str, Any]) -> str:
-    by_kind = {
-        "audio": "speech",
-        "video": "motion_picture",
-        "web": "webpage",
-        "presentacion": "speech",
-        "slides": "speech",
-        "hoja": "dataset",
-        "sheet": "dataset",
-        "imagen": "graphic",
-        "image": "graphic",
-        "fotos": "graphic",
-        "photos": "graphic",
-    }
-    if kind and kind in by_kind:
-        return by_kind[kind]
-    if meta.get("revista"):
-        return "article-journal"
-    return "book"
 
 
 def map_meta_key(key: str) -> str:
@@ -163,99 +121,123 @@ def map_meta_key(key: str) -> str:
     return _META_KEYS.get(key, key)
 
 
-_META_KEYS: dict[str, str] = {"creado": "created", "generador": "generator"}
+def map_modalities(value: Any) -> Any:
+    """Map legacy modality names (``texto`` → ``text``, ``imagen`` → ``image``)."""
+    if isinstance(value, list):
+        return [_MODALITIES.get(x, x) if isinstance(x, str) else x for x in value]
+    return value
+
+
+def _date_parts(iso: str) -> list[int] | None:
+    m = _DATE_RE.match(iso.strip())
+    if not m:
+        return None
+    return [int(g) for g in m.groups() if g is not None]
+
+
+def _has(m: Mapping[str, Any], key: str) -> bool:
+    v = m.get(key)
+    return v is not None and v != "" and v != []
+
+
+def _names(people: Any, orcids: dict[str, str]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    if not isinstance(people, list):
+        return out
+    for p in people:
+        if not isinstance(p, Mapping):
+            continue
+        n: dict[str, Any] = {}
+        if p.get("apellidos"):
+            n["family"] = p["apellidos"]
+        if p.get("nombre"):
+            n["given"] = p["nombre"]
+        if n:
+            out.append(n)
+        if p.get("orcid"):
+            key = str(p.get("apellidos") or "") + (", " + str(p["nombre"]) if p.get("nombre") else "")
+            orcids[key] = p["orcid"]
+    return out
+
+
+def default_type(kind: str | None, meta: Mapping[str, Any]) -> str:
+    """CSL type of a legacy record: ``tipoCSL``, else article-journal with a journal, else by kind."""
+    if meta.get("tipoCSL"):
+        return str(meta["tipoCSL"])
+    if meta.get("revista"):
+        return "article-journal"
+    by_kind = {
+        "audio": "speech", "video": "motion_picture", "web": "webpage", "presentacion": "speech", "slides": "speech",
+        "hoja": "dataset", "sheet": "dataset", "imagen": "graphic", "image": "graphic", "fotos": "graphic",
+        "photos": "graphic",
+    }
+    return by_kind.get(kind or "", "book")
 
 
 def map_metadata(meta: Any, kind: str | None = None) -> dict[str, Any]:
     """Map a legacy ``MetadatosDocumento`` object to a CSL-JSON item plus the ``spdf`` extension.
 
-    ``kind`` is the legacy ``documentos.tipo`` (or the mapped 5.0 kind); it decides the
-    CSL ``type`` when the record has no ``tipoCSL``.
+    ``kind`` is the legacy ``documentos.tipo``; it decides the CSL ``type`` when the record
+    has no ``tipoCSL`` and no journal. Empty or absent fields are omitted.
     """
-    if not isinstance(meta, Mapping):
-        return {"type": _default_type(kind, {})}
-    csl: dict[str, Any] = {}
+    m: Mapping[str, Any] = meta if isinstance(meta, Mapping) else {}
+    item: dict[str, Any] = {"type": default_type(kind, m)}
     ext: dict[str, Any] = {}
+    title = m.get("titulo") or ""
+    if _has(m, "subtitulo"):
+        item["title"] = f"{title}: {m['subtitulo']}"
+        item["title-short"] = title
+        ext["subtitle"] = m["subtitulo"]
+    else:
+        item["title"] = title
+    if _has(m, "tituloOriginal"):
+        item["original-title"] = m["tituloOriginal"]
     orcids: dict[str, str] = {}
-
-    title = _text(meta.get("titulo"))
-    subtitle = _text(meta.get("subtitulo"))
-    if title and subtitle:
-        csl["title"] = f"{title}: {subtitle}"
-        csl["title-short"] = title
-    elif title or subtitle:
-        csl["title"] = title or subtitle
-    if subtitle:
-        ext["subtitle"] = subtitle
-
-    for legacy_key, csl_key in _NAME_LISTS.items():
-        people = meta.get(legacy_key)
-        if isinstance(people, list):
-            names = [n for n in (_person(p, orcids) for p in people) if n]
-            if names:
-                csl[csl_key] = names
-
-    year = meta.get("anio")
-    issued = None
-    fecha = meta.get("fecha")
-    if isinstance(fecha, str) and fecha.strip():
-        full = _date_parts(fecha)
-        parts = full.get("date-parts") if full else None
-        if parts and (year is None or parts[0][0] == year):
-            issued = full
-    if issued is None and year is not None and year != "":
-        issued = _date_parts(year)
-    if issued:
-        csl["issued"] = issued
-    if meta.get("anioOriginal") not in (None, ""):
-        original = _date_parts(meta.get("anioOriginal"))
-        if original:
-            csl["original-date"] = original
-
-    for legacy_key, csl_key in _SIMPLE_META.items():
-        value = meta.get(legacy_key)
-        if value is None or value == "":
-            continue
-        if csl_key == "container-title" and "container-title" in csl:
-            continue
-        csl[csl_key] = value if isinstance(value, str) else str(value)
-    contenedor = _text(meta.get("contenedor"))
-    if contenedor and "container-title" not in csl:
-        csl["container-title"] = contenedor
-    if "type" not in csl:
-        csl["type"] = _default_type(kind, meta)
-
-    if meta.get("idiomaOriginal"):
-        ext["original_language"] = meta["idiomaOriginal"]
-    undated = meta.get("sinFecha")
-    if isinstance(undated, Mapping):
-        mapped: dict[str, Any] = {}
-        for old, new in (("desde", "from"), ("hasta", "to"), ("fundamento", "basis")):
-            if undated.get(old) not in (None, ""):
-                mapped[new] = undated[old]
-        if mapped:
-            ext["undated"] = mapped
-    provenance = meta.get("procedencia")
-    if isinstance(provenance, Mapping) and provenance:
-        mapped_prov: dict[str, Any] = {}
-        for field_name, info in provenance.items():
+    for legacy_key, csl_key in _NAME_LISTS:
+        names = _names(m.get(legacy_key), orcids)
+        if names:
+            item[csl_key] = names
+    fecha = _date_parts(m["fecha"]) if _has(m, "fecha") and isinstance(m["fecha"], str) else None
+    if fecha and (not _has(m, "anio") or fecha[0] == m["anio"]):
+        item["issued"] = {"date-parts": [fecha]}
+    elif _has(m, "anio"):
+        item["issued"] = {"date-parts": [[m["anio"]]]}
+    if _has(m, "anioOriginal"):
+        item["original-date"] = {"date-parts": [[m["anioOriginal"]]]}
+    for legacy_key, csl_key in _SIMPLE_META:
+        if _has(m, legacy_key):
+            item[csl_key] = m[legacy_key]
+    if _has(m, "revista"):
+        item["container-title"] = m["revista"]
+    elif _has(m, "contenedor"):
+        item["container-title"] = m["contenedor"]
+    if _has(m, "idiomaOriginal"):
+        ext["original_language"] = m["idiomaOriginal"]
+    if _has(m, "sinFecha") and isinstance(m["sinFecha"], Mapping):
+        sf = m["sinFecha"]
+        undated: dict[str, Any] = {}
+        if sf.get("desde") is not None:
+            undated["from"] = sf["desde"]
+        if sf.get("hasta") is not None:
+            undated["to"] = sf["hasta"]
+        if sf.get("fundamento"):
+            undated["basis"] = sf["fundamento"]
+        ext["undated"] = undated
+    if _has(m, "procedencia") and isinstance(m["procedencia"], Mapping):
+        prov: dict[str, Any] = {}
+        for field_name, info in m["procedencia"].items():
+            key = _FIELD_NAMES.get(field_name, field_name)
             if isinstance(info, Mapping):
-                entry: dict[str, Any] = {}
-                for k, v in info.items():
-                    entry[_PROVENANCE_KEYS.get(k, k)] = v
-                mapped_prov[field_name] = entry
+                src = info.get("fuente")
+                prov[key] = {
+                    "source": _PROVENANCE_SOURCES.get(src, src) if isinstance(src, str) else src,
+                    "confidence": info.get("confianza"),
+                }
             else:
-                mapped_prov[field_name] = info
-        ext["provenance"] = mapped_prov
+                prov[key] = info
+        ext["provenance"] = prov
     if orcids:
         ext["orcid"] = orcids
     if ext:
-        csl["spdf"] = ext
-    return csl
-
-
-_PROVENANCE_KEYS: dict[str, str] = {"fuente": "source", "confianza": "confidence"}
-
-
-def _text(value: Any) -> str:
-    return value.strip() if isinstance(value, str) else ("" if value is None else str(value).strip())
+        item["spdf"] = ext
+    return item
