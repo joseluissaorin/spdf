@@ -1,0 +1,63 @@
+cff-version: 1.2.0
+message: >-
+  If you use SPDF in your work, please cite the specification, with the
+  version you used.
+title: "SPDF: Semantic Processed Document Format, version 5.0"
+abstract: >-
+  SPDF is an open, portable file format for documents that have been read
+  once and can be cited forever. A .spdf file is a single uncompressed
+  SQLite 3 database that holds one document (a printed book, a scan, a
+  recording, a slide deck, a spreadsheet or a web page) as citable units and
+  searchable fragments. Every fragment carries an exact anchor: the printed
+  page or leaf, the verse, the canonical reference, the second of a
+  recording or the slide, with a portable anchor URI aligned with W3C Media
+  Fragments and RFC 5147. Metadata is a CSL-JSON item, full-text search uses
+  the tokenizers that ship with SQLite, optional embedding vectors from
+  several models can live side by side, and content can be hashed and signed
+  with Ed25519. A public conformance suite defines the expected behaviour of
+  every implementation. This is the working draft of version 5.0.
+authors:
+  - family-names: Saorín Ferrer
+    given-names: José Luis
+    email: jl@joseluissaorin.com
+license: CC-BY-4.0
+version: 5.0.0-draft
+date-released: 2026-10-07
+repository-code: "https://github.com/joseluissaorin/spdf"
+url: "https://spdf.joseluissaorin.com"
+identifiers:
+  - type: url
+    value: "https://spdf.joseluissaorin.com/spec"
+    description: "The specification, version 5.0 (working draft)"
+  - type: url
+    value: "https://spdf.joseluissaorin.com/es/especificacion"
+    description: "Spanish translation of the specification"
+keywords:
+  - SPDF
+  - document format
+  - file format
+  - citation
+  - scholarly communication
+  - digital humanities
+  - digital preservation
+  - SQLite
+  - CSL-JSON
+  - full-text search
+  - embeddings
+  - anchors
+  - W3C Web Annotation
+  - Media Fragments
+  - provenance
+preferred-citation:
+  type: standard
+  title: "SPDF: Semantic Processed Document Format, version 5.0"
+  authors:
+    - family-names: Saorín Ferrer
+      given-names: José Luis
+      email: jl@joseluissaorin.com
+  year: 2026
+  version: 5.0.0-draft
+  date-released: 2026-10-07
+  license: CC-BY-4.0
+  url: "https://spdf.joseluissaorin.com/spec"
+  repository-code: "https://github.com/joseluissaorin/spdf"
