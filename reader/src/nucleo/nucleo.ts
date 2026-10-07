@@ -38,7 +38,7 @@ export interface EntradaBiblioteca {
   anadido: string;
   abierto?: string;
   ultimaUnidad?: number;
-  /** Referencia ('blob:<clave>') de la miniatura de la primera unidad, si la hay. */
+  /** Miniatura de la primera unidad como data: URL (solo si es pequeña). */
   miniatura?: string | null;
 }
 
