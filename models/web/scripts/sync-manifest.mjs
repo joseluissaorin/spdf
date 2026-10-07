@@ -9,7 +9,7 @@ const dst = path.join(here, "..", "src", "manifest.ts");
 const json = JSON.parse(fs.readFileSync(src, "utf8"));
 const text = `// Generated from models/manifest.json by scripts/sync-manifest.mjs. Do not edit.\nexport default ${JSON.stringify(json, null, 1)};\n`;
 if (process.argv.includes("--check")) {
-  const cur = fs.existsSync(dst) ? fs.readFileSync(dst, "utf8") : "";
+  const cur = (fs.existsSync(dst) ? fs.readFileSync(dst, "utf8") : "").replace(/\r\n/g, "\n"); // git may check out CRLF on Windows
   if (cur !== text) { console.error("src/manifest.ts is out of date: npm run sync-manifest"); process.exit(1); }
   console.log("manifest in sync");
 } else {
