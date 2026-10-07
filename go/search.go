@@ -500,79 +500,14 @@ func HalfToFloat(h uint16) float64 {
 	return sign * (1 + frac/1024) * math.Pow(2, float64(exp-15))
 }
 
-// FloatToHalf converts to IEEE 754 binary16 with round-to-nearest-even.
-func FloatToHalf(f float32) uint16 {
-	b := math.Float32bits(f)
-	sign := uint16((b >> 16) & 0x8000)
-	exp := int((b >> 23) & 0xff)
-	mant := b & 0x7fffff
-	if exp == 0xff { // Inf / NaN
-		if mant != 0 {
-			return sign | 0x7e00
-		}
-		return sign | 0x7c00
-	}
-	e := exp - 127 + 15
-	if e >= 0x1f {
-		return sign | 0x7c00
-	}
-	if e <= 0 {
-		if e < -10 {
-			return sign
-		}
-		mant |= 0x800000
-		shift := uint32(14 - e)
-		half := mant >> shift
-		rem := mant & ((1 << shift) - 1)
-		mid := uint32(1) << (shift - 1)
-		if rem > mid || (rem == mid && half&1 == 1) {
-			half++
-		}
-		return sign | uint16(half)
-	}
-	half := uint32(e)<<10 | mant>>13
-	rem := mant & 0x1fff
-	if rem > 0x1000 || (rem == 0x1000 && half&1 == 1) {
-		half++
-	}
-	return sign | uint16(half)
-}
-
-// QuantizeI8 quantizes a component: clamp(round_half_away_from_zero(v×127), −127, 127).
-func QuantizeI8(v float32) int8 {
-	q := math.Round(float64(v) * 127)
-	if q > 127 {
-		q = 127
-	}
-	if q < -127 {
-		q = -127
-	}
-	return int8(q)
-}
-
-// EncodeVector encodes float32 components in the given dtype.
+// EncodeVector encodes float32 components in the given dtype (quantizing
+// for f16 and i8 with the rules of Quantize).
 func EncodeVector(v []float32, dtype string) ([]byte, error) {
-	switch dtype {
-	case "f32", "":
-		out := make([]byte, 4*len(v))
-		for i, x := range v {
-			binary.LittleEndian.PutUint32(out[i*4:], math.Float32bits(x))
-		}
-		return out, nil
-	case "f16":
-		out := make([]byte, 2*len(v))
-		for i, x := range v {
-			binary.LittleEndian.PutUint16(out[i*2:], FloatToHalf(x))
-		}
-		return out, nil
-	case "i8":
-		out := make([]byte, len(v))
-		for i, x := range v {
-			out[i] = byte(QuantizeI8(x))
-		}
-		return out, nil
+	f := make([]float64, len(v))
+	for i, x := range v {
+		f[i] = float64(x)
 	}
-	return nil, fmt.Errorf("unknown dtype %q", dtype)
+	return Quantize(f, dtype)
 }
 
 // SearchVector runs brute-force similarity over the vectors of a space and

@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"sort"
 	"strings"
@@ -151,6 +152,9 @@ func (v *validator) run(f *File) {
 	for _, o := range f.schemaObjects("trigger", "view") {
 		v.err("E020", o[0], "%s %s present", o[1], o[0])
 	}
+	for _, name := range f.foreignVirtualTables() {
+		v.err("E020", name, "virtual table %s present", name)
+	}
 	// Required tables and columns.
 	present := map[string]map[string]bool{}
 	for _, t := range requiredTables50 {
@@ -254,7 +258,7 @@ func (v *validator) run(f *File) {
 		rows, err := f.queryRows("units", []string{"id", "ord", "anchor", "text"}, "ORDER BY ord, id")
 		if err == nil {
 			for i, r := range rows {
-				ord, ok := r["ord"].(int64)
+				ord, ok := asInt(r["ord"])
 				if !ok || ord != int64(i+1) {
 					v.err("E090", "units", "units.ord is not 1..N")
 					break
@@ -475,7 +479,7 @@ func CheckAnchor(g any, text *string) (string, string) {
 		}
 		if text != nil {
 			n := int64(utf8.RuneCountInString(norm.NFC.String(*text)))
-			s, e := l[0].(int64), l[1].(int64)
+			s, e := intOf(l[0]), intOf(l[1])
 			if !(0 <= s && s <= e && e <= n) {
 				return "E042", fmt.Sprintf("chars [%d, %d] out of range (unit text has %d code points)", s, e, n)
 			}
@@ -484,9 +488,25 @@ func CheckAnchor(g any, text *string) (string, string) {
 	return "", ""
 }
 
+// isInt: a JSON number with an integral value (10 and 10.0 are the same JSON value).
 func isInt(v any) bool {
-	_, ok := v.(int64)
-	return ok
+	switch t := v.(type) {
+	case int64:
+		return true
+	case float64:
+		return t == math.Trunc(t) && !math.IsInf(t, 0)
+	}
+	return false
+}
+
+func intOf(v any) int64 {
+	switch t := v.(type) {
+	case int64:
+		return t
+	case float64:
+		return int64(t)
+	}
+	return 0
 }
 
 func isNum(v any) bool {
@@ -503,8 +523,7 @@ func isStr(v any) bool {
 func anchorShapeError(a Anchor) string {
 	switch a.Type() {
 	case "page":
-		p, ok := a["physical"].(int64)
-		if !ok || p < 1 {
+		if !isInt(a["physical"]) || intOf(a["physical"]) < 1 {
 			return "page anchor needs integer physical >= 1"
 		}
 		pr, has := a["printed"]
@@ -522,8 +541,7 @@ func anchorShapeError(a Anchor) string {
 			return "section anchor needs path (string[])"
 		}
 	case "slide":
-		n, ok := a["n"].(int64)
-		if !ok || n < 1 {
+		if !isInt(a["n"]) || intOf(a["n"]) < 1 {
 			return "slide anchor needs integer n >= 1"
 		}
 	case "sheet":

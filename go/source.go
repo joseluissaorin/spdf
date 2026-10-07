@@ -98,18 +98,25 @@ func PackVector(values []any, dtype string) ([]byte, error) {
 		}
 		return out, nil
 	case "f16", "f32", "":
-		fs := make([]float32, len(values))
+		fs := make([]float64, len(values))
 		for i, v := range values {
 			f, ok := asFloat(v)
 			if !ok {
 				return nil, fmt.Errorf("vector value %v is not a number", v)
 			}
-			fs[i] = float32(f)
-			if float64(fs[i]) != f && !math.IsNaN(f) {
-				return nil, fmt.Errorf("%s value %v is not exactly representable", dtype, v)
+			fs[i] = f
+		}
+		data, err := Quantize(fs, dtype)
+		if err != nil {
+			return nil, err
+		}
+		back, _ := DecodeVector(data, dtype)
+		for i := range back {
+			if back[i] != fs[i] && !math.IsNaN(fs[i]) {
+				return nil, fmt.Errorf("%s value %v is not exactly representable", dtype, fs[i])
 			}
 		}
-		return EncodeVector(fs, dtype)
+		return data, nil
 	}
 	return nil, fmt.Errorf("unknown dtype %q", dtype)
 }

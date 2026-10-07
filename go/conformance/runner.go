@@ -4,6 +4,7 @@
 package conformance
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math"
 	"os"
@@ -275,6 +276,18 @@ func RunCase(dir, kind string, in, exp map[string]any) string {
 		}
 		if c := spdf.FormatURI(ref, loc); c != str(exp["canonical"]) {
 			return "canonical form " + c
+		}
+		return ""
+	case "quantize":
+		data, err := spdf.Quantize(toFloats(in["values"]), str(in["dtype"]))
+		var got map[string]any
+		if err != nil {
+			got = map[string]any{"error": true}
+		} else {
+			got = map[string]any{"hex": hex.EncodeToString(data)}
+		}
+		if diff := spdf.JSONDiff(got, exp); diff != "" {
+			return fmt.Sprintf("got %s", spdf.CompactJSON(got))
 		}
 		return ""
 	case "cite":

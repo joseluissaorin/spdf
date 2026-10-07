@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -321,6 +322,13 @@ func openSQLiteMode(physical, display string, o *Options, lenient bool) (*File, 
 			}
 		}
 	}
+	if !f.legacy {
+		for _, name := range f.foreignVirtualTables() {
+			if err := issue(errf("E020", name, "virtual table %s is not allowed in an SPDF file", name)); err != nil {
+				return fail(err)
+			}
+		}
+	}
 	// Columns of every table we may read.
 	f.columns = map[string]map[string]bool{}
 	for t := range f.tables {
@@ -560,3 +568,27 @@ func asBytes(v any) []byte {
 }
 
 var errClosed = errors.New("spdf: file is closed")
+
+var fts5Re = regexp.MustCompile(`(?i)USING\s+fts5\s*\(`)
+
+// foreignVirtualTables lists virtual tables other than fragments_fts and
+// fragments_fts_trigram, or not using fts5 (E020).
+func (f *File) foreignVirtualTables() []string {
+	rows, err := f.conn.QueryContext(f.ctx(), "SELECT name, sql FROM sqlite_master WHERE type = 'table' AND sql LIKE 'CREATE VIRTUAL TABLE%' ORDER BY name")
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+	var out []string
+	for rows.Next() {
+		var name string
+		var sqlText sql.NullString
+		if rows.Scan(&name, &sqlText) != nil {
+			continue
+		}
+		if (name != "fragments_fts" && name != "fragments_fts_trigram") || !fts5Re.MatchString(sqlText.String) {
+			out = append(out, name)
+		}
+	}
+	return out
+}
