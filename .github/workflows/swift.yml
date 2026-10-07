@@ -30,8 +30,15 @@ jobs:
       - uses: actions/checkout@v4
       - name: Toolchain
         run: swift --version && sqlite3 --version
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
       - name: Unit tests and the whole suite (macOS)
+        env:
+          SPDF_SIGNED_OUT: ${{ runner.temp }}/swift-signed.spdf
         run: swift test
+      - name: Signed by Swift, verified by the reference oracle (Python)
+        run: python -c "import pathlib, sys; sys.path.insert(0, '../conformance/tools'); import spdfref as R; p = pathlib.Path(sys.argv[1]); r = R.validate_file(p); con = R.open_file(p); keys = {k for (k,) in con.con.execute(\"SELECT key FROM spdf_meta WHERE key IN ('content_sha256', 'signer', 'signature')\")}; con.close(); print(p.name, r['valid'], r['errors'], sorted(keys)); sys.exit(0 if r['valid'] and not r['errors'] and len(keys) == 3 else 1)" "$RUNNER_TEMP/swift-signed.spdf"
       - name: Conformance report
         run: swift run spdf-swift conformance ../conformance -o ../conformance.json
       - name: Tests on the iOS simulator (system SQLite of iOS)

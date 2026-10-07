@@ -48,6 +48,17 @@ jobs:
           GOOS=linux GOARCH=arm64 go build ./...
       - name: Conformance suite
         run: go run ./cmd/spdf conformance ../conformance -o ../conformance.json
+      - uses: actions/setup-python@v5
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          python-version: "3.13"
+      - name: Signed by Go, verified by the reference oracle (Python)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          python -c "print(bytes(range(32, 64)).hex())" > "$RUNNER_TEMP/seed.hex"
+          go run ./cmd/spdf build ../conformance/sources/darwin.json "$RUNNER_TEMP/go-signed.spdf"
+          go run ./cmd/spdf seal "$RUNNER_TEMP/go-signed.spdf" -key "$RUNNER_TEMP/seed.hex"
+          python -c "import pathlib, sys; sys.path.insert(0, '../conformance/tools'); import spdfref as R; p = pathlib.Path(sys.argv[1]); r = R.validate_file(p); con = R.open_file(p); keys = {k for (k,) in con.con.execute(\"SELECT key FROM spdf_meta WHERE key IN ('content_sha256', 'signer', 'signature')\")}; con.close(); print(p.name, r['valid'], r['errors'], sorted(keys)); sys.exit(0 if r['valid'] and not r['errors'] and len(keys) == 3 else 1)" "$RUNNER_TEMP/go-signed.spdf"
       - name: Upload conformance report
         if: matrix.os == 'ubuntu-latest' && always()
         uses: actions/upload-artifact@v4

@@ -163,6 +163,8 @@ class JdbcTest {
         }
         val r = Validator.validate(out, driver)
         assertTrue(r.isValid, r.toString())
+        // CI hands this file to the reference oracle (and other implementations) to verify it.
+        System.getenv("SPDF_SIGNED_OUT")?.let { out.copyTo(File(it), overwrite = true) }
         SpdfFile.open(out, driver).use { f ->
             val meta = f.meta()
             assertEquals(f.contentSha256(), meta["content_sha256"])
