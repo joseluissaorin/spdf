@@ -37,6 +37,10 @@ export {
   type Resolution,
   type Location,
   locateIn,
+  citePassageIn,
+  endUnit,
+  matterOf,
+  type PassageCitation,
   type RawOpen,
 } from './document.js';
 export { dump, dumpDocument, type CanonicalDump } from './dump.js';

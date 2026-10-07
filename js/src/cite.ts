@@ -75,18 +75,16 @@ export function formatTime(t: number): string {
 
 type Loose = Record<string, unknown>;
 
+/** Page-like locator; ends without a printed folio never take part in a range (SPEC §18). */
 function pageLocator(anchor: Loose, end: Loose | null, es: boolean, single: string, plural: string): string {
-  const lab = (a: Loose): string | null => {
-    if (!has(a.printed)) return null;
-    return a.source === 'inferred' ? `[${String(a.printed)}]` : String(a.printed);
-  };
-  const a = lab(anchor);
-  if (a === null) return es ? 's. p.' : 'n. pag.';
-  if (end && end.type === anchor.type) {
-    const b = lab(end);
-    if (b !== null && end.printed !== anchor.printed) return `${plural} ${a}-${b}`;
-  }
-  return `${single} ${a}`;
+  const lab = (a: Loose): string => (a.source === 'inferred' ? `[${String(a.printed)}]` : String(a.printed));
+  const ends = [anchor, ...(end && end.type === anchor.type ? [end] : [])];
+  const withFolio = ends.filter((x) => has(x.printed));
+  const first = withFolio[0];
+  const last = withFolio[withFolio.length - 1];
+  if (!first || !last) return es ? 's. p.' : 'n. pag.';
+  if (last !== first && last.printed !== first.printed) return `${plural} ${lab(first)}-${lab(last)}`;
+  return `${single} ${lab(first)}`;
 }
 
 /** The locator of a citation (`p. 145`, `1:09:20`, `diap. 3`…), or null if there is none. */

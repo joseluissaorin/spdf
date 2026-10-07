@@ -258,7 +258,9 @@ describe('anchor resolution (SPEC §5.4)', () => {
     expect((await doc.resolve(`spdf:${doc.docref}#f=${encodeURIComponent(u.printed!)}`))?.unit).toBe((await doc.unitByPrinted(u.printed!))[0]!.id);
     expect(await doc.resolve(`spdf:sha256-${'0'.repeat(64)}#p=1`)).toBeNull();
     expect(await doc.locate(`spdf:sha256-${'0'.repeat(64)}#p=1`)).toEqual({ document: false, units: [], fragments: [], char: null, xywh: null });
-    expect((await doc.locate('https://example.org/quijote.spdf#p=1')).units.length).toBe(1);
+    const firstPage = (await doc.units()).find((x) => x.anchor.type === 'page')!;
+    const phys = (firstPage.anchor as { physical: number }).physical;
+    expect((await doc.locate(`https://example.org/quijote.spdf#p=${phys}`)).units).toEqual([firstPage.id]);
     await doc.close();
   });
 });

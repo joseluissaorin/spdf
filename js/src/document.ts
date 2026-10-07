@@ -27,6 +27,7 @@ import type {
   VectorTarget,
 } from './types.js';
 import { mapLegacyAnchor } from './legacy.js';
+import { canonicalJson } from './canonical.js';
 import { searchHybrid, searchLexical, searchVector, type HybridOptions, type LexicalOptions, type SearchHit, type VectorHit, type VectorOptions } from './search.js';
 import { dumpDocument, type CanonicalDump } from './dump.js';
 import { validate, type ValidateOptions, type ValidationReport } from './validate.js';
@@ -288,6 +289,102 @@ export interface Resolution {
   xywh: [number, number, number, number] | null;
 }
 
+/** An anchor without `chars` and `region`, serialized canonically (anchor identity, SPEC §4.4). */
+function identity(a: unknown): string {
+  if (!a || typeof a !== 'object' || Array.isArray(a)) return canonicalJson(a ?? null);
+  const { chars: _c, region: _r, ...rest } = a as Record<string, unknown>;
+  return canonicalJson(rest);
+}
+
+/**
+ * The unit where a crossing fragment ends (SPEC §4.4): the first unit after its start unit,
+ * in `ord` order, whose anchor equals `anchor_end` ignoring `chars` and `region`.
+ */
+export function endUnit<U extends { id: string; anchor: unknown }>(units: readonly U[], startId: string, anchorEnd: unknown): U | null {
+  if (!anchorEnd || typeof anchorEnd !== 'object') return null;
+  const want = identity(anchorEnd);
+  let after = false;
+  for (const u of units) {
+    if (u.id === startId) {
+      after = true;
+      continue;
+    }
+    if (after && identity(u.anchor) === want) return u;
+  }
+  return null;
+}
+
+export interface PassageCitation {
+  /** The short citation (§18). */
+  text: string;
+  /** The anchor URI of the cited anchor or range. */
+  uri: string;
+  anchor: Anchor;
+  anchor_end: Anchor | null;
+}
+
+const codePoints = (s: string): string[] => Array.from(s);
+
+/** Index (in code points) of `needle` inside `hay`, or -1. */
+function cpIndexOf(hay: string[], needle: string[]): number {
+  if (!needle.length) return 0;
+  outer: for (let i = 0; i + needle.length <= hay.length; i++) {
+    for (let j = 0; j < needle.length; j++) if (hay[i + j] !== needle[j]) continue outer;
+    return i;
+  }
+  return -1;
+}
+
+/** SPEC §18.2 on an open document. */
+export async function citePassageIn(doc: SpdfDocument, fragmentId: string, quote: string, locale: string = 'es'): Promise<PassageCitation> {
+  const units = await doc.units();
+  const f = await doc.fragment(fragmentId);
+  if (!f) throw new Error(`No fragment with id ${fragmentId}.`);
+  const u1 = units.find((u) => u.id === f.unit);
+  if (!u1) throw new Error(`The unit ${f.unit} of fragment ${fragmentId} does not exist.`);
+  const q = codePoints(quote.normalize('NFC'));
+  const strip = (a: Anchor): Anchor => {
+    const { chars: _c, region: _r, ...rest } = a as Anchor & { chars?: unknown; region?: unknown };
+    return rest as Anchor;
+  };
+  const charsOf = (a: unknown): [number, number] | null => {
+    const c = a && typeof a === 'object' ? (a as { chars?: unknown }).chars : undefined;
+    return Array.isArray(c) && c.length === 2 ? (c as [number, number]) : null;
+  };
+  const t1 = codePoints(u1.text);
+  const c1 = charsOf(f.anchor) ?? [0, t1.length];
+  const seg1 = t1.slice(c1[0], c1[1]);
+  const u2 = endUnit(units, u1.id, f.anchor_end);
+  let seg2: string[] = [];
+  let c2: [number, number] = [0, 0];
+  if (u2) {
+    const t2 = codePoints(u2.text);
+    c2 = charsOf(f.anchor_end) ?? [0, t2.length];
+    seg2 = t2.slice(c2[0], c2[1]);
+  }
+  let anchor: Anchor;
+  let end: Anchor | null = null;
+  const i1 = cpIndexOf(seg1, q);
+  const i2 = u2 ? cpIndexOf(seg2, q) : -1;
+  if (i1 >= 0) {
+    anchor = { ...strip(u1.anchor), chars: [i1 + c1[0], i1 + c1[0] + q.length] } as Anchor;
+  } else if (u2 && i2 >= 0) {
+    anchor = { ...strip(u2.anchor), chars: [i2 + c2[0], i2 + c2[0] + q.length] } as Anchor;
+  } else if (u2 && cpIndexOf(codePoints(f.text), q) >= 0) {
+    anchor = strip(u1.anchor);
+    end = strip(u2.anchor);
+  } else {
+    throw new Error('The quotation is not in the fragment.');
+  }
+  return { text: doc.cite(anchor, locale, end), uri: formatAnchorUri(`sha256-${doc.document.source_sha256}`, anchor, end), anchor, anchor_end: end };
+}
+
+/** The `matter` of an anchor (`body` when absent or not a string). */
+export function matterOf(a: unknown): string {
+  const m = a && typeof a === 'object' ? (a as { matter?: unknown }).matter : undefined;
+  return typeof m === 'string' ? m : 'body';
+}
+
 const RULE_ORDER = ['p', 'f', 't', 'sl', 'v', 'ref', 's', 'sh'] as const;
 type Rule = (typeof RULE_ORDER)[number];
 
@@ -357,18 +454,27 @@ export async function locateIn(doc: SpdfDocument, reference: string): Promise<Lo
     const t1 = last ? (last.anchor as { t1?: unknown }).t1 : undefined;
     if (last && isNumValue(t1) && t1 === (L.t as number[])[0]) unitIds = [last.id];
   }
-  let frags = (await doc.fragments()).filter((f) => anchorMatches(rule, L, f.anchor));
+  // Fragments match by their start anchor or by their end anchor.
+  const all = await doc.fragments();
+  let frags = all.filter((f) => anchorMatches(rule, L, f.anchor) || (f.anchor_end !== null && anchorMatches(rule, L, f.anchor_end)));
   if (!unitIds.length && frags.length) {
     const order = new Map(units.map((u) => [u.id, u.ord]));
     unitIds = [...new Set(frags.map((f) => f.unit))].sort((x, y) => (order.get(x) ?? 0) - (order.get(y) ?? 0));
   }
   if (L.char) {
+    // `char` refers to the text of the first unit found.
     const [c, d] = L.char;
-    frags = frags.filter((f) => {
-      const ch = (f.anchor as { chars?: unknown }).chars;
-      if (!unitIds.includes(f.unit) || !Array.isArray(ch) || ch.length !== 2) return false;
+    const first = unitIds[0];
+    const overlaps = (x: unknown): boolean => {
+      const ch = x && typeof x === 'object' ? (x as { chars?: unknown }).chars : undefined;
+      if (!Array.isArray(ch) || ch.length !== 2) return false;
       const [a, b] = ch as [number, number];
       return c < d ? a < d && c < b : a <= c && c < b;
+    };
+    frags = frags.filter((f) => {
+      if (f.unit === first && overlaps(f.anchor)) return true;
+      const eu = endUnit(units, f.unit, f.anchor_end);
+      return eu !== null && eu.id === first && overlaps(f.anchor_end);
     });
   }
   out.units = unitIds;
@@ -488,6 +594,15 @@ export class SpdfDocument {
    */
   async locate(reference: string): Promise<Location> {
     return locateIn(this, reference);
+  }
+
+  /**
+   * Cites a quotation taken from a fragment (SPEC §18.2): by the unit the quotation lies in
+   * (with `chars`), by the end unit of a crossing fragment, or by the range of both when it
+   * spans them; never by the start anchor when the quotation is not in the start unit.
+   */
+  async citePassage(fragmentId: string, quote: string, locale: string = 'es'): Promise<PassageCitation> {
+    return citePassageIn(this, fragmentId, quote, locale);
   }
 
   /** The first unit `locate` finds (null if none, or if the URI is for another document). */

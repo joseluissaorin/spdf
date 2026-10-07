@@ -242,6 +242,17 @@ async function runCase(c: Case, io: ConformanceIO, engine: SqlEngine | undefined
       if (toHex(bytes) !== expect.hex) fail(`${toHex(bytes)} ≠ ${String(expect.hex)}`);
       return;
     }
+    case 'cite_passage': {
+      const doc = await openSpdf(await io.read(String(input.file)), opts);
+      try {
+        const r = await doc.citePassage(String(input.fragment), String(input.quote), String(input.locale));
+        if (r.text !== expect.text) fail(`text ${r.text} ≠ ${String(expect.text)}`);
+        if (r.uri !== expect.uri) fail(`uri ${r.uri} ≠ ${String(expect.uri)}`);
+      } finally {
+        await doc.close();
+      }
+      return;
+    }
     case 'locate': {
       const doc = await openSpdf(await io.read(String(input.file)), opts);
       try {

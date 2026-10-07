@@ -2,7 +2,11 @@
 
 export type Region = { x: number; y: number; w: number; h: number };
 
+/** Kind of matter of a unit (SPEC §4.1); absent or unknown = `body`. */
+export type Matter = 'body' | 'front' | 'back' | 'plate' | 'cover' | 'library' | 'blank';
+
 interface AnchorCommon {
+  matter?: Matter | string;
   /** Fractions 0–1 of the unit image. */
   region?: Region;
   /** Code points `[start, end)` in the NFC `units.text`. */

@@ -20,7 +20,7 @@ and 4.1 formats (Scholaris).
 - **TypeScript first**: strict types, ESM only, declarations included.
 - **Conforming reader, semantic reader, writer and validator**, profiles `core`,
   `semantic` and `media`, with the ALTO, TEI and IIIF exports: it passes the whole SPDF
-  conformance suite (309 cases of suite 0.4.0, every kind, nothing skipped) with
+  conformance suite (341 cases of suite 0.4.1, every kind, nothing skipped) with
   `node:sqlite` (Node 22, 24 and 26), with `bun:sqlite`, and with `sqlite-wasm` in Node
   and in Chromium.
 - **Remote reading**: in the browser, `openRemote(url)` opens a file with HTTP Range
@@ -160,7 +160,7 @@ const copy = await SpdfWriter.fromSpdf(doc); // a full 5.0 copy, e.g. to add a v
 | Document | `doc.version`, `doc.legacy`, `doc.meta`, `doc.document`, `units()`, `unit(ord)`, `unitByPrinted()`, `sections()`, `fragments()`, `fragment(id)`, `figures()`, `spaces()`, `vectors()`, `blob(key)`, `blobs()`, `provenance()`, `extensions()`, `dump()`, `validate()` |
 | Search | `doc.searchLexical(q)`, `doc.searchVector(space, vec)`, `doc.searchHybrid(q, vec, space)` |
 | Anchors | `formatAnchorUri(docref, anchor, end)`, `parseAnchorUri(uri)`, `locatorToAnchor()`, `checkAnchor()`, `doc.locate(uriOrUrl)` (SPEC §5.4: units, fragments, `char`, `xywh`), `doc.resolve()` |
-| Citation | `cite(anchor, document, locale, end)`, `doc.cite(anchor, locale, end)` (es, en) |
+| Citation | `cite(anchor, document, locale, end)`, `doc.cite(anchor, locale, end)` (es, en), `doc.citePassage(fragmentId, quote, locale)` (SPEC §18.2: cites the unit the quotation is in) |
 | Export | `toCslJson()`, `toCslJsonArray()`, `cslCitationItem()`, `toBibtex()` (keys `cervantessaavedra1605`, SPEC §19), `toAlto()`, `toTei()`, `toIiif()` |
 | Write | `SpdfWriter.create()`, `.fromSpdf()`, `.fromSource()`, `convertLegacy()`, `encodeVector()` |
 | Integrity | `doc.contentSha256()`, `doc.verifyIntegrity(publicKey?)`, `verifySignature()`, `generateSigningKey()` |

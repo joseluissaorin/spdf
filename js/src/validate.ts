@@ -7,7 +7,7 @@
 import type { RandomAccessSource, SqlConnection, SqlValue } from './port.js';
 import { SpdfError } from './errors.js';
 import { sha256Hex } from './bytes.js';
-import { openRaw, openSpdf, type OpenOptions, type RawOpen, type SpdfInput } from './document.js';
+import { endUnit, matterOf, openRaw, openSpdf, type OpenOptions, type RawOpen, type SpdfInput } from './document.js';
 import { q, parseJson } from './view.js';
 import { COLUMNS, DTYPE_SIZE, LEGACY_TRIGGERS, REQUIRED_META } from './schema.js';
 import { checkAnchor, codePointLength } from './anchors.js';
@@ -229,6 +229,27 @@ export async function validate(input: SpdfInput | { source: RandomAccessSource; 
       }
     }
 
+    // W103: a fragment that crosses from one kind of matter to another, or between a page with
+    // a printed folio and one without (SPEC §4.4).
+    if (ok('units', 'id', 'ord', 'anchor') && ok('fragments', 'id', 'unit', 'anchor', 'anchor_end')) {
+      try {
+        const us = (await conn.all('SELECT id, anchor FROM units ORDER BY ord, id')).map((r) => ({ id: String(r.id), anchor: JSON.parse(String(r.anchor)) as unknown }));
+        const byId = new Map(us.map((u) => [u.id, u]));
+        for (const f of await conn.all('SELECT id, unit, anchor_end FROM fragments WHERE anchor_end IS NOT NULL ORDER BY n')) {
+          const u1 = byId.get(String(f.unit));
+          const u2 = u1 ? endUnit(us, u1.id, JSON.parse(String(f.anchor_end))) : null;
+          if (!u1 || !u2) continue;
+          const a1 = u1.anchor as { type?: unknown; printed?: unknown };
+          const a2 = u2.anchor as { type?: unknown; printed?: unknown };
+          const folioChange = a1.type === 'page' && a2.type === 'page' && (a1.printed === null || a1.printed === undefined) !== (a2.printed === null || a2.printed === undefined);
+          if (matterOf(a1) !== matterOf(a2) || folioChange) {
+            warn('W103', `fragment crosses from ${matterOf(a1)} to ${matterOf(a2)} matter, or between a page with a folio and one without`, `fragments/${String(f.id)}`);
+          }
+        }
+      } catch {
+        /* invalid JSON is reported elsewhere */
+      }
+    }
     if (profile.includes('semantic') && nvec === 0) warn('W100', 'profile semantic without vectors');
     if (profile.includes('media') && ok('units', 'anchor')) {
       let hasTime = false;

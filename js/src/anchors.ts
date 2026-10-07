@@ -59,6 +59,7 @@ export function checkAnchor(a: unknown, textLength?: number): AnchorProblem | nu
       ok = true;
   }
   if (!ok) return { code: 'E040', message: `${o.type} anchor misses or mistypes a required member` };
+  if ('matter' in o && typeof o.matter !== 'string') return { code: 'E040', message: 'matter must be a string' };
   if ('region' in o) {
     const r = o.region as Record<string, unknown> | null;
     if (!r || typeof r !== 'object' || Array.isArray(r) || !['x', 'y', 'w', 'h'].every((k) => isNum(r[k]))) return { code: 'E040', message: 'bad region' };
