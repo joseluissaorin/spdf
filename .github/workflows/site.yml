@@ -45,3 +45,51 @@ jobs:
           name: site-dist
           path: site/dist
           retention-days: 7
+
+  validar-spdf:
+    # Ningún .spdf que no valide: los versionados en site/ e integrations/ y los
+    # de SPDF Commons (descargados de la web) se pasan por el validador de
+    # referencia (Rust) y por el de spdf-format. Solo integrations/fixtures/roto.spdf
+    # debe fallar, y con E020 y E090.
+    name: Todos los SPDF validan (Rust y JS)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      - name: Validador de referencia (spdf-tools)
+        working-directory: rust
+        run: cargo build --release -p spdf-tools
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+      - name: spdf-format (js)
+        working-directory: js
+        run: npm ci && npm run build
+      - name: Ficheros versionados
+        run: |
+          fallos=0
+          for f in $(git ls-files 'site/*.spdf' 'site/**/*.spdf' 'integrations/*.spdf' 'integrations/**/*.spdf' | sort -u); do
+            esperado=valido; case "$f" in integrations/fixtures/roto.spdf) esperado=roto ;; esac
+            if rust/target/release/spdf validate "$f" > /tmp/rust.txt 2>&1; then r=valido; else r=roto; fi
+            if node js/dist/cli/main.js validate "$f" > /tmp/js.txt 2>&1; then j=valido; else j=roto; fi
+            echo "$f: esperado $esperado · rust $r · js $j"
+            if [ "$r" != "$esperado" ] || [ "$j" != "$esperado" ]; then cat /tmp/rust.txt /tmp/js.txt; fallos=$((fallos+1)); fi
+            if [ "$esperado" = roto ] && ! { grep -q E020 /tmp/rust.txt && grep -q E090 /tmp/rust.txt; }; then echo "  falta E020 o E090"; fallos=$((fallos+1)); fi
+          done
+          exit $fallos
+      - name: SPDF Commons (desde la web)
+        run: |
+          fallos=0
+          for fichero in $(node -e "for (const o of require('./site/commons/catalogo.json').items) console.log(o.fichero)"); do
+            curl -sfL "https://spdf.joseluissaorin.com/commons/files/$fichero" -o "/tmp/$fichero" || { echo "$fichero: no se pudo descargar"; fallos=$((fallos+1)); continue; }
+            if rust/target/release/spdf validate "/tmp/$fichero" > /tmp/r.txt 2>&1 && node js/dist/cli/main.js validate "/tmp/$fichero" > /tmp/j.txt 2>&1; then
+              echo "$fichero: válido"
+            else
+              cat /tmp/r.txt /tmp/j.txt; fallos=$((fallos+1))
+            fi
+            rm -f "/tmp/$fichero"
+          done
+          exit $fallos

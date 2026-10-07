@@ -7,11 +7,13 @@
  * la lámina sin número lleva su folio deducido entre corchetes y los vectores
  * los calcula un modelo de verdad (all-MiniLM-L6-v2, 384 dimensiones).
  *
- * Además deja una copia rota a propósito (con una vista, E020) para enseñar
- * cómo informa el validador de un error.
+ * Además deja una copia rota a propósito (con una vista, E020, y unidades mal
+ * numeradas, E090) para las pruebas de las integraciones. Esa no se publica en
+ * la web: allí solo va lo que valida.
  *
  *   cd site/muestras && npm run generar
- *   → site/public/muestras/{spdf-in-five-pages.spdf, spdf-en-cinco-paginas.spdf, roto.spdf, muestras.json}
+ *   → site/public/muestras/{spdf-in-five-pages.spdf, spdf-en-cinco-paginas.spdf, muestras.json}
+ *   → integrations/fixtures/{los dos librillos, roto.spdf}
  */
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -27,6 +29,7 @@ import { folio } from '../dibujo/dibujos/folio';
 
 const aqui = dirname(fileURLToPath(import.meta.url));
 const SALIDA = resolve(aqui, '../public/muestras');
+const FIXTURES = resolve(aqui, '../../integrations/fixtures');
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const MODELO = 'Xenova/all-MiniLM-L6-v2';
 const FECHA = '2026-10-07T12:00:00Z';
@@ -179,6 +182,10 @@ async function generar(l: Lengua, extractor: Awaited<ReturnType<typeof pipeline>
   const pdf = join(tmp, 'librito.pdf');
   execFileSync(CHROME, ['--headless=new', '--disable-gpu', '--no-pdf-header-footer', `--print-to-pdf=${pdf}`, pathToFileURL(html).href], { stdio: 'ignore' });
   const msPdf = Date.now() - t0;
+  // Fechas fijas en el PDF (misma longitud, para no mover la tabla xref): así el original, y con él
+  // el docref de las URI de ancla, no cambia cada vez que se regeneran las muestras.
+  const texto = readFileSync(pdf).toString('latin1').replace(/\/(CreationDate|ModDate) \(D:(\d{14})/g, (_m, k: string) => `/${k} (D:20261007120000`);
+  writeFileSync(pdf, Buffer.from(texto, 'latin1'));
   const original = new Uint8Array(readFileSync(pdf));
   // Imágenes de las páginas, a 80 ppp, en WebP.
   execFileSync('pdftoppm', ['-r', '80', '-png', pdf, join(tmp, 'pag')]);
@@ -264,6 +271,7 @@ async function main(): Promise<void> {
   for (const l of ['en', 'es'] as const) {
     const { fichero, bytes } = await generar(l, extractor);
     writeFileSync(join(SALIDA, fichero), bytes);
+    writeFileSync(join(FIXTURES, fichero), bytes);
     const r = await validate(bytes);
     if (!r.valid) throw new Error(`${fichero} no es válido: ${JSON.stringify(r.errors)}`);
     const d = await openSpdf(bytes);
@@ -272,8 +280,8 @@ async function main(): Promise<void> {
     await d.close();
     lista.push({ fichero, nombre: { en: LIBRITO[l].titulo, es: LIBRITO[l].titulo }, bytes: bytes.length, sha256: sha256(bytes), valido: true, codigos: r.warnings.map((x) => x.code) });
   }
-  // La copia rota: el librito inglés con una vista dentro (E020).
-  const roto = join(SALIDA, 'roto.spdf');
+  // La copia rota, solo para las pruebas: el librito inglés con una vista dentro (E020) y unidades mal numeradas (E090).
+  const roto = join(FIXTURES, 'roto.spdf');
   copyFileSync(join(SALIDA, 'spdf-in-five-pages.spdf'), roto);
   const db = new DatabaseSync(roto);
   db.exec("CREATE VIEW x_rotura AS SELECT id, text FROM fragments; UPDATE units SET ord = ord + 1 WHERE ord = 6;");
@@ -281,7 +289,7 @@ async function main(): Promise<void> {
   const rb = new Uint8Array(readFileSync(roto));
   const rr = await validate(rb);
   console.log(`roto.spdf: ${rr.valid ? 'válido (¡no debería!)' : 'no válido'} · ${rr.errors.map((e) => e.code).join(', ')}`);
-  lista.push({ fichero: 'roto.spdf', nombre: { en: 'A broken copy', es: 'Una copia rota' }, bytes: rb.length, sha256: sha256(rb), valido: rr.valid, codigos: rr.errors.map((e) => e.code) });
+  if (rr.valid) throw new Error('roto.spdf debería ser inválido');
   writeFileSync(join(SALIDA, 'muestras.json'), JSON.stringify(lista, null, 2));
 }
 

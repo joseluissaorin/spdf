@@ -34,8 +34,8 @@ docs = loader.load()                  # or: for doc in loader.lazy_load(): ...
 
 docs[0].page_content                  # the literal passage, exactly as in the source
 docs[0].metadata["citation"]          # '(Saorín Ferrer, 2026, p. 1)'
-docs[0].metadata["anchor_uri"]        # 'spdf:sha256-5428…d23f#p=2&f=1&char=15,307'
-docs[0].id                            # 'sha256-5428…d23f:f2-1' (stable across runs)
+docs[0].metadata["anchor_uri"]        # 'spdf:sha256-50d9…5f4c#p=2&f=1&char=15,307'
+docs[0].id                            # 'sha256-50d9…5f4c:f2-1' (stable across runs)
 ```
 
 - A **folder** is searched recursively for `*.spdf` files (hidden files and folders are
@@ -70,7 +70,7 @@ would be null is left out** (Chroma and others reject `None`): the cover of a bo
 | `source` | str | `fixtures/spdf-in-five-pages.spdf` | Path the file was read from. |
 | `spdf_version` | str | `5.0` | `4.0` or `4.1` for legacy files. |
 | `spdf_doc_id` | str | `spdf-in-five-pages` | The document id inside the file. Not called `doc_id`, which LangChain's multi-vector and parent-document retrievers (and LlamaIndex vector stores) use for their own ids. |
-| `docref` | str | `sha256-54284912…d23f` | Document reference used by anchor URIs (SHA-256 of the original). |
+| `docref` | str | `sha256-50d94244…5f4c` | Document reference used by anchor URIs (SHA-256 of the original). |
 | `title` | str | `SPDF in five pages` | |
 | `authors` | str | `Saorín Ferrer` | |
 | `year` | int | `2026` | |
@@ -87,7 +87,7 @@ would be null is left out** (Chroma and others reject `None`): the cover of a bo
 | `anchor` | str | `{"chars":[15,307],"confidence":1,"physical":2,"printed":"1","source":"read","type":"page"}` | The start anchor as canonical JSON; `json.loads` it for the full object. |
 | `anchor_end` | str | | End anchor (JSON) when the passage crosses into another unit. |
 | `t0`, `t1` | float | | Seconds, for time anchors (recordings). |
-| `anchor_uri` | str | `spdf:sha256-54284912…d23f#p=2&f=1&char=15,307` | Resolve it with `spdf.open(path).locate(uri)`; parse it with `spdf.parse_uri`. |
+| `anchor_uri` | str | `spdf:sha256-50d94244…5f4c#p=2&f=1&char=15,307` | Resolve it with `spdf.open(path).locate(uri)`; parse it with `spdf.parse_uri`. |
 | `citation` | str | `(Saorín Ferrer, 2026, p. 1)` | Short author-date citation in the chosen locale. |
 | `vector`, `vector_space` | list, str | | Only with `with_vectors`. |
 
@@ -151,8 +151,8 @@ messages = prompt.invoke({"context": context, "question": question})
 Output:
 
 ```text
-(Saorín Ferrer, 2026, p. [3]) spdf:sha256-54284912…d23f#p=4&f=3&char=0,133
-(Saorín Ferrer, 2026, p. 2) spdf:sha256-54284912…d23f#p=3&f=2&char=19,258
+(Saorín Ferrer, 2026, p. [3]) spdf:sha256-50d94244…5f4c#p=4&f=3&char=0,133
+(Saorín Ferrer, 2026, p. 2) spdf:sha256-50d94244…5f4c#p=3&f=2&char=19,258
 ```
 
 The plate carries no printed number; its folio is inferred, so the citation prints it in

@@ -759,7 +759,25 @@ function lectorProvisional(): void {
 // Todo
 // ---------------------------------------------------------------------------
 
+/**
+ * En la web no se publica ningún .spdf que no valide: se comprueban todos los
+ * que van en los assets con spdf-format antes de escribir nada, y si uno falla,
+ * la construcción se para.
+ */
+async function validarPublicados(): Promise<number> {
+  const { validate } = await import('spdf-format');
+  const todos: string[] = [];
+  const recorrer = (d: string) => { for (const f of readdirSync(d)) { const p = join(d, f); if (statSync(p).isDirectory()) recorrer(p); else if (f.endsWith('.spdf')) todos.push(p); } };
+  recorrer(resolve(SITIO, 'public'));
+  for (const f of todos) {
+    const r = await validate(new Uint8Array(readFileSync(f)));
+    if (!r.valid) throw new Error(`${f.slice(SITIO.length + 1)} no valida (${r.errors.map((x) => x.code).join(', ')}): no se publica nada.`);
+  }
+  return todos.length;
+}
+
 async function principal(): Promise<void> {
+  const validados = await validarPublicados();
   rmSync(DIST, { recursive: true, force: true });
   mkdirSync(DIST, { recursive: true });
   cpSync(resolve(SITIO, 'public'), DIST, { recursive: true });
@@ -832,7 +850,7 @@ async function principal(): Promise<void> {
   let bytes = 0;
   const contar = (d: string) => { for (const f of readdirSync(d)) { const p = join(d, f); const s = statSync(p); if (s.isDirectory()) contar(p); else bytes += s.size; } };
   contar(DIST);
-  console.log(`web: ${PUBLICADAS.length} hojas (y sus .md), ${(bytes / 1024 / 1024).toFixed(1)} MB en dist · validador ${validador ? 'sí' : 'no'} · lector ${hayLector ? 'sí' : 'provisional'} · commons ${commons.items.length} · esquemas ${nEsquemas}`);
+  console.log(`web: ${PUBLICADAS.length} hojas (y sus .md), ${(bytes / 1024 / 1024).toFixed(1)} MB en dist · validador ${validador ? 'sí' : 'no'} · lector ${hayLector ? 'sí' : 'provisional'} · commons ${commons.items.length} · esquemas ${nEsquemas} · ${validados} .spdf validados`);
 }
 
 await principal();

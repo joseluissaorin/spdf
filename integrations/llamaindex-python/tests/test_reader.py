@@ -14,7 +14,9 @@ from llama_index.core.schema import Document, MetadataMode, QueryBundle
 
 from spdf_llamaindex import SpdfReader
 
-DOCREF_EN = "sha256-54284912f18b5f1816b455825a7a48f6bb38ded19cb94595bae8de33c0ecd23f"
+# El docref sale del propio fichero (SHA-256 del PDF original): no se fija a mano.
+with spdf.open(EN) as _f:
+    DOCREF_EN = _f.docref
 
 
 def by_fragment(docs: list[Document]) -> dict[str, Document]:

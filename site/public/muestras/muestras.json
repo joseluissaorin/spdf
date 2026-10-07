@@ -6,7 +6,7 @@
       "es": "SPDF in five pages"
     },
     "bytes": 393216,
-    "sha256": "7ff9383dd1e68d1158b471e435da076a563db319894087c69cb5ab5242a1f9d6",
+    "sha256": "93b80c0a1f6c48f463a9bfa5bf64d9cbb1928a1d60af46d54dd0b675bba6a61a",
     "valido": true,
     "codigos": []
   },
@@ -17,22 +17,8 @@
       "es": "SPDF en cinco páginas"
     },
     "bytes": 397312,
-    "sha256": "7fd770fa1bc728eb27ab5b0563eb5936dfc31e730b3ed8073d01f2047e2b529c",
+    "sha256": "60bee5f8e0310c23bdefa434c910bed4a59d96e1b2ff4139b2bf0666330ff5ea",
     "valido": true,
     "codigos": []
-  },
-  {
-    "fichero": "roto.spdf",
-    "nombre": {
-      "en": "A broken copy",
-      "es": "Una copia rota"
-    },
-    "bytes": 393216,
-    "sha256": "b02e0258188d094bfe52f7424016e48ad87b1e3ecf4b24f368449508ef62409c",
-    "valido": false,
-    "codigos": [
-      "E020",
-      "E090"
-    ]
   }
 ]

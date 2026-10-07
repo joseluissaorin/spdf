@@ -53,7 +53,7 @@ All values are scalars (string, number or boolean) and keys whose value would be
 | Key | Example |
 | --- | --- |
 | `citation` | `(Saorín Ferrer, 2026, p. 1)`; `p. [3]` when the folio was inferred; `n. pag.` (`s. p.`) when the page has none |
-| `anchor_uri` | `spdf:sha256-5428…#p=2&f=1&char=15,307` |
+| `anchor_uri` | `spdf:sha256-50d9…#p=2&f=1&char=15,307` |
 | `printed_folio`, `physical_page`, `folio_inferred` | `'1'`, `2`, `false` (page anchors; no `printed_folio` key when the page has none) |
 | `t0`, `t1`, `speaker` | seconds (time anchors) |
 | `slide`, `line_from`, `line_to` | slides and verses |
