@@ -48,17 +48,11 @@ jobs:
       - name: Format
         if: matrix.os == 'ubuntu-latest'
         run: cargo fmt --all -- --check
-      - name: Clippy
-        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
-      - name: Tests (unit, properties, API, remote, conformance, doc)
-        run: cargo test --workspace --all-features
       - name: Build the CLI
         run: cargo build --release -p spdf-tools
       - name: Conformance runner
         shell: bash
-        run: |
-          set -o pipefail
-          ./target/release/spdf conformance ../conformance > conformance.json
+        run: ./target/release/spdf conformance ../conformance > conformance.json
       - name: Upload conformance report
         if: always() && matrix.os == 'ubuntu-latest' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
@@ -66,6 +60,12 @@ jobs:
           name: conformance-rust
           path: rust/conformance.json
           if-no-files-found: error
+      - name: Clippy
+        if: always()
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      - name: Tests (unit, properties, API, remote, conformance, doc)
+        if: always()
+        run: cargo test --workspace --all-features
       - name: C ABI smoke test (static library)
         if: matrix.os != 'windows-latest'
         shell: bash

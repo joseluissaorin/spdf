@@ -139,22 +139,70 @@ impl SchemaInfo {
         out
     }
 
-    /// Tokenizer declared by the FTS table's `CREATE` statement
-    /// (`unicode61`, the FTS5 default, if there is no `tokenize` option).
+    /// Tokenizer declared by the FTS table's `CREATE` statement: the
+    /// `tokenize` option unquoted, whitespace collapsed (`unicode61`, the FTS5
+    /// default, if absent; `None` if the table does not exist).
     pub fn fts_tokenizer(&self, table: &str) -> Option<String> {
         let sql = self.tables.get(table)?;
-        let Some(i) = sql.find("tokenize") else {
-            return Some("unicode61".into());
-        };
-        let rest = &sql[i + "tokenize".len()..];
-        let parsed = (|| {
-            let rest = rest.trim_start().strip_prefix('=')?.trim_start();
-            let body = rest.strip_prefix('\'')?;
-            let end = body.find('\'')?;
-            Some(body[..end].to_string())
-        })();
-        Some(parsed.unwrap_or_else(|| "unicode61".into()))
+        Some(parse_tokenize_option(sql).unwrap_or_else(|| "unicode61".into()))
     }
+}
+
+/// The `tokenize` option of an FTS5 `CREATE` statement, as the reference
+/// reads it: `tokenize = 'x'` (with `''` escapes), `"x"` (with `""`) or a
+/// bare word, case-insensitive key, whitespace runs collapsed.
+pub(crate) fn parse_tokenize_option(sql: &str) -> Option<String> {
+    let lower = sql.to_ascii_lowercase();
+    let bytes = sql.as_bytes();
+    let mut from = 0;
+    while let Some(i) = lower[from..].find("tokenize") {
+        let mut j = from + i + "tokenize".len();
+        from = from + i + 1;
+        while j < bytes.len() && bytes[j].is_ascii_whitespace() {
+            j += 1;
+        }
+        if bytes.get(j) != Some(&b'=') {
+            continue;
+        }
+        j += 1;
+        while j < bytes.len() && bytes[j].is_ascii_whitespace() {
+            j += 1;
+        }
+        let raw = match bytes.get(j) {
+            Some(&q) if q == b'\'' || q == b'"' => {
+                let quote = char::from(q);
+                let mut out = String::new();
+                let mut closed = false;
+                let mut chars = sql[j + 1..].chars().peekable();
+                while let Some(c) = chars.next() {
+                    if c == quote {
+                        if chars.peek() == Some(&quote) {
+                            out.push(c);
+                            chars.next();
+                            continue;
+                        }
+                        closed = true;
+                        break;
+                    }
+                    out.push(c);
+                }
+                if !closed {
+                    continue;
+                }
+                out
+            }
+            Some(c) if c.is_ascii_alphanumeric() || *c == b'_' => {
+                let start = j;
+                while j < bytes.len() && (bytes[j].is_ascii_alphanumeric() || bytes[j] == b'_') {
+                    j += 1;
+                }
+                sql[start..j].to_string()
+            }
+            _ => continue,
+        };
+        return Some(raw.split_whitespace().collect::<Vec<_>>().join(" "));
+    }
+    None
 }
 
 /// `CREATE VIRTUAL TABLE…` statement?
@@ -742,11 +790,9 @@ impl Spdf {
                 }
             }
             "units" => {
-                for c in ["anchor"] {
-                    if let Some(v) = m.get(c) {
-                        let mapped = legacy::map_anchor(v);
-                        m.insert(c.into(), mapped);
-                    }
+                if let Some(v) = m.get("anchor") {
+                    let mapped = legacy::map_anchor(v);
+                    m.insert("anchor".into(), mapped);
                 }
                 for c in ["image", "thumbnail"] {
                     if let Some(v) = m.get(c) {
@@ -1161,4 +1207,32 @@ pub(crate) fn hex(bytes: &[u8]) -> String {
         s.push_str(&format!("{b:02x}"));
     }
     s
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_tokenize_option as p;
+
+    #[test]
+    fn tokenize_option_forms() {
+        assert_eq!(
+            p("CREATE VIRTUAL TABLE f USING fts5(a, tokenize='unicode61 remove_diacritics 2')")
+                .as_deref(),
+            Some("unicode61 remove_diacritics 2")
+        );
+        assert_eq!(
+            p("create virtual table f using fts5(a, TOKENIZE = \"porter   unicode61\")").as_deref(),
+            Some("porter unicode61")
+        );
+        assert_eq!(
+            p("CREATE VIRTUAL TABLE f USING fts5(a, tokenize=trigram)").as_deref(),
+            Some("trigram")
+        );
+        assert_eq!(
+            p("CREATE VIRTUAL TABLE f USING fts5(a, tokenize='unicode61 separators ''x''')")
+                .as_deref(),
+            Some("unicode61 separators 'x'")
+        );
+        assert_eq!(p("CREATE VIRTUAL TABLE f USING fts5(tokenize_me, b)"), None);
+    }
 }
