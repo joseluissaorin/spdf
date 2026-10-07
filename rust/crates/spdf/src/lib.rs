@@ -26,6 +26,7 @@
 //! * short citations (es/en) and CSL-JSON/BibTeX export — [`cite()`], [`export`];
 //! * writing 5.0 files and converting 4.x — [`Writer`], [`convert_legacy`];
 //! * integrity: `content_sha256` and Ed25519 signatures — [`integrity`];
+//! * sidecars: annotations (`.spdfa.json`) and collections (`.spdfl.json`) — [`sidecar`];
 //! * with the `http` feature, reading remote files by HTTP range requests
 //!   (experimental) — `remote`.
 //!
@@ -57,6 +58,7 @@ mod model;
 mod reader;
 pub mod schema;
 mod search;
+pub mod sidecar;
 mod sources;
 pub mod text;
 mod validate;

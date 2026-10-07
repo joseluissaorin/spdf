@@ -332,3 +332,45 @@ fn anchors_and_citations_from_search_hits() {
     }
     assert!(doc.locate("spdf:sha256-00#p=1").expect("locate").is_empty());
 }
+
+#[test]
+fn sidecars() {
+    let path = conformance().join("files/quijote.spdf");
+    let doc = Spdf::open(&path).expect("open");
+    let frags = doc.fragments().expect("fragments");
+    let f = frags
+        .iter()
+        .find(|f| f.anchor.get("chars").is_some())
+        .unwrap_or(&frags[0]);
+    let a =
+        spdf::sidecar::annotation(&doc, f, Some("Nota"), &Default::default()).expect("annotation");
+    assert_eq!(a["motivation"], "commenting");
+    let uri = spdf::sidecar::annotation_uri(&a).expect("uri");
+    assert!(doc
+        .locate(&uri)
+        .expect("locate")
+        .iter()
+        .any(|u| u.id == f.unit));
+    let quote = &a["target"]["selector"][1];
+    assert_eq!(quote["type"], "TextQuoteSelector");
+    assert!(!quote["exact"].as_str().unwrap_or("").is_empty());
+    let p = tmp("notes.spdfa.json");
+    spdf::sidecar::write_annotations(&p, std::slice::from_ref(&a), Some("Notas")).expect("write");
+    assert_eq!(spdf::sidecar::read_annotations(&p).expect("read"), vec![a]);
+
+    let mut lib = spdf::sidecar::Library::new("Fuentes");
+    lib.add_file(&path, None).expect("add");
+    lib.add_file(
+        conformance().join("legacy/garcilaso-4.1.spdf"),
+        Some("https://example.org/g.spdf"),
+    )
+    .expect("add");
+    let lp = tmp("lib.spdfl.json");
+    lib.write(&lp).expect("write");
+    let back = spdf::sidecar::Library::read(&lp).expect("read");
+    assert_eq!(back, lib);
+    assert_eq!(
+        back.items[0].sha256,
+        doc.document().expect("doc").source_sha256
+    );
+}
