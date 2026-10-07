@@ -8,42 +8,42 @@
  "date": "2026-10-07",
  "prompt_tokens_target": 512,
  "gen_tokens_target": 256,
- "load_s": 3.09,
+ "load_s": 2.76,
  "runs": [
   {
    "run": 0,
    "prompt_tokens": 509,
    "generated_tokens": 256,
-   "prompt_ms": 326.89475,
-   "gen_ms": 9881.759708000001,
-   "pp_tok_s": 1557.0760925343707,
-   "tg_tok_s": 25.906317049254845,
+   "prompt_ms": 459.919208,
+   "gen_ms": 3570.528667,
+   "pp_tok_s": 1106.716116975049,
+   "tg_tok_s": 71.69806599399024,
    "stop": "max_tokens"
   },
   {
    "run": 1,
    "prompt_tokens": 509,
    "generated_tokens": 256,
-   "prompt_ms": 16.749334,
-   "gen_ms": 8716.628875,
-   "pp_tok_s": 30389.268015074507,
-   "tg_tok_s": 29.36915218843707,
+   "prompt_ms": 442.2195,
+   "gen_ms": 3336.9525,
+   "pp_tok_s": 1151.0121105016854,
+   "tg_tok_s": 76.71670483772245,
    "stop": "max_tokens"
   },
   {
    "run": 2,
    "prompt_tokens": 509,
    "generated_tokens": 256,
-   "prompt_ms": 19.938709,
-   "gen_ms": 7232.649875,
-   "pp_tok_s": 25528.23254504592,
-   "tg_tok_s": 35.39504945274293,
+   "prompt_ms": 432.8345,
+   "gen_ms": 3309.4419999999996,
+   "pp_tok_s": 1175.9691059746854,
+   "tg_tok_s": 77.3544301426041,
    "stop": "max_tokens"
   }
  ],
- "pp_tok_s": 25528.2,
- "tg_tok_s": 29.4,
- "peak_mb": 588.3,
+ "pp_tok_s": 1151.0,
+ "tg_tok_s": 76.7,
+ "peak_mb": 592.1,
  "gguf": "gemma-4-E4B-it-Q4_K_M.gguf",
  "note": "in-process llama.cpp (spdf-infer), Metal, n_ctx 4096, greedy"
 }

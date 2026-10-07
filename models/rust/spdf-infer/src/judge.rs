@@ -214,6 +214,16 @@ impl Judge {
         })
     }
 
+    /// Applies the calibration the manifest stores for a catalog entry (use it after
+    /// `Judge::new(generator)` when the generator was loaded separately).
+    pub fn calibrated_for(mut self, entry: &crate::manager::CatalogEntry) -> Self {
+        if let Some(c) = &entry.judge_calibration {
+            self.calibration = c.choice.clone();
+            self.support_calibration = c.noul.clone();
+        }
+        self
+    }
+
     /// A judge on Valen (ONNX).
     #[cfg(feature = "valen-onnx")]
     pub fn valen(v: crate::valen::ValenOnnx) -> Self {

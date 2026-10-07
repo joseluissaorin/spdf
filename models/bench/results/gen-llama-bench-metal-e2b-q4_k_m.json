@@ -8,8 +8,8 @@
  "date": "2026-10-07",
  "prompt_tokens_target": 512,
  "gen_tokens_target": 256,
- "pp_tok_s": 1915.2,
- "tg_tok_s": 45.8,
+ "pp_tok_s": 2422.7,
+ "tg_tok_s": 104.5,
  "build": "36a73916e",
  "gguf": "gemma-4-E2B-it-Q4_K_M.gguf"
 }

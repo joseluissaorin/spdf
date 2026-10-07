@@ -86,11 +86,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             })?;
         step("generate (streamed)", t, json!({"text": s.text, "chunks": chunks, "tokens": s.generated_tokens, "tok_s": s.tokens_per_s,
             "prompt_tok_s": s.prompt_tokens_per_s}));
-        let mut j = Judge::new(g.clone())?;
-        if let Some(c) = mm.entry(&gen_id).and_then(|e| e.judge_calibration.clone()) {
-            j.calibration = c.choice;
-            j.support_calibration = c.noul;
-        }
+        let j = Judge::new(g.clone())?.calibrated_for(mm.entry(&gen_id).unwrap());
         let t = Instant::now();
         let sup = j.support("Cervantes llama Rocinante al caballo de don Quijote.",
             "…y así, después de muchos nombres que formó, borró y quitó, al fin le vino a llamar Rocinante, nombre a su parecer alto, sonoro y significativo.")?;

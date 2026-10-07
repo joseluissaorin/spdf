@@ -32,7 +32,8 @@ Corpus: 290 pasajes y 40 consultas en 16 lenguas, 54 imágenes y 24 clips de 10 
 | onnxruntime (Python o Rust) fp32 | 1,0000 / 1,0000 | 1,0000 / 1,0000 | 1,0000 / 1,0000 | `914f7f89` |
 | onnxruntime fp16 | 1,0000 / 1,0000 | 1,0000 / 1,0000 | 1,0000 / 1,0000 | `914f7f89` |
 | onnxruntime q8 (`_quantized`) | 0,9999 / 0,9999 | 0,9987 / 0,9967 | 0,9999 / 0,9999 | `914f7f89` |
-| transformers.js en Chrome (WebGPU) fp32, con el preprocesado de spdf-infer-web | 1,0000 / 1,0000 | ver nota | 1,0000 / 1,0000 | `914f7f89` |
+| transformers.js en Chrome (WebGPU) fp32, con el preprocesado de spdf-infer-web | 1,0000 / 1,0000 | 1,0000 / 0,9998 | 1,0000 / 1,0000 | `914f7f89` |
+| transformers.js en Chrome (WebGPU) q8, ídem | 0,9999 / 0,9999 | 0,9987 / 0,9968 | 0,9999 / 0,9999 | `914f7f89` |
 | MLX bf16 | 0,9999 / 0,9999 | 0,9999 / 0,9998 | 1,0000 / 1,0000 | `914f7f89` |
 | MLX 8 bits | 0,9998 / 0,9996 | 0,9998 / 0,9997 | 0,9999 / 0,9998 | `914f7f89` |
 | onnxruntime y transformers.js q4 / q4f16 | 0,9796 / 0,9676 | 0,9822 / 0,9748 | 0,9810 / 0,9718 | `914f7f89+q4` |
@@ -40,7 +41,7 @@ Corpus: 290 pasajes y 40 consultas en 16 lenguas, 54 imágenes y 24 clips de 10 
 | llama.cpp redimensionando él las imágenes | 0,9999 / 0,9998 | **0,9804 / 0,9600** | 0,9991 / 0,9967 | no (preprocesado) |
 | transformers.js redimensionando él las imágenes | 1,0000 / 1,0000 | **0,9964 / 0,9876** | 1,0000 / 1,0000 | no (preprocesado) |
 
-Nota sobre la imagen en el navegador: con el redimensionado de spdf-infer-web, las imágenes cuyo tamaño objetivo es estable dan 0,99994 de media; las cuatro del corpus en las que la fórmula del tamaño no es idempotente (843×422 pasa a 1104×528, y 1104×528 pasaría a 1152×528) bajaban porque transformers.js volvía a redimensionar. spdf-infer-web desactiva ese segundo paso; la tabla del informe recoge la medición con la corrección.
+Nota sobre la imagen en el navegador: la fórmula del tamaño no es idempotente (843×422 pasa a 1104×528, y 1104×528 pasaría a 1152×528), así que transformers.js volvía a redimensionar la imagen ya preparada y cuatro imágenes del corpus bajaban hasta 0,982. spdf-infer-web desactiva ese segundo paso; las cifras de la tabla son con la corrección.
 
 Los recortes Matryoshka conservan la compatibilidad: con Q8_0, a 512, 256 y 128 dimensiones el coseno con la referencia recortada igual sigue en 0,9999 / 0,9998 o más. En q4 mejora algo al recortar (0,9874 a 128), sin llegar al umbral.
 
