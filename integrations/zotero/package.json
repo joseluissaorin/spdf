@@ -1,0 +1,40 @@
+{
+  "name": "spdf-zotero",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Zotero 7 and 8 plugin for SPDF: import an .spdf file as an item with its CSL metadata, attach SPDF files, and copy a short citation with the exact printed folio plus its anchor URI.",
+  "keywords": [
+    "spdf",
+    "zotero",
+    "zotero-plugin",
+    "citation",
+    "csl-json"
+  ],
+  "license": "MIT OR Apache-2.0",
+  "author": "José Luis Saorín Ferrer <jl@joseluissaorin.com> (https://joseluissaorin.com)",
+  "homepage": "https://spdf.joseluissaorin.com/integrations#zotero",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joseluissaorin/spdf.git",
+    "directory": "integrations/zotero"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run typecheck && npm run build && vitest run"
+  },
+  "dependencies": {
+    "spdf-format": "file:../../js"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "esbuild": "^0.28.2",
+    "typescript": "~6.0.3",
+    "vite": "^8.3.3",
+    "vitest": "^5.0.3"
+  }
+}

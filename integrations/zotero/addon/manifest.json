@@ -1,0 +1,16 @@
+{
+  "manifest_version": 2,
+  "name": "SPDF for Zotero",
+  "version": "__VERSION__",
+  "description": "Import SPDF files as items, attach them, and copy short citations with the exact printed folio and anchor URI.",
+  "author": "José Luis Saorín Ferrer",
+  "homepage_url": "https://spdf.joseluissaorin.com/integrations#zotero",
+  "applications": {
+    "zotero": {
+      "id": "spdf@joseluissaorin.com",
+      "update_url": "https://spdf.joseluissaorin.com/zotero/updates.json",
+      "strict_min_version": "6.999",
+      "strict_max_version": "8.*"
+    }
+  }
+}
