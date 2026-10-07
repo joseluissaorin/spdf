@@ -125,11 +125,21 @@ public:
         detail::check(spdf_doc_cite(doc_, anchor_json.c_str(), detail::opt(anchor_end_json), locale.c_str(), &out));
         return detail::take(out);
     }
-    std::string locate(const std::string &uri) const {
+    // {"document","units","fragments","char","xywh"} of an anchor URI or a .spdf URL (SPEC §5.4).
+    std::string locate(const std::string &reference) const {
         char *out = nullptr;
-        detail::check(spdf_locate(doc_, uri.c_str(), &out));
+        detail::check(spdf_locate(doc_, reference.c_str(), &out));
         return detail::take(out);
     }
+    // ALTO 4, TEI P5 or a IIIF Presentation 3 manifest (SPEC §19.4).
+    std::string export_format(const std::string &format, const std::optional<std::string> &base_url = std::nullopt) const {
+        char *out = nullptr;
+        detail::check(spdf_export_format(doc_, format.c_str(), detail::opt(base_url), &out));
+        return detail::take(out);
+    }
+    std::string alto() const { return export_format("alto"); }
+    std::string tei() const { return export_format("tei"); }
+    std::string iiif(const std::string &base_url) const { return export_format("iiif", base_url); }
     // Bytes of a blob (`key` or `blob:<key>`) and its media type; nullopt if absent.
     std::optional<std::pair<std::vector<std::uint8_t>, std::string>> blob(const std::string &key) const {
         std::uint8_t *data = nullptr;
@@ -153,6 +163,25 @@ private:
     }
     SpdfDoc *doc_ = nullptr;
 };
+
+// CSL-JSON and BibTeX exports of several documents (keys disambiguated, SPEC §19).
+inline std::string export_csl(const std::vector<const Document *> &docs,
+                              const std::optional<std::string> &anchor_json = std::nullopt,
+                              const std::optional<std::string> &anchor_end_json = std::nullopt) {
+    std::vector<const SpdfDoc *> handles;
+    for (const Document *d : docs) handles.push_back(d->handle());
+    char *out = nullptr;
+    detail::check(spdf_export_csl_multi(handles.data(), handles.size(), detail::opt(anchor_json), detail::opt(anchor_end_json), &out));
+    return detail::take(out);
+}
+
+inline std::string export_bibtex(const std::vector<const Document *> &docs) {
+    std::vector<const SpdfDoc *> handles;
+    for (const Document *d : docs) handles.push_back(d->handle());
+    char *out = nullptr;
+    detail::check(spdf_export_bibtex_multi(handles.data(), handles.size(), &out));
+    return detail::take(out);
+}
 
 }  // namespace spdf
 

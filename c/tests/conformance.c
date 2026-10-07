@@ -98,8 +98,13 @@ static const char *compare_results(const sj *want, const sj *got, int via) {
     if (want->count != got->count) return fail("results: expected %zu, got %zu", want->count, got->count);
     for (size_t i = 0; i < want->count; i++) {
         const sj *w = sj_at(want, i), *g = sj_at(got, i);
-        const char *wid = sj_str(sj_get(w, "fragment_id")), *gid = sj_str(sj_get(g, "fragment_id"));
-        if (!gid || strcmp(wid, gid)) return fail("results[%zu].fragment_id: expected %s, got %s", i, wid, gid ? gid : "?");
+        const char *keys[3] = {"fragment_id", "unit_id", "figure_id"};
+        for (int k = 0; k < 3; k++) {
+            const char *wid = sj_str(sj_get(w, keys[k]));
+            if (!wid) continue;
+            const char *gid = sj_str(sj_get(g, keys[k]));
+            if (!gid || strcmp(wid, gid)) return fail("results[%zu].%s: expected %s, got %s", i, keys[k], wid, gid ? gid : "?");
+        }
         const sj *ws = sj_get(w, "score"), *gs = sj_get(g, "score");
         if (!gs || gs->type != SJ_NUM || fabs(ws->number - gs->number) > TOL)
             return fail("results[%zu].score: expected %s, got %s", i, ws->text, gs && gs->text ? gs->text : "?");
@@ -112,6 +117,31 @@ static const char *compare_results(const sj *want, const sj *got, int via) {
         }
     }
     return NULL;
+}
+
+/* Next trimmed, non-empty line of a text, or NULL at the end; advances *p. */
+static const char *next_line(const char **p, size_t *len) {
+    while (**p) {
+        const char *s = *p, *e = strchr(s, '\n');
+        if (!e) e = s + strlen(s);
+        *p = *e ? e + 1 : e;
+        while (s < e && (*s == ' ' || *s == '\t' || *s == '\r')) s++;
+        while (e > s && (e[-1] == ' ' || e[-1] == '\t' || e[-1] == '\r')) e--;
+        if (e > s) { *len = (size_t)(e - s); return s; }
+    }
+    return NULL;
+}
+
+/* BibTeX comparison of SPEC 19.3: trimmed lines, empty lines dropped. */
+static const char *compare_lines(const char *want, const char *got) {
+    const char *pw = want ? want : "", *pg = got ? got : "";
+    size_t lw = 0, lg = 0;
+    for (int line = 1;; line++) {
+        const char *w = next_line(&pw, &lw), *g = next_line(&pg, &lg);
+        if (!w && !g) return NULL;
+        if (!w || !g || lw != lg || memcmp(w, g, lw))
+            return fail("line %d: expected %.*s, got %.*s", line, w ? (int)lw : 0, w ? w : "", g ? (int)lg : 0, g ? g : "");
+    }
 }
 
 static float *floats(const sj *arr, size_t *dims) {
@@ -318,6 +348,67 @@ static const char *run_case(const char *dir, const sj *c, int *skipped) {
         if (st != SPDF_OK) return abi_fail("spdf_cite");
         if (strcmp(text, sj_str(sj_get(ex, "text")))) r = fail("expected %s, got %s", sj_str(sj_get(ex, "text")), text);
         spdf_string_free(text);
+        return r;
+    }
+
+    if (!strcmp(kind, "locate") || !strcmp(kind, "export_structure")) {
+        char *path = join(dir, sj_str(sj_get(in, "file")));
+        SpdfDoc *doc = NULL;
+        int st = spdf_open(path, NULL, &doc);
+        free(path);
+        if (st != SPDF_OK) return abi_fail("spdf_open");
+        char *out = NULL;
+        int is_locate = !strcmp(kind, "locate");
+        st = is_locate ? spdf_locate(doc, sj_str(sj_get(in, "reference")), &out)
+                       : spdf_export_structure(doc, sj_str(sj_get(in, "format")), &out);
+        spdf_close(doc);
+        sj *got = NULL;
+        if (st != SPDF_OK) {
+            if (!is_locate) return abi_fail("spdf_export_structure");
+            const char *nodoc = "{\"document\":false,\"units\":[],\"fragments\":[],\"char\":null,\"xywh\":null}";
+            got = sj_parse(nodoc, strlen(nodoc), NULL);   /* an error for another document maps to document:false */
+        } else {
+            got = take_json(out);
+        }
+        const sj *want = is_locate ? ex : sj_get(ex, "pages");
+        const sj *g = is_locate ? got : sj_get(got, "pages");
+        if (!sj_equal(want, g, TOL, why, sizeof why)) r = fail("%s %s", kind, why);
+        sj_free(got);
+        return r;
+    }
+
+    if (!strcmp(kind, "export_csl") || !strcmp(kind, "export_bibtex")) {
+        const sj *files = sj_get(in, "files");
+        size_t n = files ? files->count : 0;
+        SpdfDoc **docs = (SpdfDoc **)calloc(n ? n : 1, sizeof(SpdfDoc *));
+        for (size_t i = 0; i < n && !r; i++) {
+            char *path = join(dir, sj_str(sj_at(files, i)));
+            if (spdf_open(path, NULL, &docs[i]) != SPDF_OK) r = abi_fail("spdf_open");
+            free(path);
+        }
+        char *out = NULL;
+        if (!r) {
+            if (!strcmp(kind, "export_csl")) {
+                char *anchor = dump_or_null(sj_get(in, "anchor"));
+                char *end = dump_or_null(sj_get(in, "anchor_end"));
+                if (spdf_export_csl_multi((const SpdfDoc *const *)docs, n, anchor, end, &out) != SPDF_OK) r = abi_fail("spdf_export_csl_multi");
+                else {
+                    sj *got = take_json(out);
+                    if (!sj_equal(sj_get(ex, "items"), got, TOL, why, sizeof why)) r = fail("items %s", why);
+                    sj_free(got);
+                }
+                free(anchor);
+                free(end);
+            } else {
+                if (spdf_export_bibtex_multi((const SpdfDoc *const *)docs, n, &out) != SPDF_OK) r = abi_fail("spdf_export_bibtex_multi");
+                else {
+                    r = compare_lines(sj_str(sj_get(ex, "text")), out);
+                    spdf_string_free(out);
+                }
+            }
+        }
+        for (size_t i = 0; i < n; i++) spdf_close(docs[i]);
+        free(docs);
         return r;
     }
 

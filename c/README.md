@@ -67,8 +67,10 @@ specification.
 
 spdf::Document doc("quijote.spdf");
 std::string hits = doc.search("hidalgo", 5);               // JSON array
-std::string uri_units = doc.locate("spdf:sha256-…#p=5");   // units an anchor URI points at
-std::cout << doc.bibtex();                                 // @book{cervantessaavedra1605, …
+std::string where = doc.locate("spdf:sha256-…#p=5");   // {"document","units","fragments","char","xywh"}
+std::cout << doc.bibtex();                             // @book{cervantessaavedra1605, …
+std::string tei = doc.tei();                           // also alto() and iiif(base_url)
+std::string bib = spdf::export_bibtex({&doc, &other}); // several documents, keys disambiguated
 ```
 
 Errors throw `spdf::Error` (with `status()` and the JSON of `spdf_last_error()`).
@@ -77,8 +79,9 @@ Errors throw `spdf::Error` (with `status()` and the JSON of `spdf_last_error()`)
 
 `build/spdf_conformance ../conformance` runs every case through the ABI and prints the
 report of the specification; `ctest` runs it. CI publishes it as the `conformance-c`
-artifact. All kinds are claimed, including `roundtrip` (through `spdf_write_from_dump`)
-and `quantize` (through `spdf_quantize`).
+artifact. All kinds are claimed: `roundtrip` through `spdf_write_from_dump`, `quantize`
+through `spdf_quantize`, `locate` through `spdf_locate`, the exports through
+`spdf_export_csl_multi`, `spdf_export_bibtex_multi` and `spdf_export_structure`.
 
 ## License
 
