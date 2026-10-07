@@ -126,6 +126,12 @@ public:
         return detail::take(out);
     }
     // {"document","units","fragments","char","xywh"} of an anchor URI or a .spdf URL (SPEC §5.4).
+    // {"text","uri","anchor","anchor_end"}: a quotation cited by the unit it lies in (SPEC §18.2).
+    std::string cite_passage(const std::string &fragment_id, const std::string &quote, const std::string &locale = "es") const {
+        char *out = nullptr;
+        detail::check(spdf_cite_passage(doc_, fragment_id.c_str(), quote.c_str(), locale.c_str(), &out));
+        return detail::take(out);
+    }
     std::string locate(const std::string &reference) const {
         char *out = nullptr;
         detail::check(spdf_locate(doc_, reference.c_str(), &out));

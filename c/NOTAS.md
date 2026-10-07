@@ -20,6 +20,7 @@ Estado a 7-10-2026: la ABI existe (`rust/crates/spdf-ffi/include/spdf.h`, biblio
 | resolver URI (§5.4) | `spdf_locate` con la forma `{document, units, fragments, char, xywh}` (commit 1ada03b) |
 | exportar varios documentos (§19) | `spdf_export_csl_multi`, `spdf_export_bibtex_multi` (commit 1ada03b) |
 | ALTO, TEI, IIIF (§19.4) | `spdf_export_format`, `spdf_export_structure` (commit 1ada03b) |
+| citar un pasaje (§18.2) | `spdf_cite_passage` (commit 59a1d14) |
 
 Lo que el runner de C no compara: `route` y `match` de la búsqueda léxica (la ABI
 devuelve solo los resultados; el README de la batería lo deja como SHOULD).

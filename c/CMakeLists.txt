@@ -104,11 +104,11 @@ target_link_libraries(spdf_conformance PRIVATE spdf spdf_sjson)
 
 enable_testing()
 add_test(NAME conformance COMMAND spdf_conformance "${SPDF_CONFORMANCE_DIR}" WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
-add_test(NAME example_c COMMAND spdf_search "${SPDF_CONFORMANCE_DIR}/files/quijote.spdf" "lugar de la Mancha")
-add_test(NAME example_cpp COMMAND spdf_search_cpp "${SPDF_CONFORMANCE_DIR}/files/quijote.spdf" "hidalgo")
+add_test(NAME example_c COMMAND spdf_search "${SPDF_CONFORMANCE_DIR}/files/quijote.spdf" "hermoso")
+add_test(NAME example_cpp COMMAND spdf_search_cpp "${SPDF_CONFORMANCE_DIR}/files/quijote.spdf" "hermoso")
 add_test(NAME example_validate COMMAND spdf_validate "${SPDF_CONFORMANCE_DIR}/files/darwin.spdf")
-set_tests_properties(example_c PROPERTIES PASS_REGULAR_EXPRESSION "Cervantes Saavedra, 1605")
-set_tests_properties(example_cpp PROPERTIES PASS_REGULAR_EXPRESSION "Cervantes Saavedra, 1605")
+set_tests_properties(example_c PROPERTIES PASS_REGULAR_EXPRESSION "Cervantes Saavedra, 1608")
+set_tests_properties(example_cpp PROPERTIES PASS_REGULAR_EXPRESSION "Cervantes Saavedra, 1608")
 
 # pkg-config file for installations of the C ABI.
 configure_file(spdf.pc.in "${CMAKE_BINARY_DIR}/spdf.pc" @ONLY)

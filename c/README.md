@@ -44,13 +44,13 @@ if (spdf_open("quijote.spdf", NULL, &doc) != SPDF_OK) {     /* read-only, safe o
     return 1;
 }
 char *hits = NULL;
-if (spdf_search_lexical(doc, "\"lugar de la Mancha\"", 10, &hits) == SPDF_OK) {
-    puts(hits);   /* [{"fragment_id":"q4","score":…,"via":["lexical"],"anchor":{…},"anchor_uri":"spdf:sha256-…#p=5&pe=6&f=1r&fe=1v&char=101,278"}] */
+if (spdf_search_lexical(doc, "hermoso", 10, &hits) == SPDF_OK) {   /* the 1608 edition prints «hermoſo» */
+    puts(hits);   /* [{"fragment_id":"q1","score":…,"via":["lexical"],"anchor":{…},"anchor_uri":"spdf:sha256-27ea…#p=13&char=10,194"}] */
     spdf_string_free(hits);
 }
-char *cite = NULL;
-spdf_doc_cite(doc, "{\"type\":\"page\",\"physical\":5,\"printed\":\"1r\",\"foliation\":\"leaf\"}", NULL, "es", &cite);
-puts(cite);       /* (Cervantes Saavedra, 1605, fol. 1r) */
+char *cite = NULL;   /* a quotation is cited by the page it lies in (SPEC §18.2) */
+spdf_cite_passage(doc, "q5", "rozin, como tomaua la podadera.", "es", &cite);
+puts(cite);       /* {"text":"(Cervantes Saavedra, 1608, fol. [Iv])","uri":"spdf:sha256-27ea…#p=30&f=Iv&char=130,161",…} */
 spdf_string_free(cite);
 spdf_close(doc);
 ```
@@ -68,7 +68,7 @@ specification.
 spdf::Document doc("quijote.spdf");
 std::string hits = doc.search("hidalgo", 5);               // JSON array
 std::string where = doc.locate("spdf:sha256-…#p=5");   // {"document","units","fragments","char","xywh"}
-std::cout << doc.bibtex();                             // @book{cervantessaavedra1605, …
+std::cout << doc.bibtex();                             // @book{cervantessaavedra1608, …
 std::string tei = doc.tei();                           // also alto() and iiif(base_url)
 std::string bib = spdf::export_bibtex({&doc, &other}); // several documents, keys disambiguated
 ```
@@ -81,7 +81,8 @@ Errors throw `spdf::Error` (with `status()` and the JSON of `spdf_last_error()`)
 report of the specification; `ctest` runs it. CI publishes it as the `conformance-c`
 artifact. All kinds are claimed: `roundtrip` through `spdf_write_from_dump`, `quantize`
 through `spdf_quantize`, `locate` through `spdf_locate`, the exports through
-`spdf_export_csl_multi`, `spdf_export_bibtex_multi` and `spdf_export_structure`.
+`spdf_export_csl_multi`, `spdf_export_bibtex_multi` and `spdf_export_structure`, and
+`cite_passage` through `spdf_cite_passage`.
 
 ## License
 

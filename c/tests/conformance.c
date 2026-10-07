@@ -334,6 +334,25 @@ static const char *run_case(const char *dir, const sj *c, int *skipped) {
         return r;
     }
 
+    if (!strcmp(kind, "cite_passage")) {
+        char *path = join(dir, sj_str(sj_get(in, "file")));
+        SpdfDoc *doc = NULL;
+        int st = spdf_open(path, NULL, &doc);
+        free(path);
+        if (st != SPDF_OK) return abi_fail("spdf_open");
+        const char *locale = sj_str(sj_get(in, "locale"));
+        char *out = NULL;
+        st = spdf_cite_passage(doc, sj_str(sj_get(in, "fragment")), sj_str(sj_get(in, "quote")), locale ? locale : "en", &out);
+        spdf_close(doc);
+        if (st != SPDF_OK) return abi_fail("spdf_cite_passage");
+        sj *got = take_json(out);
+        const char *t = sj_str(sj_get(got, "text")), *u = sj_str(sj_get(got, "uri"));
+        if (!t || strcmp(t, sj_str(sj_get(ex, "text")))) r = fail("text: expected %s, got %s", sj_str(sj_get(ex, "text")), t ? t : "?");
+        else if (!u || strcmp(u, sj_str(sj_get(ex, "uri")))) r = fail("uri: expected %s, got %s", sj_str(sj_get(ex, "uri")), u ? u : "?");
+        sj_free(got);
+        return r;
+    }
+
     if (!strcmp(kind, "cite")) {
         const sj *m = sj_get(in, "metadata");
         char *meta = sj_is_null(m) ? strdup("{}") : sj_dump(m);
