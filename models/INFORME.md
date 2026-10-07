@@ -117,9 +117,9 @@ Límites: la cuantización a 4 bits aplana algo las probabilidades de la pregunt
 | Plataforma | Qué se ejecutó | Resultado |
 |---|---|---|
 | macOS (M4 Max, Metal) | descarga real de Hugging Face cortada a mitad y reanudada, verificación SHA-256, texto, imagen, audio, MRL, Gemma 4 E2B en streaming, juez Gemma y Valen | todo correcto; 65 tok/s en la respuesta corta |
-| iOS (simulador, iPhone 17 Pro) | lo mismo sobre los modelos descargados | correcto en CPU; el Metal emulado del simulador da vectores erróneos, así que el crate usa CPU allí (en dispositivo, Metal) |
+| iOS (simulador, iPhone 17 Pro) | lo mismo sobre los modelos descargados | correcto en CPU (el Metal emulado del simulador da vectores erróneos, así que el crate usa CPU allí; en dispositivo, Metal): consulta a 256 en 23 ms, pasaje en 0,6 s, imagen 2,6 s, audio 0,6 s, E2B a 65 tok/s (prompt 123 tok/s), juez 0,8-3,3 s, 4,4 GB de pico |
 | iOS (dispositivo) | compilación y enlace para `aarch64-apple-ios` | compila; sin dispositivo para ejecutarlo |
-| Android (emulador arm64, API 36) | texto, imagen, audio, generación y juez | correcto (puntuaciones iguales a la referencia); el emulador simula la CPU por software, así que sus tiempos no sirven |
+| Android (emulador arm64, API 36, HVF, 4 núcleos) | texto, imagen, audio, generación y juez, compilado para API 24 | correcto (puntuaciones iguales a la referencia): consulta a 256 en 61 ms, pasaje 0,6 s, imagen 4,6 s, audio 1,5 s, E2B a 48 tok/s (prompt 112 tok/s), juez 0,9-3,7 s, 1,5 GB con el embebedor y 4,4 GB con el generador |
 | Windows y Linux | CI: compilación y pruebas | en verde (CPU) |
 | Web (Chrome 154 headless, WebGPU, `--mute-audio`) | descargas a OPFS con SHA-256, texto, imagen, audio, MRL, Gemma 4 E2B con MediaPipe, juez Valen | todo correcto en 90 s (con las descargas desde un espejo local) |
 
