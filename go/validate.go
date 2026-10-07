@@ -319,6 +319,11 @@ func (v *validator) run(f *File) {
 			}
 		}
 	}
+	// W103: fragments that cross between kinds of matter, or between a page
+	// with a folio and one without.
+	if has("units", "id", "ord", "anchor") && has("fragments", "id", "unit", "anchor", "anchor_end") {
+		v.checkCrossings(f)
+	}
 	// Spaces and vectors.
 	type spaceInfo struct {
 		dims  int64
@@ -474,6 +479,11 @@ func CheckAnchor(g any, text *string) (string, string) {
 	if msg := anchorShapeError(a); msg != "" {
 		return "E040", msg
 	}
+	if mt, has := m["matter"]; has {
+		if _, ok := mt.(string); !ok {
+			return "E040", "matter must be a string"
+		}
+	}
 	if r, has := m["region"]; has {
 		rm, ok := r.(map[string]any)
 		if !ok || !isNum(rm["x"]) || !isNum(rm["y"]) || !isNum(rm["w"]) || !isNum(rm["h"]) {
@@ -612,4 +622,54 @@ func ftsIntegrity(f *File) error {
 		}
 	}
 	return nil
+}
+
+func (v *validator) checkCrossings(f *File) {
+	rows, err := f.queryRows("units", []string{"id", "anchor"}, "ORDER BY ord, id")
+	if err != nil {
+		return
+	}
+	units := make([]unitAnchor, 0, len(rows))
+	for _, r := range rows {
+		id, _ := asString(r["id"])
+		s, _ := asString(r["anchor"])
+		g, err := ParseJSON(s)
+		if err != nil {
+			return
+		}
+		units = append(units, unitAnchor{id, g})
+	}
+	byID := map[string]any{}
+	for _, u := range units {
+		byID[u.id] = u.anchor
+	}
+	frs, err := f.queryRows("fragments", []string{"id", "unit", "anchor_end"}, "WHERE anchor_end IS NOT NULL ORDER BY n")
+	if err != nil {
+		return
+	}
+	for _, r := range frs {
+		id, _ := asString(r["id"])
+		unit, _ := asString(r["unit"])
+		s, _ := asString(r["anchor_end"])
+		end, err := ParseJSON(s)
+		if err != nil {
+			return
+		}
+		a1, ok := byID[unit]
+		if !ok {
+			continue
+		}
+		u2 := endUnit(units, unit, end)
+		if u2 == nil {
+			continue
+		}
+		m1, _ := a1.(map[string]any)
+		m2, _ := u2.anchor.(map[string]any)
+		folioChange := m1 != nil && m2 != nil && m1["type"] == "page" && m2["type"] == "page" &&
+			(m1["printed"] == nil) != (m2["printed"] == nil)
+		if matterOf(a1) != matterOf(u2.anchor) || folioChange {
+			v.warn("W103", "fragments/"+id, "fragment crosses from %s to %s matter, or between a page with a folio and one without",
+				matterOf(a1), matterOf(u2.anchor))
+		}
+	}
 }

@@ -25,7 +25,7 @@ go get github.com/joseluissaorin/spdf/go
 | Validation | every code of the specification (E001–E090, W100–W110), Ed25519 signatures |
 | Search | lexical (FTS5 BM25, CJK route with `trigram` or substring), vector (`f32`, `f16`, `i8`), hybrid (reciprocal rank fusion, k = 10) |
 | Anchors | anchor ↔ URI (`spdf:sha256-…#p=29&f=21&char=118,301`), strict parser; resolution of a URI or of a `.spdf` URL with a fragment to units and fragments (`Locate`, SPEC §5.4) |
-| Citation | short author-date citation in Spanish and English |
+| Citation | short author-date citation in Spanish and English; citation of a quotation by the unit it lies in (`CitePassage`, SPEC §18.2) |
 | Export | CSL-JSON (also citations with `label`/`locator`) and BibTeX, one or several documents with the keys of SPEC §19 (`cervantessaavedra1605`, `lazarillo1554`, collision suffixes); ALTO 4, minimal TEI and IIIF Presentation 3 (`ExportALTO`, `ExportTEI`, `ExportIIIF`; no invented coordinates or dimensions) |
 | Writer | builds valid SPDF 5.0 files (FTS kept in sync, `VACUUM`, no triggers) with `content_sha256` and, given a key, an Ed25519 signature (§8); `Seal` hashes and signs an existing file in place |
 
@@ -92,6 +92,13 @@ text := spdf.Cite(a, nil, map[string]any{
 	"author": []any{map[string]any{"family": "Vega", "non-dropping-particle": "de", "given": "Lope"}},
 	"issued": map[string]any{"date-parts": []any{[]any{int64(1609)}}},
 }, "es")                                            // (de Vega, 1609, p. [21])
+```
+
+## Citing a quotation
+
+```go
+p, _ := f.CitePassage("m4", "Schem. XXXIV.", "en")   // the unit the quotation is in, not the fragment start
+fmt.Println(p.Text, p.URI)
 ```
 
 ## Resolving references

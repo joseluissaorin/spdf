@@ -127,23 +127,33 @@ func bracketIfInferred(a Anchor, printed string) string {
 	return printed
 }
 
-// pageLocator renders a page-like locator (page anchors, or section/web/verse
-// anchors carrying a printed folio).
+// pageLocator renders a page-like locator (page anchors, or section/web
+// anchors carrying a printed folio). Ends without a printed folio never take
+// part in a range (SPEC §18): "p. 211", never "pp. s. p.-211".
 func pageLocator(a, end Anchor, es bool, single, plural string) string {
-	printed, ok := a.Str("printed")
-	if !ok {
+	ends := []Anchor{a}
+	if end != nil && end.Type() == a.Type() {
+		ends = append(ends, end)
+	}
+	var withFolio []Anchor
+	for _, x := range ends {
+		if _, ok := x.Str("printed"); ok {
+			withFolio = append(withFolio, x)
+		}
+	}
+	if len(withFolio) == 0 {
 		if es {
 			return "s. p."
 		}
 		return "n. pag."
 	}
-	first := bracketIfInferred(a, printed)
-	if end != nil && end.Type() == a.Type() {
-		if ep, ok := end.Str("printed"); ok && ep != printed {
-			return plural + " " + first + "-" + bracketIfInferred(end, ep)
-		}
+	first, last := withFolio[0], withFolio[len(withFolio)-1]
+	fp, _ := first.Str("printed")
+	lp, _ := last.Str("printed")
+	if len(withFolio) > 1 && lp != fp {
+		return plural + " " + bracketIfInferred(first, fp) + "-" + bracketIfInferred(last, lp)
 	}
-	return single + " " + first
+	return single + " " + bracketIfInferred(first, fp)
 }
 
 func clock(t float64) string {

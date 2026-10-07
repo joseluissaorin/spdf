@@ -336,6 +336,20 @@ func RunCase(dir, kind string, in, exp map[string]any) string {
 			return fmt.Sprintf("got %q", strings.Join(got, "\n"))
 		}
 		return ""
+	case "cite_passage":
+		f, err := spdf.Open(filepath.Join(dir, str(in["file"])), nil)
+		if err != nil {
+			return "open: " + err.Error()
+		}
+		defer f.Close()
+		p, err := f.CitePassage(str(in["fragment"]), str(in["quote"]), str(in["locale"]))
+		if err != nil {
+			return err.Error()
+		}
+		if p.Text != str(exp["text"]) || p.URI != str(exp["uri"]) {
+			return fmt.Sprintf("got %q %s", p.Text, p.URI)
+		}
+		return ""
 	case "export_structure":
 		f, err := spdf.Open(filepath.Join(dir, str(in["file"])), nil)
 		if err != nil {

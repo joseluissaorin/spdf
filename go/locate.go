@@ -223,11 +223,18 @@ func (f *File) Locate(reference string) (LocateResult, error) {
 			ids = []string{id}
 		}
 	}
+	var uas []unitAnchor
+	for _, u := range units {
+		um := u.(map[string]any)
+		id, _ := um["id"].(string)
+		uas = append(uas, unitAnchor{id, um["anchor"]})
+	}
 	var matched []map[string]any
 	for _, fr := range frags {
 		fm := fr.(map[string]any)
 		a, _ := fm["anchor"].(map[string]any)
-		if anchorMatches(rule, l, a, nil) {
+		e, _ := fm["anchor_end"].(map[string]any)
+		if anchorMatches(rule, l, a, nil) || (e != nil && anchorMatches(rule, l, e, nil)) {
 			matched = append(matched, fm)
 		}
 	}
@@ -244,27 +251,29 @@ func (f *File) Locate(reference string) (LocateResult, error) {
 	}
 	if len(l.Char) == 2 {
 		c, d := l.Char[0], l.Char[1]
-		inUnits := map[string]bool{}
-		for _, id := range ids {
-			inUnits[id] = true
+		first := ""
+		if len(ids) > 0 {
+			first = ids[0] // char refers to the text of the first unit
+		}
+		overlaps := func(x any) bool {
+			ch, ok := Anchor(asMap(x)).Chars()
+			if !ok {
+				return false
+			}
+			lo, hi := ch[0], ch[1]
+			if c < d {
+				return lo < d && c < hi
+			}
+			return lo <= c && c < hi
 		}
 		var kept []map[string]any
 		for _, fm := range matched {
 			u, _ := fm["unit"].(string)
-			a, _ := fm["anchor"].(map[string]any)
-			if !inUnits[u] || a == nil {
+			if u == first && overlaps(fm["anchor"]) {
+				kept = append(kept, fm)
 				continue
 			}
-			ch, ok := Anchor(a).Chars()
-			if !ok {
-				continue
-			}
-			lo, hi := ch[0], ch[1]
-			if c < d {
-				if lo < d && c < hi {
-					kept = append(kept, fm)
-				}
-			} else if lo <= c && c < hi {
+			if eu := endUnit(uas, u, fm["anchor_end"]); eu != nil && eu.id == first && overlaps(fm["anchor_end"]) {
 				kept = append(kept, fm)
 			}
 		}
@@ -278,4 +287,61 @@ func (f *File) Locate(reference string) (LocateResult, error) {
 		out.Fragments = append(out.Fragments, id)
 	}
 	return out, nil
+}
+
+func asMap(v any) map[string]any {
+	m, _ := v.(map[string]any)
+	return m
+}
+
+// unitAnchor is a unit id with its (parsed) anchor, in reading order.
+type unitAnchor struct {
+	id     string
+	anchor any
+}
+
+// identity drops "chars" and "region" from an anchor (SPEC §4.4).
+func identity(a any) any {
+	m, ok := a.(map[string]any)
+	if !ok {
+		return a
+	}
+	out := make(map[string]any, len(m))
+	for k, v := range m {
+		if k != "chars" && k != "region" {
+			out[k] = v
+		}
+	}
+	return out
+}
+
+// endUnit is the unit where a fragment ends: the first unit after its start
+// unit (in reading order) whose anchor equals anchorEnd, ignoring chars and
+// region (SPEC §4.4).
+func endUnit(units []unitAnchor, startID string, anchorEnd any) *unitAnchor {
+	if _, ok := anchorEnd.(map[string]any); !ok {
+		return nil
+	}
+	want := identity(anchorEnd)
+	after := false
+	for i := range units {
+		if units[i].id == startID {
+			after = true
+			continue
+		}
+		if after && JSONEqual(identity(units[i].anchor), want) {
+			return &units[i]
+		}
+	}
+	return nil
+}
+
+// matterOf is the "matter" of an anchor (SPEC §4.1): body when absent.
+func matterOf(a any) string {
+	if m, ok := a.(map[string]any); ok {
+		if s, ok := m["matter"].(string); ok {
+			return s
+		}
+	}
+	return "body"
 }
