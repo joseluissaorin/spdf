@@ -9,9 +9,9 @@ import type { Coleccion, EntradaBiblioteca } from '../nucleo/nucleo';
 export function manifiestoColeccion(c: Coleccion, entradas: EntradaBiblioteca[]): string {
   const items = c.items.map((sha) => {
     const e = entradas.find((x) => x.source_sha256 === sha);
-    return { sha256: sha, title: e?.titulo ?? '', authors: e?.autores ?? '', year: e?.anio ?? null };
+    return { sha256: sha, title: e?.titulo ?? '', authors: e?.autores ?? '', year: e?.anio ?? null, ...(e ? { file_sha256: e.id } : {}) };
   });
-  return JSON.stringify({ spdf_library: '1.0', name: c.nombre, items }, null, 2) + '\n';
+  return JSON.stringify({ spdf_library: '1.0', name: c.nombre, created: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), items }, null, 2) + '\n';
 }
 
 export function leerManifiesto(json: string): Coleccion {

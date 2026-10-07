@@ -41,6 +41,7 @@ export function aW3C(anots: Anotacion[], o: { titulo: string; docref: string; le
   return JSON.stringify({
     '@context': 'http://www.w3.org/ns/anno.jsonld',
     type: 'AnnotationCollection',
+    spdf_annotations: '1.0',
     label: o.titulo,
     generator: o.generador,
     total: items.length,

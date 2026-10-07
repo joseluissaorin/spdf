@@ -45,7 +45,7 @@ export function Facsimil({ id, unidad, region }: { id: string; unidad: Unidad | 
             <button className="icono" onClick={() => setZoom((z) => Math.max(0.5, z - 0.25))} aria-label={t('reducir')}><Menos /></button>
           </div>
           <div className="lienzo" style={{ ['--zoom' as string]: zoom }}>
-            <img src={url} alt={`${t('facsimil')}: ${unidad?.printed ? `p. ${unidad.printed}` : t('paginaFisica', { n: unidad?.ord ?? 0, total: '' }).trim()}`} decoding="async" />
+            <img src={url} alt={`${t('facsimil')}: ${unidad?.printed ? `p. ${unidad.printed}` : `${t('pagina').toLowerCase()} ${unidad?.ord ?? ''} (${t('sinFolio')})`}`} decoding="async" />
             {region && <div className="region" style={{ left: `${region.x * 100}%`, top: `${region.y * 100}%`, width: `${region.w * 100}%`, height: `${region.h * 100}%` }} />}
           </div>
         </>

@@ -342,7 +342,7 @@ h1, h2, h3, h4 { font-weight: normal; margin: 0; }
 .hoja .margen .folio { font-family: var(--mono); font-size: 13px; color: var(--rojo); letter-spacing: 0.02em; white-space: nowrap; }
 .hoja .margen .fisica { font-family: var(--mono); font-size: 10.5px; color: var(--tinta-2); }
 .hoja .titulillo { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--tinta-2); text-align: center; margin-bottom: 18px; }
-.hoja article { font-size: var(--tam-lectura); line-height: 1.62; hyphens: auto; }
+.hoja article { font-size: var(--tam-lectura); line-height: 1.62; -webkit-hyphens: auto; hyphens: auto; }
 .hoja article p { margin: 0 0 0.9em; text-wrap: pretty; }
 .hoja article h1, .hoja article h2, .hoja article h3 { font-size: 1.35em; margin: 0.4em 0 0.8em; font-style: italic; }
 .hoja article blockquote { margin: 0.6em 0 0.9em 1.2em; padding-left: 0.9em; border-left: 2px solid var(--filete); color: var(--tinta-2); }

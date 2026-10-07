@@ -1,0 +1,51 @@
+[package]
+name = "lector-spdf"
+version = "0.1.0"
+description = "Lector SPDF / SPDF Reader: lee, busca y cita documentos SPDF. Núcleo Rust de la aplicación Tauri."
+authors = ["José Luis Saorín Ferrer <jl@joseluissaorin.com>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/joseluissaorin/spdf"
+edition = "2021"
+rust-version = "1.85"
+
+[lib]
+name = "lector_spdf_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.5", features = [] }
+
+[dependencies]
+# El formato: la implementación de referencia, por ruta (agente «rust»).
+spdf = { path = "../../rust/crates/spdf" }
+tauri = { version = "2.12", features = [] }
+tauri-plugin-dialog = "2.6"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+percent-encoding = "2.3"
+thiserror = "2"
+unicode-normalization = "0.1"
+# Gemini con la clave del usuario (respaldo mientras spdf-infer no lo trae): bloqueante, con rustls.
+ureq = { version = "3", features = ["json"] }
+
+[target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
+keyring = { version = "3.6", features = ["apple-native"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+keyring = { version = "3.6", features = ["windows-native"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+keyring = { version = "3.6", features = ["sync-secret-service", "crypto-rust", "vendored"] }
+
+[features]
+default = []
+# Activa el modelo falso de pruebas (para las pruebas de extremo a extremo).
+pruebas = []
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+opt-level = 3
+strip = true
+panic = "abort"

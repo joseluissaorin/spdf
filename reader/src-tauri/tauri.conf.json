@@ -1,0 +1,92 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "Lector SPDF",
+  "mainBinaryName": "lector-spdf",
+  "version": "0.1.0",
+  "identifier": "com.joseluissaorin.spdfreader",
+  "build": {
+    "frontendDist": "../dist-tauri",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "npm run dev -- --mode tauri",
+    "beforeBuildCommand": "npm run build:tauri"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Lector SPDF",
+        "width": 1320,
+        "height": 860,
+        "minWidth": 380,
+        "minHeight": 480,
+        "resizable": true,
+        "backgroundColor": "#f5f0e8",
+        "dragDropEnabled": false
+      }
+    ],
+    "security": {
+      "csp": {
+        "default-src": "'self' ipc: http://ipc.localhost",
+        "script-src": "'self' 'wasm-unsafe-eval'",
+        "style-src": "'self' 'unsafe-inline'",
+        "img-src": "'self' spdf: http://spdf.localhost blob: data: https:",
+        "media-src": "'self' spdf: http://spdf.localhost blob: https:",
+        "font-src": "'self' data:",
+        "connect-src": "'self' ipc: http://ipc.localhost spdf: http://spdf.localhost",
+        "object-src": "'none'",
+        "base-uri": "'self'"
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "publisher": "José Luis Saorín Ferrer",
+    "copyright": "© 2026 José Luis Saorín Ferrer. MIT OR Apache-2.0.",
+    "category": "Education",
+    "shortDescription": "Lee, busca y cita documentos SPDF.",
+    "longDescription": "Lector SPDF / SPDF Reader: lee documentos SPDF (5.0 y legado 4.x) con su facsímil y su texto, busca por palabras y por significado, copia la cita con el folio impreso y la referencia bibliográfica. Sin conexión y sin telemetría.",
+    "homepage": "https://spdf.joseluissaorin.com",
+    "license": "MIT OR Apache-2.0",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "fileAssociations": [
+      {
+        "ext": ["spdf"],
+        "name": "Documento SPDF",
+        "description": "Documento SPDF (Semantic Processed Document Format)",
+        "role": "Viewer",
+        "mimeType": "application/vnd.spdf",
+        "rank": "Owner",
+        "exportedType": {
+          "identifier": "com.joseluissaorin.spdf",
+          "conformsTo": ["public.data", "public.content"]
+        }
+      }
+    ],
+    "macOS": {
+      "minimumSystemVersion": "11.0",
+      "signingIdentity": "-",
+      "dmg": {
+        "windowSize": { "width": 640, "height": 400 }
+      }
+    },
+    "iOS": {
+      "minimumSystemVersion": "15.0"
+    },
+    "android": {
+      "minSdkVersion": 26,
+      "debugApplicationIdSuffix": ".debug"
+    },
+    "linux": {
+      "deb": { "section": "text" }
+    },
+    "windows": {
+      "nsis": { "languages": ["Spanish", "English"], "displayLanguageSelector": false }
+    }
+  }
+}
