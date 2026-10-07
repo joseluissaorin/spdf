@@ -11,6 +11,8 @@ import sys
 import unicodedata
 import zipfile
 
+from spdf_build.readers.html import clean_page_label
+
 
 def fold(s):
     s = unicodedata.normalize("NFD", s.lower())
@@ -23,7 +25,7 @@ text = re.sub(r"<(span|a)[^>]*pageno[^>]*title=\"\[?([^\]\"]+)\]?\"[^>]*>.*?</\1
 text = re.sub(r"<[^>]+>", " ", text)
 after = {}
 for m in re.finditer(r"⟦([^⟧]+)⟧", text):
-    after.setdefault(m.group(1), fold(text[m.end():m.end() + 400])[:60])
+    after.setdefault(clean_page_label("[" + m.group(1) + "]"), fold(text[m.end():m.end() + 400])[:60])
 db = sqlite3.connect(sys.argv[1])
 ok = bad = 0
 errs = []

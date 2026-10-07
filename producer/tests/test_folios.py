@@ -136,3 +136,80 @@ def test_candidates():
     assert [c.value for c in candidates_in_line("Pag. 1.", "header")] == [1]
     assert not [c for c in candidates_in_line("Capítulo IV", "header") if c.value == 4]
     assert candidates_in_line("l23", "footer")[0].value == 123
+
+
+LATIN = ("quod Stellae fixae et erraticae in eodem lumine apparent, et quae circa Iovem volvuntur Planetae, qui ab "
+         "omnibus hactenus ignorati fuerunt, nunc primum a nobis observati sunt, et cetera quae sequuntur in hoc libello ")
+
+
+def test_inserted_leaves_in_a_foliated_book():
+    """Galileo, Sidereus nuncius (1610): two unnumbered inserted leaves after fol. 16; the true 16v must keep its folio."""
+    pages, truth = [], []
+    phys = 0
+    for leaf in range(10, 22):
+        phys += 1
+        pages.append({"physical": phys, "header": f"OBSERVAT. SIDEREAE {leaf}", "text": LATIN + "co,", "footer": "eo,"})
+        truth.append(f"{leaf}r")
+        phys += 1
+        pages.append({"physical": phys, "header": "SIDEREVS NVNCIVS", "text": "eo, " + LATIN + "atque"})
+        truth.append(f"{leaf}v")
+        if leaf == 16:  # two inserted leaves: an engraving and a blank, twice
+            for kind in ("plate", "blank", "plate", "blank"):
+                phys += 1
+                if kind == "plate":
+                    pages.append({"physical": phys, "text": "Nebulosa Orionis.", "figures": [1]})
+                else:
+                    pages.append({"physical": phys, "text": "", "empty": True})
+                truth.append(None)
+    r = deduce_folios(pages)
+    got = [p.printed for p in r.pages]
+    assert r.foliation
+    assert got == truth, list(zip(range(1, 99), got, truth))
+
+
+def test_library_apparatus_after_the_last_page_gets_no_folio():
+    """Gilman, The Yellow Wall Paper (1901): after p. 55, endpapers, the cover, a DATE DUE slip and a barcode."""
+    pages = [{"physical": i, "header": "THE YELLOW WALL PAPER", "text": TEXT, "footer": str(i - 2) if i > 2 else ""} for i in range(1, 58)]
+    pages[0]["text"], pages[0]["header"] = "THE YELLOW WALL PAPER BY CHARLOTTE PERKINS STETSON", ""
+    pages[1]["text"], pages[1]["header"] = "", ""
+    tail = [{"text": ""}, {"text": "", "empty": True}, {"text": "DATE DUE\n\nGAYLORD PRINTED IN U.S.A."},
+            {"text": "3 9015 00001 2345 6"}, {"text": "THE YELLOW WALL PAPER GILMAN", "header": ""},
+            {"text": "Digitized by the Internet Archive in 2010 with funding from University of North Carolina at Chapel Hill"}]
+    for k, t in enumerate(tail):
+        pages.append({"physical": 58 + k, **t})
+    r = deduce_folios(pages)
+    by = {p.physical: p.printed for p in r.pages}
+    assert by[57] == "55"
+    assert all(by[i] is None for i in range(58, 64)), {i: by[i] for i in range(58, 64)}
+
+
+def test_gap_that_cannot_be_explained_is_left_without_folio():
+    pages = [{"physical": i, "text": TEXT, "footer": str(i)} for i in range(1, 6)]
+    # pages 6-9 have text and no evidence, but only 2 of them can be numbered (7 follows 5 four pages later)
+    pages += [{"physical": i, "text": "Otra cosa. " + TEXT.capitalize() + "."} for i in range(6, 10)]
+    pages += [{"physical": i, "text": TEXT, "footer": str(i - 2)} for i in range(10, 16)]
+    r = deduce_folios(pages)
+    by = {p.physical: p.printed for p in r.pages}
+    assert by[5] == "5" and by[10] == "8"
+    assert all(by[i] is None for i in range(6, 10))
+
+
+def test_inserted_leaves_with_running_text_keep_the_verso_only():
+    """As in the real Galileo scan: the inserted leaves carry text with running heads and catchwords, so they
+    cannot be told from text pages by counting. The gap stays without folios except the verso of fol. 16."""
+    pages, truth = [], []
+    phys = 0
+    for leaf in range(10, 22):
+        phys += 1
+        pages.append({"physical": phys, "header": f"OBSERVAT. SIDEREAE {leaf}", "text": LATIN + "co,", "footer": "eo,"})
+        truth.append(f"{leaf}r")
+        phys += 1
+        pages.append({"physical": phys, "header": "SIDEREVS NVNCIVS", "text": "eo, " + LATIN + "atque"})
+        truth.append(f"{leaf}v")
+        if leaf == 16:
+            for k in range(4):
+                phys += 1
+                pages.append({"physical": phys, "header": "SIDEREVS NVNCIVS", "text": "atque " + LATIN + "et", "figures": [1]})
+                truth.append(None)
+    got = [p.printed for p in deduce_folios(pages).pages]
+    assert got == truth, [(i + 1, g, t) for i, (g, t) in enumerate(zip(got, truth)) if g != t]

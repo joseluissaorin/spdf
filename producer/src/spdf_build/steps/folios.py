@@ -514,6 +514,71 @@ def _first_numbered(total: int, texts: dict[int, str], markers: dict[int, str], 
 
 
 # ---------------------------------------------------------------------------
+# What each page is, and the evidence that a page continues the book's text
+# ---------------------------------------------------------------------------
+
+APPARATUS = re.compile(
+    r"\b(?:date\s+due|due\s+date|return\s+(?:this|to)|this\s+book\s+is\s+due|stamped\s+below|digiti[sz]ed\s+by|internet\s+archive|"
+    r"google|property\s+of|call\s+n(?:o\.?|umber)|barcode|renew(?:ed|als?)?|overdue|"
+    r"(?:university|college|public|state)\s+(?:of\s+[\w\s]{1,40})?librar(?:y|ies)|library\s+of|bibliot(?:e|h)[cèe]a|bibliothèque)\b",
+    re.I)
+BARCODE = re.compile(r"(?<!\d)\d(?:[\s-]?\d){10,}(?!\d)")
+CHART = re.compile(r"\b(?:kodak|color\s+control\s+patches|gr[ae]y\s*scale|q-?13|colorchecker|x-?rite|golden\s*thread)\b", re.I)
+
+
+def classify_page(p: dict) -> str:
+    """text | plate | blank | cover | apparatus | chart | short"""
+    text = (p.get("text") or "").strip()
+    around = f"{p.get('header') or ''}\n{text}\n{p.get('footer') or ''}"
+    if p.get("blank") or (p.get("empty") and not text):
+        return "blank"
+    if CHART.search(around):
+        return "chart"
+    if len(text) < 800 and (APPARATUS.search(around) or BARCODE.search(around)):
+        return "apparatus"
+    if is_cover(p) or re.search(r"\b(?:spine|lomo|dust\s*jacket)\b", around, re.I):
+        return "cover"
+    letters = sum(1 for c in text if c.isalpha())
+    if p.get("figures") and letters < 300:
+        return "plate"
+    if re.match(r"^\s*(?:l[áa]m(?:ina)?|plate|tav(?:ola)?|taf(?:el)?|planche|fig(?:ura|ure)?)\.?\s*[\divxlc]+", text, re.I) and letters < 400:
+        return "plate"
+    if letters < 40:
+        return "short"
+    return "text"
+
+
+def running_heads(pages: list[dict]) -> set[str]:
+    from collections import Counter
+
+    c = Counter(k for k in (running_key(p.get("header") or "") for p in pages) if len(k) >= 4)
+    return {k for k, n in c.items() if n >= 3}
+
+
+def running_key(header: str) -> str:
+    h = re.sub(r"\b(?:p(?:ag)?\.?|fol\.?|f\.)\s*", " ", (header or "").lower())
+    h = re.sub(r"\b[\divxlcdm]+[rv]?\b", " ", h)
+    return re.sub(r"[^\w]+", " ", h).strip()
+
+
+def continues(prev: dict, cur: dict) -> bool:
+    """`cur` continues the text of `prev`: an unfinished sentence or word, or the catchword of `prev` opens `cur`."""
+    a = (prev.get("text") or "").rstrip()
+    b = (cur.get("text") or "").lstrip()
+    if not a or not b:
+        return False
+    first = re.sub(r"^[#*\s«\"(]+", "", b).split(" ", 1)[0]
+    catch = (prev.get("footer") or "").split()
+    if catch:
+        cw = re.sub(r"[^\w]", "", catch[-1].lower())
+        fw = re.sub(r"[^\w]", "", first.lower())
+        if len(cw) >= 2 and fw.startswith(cw.rstrip("-")):
+            return True
+    if re.search(r"[^\W\d_][-¬]$", a) and first[:1].islower():
+        return True
+    return not re.search(r"[.!?:;»”\")\]]$", a) and (first[:1].islower() or first[:1] in ",;")
+
+# ---------------------------------------------------------------------------
 # Assembly
 # ---------------------------------------------------------------------------
 
@@ -612,6 +677,27 @@ def _choose_plates(prep: _Prep, lo: int, hi: int, count: int) -> set[int]:
     return {i for i, _ in pts[:count]}
 
 
+def _plates_by_evidence(rng, count: int, kinds: list[str], evidence, a: int, b: int) -> Optional[set[int]]:
+    """Which pages of a gap are the `count` unnumbered ones (plates, inserted leaves).
+
+    Pages that are not book text (plates, blanks, covers…) go first; pages of text with proof (running head,
+    continuity with a neighbour) are never plates. If the count still does not fit, None (leave the gap without
+    folios): Galileo's Sidereus nuncius (1610) has two inserted leaves after fol. 16, and the true 16v must not
+    be taken for one of them."""
+    idx = list(rng)
+    non_text = [i for i in idx if kinds[i] != "text"]
+    proven = {i for i in idx if kinds[i] == "text" and (evidence(i, i - 1 if i - 1 >= a else None) or evidence(i, i + 1 if i + 1 <= b else None))}
+    if len(non_text) == count:
+        return set(non_text)
+    if len(non_text) > count:
+        order = {"plate": 0, "blank": 1, "chart": 2, "apparatus": 2, "cover": 3, "short": 4}
+        return set(sorted(non_text, key=lambda i: (order.get(kinds[i], 5), i))[:count])
+    unproven = [i for i in idx if kinds[i] == "text" and i not in proven]
+    if len(non_text) + len(unproven) == count:
+        return set(non_text) | set(unproven)
+    return None
+
+
 def _cut_point(a: int, b: int, markers: dict[int, str]) -> int:
     for i in range(a + 1, b):
         m = markers.get(i + 1)
@@ -693,6 +779,20 @@ def _assemble(prep: _Prep, seq: SequenceResult) -> FolioResult:
         first = min(first, transition)
     first = max(0, first)
 
+    kinds = [classify_page(p) for p in pages]
+    heads = running_heads(pages)
+
+    def evidence(i: int, from_i: Optional[int]) -> bool:
+        """A page with no reading may take the folio its neighbour implies only with proof: the running head,
+        or the text continuing from (or into) that neighbour."""
+        if kinds[i] != "text":
+            return False
+        if heads and running_key(pages[i].get("header") or "") in heads:
+            return True
+        if from_i is None:
+            return False
+        return continues(pages[from_i], pages[i]) if from_i < i else continues(pages[i], pages[from_i])
+
     value: list[Optional[float]] = [None] * n
     conf = [0.0] * n
     origin = ["none"] * n
@@ -720,8 +820,8 @@ def _assemble(prep: _Prep, seq: SequenceResult) -> FolioResult:
         p0 = in_range[0]
         for i in range(p0[0] - 1, lo - 1, -1):
             v = p0[1].value - step * (p0[0] - i)
-            if v < 1 - 1e-9:
-                break
+            if v < 1 - 1e-9 or kinds[i] != "text":
+                break  # before the first reading, only pages of the book's text are counted back
             value[i] = v
             conf[i] = max(0.5, 0.9 - 0.005 * (p0[0] - i))
             origin[i] = "inferred"
@@ -739,7 +839,15 @@ def _assemble(prep: _Prep, seq: SequenceResult) -> FolioResult:
                 continue
             plates = round(-gap / step)
             if gap < 0 and plates <= inside and abs(-gap / step - plates) < 1e-9:
-                chosen_plates = _choose_plates(prep, a[0] + 1, b[0] - 1, plates)
+                chosen_plates = _plates_by_evidence(range(a[0] + 1, b[0]), plates, kinds, evidence, a[0], b[0])
+                if chosen_plates is None:
+                    # the pages in the gap cannot be told apart with confidence: no folio rather than a wrong one
+                    for i in range(a[0] + 1, b[0]):
+                        value[i], conf[i], origin[i] = None, 0.0, "none"
+                        plate[i] = kinds[i] in ("plate", "blank")
+                    warnings.append(f"Between physical pages {pages[a[0]]['physical']} and {pages[b[0]]['physical']}: "
+                                    f"{plates} unnumbered page(s) that cannot be identified; the gap is left without folios.")
+                    continue
                 v = a[1].value
                 for i in range(a[0] + 1, b[0]):
                     if i in chosen_plates:
@@ -758,7 +866,7 @@ def _assemble(prep: _Prep, seq: SequenceResult) -> FolioResult:
             cut = _cut_point(a[0], b[0], markers)
             for i in range(a[0] + 1, b[0]):
                 v = a[1].value + step * (i - a[0]) if i < cut else b[1].value - step * (b[0] - i)
-                if v < 1 - 1e-9:
+                if v < 1 - 1e-9 or kinds[i] != "text":
                     continue
                 value[i] = v
                 conf[i] = 0.6
@@ -771,6 +879,10 @@ def _assemble(prep: _Prep, seq: SequenceResult) -> FolioResult:
                                 f"numbering breaks ({a[1].value:g} to {b[1].value:g}).")
         pn = in_range[-1]
         for i in range(pn[0] + 1, hi + 1):
+            # after the last reading, a page takes the next folio only with proof (running head, or text that
+            # continues the previous page): endpapers, covers and library slips get none (Gilman 1901)
+            if not evidence(i, i - 1):
+                break
             value[i] = pn[1].value + step * (i - pn[0])
             conf[i] = max(0.5, 0.9 - 0.005 * (i - pn[0]))
             origin[i] = "inferred"
@@ -783,6 +895,19 @@ def _assemble(prep: _Prep, seq: SequenceResult) -> FolioResult:
     else:
         fill(romans, first, transition - 1, True)
         fill(arabic, transition, n - 1, False)
+
+    if prep.foliation:
+        # A leaf has two sides and nothing can be inserted between them: the page right after a recto that was
+        # read is its verso, even when the gap that follows cannot be explained (Galileo 1610: fol. 16v before
+        # two unnumbered inserted leaves).
+        for (i, c, _sup) in anchors:
+            if not c.roman and abs(c.value - round(c.value)) < 1e-9 and i + 1 < n and value[i + 1] is None \
+                    and not plate[i + 1] and kinds[i + 1] in ("text", "short", "blank", "plate"):
+                if i + 1 in {a[0] for a in anchors}:
+                    continue
+                value[i + 1] = c.value + 0.5
+                conf[i + 1] = 0.9
+                origin[i + 1] = "inferred"
 
     out: list[PageFolio] = []
     for i, p in enumerate(pages):
@@ -1023,6 +1148,6 @@ def pages_from_units(units) -> list[dict]:
         out.append({
             "physical": u.ord, "header": u.header, "footer": u.footer, "folio": u.folio_seen or "",
             "text": u.text, "empty": u.empty, "confidence": u.confidence,
-            "figures": [1 for _ in u.figures], "label": u.label,
+            "figures": [1 for _ in u.figures], "label": u.label, "blank": bool(u.extra.get("blank")),
         })
     return out
