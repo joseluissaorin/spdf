@@ -34,12 +34,23 @@ final class Bibliography
         return $item;
     }
 
-    /** CSL-JSON items of several metadata records (keys disambiguated). @return list<array> */
-    public static function cslItems(array $metadatas): array
+    /**
+     * CSL-JSON export of several metadata records (keys disambiguated, SPEC §19.2). With
+     * an anchor and a single record, the item carries the CSL `label` and `locator`.
+     *
+     * @return list<array>
+     */
+    public static function cslItems(array $metadatas, ?array $anchor = null, ?array $anchorEnd = null): array
     {
-        $items = array_map([self::class, 'base'], $metadatas);
+        $items = array_map([self::class, 'base'], array_values($metadatas));
         foreach (self::keys($items) as $i => $k) {
             $items[$i]['id'] = $k;
+        }
+        if ($anchor !== null && count($items) === 1) {
+            $ll = Cite::cslLocator($anchor, $anchorEnd);
+            if ($ll !== null) {
+                [$items[0]['label'], $items[0]['locator']] = $ll;
+            }
         }
         return $items;
     }
@@ -57,13 +68,14 @@ final class Bibliography
         return strtolower(preg_replace('/[^A-Za-z]/', '', $d) ?? '');
     }
 
+    /** First year of `issued` in decimal (negative years keep their sign), or null. */
     private static function year(array $item): ?string
     {
         $y = $item['issued']['date-parts'][0][0] ?? null;
-        if (is_bool($y) || $y === null) {
+        if ($y === null || is_bool($y) || is_array($y)) {
             return null;
         }
-        if (is_int($y) || (is_float($y) && floor($y) == $y)) {
+        if (is_int($y) || is_float($y)) {
             return (string) (int) $y;
         }
         if (is_string($y) && preg_match('/^\s*-?\d+\s*$/', $y)) {
@@ -72,17 +84,22 @@ final class Bibliography
         return null;
     }
 
-    /** Base key (SPEC §19, RFC 0002): family (or literal) of the first author, else the first word of the title. */
+    /**
+     * Base key (SPEC §19.1): the first author's family, literal or given name, else the
+     * first word of `title-short` or `title`, folded to ASCII letters; `anon` if nothing is
+     * left; then the first year of `issued` or `nd`.
+     */
     public static function key(array $item): string
     {
         $base = '';
         $a = $item['author'][0] ?? null;
         if (is_array($a)) {
-            $who = ($a['family'] ?? null) ?: (($a['literal'] ?? null) ?: '');
+            $who = ($a['family'] ?? null) ?: (($a['literal'] ?? null) ?: (($a['given'] ?? null) ?: ''));
             $base = self::asciiLetters((string) $who);
         }
         if ($base === '') {
-            $words = preg_split('/\s+/u', trim((string) ($item['title'] ?? '')), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+            $title = ($item['title-short'] ?? null) ?: (($item['title'] ?? null) ?: '');
+            $words = preg_split('/\s+/u', trim((string) $title), -1, PREG_SPLIT_NO_EMPTY) ?: [];
             $base = $words === [] ? '' : self::asciiLetters($words[0]);
         }
         return ($base === '' ? 'anon' : $base) . (self::year($item) ?? 'nd');

@@ -607,52 +607,130 @@ final class Document
     }
 
     /**
-     * Units an anchor URI points at (SPEC §5.4): by physical page (and end page), else
-     * printed folio, time, slide, verse, canonical reference or section path. Returns []
-     * when the URI designates another document.
+     * Resolves an anchor URI, or the URL of a `.spdf` with a fragment, against this file
+     * (SPEC §5.4). Returns `{document, units, fragments, char, xywh}`: unit ids in `ord`
+     * order, fragment ids in `n` order, and the `char`/`xywh` of the locator (or null).
      */
-    public function locate(string $uri): array
+    public function locate(string $reference): array
     {
-        $parsed = AnchorUri::parse($uri);
-        $ref = $parsed['docref'];
+        $empty = ['document' => false, 'units' => [], 'fragments' => [], 'char' => null, 'xywh' => null];
         $d = $this->document();
-        if (str_starts_with($ref, 'sha256-')) {
-            if (substr($ref, 7) !== strtolower((string) ($d['source_sha256'] ?? ''))) {
-                return [];
+        if (str_starts_with($reference, 'spdf:')) {
+            $parsed = AnchorUri::parse($reference);
+            if ($parsed['docref'] !== 'sha256-' . $d['source_sha256'] && $parsed['docref'] !== (string) $d['id']) {
+                return $empty;
             }
-        } elseif ($ref !== (string) $d['id']) {
-            return [];
+            $l = $parsed['locator'];
+        } else {
+            $hash = strpos($reference, '#');
+            $frag = $hash === false ? '' : substr($reference, $hash + 1);
+            $l = $frag === '' ? [] : AnchorUri::parse('spdf:x#' . $frag)['locator'];
         }
-        $l = $parsed['locator'];
-        $out = [];
-        foreach ($this->units() as $u) {
-            $a = is_array($u['anchor']) ? $u['anchor'] : [];
-            if (isset($l['p'])) {
-                $ph = $a['physical'] ?? null;
-                $hit = $ph !== null && $l['p'] <= $ph && $ph <= ($l['pe'] ?? $l['p']);
-            } elseif (isset($l['f'])) {
-                $hit = ($u['printed'] ?? null) === $l['f'] || ($a['printed'] ?? null) === $l['f'];
-            } elseif (isset($l['t'])) {
-                $t = $l['t'][0];
-                $hit = isset($a['t0'], $a['t1']) && $a['t0'] <= $t && $t < $a['t1'];
-            } elseif (isset($l['sl'])) {
-                $hit = ($a['n'] ?? null) == $l['sl'];
-            } elseif (isset($l['v'])) {
-                $from = $a['line_from'] ?? null;
-                $hit = $from !== null && $from <= $l['v'][0] && $l['v'][0] <= ($a['line_to'] ?? $from);
-            } elseif (isset($l['ref'])) {
-                $hit = ($a['scheme'] ?? null) === $l['ref']['scheme'] && ($a['ref'] ?? null) === $l['ref']['ref'];
-            } elseif (isset($l['s'])) {
-                $path = $a['path'] ?? null;
-                $hit = is_array($path) && array_slice(array_values($path), 0, count($l['s'])) === $l['s'];
-            } else {
-                $hit = false;
-            }
-            if ($hit) {
-                $out[] = $u;
+        $out = ['document' => true, 'units' => [], 'fragments' => [], 'char' => $l['char'] ?? null, 'xywh' => $l['xywh'] ?? null];
+        $rule = null;
+        foreach (['p', 'f', 't', 'sl', 'v', 'ref', 's', 'sh'] as $r) {
+            if (array_key_exists($r, $l)) {
+                $rule = $r;
+                break;
             }
         }
+        if ($rule === null) {
+            return $out;
+        }
+        $units = $this->units();
+        $hits = [];
+        foreach ($units as $u) {
+            $printed = $rule === 'f' ? ($u['printed'] ?? null) : null;
+            if (self::anchorMatches($rule, $l, $u['anchor'], $printed)) {
+                $hits[] = $u['id'];
+            }
+        }
+        if ($rule === 't' && $hits === []) {
+            $timed = array_values(array_filter($units, fn ($u) => is_array($u['anchor']) && ($u['anchor']['type'] ?? null) === 'time'));
+            $last = $timed === [] ? null : $timed[count($timed) - 1]['anchor'];
+            if ($last !== null && (is_int($last['t1'] ?? null) || is_float($last['t1'] ?? null)) && $last['t1'] == $l['t'][0]) {
+                $hits = [$timed[count($timed) - 1]['id']];
+            }
+        }
+        $frags = array_values(array_filter($this->fragments(), fn ($f) => self::anchorMatches($rule, $l, $f['anchor'], null)));
+        if ($hits === [] && $frags !== []) {
+            $wanted = array_flip(array_map(fn ($f) => (string) $f['unit'], $frags));
+            foreach ($units as $u) {
+                if (isset($wanted[(string) $u['id']])) {
+                    $hits[] = $u['id'];
+                }
+            }
+        }
+        if (isset($l['char'])) {
+            [$c, $dd] = $l['char'];
+            $frags = array_values(array_filter($frags, function ($f) use ($hits, $c, $dd) {
+                $ch = is_array($f['anchor']) ? ($f['anchor']['chars'] ?? null) : null;
+                if (!in_array($f['unit'], $hits, true) || !is_array($ch) || count($ch) !== 2) {
+                    return false;
+                }
+                [$a, $b] = array_values($ch);
+                return $c < $dd ? ($a < $dd && $c < $b) : ($a <= $c && $c < $b);
+            }));
+        }
+        $out['units'] = $hits;
+        $out['fragments'] = array_map(fn ($f) => $f['id'], $frags);
         return $out;
+    }
+
+    private static function isInt(mixed $v): bool
+    {
+        return is_int($v) || (is_float($v) && is_finite($v) && floor($v) == $v);
+    }
+
+    private static function isNum(mixed $v): bool
+    {
+        return is_int($v) || is_float($v);
+    }
+
+    /** The §5.4 predicate of a rule on one anchor. */
+    private static function anchorMatches(string $rule, array $l, mixed $a, mixed $printed): bool
+    {
+        if (!is_array($a) || array_is_list($a)) {
+            return false;
+        }
+        $t = $a['type'] ?? null;
+        switch ($rule) {
+            case 'p':
+                return $t === 'page' && self::isInt($a['physical'] ?? null) && $l['p'] <= $a['physical'] && $a['physical'] <= ($l['pe'] ?? $l['p']);
+            case 'f':
+                return ($printed ?? ($a['printed'] ?? null)) === $l['f'];
+            case 't':
+                $x = $l['t'][0];
+                return $t === 'time' && self::isNum($a['t0'] ?? null) && self::isNum($a['t1'] ?? null) && $a['t0'] <= $x && $x < $a['t1'];
+            case 'sl':
+                return $t === 'slide' && ($a['n'] ?? null) == $l['sl'] && ($a['n'] ?? null) !== null;
+            case 'v':
+                $x = $l['v'][0];
+                $lf = $a['line_from'] ?? null;
+                $lt = ($a['line_to'] ?? null) ?? $lf;
+                return $t === 'verse' && self::isInt($lf) && $lf <= $x && $x <= $lt;
+            case 'ref':
+                return $t === 'canonical' && ($a['scheme'] ?? null) === $l['ref']['scheme'] && ($a['ref'] ?? null) === $l['ref']['ref'];
+            case 's':
+                $path = $a['path'] ?? null;
+                if (!in_array($t, ['section', 'web'], true) || !is_array($path) || !array_is_list($path)) {
+                    return false;
+                }
+                if (array_key_exists('para', $l)) {
+                    return $path === $l['s'] && ($a['paragraph'] ?? null) == $l['para'] && ($a['paragraph'] ?? null) !== null;
+                }
+                return array_slice($path, 0, count($l['s'])) === $l['s'];
+            case 'sh':
+                if ($t !== 'sheet' || ($a['sheet'] ?? null) !== $l['sh']) {
+                    return false;
+                }
+                if (isset($l['rows'])) {
+                    $x = $l['rows'][0];
+                    return self::isInt($a['row_from'] ?? null) && self::isInt($a['row_to'] ?? null) && $a['row_from'] <= $x && $x <= $a['row_to'];
+                }
+                return true;
+        }
+        return false;
     }
 
     /** Short author-date citation of an anchor, e.g. "(Cervantes, 1605, p. 45)". */

@@ -42,7 +42,7 @@ final class Runner
                 if ($reason === null) {
                     $passed[] = $id;
                 } elseif ($reason === 'skip') {
-                    $skipped[] = $id;
+                    $skipped[] = ['id' => $id, 'reason' => 'ALTO, TEI and IIIF exports (SPEC §19.4, optional) are not implemented'];
                 } else {
                     $failed[] = ['id' => $id, 'reason' => $reason];
                 }
@@ -122,6 +122,31 @@ final class Runner
                     return "expected an error, got {$hex}";
                 }
                 return $hex === $ex['hex'] ? null : "expected {$ex['hex']}, got {$hex}";
+            case 'locate':
+                $doc = Document::open($this->path($in['file']));
+                try {
+                    $got = $doc->locate((string) $in['reference']);
+                } catch (SpdfException $e) {
+                    $got = ['document' => false, 'units' => [], 'fragments' => [], 'char' => null, 'xywh' => null];
+                }
+                return self::compare($ex, $got, 'locate');
+            case 'export_csl':
+                $metas = array_map(fn ($f) => Document::open($this->path($f))->metadata(), $in['files']);
+                $anchor = is_array($in['anchor'] ?? null) ? $in['anchor'] : null;
+                $end = is_array($in['anchor_end'] ?? null) ? $in['anchor_end'] : null;
+                return self::compare($ex['items'], \Spdf\Bibliography::cslItems($metas, $anchor, $end), 'items');
+            case 'export_bibtex':
+                $metas = array_map(fn ($f) => Document::open($this->path($f))->metadata(), $in['files']);
+                $want = self::bibLines((string) $ex['text']);
+                $got = self::bibLines(\Spdf\Bibliography::bibtexAll($metas));
+                foreach ($want as $i => $line) {
+                    if (($got[$i] ?? null) !== $line) {
+                        return "line " . ($i + 1) . ": expected {$line}, got " . ($got[$i] ?? '(nothing)');
+                    }
+                }
+                return count($got) === count($want) ? null : 'expected ' . count($want) . ' lines, got ' . count($got);
+            case 'export_structure':
+                return 'skip';
             case 'cite':
                 $meta = $in['metadata'] instanceof \stdClass ? [] : (array) $in['metadata'];
                 $end = is_array($in['anchor_end'] ?? null) ? $in['anchor_end'] : null;
@@ -171,16 +196,30 @@ final class Runner
         return $f === $uri ? null : "format(parse(uri)): expected {$uri}, got {$f}";
     }
 
+    /** @return list<string> */
+    private static function bibLines(string $text): array
+    {
+        $out = [];
+        foreach (explode("\n", str_replace("\r\n", "\n", $text)) as $line) {
+            $t = trim($line);
+            if ($t !== '') {
+                $out[] = $t;
+            }
+        }
+        return $out;
+    }
+
     private static function compareResults(array $want, array $got, bool $via): ?string
     {
         if (count($want) !== count($got)) {
-            return 'results: expected ' . count($want) . ' (' . implode(',', array_column($want, 'fragment_id')) . '), got '
-                . count($got) . ' (' . implode(',', array_column($got, 'fragment_id')) . ')';
+            return 'results: expected ' . count($want) . ', got ' . count($got);
         }
         foreach ($want as $i => $w) {
             $g = $got[$i];
-            if ($w['fragment_id'] !== $g['fragment_id']) {
-                return "results[{$i}].fragment_id: expected {$w['fragment_id']}, got {$g['fragment_id']}";
+            foreach (['fragment_id', 'unit_id', 'figure_id'] as $idKey) {
+                if (array_key_exists($idKey, $w) && ($w[$idKey] !== ($g[$idKey] ?? null))) {
+                    return "results[{$i}].{$idKey}: expected {$w[$idKey]}, got " . ($g[$idKey] ?? 'nothing');
+                }
             }
             if (abs((float) $w['score'] - (float) $g['score']) > self::TOLERANCE) {
                 return "results[{$i}].score: expected {$w['score']}, got {$g['score']}";

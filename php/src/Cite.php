@@ -174,6 +174,60 @@ final class Cite
         return "{$one} {$la}";
     }
 
+    /**
+     * CSL `label` and `locator` of an anchor (SPEC §19.2), or null when CSL has none.
+     *
+     * @return array{0:string,1:string}|null
+     */
+    public static function cslLocator(array $a, ?array $end = null): ?array
+    {
+        $t = $a['type'] ?? null;
+        $folio = fn (array $x) => ($x['printed'] ?? null) === null ? null
+            : ((($x['source'] ?? null) === 'inferred') ? '[' . $x['printed'] . ']' : (string) $x['printed']);
+        if ($t === 'page' || (in_array($t, ['section', 'web'], true) && ($a['printed'] ?? null) !== null)) {
+            $f = $folio($a);
+            if ($f === null) {
+                return null;
+            }
+            $label = $t === 'page' ? (['leaf' => 'folio', 'column' => 'column'][$a['foliation'] ?? 'page'] ?? 'page') : 'page';
+            if ($end !== null && ($end['type'] ?? null) === $t && ($end['printed'] ?? null) !== null
+                && ($end['printed'] ?? null) !== ($a['printed'] ?? null)) {
+                return [$label, $f . '-' . $folio($end)];
+            }
+            return [$label, $f];
+        }
+        if ($t === 'section' || $t === 'web') {
+            if (($a['paragraph'] ?? null) !== null) {
+                return ['paragraph', (string) $a['paragraph']];
+            }
+            if (isset($a['path']) && is_array($a['path']) && $a['path'] !== []) {
+                return ['section', (string) $a['path'][count($a['path']) - 1]];
+            }
+            return null;
+        }
+        if ($t === 'time') {
+            $s = self::clock((float) ($a['t0'] ?? 0));
+            if ($end !== null && ($end['type'] ?? null) === 'time') {
+                $s .= '-' . self::clock((float) ($end['t1'] ?? 0));
+            }
+            return ['timestamp', $s];
+        }
+        if ($t === 'verse') {
+            $from = $a['line_from'] ?? null;
+            $to = $a['line_to'] ?? null;
+            return ['verse', $to === null || $to == $from ? (string) $from : "{$from}-{$to}"];
+        }
+        if ($t === 'canonical') {
+            return ['section', (string) ($a['ref'] ?? '')];
+        }
+        if ($t === 'sheet') {
+            $from = $a['row_from'] ?? null;
+            $to = $a['row_to'] ?? null;
+            return ['line', $from == $to ? (string) $from : "{$from}-{$to}"];
+        }
+        return null;
+    }
+
     /** `h:mm:ss` from one hour, else `m:ss`; seconds floored. */
     public static function clock(float $t): string
     {

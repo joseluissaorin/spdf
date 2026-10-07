@@ -62,20 +62,22 @@ $uri = $doc->anchorUri($fragment['anchor'], $fragment['anchor_end']);
 $parsed = AnchorUri::parse('spdf:sha256-3f2a…#p=29&f=21&char=118,301');
 // ['docref' => 'sha256-3f2a…', 'locator' => ['p' => 29, 'f' => '21', 'char' => [118, 301]]]
 AnchorUri::format($parsed['docref'], $parsed['locator']);   // the same URI, byte for byte
-$doc->locate($uri);   // the units the URI points at ([] if it names another document)
+$doc->locate($uri);   // {document, units, fragments, char, xywh} (SPEC §5.4)
 ```
 
 ### Bibliography
 
 ```php
 file_put_contents('lazarillo.json', $doc->cslJson());   // Zotero, Pandoc, citeproc
-file_put_contents('lazarillo.bib', $doc->bibtex());     // @book{la1554, ...
+file_put_contents('lazarillo.bib', $doc->bibtex());     // @book{lazarillo1554, ...
 ```
 
-Keys and fields follow the specification (§19): first author's family name, or the first
-word of the title, folded to ASCII and lowercased, plus the year (`cervantessaavedra1605`);
-the CSL-JSON `id` is the same key. `Spdf\Bibliography::bibtexAll()` exports several
-records and disambiguates colliding keys with `a`, `b`, `c`…
+Keys and fields follow the specification (§19): the first author's name, or the first
+word of the short title, folded to ASCII and lowercased, plus the year
+(`cervantessaavedra1605`, `lazarillo1554`, `anonnd`); the CSL-JSON `id` is the same key.
+`Spdf\Bibliography::cslItems()` and `bibtexAll()` export several records and disambiguate
+colliding keys with `a`, `b`, `c`…; `cslItems([$meta], $anchor, $anchorEnd)` adds the CSL
+`label` and `locator` of a citation.
 
 ## Validate
 
@@ -142,7 +144,9 @@ vendor/bin/spdf conformance ../conformance
 
 `php bin/spdf conformance ../conformance` runs the shared suite of the repository and
 prints `{"impl":"php","version":…,"passed":[…],"failed":[…],"skipped":[…]}`. CI runs it on
-PHP 8.1 to 8.4 and publishes the report as the `conformance-php` artifact.
+PHP 8.1 to 8.4 and publishes the report as the `conformance-php` artifact. All kinds are
+claimed except `export_structure` (ALTO, TEI and IIIF exports are optional and not
+implemented).
 
 ## License
 

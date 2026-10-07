@@ -224,8 +224,7 @@ final class Search
             }
         }
         return [
-            'target' => $target,
-            'id' => $id,
+            ($target === 'unit' ? 'unit_id' : 'figure_id') => $id,
             'score' => $score,
             'via' => ['vector'],
             'anchor' => $anchor,

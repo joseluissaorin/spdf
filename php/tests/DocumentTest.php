@@ -94,9 +94,9 @@ final class DocumentTest extends TestCase
     {
         $d = Document::open(self::$file);
         $csl = Json::decode($d->cslJson());
-        $this->assertSame('la1554', $csl[0]['id']);
+        $this->assertSame('lazarillo1554', $csl[0]['id']);
         $this->assertArrayNotHasKey('spdf', $csl[0]);
-        $this->assertStringStartsWith("@book{la1554,\n  title = {{La} vida de {Lazarillo} de {Tormes:}", $d->bibtex());
+        $this->assertStringStartsWith("@book{lazarillo1554,\n  title = {{La} vida de {Lazarillo} de {Tormes:}", $d->bibtex());
     }
 
     public function testLegacyView(): void
