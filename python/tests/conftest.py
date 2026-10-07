@@ -47,11 +47,24 @@ PNG_1x1 = bytes.fromhex(
 
 
 def page(i: int, printed: str | None, **extra: Any) -> dict[str, Any]:
-    return {"type": "page", "physical": i, "printed": printed, "roman": False, "source": "read", "confidence": 1, **extra}
+    return {
+        "type": "page",
+        "physical": i,
+        "printed": printed,
+        "roman": False,
+        "source": "read",
+        "confidence": 1,
+        **extra,
+    }
 
 
 def build_quijote(
-    path: Path, *, sign_key: bytes | None = None, vectors: bool = True, hash_content: bool = True, **writer_kw: Any
+    path: Path,
+    *,
+    sign_key: bytes | None = None,
+    vectors: bool = True,
+    hash_content: bool = True,
+    **writer_kw: Any,
 ) -> Path:
     with spdf.Writer(path, overwrite=True, **writer_kw) as w:
         w.add_document(
@@ -109,16 +122,39 @@ def build_quijote(
         if vectors:
             w.add_space({"id": "test@4", "provider": "test", "model": "test", "dims": 4, "created": "2026-10-07"})
             w.add_space(
-                {"id": "test@4:i8", "provider": "test", "model": "test", "dims": 4, "dtype": "i8", "created": "2026-10-07"}
+                {
+                    "id": "test@4:i8",
+                    "provider": "test",
+                    "model": "test",
+                    "dims": 4,
+                    "dtype": "i8",
+                    "created": "2026-10-07",
+                }
             )
             w.add_space(
-                {"id": "test@4:f16", "provider": "test", "model": "test", "dims": 4, "dtype": "f16", "created": "2026-10-07"}
+                {
+                    "id": "test@4:f16",
+                    "provider": "test",
+                    "model": "test",
+                    "dims": 4,
+                    "dtype": "f16",
+                    "created": "2026-10-07",
+                }
             )
             for i in range(1, 4):
                 v = [1.0 if j == i - 1 else 0.0 for j in range(4)]
                 for sp in ("test@4", "test@4:i8", "test@4:f16"):
                     w.add_vector("fragment", f"f{i}", sp, data=v)
-        w.add_provenance({"stage": "read", "provider": "test", "model": "none", "detail": {"pages": 3}, "ms": 5, "at": "2026-10-07T00:00:00Z"})
+        w.add_provenance(
+            {
+                "stage": "read",
+                "provider": "test",
+                "model": "none",
+                "detail": {"pages": 3},
+                "ms": 5,
+                "at": "2026-10-07T00:00:00Z",
+            }
+        )
         if sign_key is not None or not hash_content:
             w.finalize(sign_key=sign_key, content_hash=hash_content)
     return path
@@ -168,7 +204,14 @@ CREATE TABLE procedencia (documento TEXT NOT NULL, fase TEXT NOT NULL, proveedor
 
 
 def legacy_page(i: int, printed: str | None) -> dict[str, Any]:
-    return {"tipo": "pagina", "fisica": i, "impresa": printed, "romana": False, "origen": "leido", "confianza": 1}
+    return {
+        "tipo": "pagina",
+        "fisica": i,
+        "impresa": printed,
+        "romana": False,
+        "origen": "leido",
+        "confianza": 1,
+    }
 
 
 LEGACY_META = {
@@ -202,26 +245,60 @@ def build_legacy(path: Path, *, version: str = "4.1", gzipped: bool = True) -> P
     c.execute(f"PRAGMA user_version = {410 if v41 else 400}")
     c.executemany(
         "INSERT INTO spdf VALUES (?, ?)",
-        [("spdf_version", version), ("creado", "2026-10-06T20:00:00.000Z"), ("generador", "scholaris-nube/test")],
+        [
+            ("spdf_version", version),
+            ("creado", "2026-10-06T20:00:00.000Z"),
+            ("generador", "scholaris-nube/test"),
+        ],
     )
     c.execute(
         "INSERT INTO documentos (id, tipo, metadatos, estado, huella, original, mime, bytes, unidades, creado, "
         "actualizado, bibliotecas, titulo, autores, anio, idioma) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (
-            "doc_mini", "pdf_escaneado", json.dumps(LEGACY_META, ensure_ascii=False), "listo", SOURCE_SHA,
-            "original.pdf", "application/pdf", len(SOURCE), 3, "2026-10-06T20:00:00Z", "2026-10-06T20:00:00Z", "[]",
-            LEGACY_META["titulo"], "Cervantes Saavedra", 1605, "es",
+            "doc_mini",
+            "pdf_escaneado",
+            json.dumps(LEGACY_META, ensure_ascii=False),
+            "listo",
+            SOURCE_SHA,
+            "original.pdf",
+            "application/pdf",
+            len(SOURCE),
+            3,
+            "2026-10-06T20:00:00Z",
+            "2026-10-06T20:00:00Z",
+            "[]",
+            LEGACY_META["titulo"],
+            "Cervantes Saavedra",
+            1605,
+            "es",
         ),
     )
     for i, t in enumerate(TEXTS):
         printed = None if i == 0 else str(i + 22)
         cols = "id, documento, orden, ancla, texto, lector, confianza, impresa, imagen"
-        vals: list[Any] = [f"u{i}", "doc_mini", i, json.dumps(legacy_page(i + 1, printed)), t, "prueba", 1, printed,
-                           "paginas/0001.png" if i == 0 else ""]
+        vals: list[Any] = [
+            f"u{i}",
+            "doc_mini",
+            i,
+            json.dumps(legacy_page(i + 1, printed)),
+            t,
+            "prueba",
+            1,
+            printed,
+            "paginas/0001.png" if i == 0 else "",
+        ]
         c.execute(f"INSERT INTO unidades ({cols}) VALUES ({','.join('?' * len(vals))})", vals)
         fcols = "id, documento, unidad, orden, texto, contexto, seccion, ancla"
-        fvals: list[Any] = [f"f{i}", "doc_mini", f"u{i}", i, t, "Primera parte, capítulo primero.",
-                            json.dumps(["Capítulo primero"]), json.dumps(legacy_page(i + 1, printed))]
+        fvals: list[Any] = [
+            f"f{i}",
+            "doc_mini",
+            f"u{i}",
+            i,
+            t,
+            "Primera parte, capítulo primero.",
+            json.dumps(["Capítulo primero"]),
+            json.dumps(legacy_page(i + 1, printed)),
+        ]
         if v41:
             fcols += ", texto_busqueda"
             fvals.append("")
@@ -242,7 +319,15 @@ def build_legacy(path: Path, *, version: str = "4.1", gzipped: bool = True) -> P
     c.execute("INSERT INTO blobs VALUES (?,?,?)", ("paginas/0001.png", "image/png", PNG_1x1))
     c.execute(
         "INSERT INTO figuras VALUES (?,?,?,?,?,?,?)",
-        ("g1", "doc_mini", "u0", "", "Portada", None, json.dumps({"tipo": "imagen", "region": {"x": 0, "y": 0, "w": 1, "h": 0.5}})),
+        (
+            "g1",
+            "doc_mini",
+            "u0",
+            "",
+            "Portada",
+            None,
+            json.dumps({"tipo": "imagen", "region": {"x": 0, "y": 0, "w": 1, "h": 0.5}}),
+        ),
     )
     c.execute(
         "INSERT INTO procedencia VALUES (?,?,?,?,?,?)",

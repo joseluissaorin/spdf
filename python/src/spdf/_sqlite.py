@@ -44,7 +44,8 @@ def _load_pysqlite3() -> ModuleType | None:
         from pysqlite3 import dbapi2
     except ImportError:
         return None
-    return dbapi2
+    mod: ModuleType = dbapi2
+    return mod
 
 
 def _choose() -> ModuleType:

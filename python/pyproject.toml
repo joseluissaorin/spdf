@@ -75,13 +75,13 @@ module = ["numpy.*", "pandas.*", "pyarrow.*", "cryptography.*", "pysqlite3.*"]
 ignore_missing_imports = true
 
 [tool.ruff]
-line-length = 110
+line-length = 120
 target-version = "py310"
 src = ["src", "tests"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "PT", "C4", "PIE", "RET", "TID"]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "PT", "C4", "PIE", "RET"]
 ignore = ["RUF001", "RUF002", "RUF003", "SIM108", "RET505"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["PT011"]
+"tests/*" = ["PT011", "PT018", "E501", "PT006", "PT007"]

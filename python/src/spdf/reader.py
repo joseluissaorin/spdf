@@ -6,6 +6,7 @@ metadata (CSL-JSON) and references are mapped on the fly (contract §7).
 
 from __future__ import annotations
 
+import contextlib
 import dataclasses
 import hashlib
 import json
@@ -30,11 +31,11 @@ from .errors import SpdfError, UnsupportedExtensionError
 from .legacy import map_anchor, map_kind, map_meta_key, map_metadata, map_modalities, map_target
 from .model import (
     BlobInfo,
-    LexicalSearch,
     Document,
     Extension,
     Figure,
     Fragment,
+    LexicalSearch,
     Provenance,
     SearchResult,
     Section,
@@ -42,7 +43,7 @@ from .model import (
     Unit,
 )
 from .schema import JSON_COLUMNS, LEGACY_COLUMNS, LEGACY_TABLES, LEGACY_TARGETS, TABLES_50
-from .search import fts_string, is_cjk, parse_query, rrf
+from .search import is_cjk, parse_query, rrf
 from .vectors import decode, scores
 
 __all__ = ["SpdfFile", "open_spdf"]
@@ -136,10 +137,8 @@ class SpdfFile:
 
     def __del__(self) -> None:  # pragma: no cover - best effort
         if getattr(self, "_owns", False):
-            try:
+            with contextlib.suppress(Exception):
                 self.close()
-            except Exception:
-                pass
 
     def __repr__(self) -> str:
         return f"<SpdfFile {self._c.source!r} version={self.version}>"
@@ -208,9 +207,7 @@ class SpdfFile:
     def _cols(self, physical: str) -> list[str]:
         if physical not in self._columns:
             try:
-                self._columns[physical] = [
-                    str(r[1]) for r in self.conn.execute(f"PRAGMA table_info({_q(physical)})")
-                ]
+                self._columns[physical] = [str(r[1]) for r in self.conn.execute(f"PRAGMA table_info({_q(physical)})")]
             except sqlite3.Error:
                 self._columns[physical] = []
         return self._columns[physical]
@@ -250,7 +247,7 @@ class SpdfFile:
         cur = self.conn.execute(sql, tuple(params))
         names = [d[0] for d in cur.description]
         for row in cur:
-            yield dict(zip(names, row))
+            yield dict(zip(names, row, strict=True))
 
     def _rows(self, table: str, **kw: Any) -> list[dict[str, Any]]:
         return [self._process(table, r) for r in self._raw(table, **kw)]
@@ -570,7 +567,7 @@ class SpdfFile:
 
     def blobs(self) -> list[BlobInfo]:
         """Embedded binaries (ordered by key); ``sha256`` is computed from the bytes."""
-        out = []
+        out: list[BlobInfo] = []
         if not self.has_table("blobs"):
             return out
         kcol, mcol, dcol = self._col("blobs", "key"), self._col("blobs", "mime"), self._col("blobs", "data")
@@ -645,7 +642,9 @@ class SpdfFile:
     # -- anchors, URIs, citations -----------------------------------------------------
 
     def anchor_uri(
-        self, item: Fragment | Unit | Figure | Anchor | Mapping[str, Any], end: Anchor | Mapping[str, Any] | None = None
+        self,
+        item: Fragment | Unit | Figure | Anchor | Mapping[str, Any],
+        end: Anchor | Mapping[str, Any] | None = None,
     ) -> str:
         """The anchor URI of a fragment, unit, figure or anchor in this document."""
         anchor, end = _anchor_of(item, end)
@@ -767,8 +766,7 @@ class SpdfFile:
         if self._n_by_id is None:
             icol = _q(self._col("fragments", "id"))
             self._n_by_id = {
-                str(i): int(n)
-                for i, n in self.conn.execute(f"SELECT {icol}, n FROM {_q(self._physical('fragments'))}")
+                str(i): int(n) for i, n in self.conn.execute(f"SELECT {icol}, n FROM {_q(self._physical('fragments'))}")
             }
         return self._n_by_id
 
@@ -785,15 +783,17 @@ class SpdfFile:
             ids.append(vid)
             blobs.append(data)
         s = scores(q, blobs, sp.dtype, sp.normalized)
+        tiebreak: dict[str, int] = {}
         if target == "fragment":
-            nmap = self._n_map()
-            key = lambda i: nmap.get(ids[i], 1 << 62)  # noqa: E731
+            tiebreak = self._n_map()
         elif target == "unit":
-            ranks = {u.id: u.ord for u in self.iter_units()}
-            key = lambda i: ranks.get(ids[i], 1 << 62)  # noqa: E731
-        else:
-            key = lambda i: 0  # noqa: E731
-        order = sorted(range(len(ids)), key=lambda i: (-s[i], key(i), ids[i]))
+            tiebreak = {u.id: u.ord for u in self.iter_units()}
+        far = 1 << 62
+
+        def sort_key(i: int) -> tuple[float, int, str]:
+            return (-s[i], tiebreak.get(ids[i], far) if tiebreak else 0, ids[i])
+
+        order = sorted(range(len(ids)), key=sort_key)
         return [(ids[i], s[i]) for i in order[: max(0, limit)]]
 
     def search_vector(
@@ -814,9 +814,7 @@ class SpdfFile:
         if target == "fragment":
             nmap = self._n_map()
             frags = self._fragments_by_n([nmap[i] for i, _ in ranked if i in nmap])
-            return [
-                self._result(frags[nmap[i]], s, ("vector",)) for i, s in ranked if i in nmap and nmap[i] in frags
-            ]
+            return [self._result(frags[nmap[i]], s, ("vector",)) for i, s in ranked if i in nmap and nmap[i] in frags]
         out: list[SearchResult] = []
         for i, s in ranked:
             obj: Unit | Figure | None
@@ -909,9 +907,7 @@ class SpdfFile:
         current: str | None = None
         h = hashlib.sha256()
         count = 0
-        for space, data in self.conn.execute(
-            f"SELECT {scol}, {dcol} FROM {table} ORDER BY {scol}, {tcol}, {icol}"
-        ):
+        for space, data in self.conn.execute(f"SELECT {scol}, {dcol} FROM {table} ORDER BY {scol}, {tcol}, {icol}"):
             if space != current:
                 if current is not None:
                     out[current] = {"count": count, "sha256": h.hexdigest()}
@@ -941,7 +937,7 @@ class SpdfFile:
             for target, vid, data in self.conn.execute(sql, (space_id,)):
                 raw = bytes(data)
                 if dtype == "i8":
-                    values: list[Any] = list(raw[i] - 256 if raw[i] > 127 else raw[i] for i in range(len(raw)))
+                    values: list[Any] = [b - 256 if b > 127 else b for b in raw]
                 else:
                     values = decode(raw, dtype)
                 t = map_target(str(target)) if self.legacy else str(target)

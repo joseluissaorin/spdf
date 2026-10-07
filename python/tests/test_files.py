@@ -10,9 +10,9 @@ from collections.abc import Callable
 from pathlib import Path
 
 import pytest
-from conftest import SOURCE, SOURCE_SHA, TEXTS, build_legacy, build_quijote
 
 import spdf
+from conftest import SOURCE, SOURCE_SHA, TEXTS, build_legacy, build_quijote
 from spdf.cli import main
 
 # -- reading 5.0 ------------------------------------------------------------------------
@@ -50,17 +50,40 @@ def test_read_document_and_records(quijote: Path) -> None:
 def test_dump_shape(quijote: Path) -> None:
     d = spdf.dump(quijote)
     assert list(d) == [
-        "spdf_version", "meta", "fts", "document", "units", "sections", "fragments", "figures",
-        "spaces", "vectors", "blobs", "provenance", "extensions",
+        "spdf_version",
+        "meta",
+        "fts",
+        "document",
+        "units",
+        "sections",
+        "fragments",
+        "figures",
+        "spaces",
+        "vectors",
+        "blobs",
+        "provenance",
+        "extensions",
     ]
     assert d["spdf_version"] == "5.0" and "legacy" not in d
     assert d["fts"] == {"tokenizer": "unicode61 remove_diacritics 2", "trigram": False}
     assert "document" not in d["units"][0] and "document" not in d["fragments"][0]
     assert set(d["vectors"]) == {"test@4", "test@4:i8", "test@4:f16"}
     assert d["vectors"]["test@4"]["count"] == 3
-    assert d["blobs"][0] == {"key": "original.pdf", "mime": "application/pdf", "bytes": len(SOURCE), "sha256": SOURCE_SHA}
+    assert d["blobs"][0] == {
+        "key": "original.pdf",
+        "mime": "application/pdf",
+        "bytes": len(SOURCE),
+        "sha256": SOURCE_SHA,
+    }
     assert d["provenance"] == [
-        {"stage": "read", "provider": "test", "model": "none", "detail": {"pages": 3}, "ms": 5, "at": "2026-10-07T00:00:00Z"}
+        {
+            "stage": "read",
+            "provider": "test",
+            "model": "none",
+            "detail": {"pages": 3},
+            "ms": 5,
+            "at": "2026-10-07T00:00:00Z",
+        }
     ]
     assert d["units"][0]["confidence"] == 1 and d["units"][0]["notes"] is None
     text = spdf.canonical_dumps(d)
@@ -106,12 +129,19 @@ def test_vector_and_hybrid_search(quijote: Path) -> None:
             f.search_vector([0, 1, 0, 0])  # several spaces: must choose
         with pytest.raises(ValueError):
             f.search_vector([0, 1], space="test@4")
+        lex = [h.fragment_id for h in f.search("hidalgo", limit=50)]
+        vec = [h.fragment_id for h in f.search_vector([0, 0, 1, 0], space="test@4", limit=50)]
+        expected: dict[str, float] = {}
+        for ranking in (lex, vec):
+            for rank, fid in enumerate(ranking, start=1):
+                expected[fid] = expected.get(fid, 0.0) + 1 / (10 + rank)
         hy = f.search_hybrid("hidalgo", [0, 0, 1, 0], space="test@4")
-        assert [h.fragment_id for h in hy] == ["f1", "f2", "f3"] or [h.fragment_id for h in hy][0] in ("f1", "f3")
-        top = hy[0]
-        assert top.score == pytest.approx(sum(1 / (10 + r) for r in (1, 1))) or top.via
-        ids = {h.fragment_id: h.via for h in hy}
-        assert ids["f3"] == ("vector",) or "vector" in ids["f3"]
+        order = sorted(expected, key=lambda fid: (-expected[fid], int(fid[1:])))
+        assert [h.fragment_id for h in hy] == order
+        for h in hy:
+            assert h.score == pytest.approx(expected[h.fragment_id])
+            assert h.via == tuple(v for v, lst in (("lexical", lex), ("vector", vec)) if h.fragment_id in lst)
+        assert len(f.search_hybrid("hidalgo", [0, 0, 1, 0], space="test@4", limit=1)) == 1
 
 
 def test_cjk_search(tmp_path: Path) -> None:
@@ -119,8 +149,14 @@ def test_cjk_search(tmp_path: Path) -> None:
         p = tmp_path / f"cjk{int(trigram)}.spdf"
         with spdf.Writer(p, overwrite=True, trigram=trigram) as w:
             w.add_document(
-                {"id": "lunyu", "kind": "document", "metadata": {"type": "book", "title": "論語"},
-                 "source_sha256": "0" * 64, "mime": "text/plain", "bytes": 1}
+                {
+                    "id": "lunyu",
+                    "kind": "document",
+                    "metadata": {"type": "book", "title": "論語"},
+                    "source_sha256": "0" * 64,
+                    "mime": "text/plain",
+                    "bytes": 1,
+                }
             )
             for i, t in enumerate(["學而時習之，不亦說乎", "有朋自遠方來，不亦樂乎", "人不知而不慍"], start=1):
                 a = {"type": "section", "path": ["學而"], "paragraph": i}
@@ -204,7 +240,17 @@ def test_roundtrip_copy(quijote: Path, tmp_path: Path) -> None:
         out = spdf.copy_into(f, tmp_path / "copy.spdf")
         original = f.dump()
     copied = spdf.dump(out)
-    for key in ("document", "units", "fragments", "sections", "figures", "spaces", "vectors", "blobs", "provenance"):
+    for key in (
+        "document",
+        "units",
+        "fragments",
+        "sections",
+        "figures",
+        "spaces",
+        "vectors",
+        "blobs",
+        "provenance",
+    ):
         assert copied[key] == original[key], key
 
 
@@ -251,18 +297,28 @@ def test_gzip_wrapped_50(quijote: Path, tmp_path: Path) -> None:
         (["DROP TABLE figures"], "E010"),
         (["ALTER TABLE units DROP COLUMN words"], "E011"),
         (["DELETE FROM spdf_meta WHERE key = 'generator'"], "E012"),
-        (["INSERT INTO documents SELECT 'otro', kind, metadata, source_sha256, source_ref, mime, bytes, unit_count, "
-          "duration, created, updated, title, authors, year, language, rights FROM documents"], "E013"),
+        (
+            [
+                "INSERT INTO documents SELECT 'otro', kind, metadata, source_sha256, source_ref, mime, bytes, unit_count, "
+                "duration, created, updated, title, authors, year, language, rights FROM documents"
+            ],
+            "E013",
+        ),
         (["UPDATE documents SET metadata = '{bad'"], "E050"),
         (["UPDATE documents SET rights = '[1'"], "E050"),
-        (["UPDATE documents SET metadata = '{\"title\": \"x\"}'"], "E051"),
+        (['UPDATE documents SET metadata = \'{"title": "x"}\''], "E051"),
         (["INSERT INTO extensions VALUES ('x_acme_magic', '1', 1)"], "E060"),
         (["UPDATE units SET ord = 5 WHERE id = 'u3'"], "E090"),
         (["UPDATE units SET anchor = 'nope' WHERE id = 'u1'"], "E040"),
-        (["UPDATE fragments SET anchor = '{\"type\":\"page\",\"physical\":1}' WHERE id = 'f1'"], "E040"),
-        (["UPDATE figures SET anchor = '{\"type\":\"hologram\"}'"], "E041"),
-        (["UPDATE fragments SET anchor = '{\"type\":\"page\",\"physical\":1,\"printed\":null,\"chars\":[0,9999]}' "
-          "WHERE id = 'f1'"], "E042"),
+        (['UPDATE fragments SET anchor = \'{"type":"page","physical":1}\' WHERE id = \'f1\''], "E040"),
+        (['UPDATE figures SET anchor = \'{"type":"hologram"}\''], "E041"),
+        (
+            [
+                'UPDATE fragments SET anchor = \'{"type":"page","physical":1,"printed":null,"chars":[0,9999]}\' '
+                "WHERE id = 'f1'"
+            ],
+            "E042",
+        ),
         (["UPDATE vectors SET data = x'00' WHERE id = 'f1' AND space = 'test@4'"], "E030"),
         (["UPDATE vectors SET space = 'ghost@4' WHERE id = 'f1' AND space = 'test@4'"], "E031"),
         (["UPDATE spaces SET dtype = 'bf16' WHERE id = 'test@4:f16'"], "E032"),
@@ -372,24 +428,42 @@ def test_open_bytes(quijote: Path, legacy41: Path) -> None:
 
 def test_writer_errors(tmp_path: Path) -> None:
     p = tmp_path / "w.spdf"
-    with pytest.raises(spdf.WriterError):
-        with spdf.Writer(p) as w:
-            w.add_unit({"id": "u1", "ord": 1, "anchor": {"type": "slide", "n": 1}, "reader": "x"})
+    with pytest.raises(spdf.WriterError), spdf.Writer(p) as w:
+        w.add_unit({"id": "u1", "ord": 1, "anchor": {"type": "slide", "n": 1}, "reader": "x"})
     assert not p.exists()
     assert not list(tmp_path.glob(".w.spdf.*"))
     w = spdf.Writer(p)
     with pytest.raises(spdf.WriterError):
-        w.add_document({"id": "d", "kind": "pdf", "metadata": {"title": "x"}, "source_sha256": "0", "mime": "x", "bytes": 1})
+        w.add_document(
+            {
+                "id": "d",
+                "kind": "pdf",
+                "metadata": {"title": "x"},
+                "source_sha256": "0",
+                "mime": "x",
+                "bytes": 1,
+            }
+        )
     with pytest.raises(spdf.WriterError):
         w.add_vector("fragment", "f1", "nope@3", data=[1, 2, 3])
     w.abort()
+    # A unit whose chars point past its text makes an invalid file: refused at finalize.
+    w2 = spdf.Writer(p)
+    w2.add_document(
+        {
+            "id": "d",
+            "kind": "pdf",
+            "metadata": {"type": "book", "title": "x"},
+            "source_sha256": "0" * 64,
+            "mime": "x",
+            "bytes": 1,
+        }
+    )
+    w2.add_unit(
+        {"id": "u1", "ord": 1, "anchor": {"type": "slide", "n": 1, "chars": [0, 50]}, "text": "abc", "reader": "x"}
+    )
     with pytest.raises(spdf.WriterError):
-        # A unit whose chars point past its text makes an invalid file: refused at finalize.
-        with spdf.Writer(p) as w2:
-            w2.add_document({"id": "d", "kind": "pdf", "metadata": {"type": "book", "title": "x"},
-                             "source_sha256": "0" * 64, "mime": "x", "bytes": 1})
-            w2.add_unit({"id": "u1", "ord": 1, "anchor": {"type": "slide", "n": 1, "chars": [0, 50]}, "text": "abc",
-                         "reader": "x"})
+        w2.finalize()
     assert not p.exists()
 
 
@@ -397,11 +471,35 @@ def test_writer_nfc_and_defaults(tmp_path: Path) -> None:
     p = tmp_path / "nfc.spdf"
     decomposed = "rocín"  # i + combining acute
     with spdf.Writer(p) as w:
-        w.add_document({"id": "d", "kind": "audio", "metadata": {"type": "speech", "title": "Prueba"},
-                        "source_sha256": "A" * 64, "mime": "audio/mpeg", "bytes": 1, "duration": 10.0})
-        w.add_unit({"id": "u1", "ord": 1, "anchor": {"type": "time", "t0": 0.0, "t1": 10.0}, "text": decomposed,
-                    "reader": "whisper"})
-        w.add_fragment({"id": "f1", "unit": "u1", "ord": 1, "text": decomposed, "anchor": {"type": "time", "t0": 0, "t1": 10}})
+        w.add_document(
+            {
+                "id": "d",
+                "kind": "audio",
+                "metadata": {"type": "speech", "title": "Prueba"},
+                "source_sha256": "A" * 64,
+                "mime": "audio/mpeg",
+                "bytes": 1,
+                "duration": 10.0,
+            }
+        )
+        w.add_unit(
+            {
+                "id": "u1",
+                "ord": 1,
+                "anchor": {"type": "time", "t0": 0.0, "t1": 10.0},
+                "text": decomposed,
+                "reader": "whisper",
+            }
+        )
+        w.add_fragment(
+            {
+                "id": "f1",
+                "unit": "u1",
+                "ord": 1,
+                "text": decomposed,
+                "anchor": {"type": "time", "t0": 0, "t1": 10},
+            }
+        )
     with spdf.open(p) as f:
         assert f.units()[0].text == "rocín"
         assert f.units()[0].t0 == 0.0 and f.units()[0].t1 == 10.0
@@ -423,7 +521,12 @@ def test_bibliography(quijote: Path) -> None:
     assert bib.startswith("@book{cervantes1605ingenioso,")
     assert "author = {Cervantes Saavedra, Miguel de}" in bib
     assert "address = {Madrid}" in bib
-    item = {"type": "article-journal", "title": "A & B_c", "container-title": "Revista", "author": [{"literal": "ACME"}]}
+    item = {
+        "type": "article-journal",
+        "title": "A & B_c",
+        "container-title": "Revista",
+        "author": [{"literal": "ACME"}],
+    }
     entry = spdf.csl_to_bibtex(item, key="k")
     assert "@article{k," in entry and "journal = {Revista}" in entry and r"A \& B\_c" in entry
 
@@ -498,7 +601,21 @@ def test_cli(quijote: Path, legacy41: Path, tmp_path: Path, capsys: pytest.Captu
         assert main(["export", str(quijote), "-f", fmt]) == 0
     capsys.readouterr()
     images = tmp_path / "iiif"
-    assert main(["export", str(quijote), "-f", "iiif", "--base-url", "https://x.org/m", "--images-dir", str(images)]) == 0
+    assert (
+        main(
+            [
+                "export",
+                str(quijote),
+                "-f",
+                "iiif",
+                "--base-url",
+                "https://x.org/m",
+                "--images-dir",
+                str(images),
+            ]
+        )
+        == 0
+    )
     assert (images / "blobs" / "pages" / "0001.png").is_file()
     capsys.readouterr()
     out_file = tmp_path / "conv.spdf"

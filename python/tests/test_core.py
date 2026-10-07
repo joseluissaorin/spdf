@@ -44,7 +44,7 @@ def test_es_number(value: float, expected: str) -> None:
 
 
 def test_canonical_json_sorting_and_escaping() -> None:
-    obj = {"b": 1, "a": [1.0, 0.1234567, None, True], "é": "x\ny\u0001\"\\", "דּ": 3, "€": 1, "\U0001f600": 2}
+    obj = {"b": 1, "a": [1.0, 0.1234567, None, True], "é": 'x\ny\u0001"\\', "דּ": 3, "€": 1, "\U0001f600": 2}
     out = canonical_dumps(obj)
     # RFC 8785 sorts keys by UTF-16 code units: U+20AC < U+1F600 (D83D DE00) < U+FB33.
     assert out == '{"a":[1,0.123457,null,true],"b":1,"é":"x\\ny\\u0001\\"\\\\","€":1,"\U0001f600":2,"דּ":3}'
@@ -90,7 +90,12 @@ def test_uri_page_with_chars() -> None:
 
 
 def test_uri_ranges_and_encoding() -> None:
-    a = {"type": "page", "physical": 10, "printed": "fol. 1r", "region": {"x": 0.125, "y": 0.1, "w": 0.5, "h": 0.25}}
+    a = {
+        "type": "page",
+        "physical": 10,
+        "printed": "fol. 1r",
+        "region": {"x": 0.125, "y": 0.1, "w": 0.5, "h": 0.25},
+    }
     e = {"type": "page", "physical": 11, "printed": "fol. 2v"}
     uri = spdf.make_uri("doc 1", a, e)
     assert uri == "spdf:doc%201#p=10&pe=11&f=fol.%201r&fe=fol.%202v&xywh=percent:12.5,10,50,25"
@@ -107,10 +112,14 @@ def test_uri_time_section_sheet_verse_canonical() -> None:
         spdf.make_uri(d, {"type": "section", "path": ["Chapter 3", "3.2 The panopticon/x"], "paragraph": 4})
         == f"spdf:{d}#s=Chapter%203/3.2%20The%20panopticon%2Fx&para=4"
     )
-    assert spdf.make_uri(d, {"type": "sheet", "sheet": "Data", "row_from": 4, "row_to": 9}) == f"spdf:{d}#sh=Data&rows=4-9"
+    assert (
+        spdf.make_uri(d, {"type": "sheet", "sheet": "Data", "row_from": 4, "row_to": 9}) == f"spdf:{d}#sh=Data&rows=4-9"
+    )
     assert spdf.make_uri(d, {"type": "verse", "line_from": 1234, "line_to": 1240}) == f"spdf:{d}#v=1234-1240"
     assert spdf.make_uri(d, {"type": "verse", "line_from": 7, "line_to": 7}) == f"spdf:{d}#v=7"
-    assert spdf.make_uri(d, {"type": "canonical", "scheme": "stephanus", "ref": "514a"}) == f"spdf:{d}#ref=stephanus:514a"
+    assert (
+        spdf.make_uri(d, {"type": "canonical", "scheme": "stephanus", "ref": "514a"}) == f"spdf:{d}#ref=stephanus:514a"
+    )
     assert spdf.make_uri(d, {"type": "slide", "n": 3}) == f"spdf:{d}#sl=3"
     for uri in (
         f"spdf:{d}#t=4160,4175.5",
@@ -143,25 +152,50 @@ def test_locator_to_anchor() -> None:
 
 # -- citation ---------------------------------------------------------------------------
 
-META = {"type": "book", "title": "Don Quijote: primera parte", "author": [{"family": "Cervantes"}], "issued": {"date-parts": [[1605]]}}
+META = {
+    "type": "book",
+    "title": "Don Quijote: primera parte",
+    "author": [{"family": "Cervantes"}],
+    "issued": {"date-parts": [[1605]]},
+}
 
 
 @pytest.mark.parametrize(
     ("anchor", "end", "locale", "expected"),
     [
         ({"type": "page", "physical": 9, "printed": "145"}, None, "es", "(Cervantes, 1605, p. 145)"),
-        ({"type": "page", "physical": 9, "printed": "xiv", "roman": True}, None, "en", "(Cervantes, 1605, p. xiv)"),
-        ({"type": "page", "physical": 9, "printed": "21", "source": "inferred"}, None, "es", "(Cervantes, 1605, p. [21])"),
+        (
+            {"type": "page", "physical": 9, "printed": "xiv", "roman": True},
+            None,
+            "en",
+            "(Cervantes, 1605, p. xiv)",
+        ),
+        (
+            {"type": "page", "physical": 9, "printed": "21", "source": "inferred"},
+            None,
+            "es",
+            "(Cervantes, 1605, p. [21])",
+        ),
         ({"type": "page", "physical": 9, "printed": None}, None, "es", "(Cervantes, 1605, s. p.)"),
         ({"type": "page", "physical": 9, "printed": None}, None, "en", "(Cervantes, 1605, n. pag.)"),
-        ({"type": "page", "physical": 9, "printed": "1r", "foliation": "leaf"}, None, "es", "(Cervantes, 1605, fol. 1r)"),
+        (
+            {"type": "page", "physical": 9, "printed": "1r", "foliation": "leaf"},
+            None,
+            "es",
+            "(Cervantes, 1605, fol. 1r)",
+        ),
         (
             {"type": "page", "physical": 9, "printed": "1r", "foliation": "leaf"},
             {"type": "page", "physical": 10, "printed": "2v", "foliation": "leaf"},
             "es",
             "(Cervantes, 1605, fols. 1r-2v)",
         ),
-        ({"type": "page", "physical": 9, "printed": "45", "foliation": "column"}, None, "es", "(Cervantes, 1605, col. 45)"),
+        (
+            {"type": "page", "physical": 9, "printed": "45", "foliation": "column"},
+            None,
+            "es",
+            "(Cervantes, 1605, col. 45)",
+        ),
         (
             {"type": "page", "physical": 9, "printed": "145"},
             {"type": "page", "physical": 10, "printed": "146"},
@@ -175,16 +209,46 @@ META = {"type": "book", "title": "Don Quijote: primera parte", "author": [{"fami
             "(Cervantes, 1605, pp. [20]-[21])",
         ),
         ({"type": "time", "t0": 4160.9, "t1": 4175.5}, None, "es", "(Cervantes, 1605, 1:09:20)"),
-        ({"type": "time", "t0": 42.0, "t1": 50}, {"type": "time", "t0": 50, "t1": 65}, "es", "(Cervantes, 1605, 0:42-1:05)"),
-        ({"type": "section", "path": ["Cap. 3", "3.2"], "paragraph": 4}, None, "es", "(Cervantes, 1605, § 3.2, párr. 4)"),
-        ({"type": "section", "path": ["Cap. 3"], "paragraph": 4}, None, "en", "(Cervantes, 1605, § Cap. 3, para. 4)"),
+        (
+            {"type": "time", "t0": 42.0, "t1": 50},
+            {"type": "time", "t0": 50, "t1": 65},
+            "es",
+            "(Cervantes, 1605, 0:42-1:05)",
+        ),
+        (
+            {"type": "section", "path": ["Cap. 3", "3.2"], "paragraph": 4},
+            None,
+            "es",
+            "(Cervantes, 1605, § 3.2, párr. 4)",
+        ),
+        (
+            {"type": "section", "path": ["Cap. 3"], "paragraph": 4},
+            None,
+            "en",
+            "(Cervantes, 1605, § Cap. 3, para. 4)",
+        ),
         ({"type": "section", "path": [], "paragraph": 2}, None, "es", "(Cervantes, 1605, párr. 2)"),
-        ({"type": "section", "path": ["Cap. 3"], "paragraph": 4, "printed": "145"}, None, "es", "(Cervantes, 1605, p. 145)"),
+        (
+            {"type": "section", "path": ["Cap. 3"], "paragraph": 4, "printed": "145"},
+            None,
+            "es",
+            "(Cervantes, 1605, p. 145)",
+        ),
         ({"type": "slide", "n": 3}, None, "es", "(Cervantes, 1605, diap. 3)"),
         ({"type": "slide", "n": 3}, None, "en", "(Cervantes, 1605, slide 3)"),
-        ({"type": "sheet", "sheet": "Data", "row_from": 4, "row_to": 9}, None, "es", "(Cervantes, 1605, Data, filas 4-9)"),
+        (
+            {"type": "sheet", "sheet": "Data", "row_from": 4, "row_to": 9},
+            None,
+            "es",
+            "(Cervantes, 1605, Data, filas 4-9)",
+        ),
         ({"type": "verse", "line_from": 1234}, None, "es", "(Cervantes, 1605, v. 1234)"),
-        ({"type": "verse", "line_from": 1234, "line_to": 1240}, None, "en", "(Cervantes, 1605, vv. 1234-1240)"),
+        (
+            {"type": "verse", "line_from": 1234, "line_to": 1240},
+            None,
+            "en",
+            "(Cervantes, 1605, vv. 1234-1240)",
+        ),
         ({"type": "canonical", "scheme": "stephanus", "ref": "514a"}, None, "es", "(Cervantes, 1605, 514a)"),
         ({"type": "image"}, None, "es", "(Cervantes, 1605)"),
         ({"type": "page", "physical": 1, "printed": "3"}, None, "fr", "(Cervantes, 1605, p. 3)"),
@@ -200,12 +264,20 @@ def test_cite_names_and_years() -> None:
     assert cite(None, two, "en") == "(Deleuze and Guattari, 1980)"
     i_sound = {"author": [{"family": "Pérez"}, {"family": "Iglesias"}], "issued": {"date-parts": [[2001]]}}
     assert cite(None, i_sound, "es") == "(Pérez e Iglesias, 2001)"
-    assert cite(None, {**i_sound, "author": [{"family": "Pérez"}, {"family": "Hinojosa"}]}, "es") == "(Pérez e Hinojosa, 2001)"
-    assert cite(None, {**i_sound, "author": [{"family": "Pérez"}, {"family": "Hierro"}]}, "es") == "(Pérez y Hierro, 2001)"
+    assert (
+        cite(None, {**i_sound, "author": [{"family": "Pérez"}, {"family": "Hinojosa"}]}, "es")
+        == "(Pérez e Hinojosa, 2001)"
+    )
+    assert (
+        cite(None, {**i_sound, "author": [{"family": "Pérez"}, {"family": "Hierro"}]}, "es") == "(Pérez y Hierro, 2001)"
+    )
     three = {"author": [{"family": "A"}, {"family": "B"}, {"family": "C"}]}
     assert cite(None, three, "es") == "(A et al., s. f.)"
     assert cite(None, three, "en") == "(A et al., n.d.)"
-    particle = {"author": [{"family": "Gogh", "non-dropping-particle": "van"}], "issued": {"date-parts": [[1888]]}}
+    particle = {
+        "author": [{"family": "Gogh", "non-dropping-particle": "van"}],
+        "issued": {"date-parts": [[1888]]},
+    }
     assert cite(None, particle, "en") == "(van Gogh, 1888)"
     literal = {"author": [{"literal": "UNESCO"}], "issued": {"date-parts": [["2019"]]}}
     assert cite(None, literal, "en") == "(UNESCO, 2019)"

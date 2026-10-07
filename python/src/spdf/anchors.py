@@ -173,9 +173,26 @@ class Anchor:
             return dict(self.raw)
         out: dict[str, Any] = {"type": self.type}
         for name in (
-            "physical", "printed", "roman", "foliation", "source", "confidence", "t0", "t1", "speaker",
-            "paragraph", "url", "accessed", "n", "sheet", "row_from", "row_to", "line_from", "line_to",
-            "scheme", "ref",
+            "physical",
+            "printed",
+            "roman",
+            "foliation",
+            "source",
+            "confidence",
+            "t0",
+            "t1",
+            "speaker",
+            "paragraph",
+            "url",
+            "accessed",
+            "n",
+            "sheet",
+            "row_from",
+            "row_to",
+            "line_from",
+            "line_to",
+            "scheme",
+            "ref",
         ):
             value = getattr(self, name)
             if value is not None:
@@ -210,6 +227,7 @@ def _as_dict(a: AnchorLike | None) -> dict[str, Any] | None:
 
 # --- Validation ---------------------------------------------------------------
 
+
 def _is_int(v: Any) -> bool:
     return _int(v) is not None
 
@@ -224,8 +242,8 @@ def _required_ok(t: str, a: Mapping[str, Any]) -> bool:
         p = _int(a.get("physical"))
         return p is not None and p >= 1 and "printed" in a and (a["printed"] is None or isinstance(a["printed"], str))
     if t == "time":
-        t0, t1 = a.get("t0"), a.get("t1")
-        return _is_num(t0) and _is_num(t1) and 0 <= float(t0) <= float(t1)
+        t0, t1 = _num(a.get("t0")), _num(a.get("t1"))
+        return t0 is not None and t1 is not None and math.isfinite(t0) and math.isfinite(t1) and 0 <= t0 <= t1
     if t == "section":
         path = a.get("path")
         return isinstance(path, list) and all(isinstance(x, str) for x in path)
@@ -266,7 +284,8 @@ def anchor_problem(data: Any, text_length: int | None = None) -> tuple[str, str]
         if not (isinstance(c, list) and len(c) == 2 and all(_is_int(x) for x in c)):
             return ("E040", "'chars' must be [start, end] integers")
         a, b = _int(c[0]), _int(c[1])
-        assert a is not None and b is not None
+        assert a is not None
+        assert b is not None
         if text_length is not None and not (0 <= a <= b <= text_length):
             return ("E042", f"chars [{a}, {b}] out of range (unit text has {text_length} code points)")
     return None

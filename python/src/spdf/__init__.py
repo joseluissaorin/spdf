@@ -63,7 +63,7 @@ from .reader import SpdfFile, content_hash, open_spdf
 from .validate import validate
 from .writer import Writer, convert_legacy, copy_into
 
-open = open_spdf  # noqa: A001 - spdf.open() mirrors gzip.open / tarfile.open
+open = open_spdf
 
 __all__ = [
     "HAS_FTS5",
@@ -154,7 +154,9 @@ def verify(source: str | os.PathLike[str] | bytes, public_key: bytes | str | Non
     signer = meta.get("signer")
     sig_ok: bool | None = None
     if signature is not None:
-        sig_ok = bool(signer) and stored is not None and stored == actual and verify_hash(actual, signature, signer or "")
+        sig_ok = (
+            bool(signer) and stored is not None and stored == actual and verify_hash(actual, signature, signer or "")
+        )
     trusted: bool | None = None
     if public_key is not None:
         expected = signer_id(load_public_key(public_key))

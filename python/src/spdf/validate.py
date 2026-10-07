@@ -73,7 +73,10 @@ def validate(
     col = _Collector(result)
     try:
         c = open_container(
-            source, max_blob_size=max_blob_size, max_decompressed_size=max_decompressed_size, check_objects=False
+            source,
+            max_blob_size=max_blob_size,
+            max_decompressed_size=max_decompressed_size,
+            check_objects=False,
         )
     except SpdfError as exc:
         col.error(exc.code or "E001", str(exc).split(": ", 1)[-1] if exc.code else str(exc))
@@ -178,7 +181,11 @@ def _validate_open(c: Container, col: _Collector, *, check_fts: bool) -> None:
         if [r[1] for r in rows] != list(range(1, len(rows) + 1)):
             col.error("E090", "units.ord must be contiguous from 1", "units")
         if len(docs) == 1 and docs[0][3] is not None and docs[0][3] != len(rows):
-            col.warn("W102", f"documents.unit_count is {docs[0][3]} but there are {len(rows)} units", "documents.unit_count")
+            col.warn(
+                "W102",
+                f"documents.unit_count is {docs[0][3]} but there are {len(rows)} units",
+                "documents.unit_count",
+            )
         for uid, _, anc, text in rows:
             length = len(unicodedata.normalize("NFC", text)) if isinstance(text, str) else None
             texts[str(uid)] = length if length is not None else 0

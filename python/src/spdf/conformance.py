@@ -70,7 +70,7 @@ def json_diff(a: Any, b: Any, path: str = "$", tol: float = 0.0) -> str | None:
     if isinstance(a, list) and isinstance(b, list):
         if len(a) != len(b):
             return f"{path}: length {len(a)} != {len(b)}"
-        for i, (x, y) in enumerate(zip(a, b)):
+        for i, (x, y) in enumerate(zip(a, b, strict=True)):
             d = json_diff(x, y, f"{path}[{i}]", tol)
             if d:
                 return d
@@ -138,18 +138,19 @@ def _case_validate(case: Mapping[str, Any], root: Path) -> None:
     _check(warnings == set(e["warnings"]), f"warnings {sorted(warnings)} != {sorted(e['warnings'])}")
 
 
-def _compare_results(
-    got: list[SearchResult], expected: list[Mapping[str, Any]], *, with_via: bool
-) -> None:
+def _compare_results(got: list[SearchResult], expected: list[Mapping[str, Any]], *, with_via: bool) -> None:
     ids = [h.fragment_id for h in got]
     exp_ids = [x["fragment_id"] for x in expected]
     _check(ids == exp_ids, f"result ids {ids} != {exp_ids}")
-    for h, x in zip(got, expected):
+    for h, x in zip(got, expected, strict=True):
         _check(
             math.isclose(h.score, float(x["score"]), rel_tol=0.0, abs_tol=SCORE_TOLERANCE),
             f"score of {h.fragment_id}: {h.score} != {x['score']}",
         )
-        _check(h.anchor_uri == x["anchor_uri"], f"anchor_uri of {h.fragment_id}: {h.anchor_uri} != {x['anchor_uri']}")
+        _check(
+            h.anchor_uri == x["anchor_uri"],
+            f"anchor_uri of {h.fragment_id}: {h.anchor_uri} != {x['anchor_uri']}",
+        )
         if with_via and "via" in x:
             _check(list(h.via) == list(x["via"]), f"via of {h.fragment_id}: {list(h.via)} != {x['via']}")
 
@@ -169,7 +170,10 @@ def _case_search_vector(case: Mapping[str, Any], root: Path) -> None:
     i, e = case["input"], case["expect"]
     with open_spdf(root / i["file"]) as f:
         got = f.search_vector(
-            i["query_vector"], space=i["space"], limit=int(i.get("limit", 10)), target=i.get("target", "fragment")
+            i["query_vector"],
+            space=i["space"],
+            limit=int(i.get("limit", 10)),
+            target=i.get("target", "fragment"),
         )
     _compare_results(got, e["results"], with_via=False)
 

@@ -224,9 +224,7 @@ def cmd_export(args: argparse.Namespace) -> int:
         elif fmt == "jsonl":
             from .interop.frames import fragment_records
 
-            text = "\n".join(
-                json.dumps(r, ensure_ascii=False) for r in fragment_records(f, locale=args.locale)
-            )
+            text = "\n".join(json.dumps(r, ensure_ascii=False) for r in fragment_records(f, locale=args.locale))
         else:  # pragma: no cover - argparse restricts choices
             raise SystemExit(f"unknown format {fmt}")
     _out(text, args.output)

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import contextlib
 import gzip
+import io
 import os
 import re
 import sqlite3
@@ -22,7 +23,7 @@ import tempfile
 import zlib
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, NoReturn
+from typing import NoReturn
 
 from . import _sqlite
 from .errors import NotSpdfError, UnsafeFileError
@@ -69,23 +70,25 @@ class Container:
                 self.db_path.unlink()
 
 
+def _open_gzip(src: Path | bytes) -> gzip.GzipFile:
+    if isinstance(src, bytes):
+        return gzip.GzipFile(fileobj=io.BytesIO(src))
+    return gzip.GzipFile(filename=src, mode="rb")
+
+
 def _gunzip(src: Path | bytes, max_size: int) -> Path:
     fd, tmp = tempfile.mkstemp(prefix="spdf-", suffix=".sqlite")
     total = 0
     try:
-        with os.fdopen(fd, "wb") as out:
-            raw: Any = gzip.GzipFile(fileobj=_BytesReader(src)) if isinstance(src, bytes) else gzip.open(src, "rb")
-            with raw:
-                while True:
-                    chunk = raw.read(1 << 20)
-                    if not chunk:
-                        break
-                    total += len(chunk)
-                    if total > max_size:
-                        raise UnsafeFileError(
-                            f"gzip content exceeds the maximum decompressed size ({max_size} bytes)"
-                        )
-                    out.write(chunk)
+        with os.fdopen(fd, "wb") as out, _open_gzip(src) as raw:
+            while True:
+                chunk = raw.read(1 << 20)
+                if not chunk:
+                    break
+                total += len(chunk)
+                if total > max_size:
+                    raise UnsafeFileError(f"gzip content exceeds the maximum decompressed size ({max_size} bytes)")
+                out.write(chunk)
     except (OSError, EOFError, zlib.error) as exc:
         with contextlib.suppress(OSError):
             os.unlink(tmp)
@@ -95,30 +98,6 @@ def _gunzip(src: Path | bytes, max_size: int) -> Path:
             os.unlink(tmp)
         raise
     return Path(tmp)
-
-
-class _BytesReader:
-    """Minimal file object over bytes (avoids importing io just for BytesIO typing)."""
-
-    def __init__(self, data: bytes) -> None:
-        self._data = memoryview(data)
-        self._pos = 0
-
-    def read(self, n: int = -1) -> bytes:
-        if n is None or n < 0:
-            n = len(self._data) - self._pos
-        chunk = self._data[self._pos : self._pos + n].tobytes()
-        self._pos += len(chunk)
-        return chunk
-
-    def readable(self) -> bool:
-        return True
-
-    def seekable(self) -> bool:
-        return False
-
-    def close(self) -> None:
-        pass
 
 
 def _connect(db_path: Path, *, immutable: bool, max_blob_size: int) -> sqlite3.Connection:
@@ -177,8 +156,8 @@ def open_container(
             gz = True
         else:
             fd, tmp = tempfile.mkstemp(prefix="spdf-", suffix=".sqlite")
-            with os.fdopen(fd, "wb") as f:
-                f.write(data)
+            with os.fdopen(fd, "wb") as out:
+                out.write(data)
             db_path = Path(tmp)
         temporary = True
     else:
@@ -186,8 +165,8 @@ def open_container(
         label = str(path)
         if not path.is_file():
             raise FileNotFoundError(f"no such file: {path}")
-        with path.open("rb") as f:
-            head = f.read(2)
+        with path.open("rb") as fh:
+            head = fh.read(2)
         if head == GZIP_MAGIC:
             db_path = _gunzip(path, max_decompressed_size)
             gz = True
@@ -201,8 +180,8 @@ def open_container(
                 db_path.unlink()
         raise exc
 
-    with db_path.open("rb") as f:
-        header = f.read(100)
+    with db_path.open("rb") as fh2:
+        header = fh2.read(100)
     if not header.startswith(SQLITE_MAGIC):
         fail(NotSpdfError(f"{label} is not a SQLite database", "E001"))
 
@@ -215,8 +194,7 @@ def open_container(
         app_id = int(conn.execute("PRAGMA application_id").fetchone()[0])
         uv = int(conn.execute("PRAGMA user_version").fetchone()[0])
         objects = [
-            (str(t), str(n), str(tb))
-            for t, n, tb in conn.execute("SELECT type, name, tbl_name FROM sqlite_master")
+            (str(t), str(n), str(tb)) for t, n, tb in conn.execute("SELECT type, name, tbl_name FROM sqlite_master")
         ]
     except sqlite3.DatabaseError as exc:
         conn.close()
@@ -292,9 +270,7 @@ def forbidden_objects(c: Container) -> list[tuple[str, str]]:
 
 
 def _check_blob_sizes(c: Container, max_blob_size: int) -> None:
-    checks = (
-        [("vectores", "valores"), ("blobs", "datos")] if c.legacy else [("vectors", "data"), ("blobs", "data")]
-    )
+    checks = [("vectores", "valores"), ("blobs", "datos")] if c.legacy else [("vectors", "data"), ("blobs", "data")]
     tables = {n for t, n, _ in c.schema_objects if t == "table"}
     for table, col in checks:
         if table not in tables:

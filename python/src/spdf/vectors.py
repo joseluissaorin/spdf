@@ -15,9 +15,11 @@ from .schema import DTYPE_SIZES
 
 __all__ = ["HAS_NUMPY", "decode", "dot", "encode", "norm"]
 
+_np: Any
 try:  # pragma: no cover - depends on the environment
-    import numpy as _np
+    import numpy
 
+    _np = numpy
     HAS_NUMPY = True
 except ImportError:  # pragma: no cover
     _np = None
@@ -27,7 +29,7 @@ _FMT = {"f32": "f", "f16": "e", "i8": "b"}
 
 
 def _round_half_away(x: float) -> int:
-    return int(math.floor(abs(x) + 0.5)) * (1 if x >= 0 else -1)
+    return math.floor(abs(x) + 0.5) * (1 if x >= 0 else -1)
 
 
 def encode(values: Any, dtype: str = "f32") -> bytes:
@@ -77,7 +79,7 @@ def decode_numpy(data: bytes, dtype: str = "f32") -> Any:
 def dot(a: Sequence[float], b: Sequence[float]) -> float:
     """Dot product in float64."""
     total = 0.0
-    for x, y in zip(a, b):
+    for x, y in zip(a, b, strict=False):
         total += x * y
     return total
 

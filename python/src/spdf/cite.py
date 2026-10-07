@@ -69,9 +69,9 @@ def _name(person: Any) -> str:
 
 def _starts_with_i_sound(word: str) -> bool:
     w = unicodedata.normalize("NFC", word).lower()
-    if w.startswith("hi") or w.startswith("hí"):
+    if w.startswith(("hi", "hí")):
         rest = w[2:]
-    elif w.startswith("i") or w.startswith("í"):
+    elif w.startswith(("i", "í")):
         rest = w[1:]
     else:
         return False
@@ -126,7 +126,7 @@ def year_label(metadata: Mapping[str, Any], locale: str = "es") -> str:
 
 def format_time(seconds: float) -> str:
     """``h:mm:ss`` from one hour on, ``m:ss`` below (seconds floored)."""
-    s = int(math.floor(max(0.0, float(seconds))))
+    s = math.floor(max(0.0, float(seconds)))
     h, rem = divmod(s, 3600)
     m, sec = divmod(rem, 60)
     return f"{h}:{m:02d}:{sec:02d}" if h else f"{m}:{sec:02d}"

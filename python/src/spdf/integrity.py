@@ -144,7 +144,7 @@ def load_private_key(source: str | os.PathLike[str] | bytes) -> bytes:
             serialization.Encoding.Raw, serialization.PrivateFormat.Raw, serialization.NoEncryption()
         )
         return raw
-    for decoder in (lambda b: bytes.fromhex(b.decode("ascii")), lambda b: base64.b64decode(b, validate=True)):
+    for decoder in (_from_hex_bytes, _from_b64_bytes):
         try:
             raw = decoder(text)
         except (ValueError, binascii.Error, UnicodeDecodeError):
@@ -152,6 +152,18 @@ def load_private_key(source: str | os.PathLike[str] | bytes) -> bytes:
         if len(raw) == 32:
             return raw
     raise SignatureError("unrecognized private key format (expected 32 raw bytes, hex, base64 or PEM)")
+
+
+def _from_hex_bytes(b: bytes) -> bytes:
+    return bytes.fromhex(b.decode("ascii"))
+
+
+def _from_b64_bytes(b: bytes) -> bytes:
+    return base64.b64decode(b, validate=True)
+
+
+def _from_b64_str(s: str) -> bytes:
+    return base64.b64decode(s, validate=True)
 
 
 def load_public_key(value: str | bytes) -> bytes:
@@ -163,7 +175,7 @@ def load_public_key(value: str | bytes) -> bytes:
     v = value.strip()
     if v.startswith("ed25519:"):
         return parse_signer(v)
-    for decoder in (bytes.fromhex, lambda s: base64.b64decode(s, validate=True)):
+    for decoder in (bytes.fromhex, _from_b64_str):
         try:
             raw = decoder(v)
         except (ValueError, binascii.Error):

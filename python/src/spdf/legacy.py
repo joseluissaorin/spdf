@@ -13,7 +13,15 @@ from typing import Any
 
 from .schema import LEGACY_KINDS, LEGACY_TARGETS
 
-__all__ = ["default_type", "map_anchor", "map_kind", "map_meta_key", "map_metadata", "map_modalities", "map_target"]
+__all__ = [
+    "default_type",
+    "map_anchor",
+    "map_kind",
+    "map_meta_key",
+    "map_metadata",
+    "map_modalities",
+    "map_target",
+]
 
 _ANCHOR_KEYS: dict[str, str] = {
     "tipo": "type",
@@ -61,7 +69,7 @@ def map_anchor(anchor: Any) -> Any:
         return anchor
     out: dict[str, Any] = {}
     for key, value in anchor.items():
-        new_key = _ANCHOR_KEYS.get(key, key)
+        new_key = str(_ANCHOR_KEYS.get(key, key))
         if new_key == "type" and isinstance(value, str):
             value = _ANCHOR_TYPES.get(value, value)
         elif new_key == "source" and isinstance(value, str):
@@ -89,17 +97,40 @@ _SIMPLE_META: tuple[tuple[str, str], ...] = (
 
 # Field names used as provenance keys (legacy field -> CSL name; "spdf." prefixes dropped).
 _FIELD_NAMES: dict[str, str] = {
-    "titulo": "title", "subtitulo": "subtitle", "tituloOriginal": "original-title", "autores": "author",
-    "editores": "editor", "traductores": "translator", "entrevistadores": "interviewer", "anio": "issued",
-    "anioOriginal": "original-date", "editorial": "publisher", "lugar": "publisher-place",
-    "revista": "container-title", "contenedor": "container-title", "coleccion": "collection-title",
-    "volumen": "volume", "numero": "issue", "paginas": "page", "edicion": "edition", "doi": "DOI", "isbn": "ISBN",
-    "url": "URL", "idioma": "language", "tipoCSL": "type", "resumen": "abstract",
-    "idiomaOriginal": "original_language", "fecha": "issued", "sinFecha": "undated",
+    "titulo": "title",
+    "subtitulo": "subtitle",
+    "tituloOriginal": "original-title",
+    "autores": "author",
+    "editores": "editor",
+    "traductores": "translator",
+    "entrevistadores": "interviewer",
+    "anio": "issued",
+    "anioOriginal": "original-date",
+    "editorial": "publisher",
+    "lugar": "publisher-place",
+    "revista": "container-title",
+    "contenedor": "container-title",
+    "coleccion": "collection-title",
+    "volumen": "volume",
+    "numero": "issue",
+    "paginas": "page",
+    "edicion": "edition",
+    "doi": "DOI",
+    "isbn": "ISBN",
+    "url": "URL",
+    "idioma": "language",
+    "tipoCSL": "type",
+    "resumen": "abstract",
+    "idiomaOriginal": "original_language",
+    "fecha": "issued",
+    "sinFecha": "undated",
 }
 
 _PROVENANCE_SOURCES: dict[str, str] = {
-    "lectura": "reading", "usuario": "user", "colofon": "colophon", "impresores": "printers",
+    "lectura": "reading",
+    "usuario": "user",
+    "colofon": "colophon",
+    "impresores": "printers",
 }
 
 _NAME_LISTS: tuple[tuple[str, str], ...] = (
@@ -109,7 +140,13 @@ _NAME_LISTS: tuple[tuple[str, str], ...] = (
     ("entrevistadores", "interviewer"),
 )
 
-_MODALITIES: dict[str, str] = {"texto": "text", "imagen": "image", "audio": "audio", "video": "video", "pdf": "pdf"}
+_MODALITIES: dict[str, str] = {
+    "texto": "text",
+    "imagen": "image",
+    "audio": "audio",
+    "video": "video",
+    "pdf": "pdf",
+}
 
 _META_KEYS: dict[str, str] = {"creado": "created", "generador": "generator"}
 
@@ -167,8 +204,16 @@ def default_type(kind: str | None, meta: Mapping[str, Any]) -> str:
     if meta.get("revista"):
         return "article-journal"
     by_kind = {
-        "audio": "speech", "video": "motion_picture", "web": "webpage", "presentacion": "speech", "slides": "speech",
-        "hoja": "dataset", "sheet": "dataset", "imagen": "graphic", "image": "graphic", "fotos": "graphic",
+        "audio": "speech",
+        "video": "motion_picture",
+        "web": "webpage",
+        "presentacion": "speech",
+        "slides": "speech",
+        "hoja": "dataset",
+        "sheet": "dataset",
+        "imagen": "graphic",
+        "image": "graphic",
+        "fotos": "graphic",
         "photos": "graphic",
     }
     return by_kind.get(kind or "", "book")
@@ -226,7 +271,7 @@ def map_metadata(meta: Any, kind: str | None = None) -> dict[str, Any]:
     if _has(m, "procedencia") and isinstance(m["procedencia"], Mapping):
         prov: dict[str, Any] = {}
         for field_name, info in m["procedencia"].items():
-            key = _FIELD_NAMES.get(field_name, field_name)
+            key = str(_FIELD_NAMES.get(field_name, field_name))
             if isinstance(info, Mapping):
                 src = info.get("fuente")
                 prov[key] = {

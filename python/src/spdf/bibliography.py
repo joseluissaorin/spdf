@@ -78,7 +78,25 @@ def bibtex_key(item: Mapping[str, Any]) -> str:
         if isinstance(parts, list) and parts and isinstance(parts[0], list) and parts[0]:
             year = str(parts[0][0])
     title = str(item.get("title") or "")
-    stop = {"a", "an", "the", "el", "la", "los", "las", "lo", "un", "una", "de", "del", "le", "les", "il", "der", "die"}
+    stop = {
+        "a",
+        "an",
+        "the",
+        "el",
+        "la",
+        "los",
+        "las",
+        "lo",
+        "un",
+        "una",
+        "de",
+        "del",
+        "le",
+        "les",
+        "il",
+        "der",
+        "die",
+    }
     word = next((w for w in re.findall(r"\w+", _ascii(title).lower()) if w not in stop), "")
     words = family.split()
     # First capitalized word of the family name ("Cervantes Saavedra" -> cervantes, "de la Fuente" -> fuente).

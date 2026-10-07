@@ -259,10 +259,22 @@ class Writer:
             "INSERT INTO units (id, document, ord, anchor, text, notes, header, footer, image, thumbnail, "
             "reader, confidence, printed, t0, t1, words) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
-                u["id"], self._doc_id(u), int(u["ord"]), _json(anchor), u.get("text") or "",
-                _json(u.get("notes")), u.get("header"), u.get("footer"), u.get("image"), u.get("thumbnail"),
-                u["reader"], float(u.get("confidence", 1.0) if u.get("confidence") is not None else 1.0),
-                printed, t0, t1, _json(u.get("words")),
+                u["id"],
+                self._doc_id(u),
+                int(u["ord"]),
+                _json(anchor),
+                u.get("text") or "",
+                _json(u.get("notes")),
+                u.get("header"),
+                u.get("footer"),
+                u.get("image"),
+                u.get("thumbnail"),
+                u["reader"],
+                float(u.get("confidence", 1.0) if u.get("confidence") is not None else 1.0),
+                printed,
+                t0,
+                t1,
+                _json(u.get("words")),
             ),
         )
         self._units += 1
@@ -276,8 +288,14 @@ class Writer:
             "INSERT INTO sections (id, document, parent, level, title, unit_from, unit_to, summary) "
             "VALUES (?,?,?,?,?,?,?,?)",
             (
-                s["id"], self._doc_id(s), s.get("parent"), int(s["level"]), s["title"], s["unit_from"],
-                s.get("unit_to"), s.get("summary"),
+                s["id"],
+                self._doc_id(s),
+                s.get("parent"),
+                int(s["level"]),
+                s["title"],
+                s["unit_from"],
+                s.get("unit_to"),
+                s.get("summary"),
             ),
         )
 
@@ -293,7 +311,13 @@ class Writer:
             "INSERT INTO fragments (n, id, document, unit, ord, text, context, section, anchor, anchor_end, "
             "search_text) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
             (
-                n, f["id"], self._doc_id(f), f["unit"], int(f["ord"]), f["text"], f.get("context") or "",
+                n,
+                f["id"],
+                self._doc_id(f),
+                f["unit"],
+                int(f["ord"]),
+                f["text"],
+                f.get("context") or "",
                 _json(list(section) if isinstance(section, (list, tuple)) else section),
                 _json(_as_mapping(f["anchor"])),
                 _json(_as_mapping(f["anchor_end"])) if f.get("anchor_end") is not None else None,
@@ -310,7 +334,12 @@ class Writer:
         self.conn.execute(
             "INSERT INTO figures (id, document, unit, image, caption, description, anchor) VALUES (?,?,?,?,?,?,?)",
             (
-                g["id"], self._doc_id(g), g["unit"], g["image"], g.get("caption"), g.get("description"),
+                g["id"],
+                self._doc_id(g),
+                g["unit"],
+                g["image"],
+                g.get("caption"),
+                g.get("description"),
                 _json(_as_mapping(g["anchor"])),
             ),
         )
@@ -328,10 +357,17 @@ class Writer:
             "INSERT INTO spaces (id, provider, model, version, dims, dtype, normalized, truncated_from, "
             "modalities, task_prefixes, created) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
             (
-                s["id"], s["provider"], s["model"], s.get("version"), int(s["dims"]), dtype,
-                1 if normalized else 0, s.get("truncated_from"),
+                s["id"],
+                s["provider"],
+                s["model"],
+                s.get("version"),
+                int(s["dims"]),
+                dtype,
+                1 if normalized else 0,
+                s.get("truncated_from"),
                 _json(list(s["modalities"]) if "modalities" in s else ["text"]),
-                _json(s.get("task_prefixes")), s["created"] if "created" in s else now_iso(),
+                _json(s.get("task_prefixes")),
+                s["created"] if "created" in s else now_iso(),
             ),
         )
         self._spaces[str(s["id"])] = (int(s["dims"]), dtype)
@@ -339,7 +375,7 @@ class Writer:
     def add_vector(
         self,
         target: str,
-        id: str,  # noqa: A002 - mirrors the column name
+        id: str,
         space: str,
         document: str | None = None,
         data: bytes | Sequence[float] | Any = None,
@@ -385,9 +421,13 @@ class Writer:
         self.conn.execute(
             "INSERT INTO provenance (document, stage, provider, model, detail, ms, at) VALUES (?,?,?,?,?,?,?)",
             (
-                self._doc_id(p), p["stage"], p.get("provider"), p.get("model"),
+                self._doc_id(p),
+                p["stage"],
+                p.get("provider"),
+                p.get("model"),
                 _detail_json(detail),
-                int(p["ms"]) if p.get("ms") is not None else None, p.get("at") or now_iso(),
+                int(p["ms"]) if p.get("ms") is not None else None,
+                p.get("at") or now_iso(),
             ),
         )
 
@@ -395,7 +435,8 @@ class Writer:
         """Declare an extension (its tables must be named ``x_<vendor>_<name>``)."""
         self._check_open()
         self.conn.execute(
-            "INSERT INTO extensions (name, version, required) VALUES (?,?,?)", (name, version, 1 if required else 0)
+            "INSERT INTO extensions (name, version, required) VALUES (?,?,?)",
+            (name, version, 1 if required else 0),
         )
 
     def execute(self, sql: str, params: Sequence[Any] = ()) -> None:
@@ -479,10 +520,21 @@ class Writer:
             "duration, created, updated, title, authors, year, language, rights) "
             "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
-                d["id"], d["kind"], _json(meta), str(d["source_sha256"]).lower(), d.get("source_ref"), d["mime"],
-                int(d["bytes"]), int(unit_count), d.get("duration"), d.get("created") or now,
-                d.get("updated") or d.get("created") or now, title,
-                d.get("authors", _authors_of(meta)), d.get("year", _year_of(meta)), language,
+                d["id"],
+                d["kind"],
+                _json(meta),
+                str(d["source_sha256"]).lower(),
+                d.get("source_ref"),
+                d["mime"],
+                int(d["bytes"]),
+                int(unit_count),
+                d.get("duration"),
+                d.get("created") or now,
+                d.get("updated") or d.get("created") or now,
+                title,
+                d.get("authors", _authors_of(meta)),
+                d.get("year", _year_of(meta)),
+                language,
                 _json(d.get("rights")),
             ),
         )

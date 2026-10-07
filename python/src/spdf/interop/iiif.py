@@ -53,9 +53,9 @@ def rights_uri(rights: dict[str, Any] | None) -> str | None:
     lic = rights.get("license")
     if not isinstance(lic, str) or not lic:
         return None
-    if lic.startswith("http://creativecommons.org/") or lic.startswith("http://rightsstatements.org/"):
+    if lic.startswith(("http://creativecommons.org/", "http://rightsstatements.org/")):
         return lic
-    if lic.startswith("https://creativecommons.org/") or lic.startswith("https://rightsstatements.org/"):
+    if lic.startswith(("https://creativecommons.org/", "https://rightsstatements.org/")):
         return "http://" + lic[len("https://") :]
     return LICENSE_URIS.get(lic)
 
@@ -88,7 +88,7 @@ def to_iiif(
             return resolve(ref)
         if ref.startswith("blob:"):
             return f"{base}/blobs/{quote(ref[5:], safe='/')}"
-        if ref.startswith("http://") or ref.startswith("https://"):
+        if ref.startswith(("http://", "https://")):
             return ref
         return None
 
@@ -149,7 +149,12 @@ def to_iiif(
     if doc.kind in ("audio", "video"):
         cid = f"{base}/canvas/1"
         duration = doc.duration or max((u.t1 or 0.0 for u in units), default=0.0) or 1.0
-        canvas: dict[str, Any] = {"id": cid, "type": "Canvas", "label": {lang: [doc.display_title]}, "duration": duration}
+        canvas: dict[str, Any] = {
+            "id": cid,
+            "type": "Canvas",
+            "label": {lang: [doc.display_title]},
+            "duration": duration,
+        }
         media = url_of(doc.source_ref)
         if media:
             body_type = "Sound" if doc.kind == "audio" else "Video"
@@ -162,7 +167,12 @@ def to_iiif(
                             "id": f"{cid}/page/1/a1",
                             "type": "Annotation",
                             "motivation": "painting",
-                            "body": {"id": media, "type": body_type, "format": doc.mime, "duration": duration},
+                            "body": {
+                                "id": media,
+                                "type": body_type,
+                                "format": doc.mime,
+                                "duration": duration,
+                            },
                             "target": cid,
                         }
                     ],
@@ -229,7 +239,12 @@ def to_iiif(
                             "id": f"{cid}/annotations/figure/{i}",
                             "type": "Annotation",
                             "motivation": "describing",
-                            "body": {"type": "TextualBody", "value": text, "format": "text/plain", "language": lang},
+                            "body": {
+                                "type": "TextualBody",
+                                "value": text,
+                                "format": "text/plain",
+                                "language": lang,
+                            },
                             "target": target,
                         }
                     )
@@ -261,9 +276,7 @@ def _text_anno(f: SpdfFile, u: Unit, aid: str, target: str, lang: str) -> dict[s
     }
 
 
-def _ranges(
-    f: SpdfFile, base: str, canvas_of: dict[str, str], units: list[Unit], lang: str
-) -> list[dict[str, Any]]:
+def _ranges(f: SpdfFile, base: str, canvas_of: dict[str, str], units: list[Unit], lang: str) -> list[dict[str, Any]]:
     sections = f.sections()
     if not sections:
         return []
