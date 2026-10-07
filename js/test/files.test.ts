@@ -133,6 +133,9 @@ describe.each(engines)('legacy 4.x with %s', (_name, engine) => {
     ]);
     expect(units[2]?.anchor).toEqual({ type: 'page', physical: 3, printed: '2', roman: false, source: 'inferred', confidence: 0.9 });
     expect((await doc.figures())[0]?.image).toBe('blob:pagina-1.webp');
+    // Legacy blobs (clave, mime, datos) through the 5.0 view: keys, sizes and computed hashes.
+    expect(await doc.blobs()).toEqual([{ key: 'pagina-1.webp', mime: 'image/webp', bytes: 4, sha256: expect.stringMatching(/^[0-9a-f]{64}$/) }]);
+    expect((await doc.blob(units[0]!.image as string))?.data).toEqual(new Uint8Array([82, 73, 70, 70]));
     expect((await doc.spaces())[0]).toMatchObject({ id: 'toy@2', dtype: 'f32', modalities: ['text'] });
     expect((await doc.vectors('toy@2')).map((x) => x.target)).toEqual(['fragment', 'fragment']);
     expect((await doc.searchLexical('caballerías')).map((h) => h.fragment_id)).toEqual(['fr2']);
