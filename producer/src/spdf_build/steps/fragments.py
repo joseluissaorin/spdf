@@ -94,7 +94,7 @@ def _stream(units: list[Unit], sections: list[Section]):
             verse = "\n" in text
             if not changed and i == 0 and prev and prev.u0 < u.ord and not prev.verse and not verse:
                 last = prev.sents[-1]
-                if not ends_sentence(last.text) and _looks_continuation(text):
+                if not ends_sentence(last.text) and (_looks_continuation(text) or u.extra.get("continues")):
                     new = _sentences(text, u.ord, i)
                     first = new.pop(0) if new else None
                     if first:

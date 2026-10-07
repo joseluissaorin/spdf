@@ -30,6 +30,7 @@ class Block:
     src: Optional[str] = None
     label: Optional[str] = None
     ids: list[str] = field(default_factory=list)
+    cont: bool = False  # continues the paragraph of the previous page (break inside a paragraph)
 
 
 def _clean(s: str) -> str:
@@ -39,7 +40,27 @@ def _clean(s: str) -> str:
     return s.strip()
 
 
-PAGE_CLASS = re.compile(r"\b(pagenum|pageno|x-ebookmaker-pageno|page-?break|pagebreak|page_number)\b", re.I)
+def clean_page_label(s: str) -> str:
+    """«[23]», «[Pg 23]», «p. 23», «Page 23» → «23»."""
+    s = unescape(re.sub(r"<[^>]+>", "", s or "")).strip()
+    s = re.sub(r"^[\[({]\s*|\s*[\])}]$", "", s).strip()
+    s = re.sub(r"^(?:p(?:ag|g)?\.?|page|página|seite|s\.)\s*", "", s, flags=re.I).strip()
+    return s if len(s) <= 12 else ""
+
+
+def label_from_id(ident: Optional[str]) -> str:
+    m = re.match(r"(?i)^(?:page|pag|pg|p)[_\-.]?(\d+|[ivxlcdm]+)$", ident or "")
+    return m.group(1) if m else ""
+
+
+# Whole class tokens only: «page-break-after» is CSS layout, not a page marker (it swallowed the last
+# paragraph of Kafka's Verwandlung, PG 22367).
+PAGE_CLASS_TOKENS = {"pagenum", "pageno", "x-ebookmaker-pageno", "pagebreak", "page-number", "page_number", "pagenumber",
+                     "pg-num", "pgnum", "page-num"}
+
+
+def is_page_class(cls: str) -> bool:
+    return any(t.lower() in PAGE_CLASS_TOKENS for t in cls.split())
 
 
 class _Parser(HTMLParser):
@@ -60,6 +81,7 @@ class _Parser(HTMLParser):
         self.page_span_depth = 0
         self.capture = False
         self.buf_page: list[str] = []
+        self.cont_next = False
         self.figure_alt: list[tuple[str, str]] = []
 
     # --- helpers
@@ -69,20 +91,29 @@ class _Parser(HTMLParser):
         text = _clean(text)
         ids, self.ids = self.ids, []
         if not text:
+            self.cont_next = False  # the break was at the end of its paragraph: nothing continues
             if ids:
                 self.blocks.append(Block("anchor", ids=ids))
             return
+        cont, self.cont_next = self.cont_next, False
         if self.heading:
             t = re.sub(r"\s+", " ", text)
             self.blocks.append(Block("title", t, level=self.heading, ids=ids))
         elif "\n" in text and (self.verse or self.pre):
             self.blocks.append(Block("verse", text, ids=ids))
         else:
-            self.blocks.append(Block("para", re.sub(r"\s+", " ", text) if not self.pre else text, ids=ids))
+            self.blocks.append(Block("para", re.sub(r"\s+", " ", text) if not self.pre else text, ids=ids, cont=cont))
 
     def page(self, label: str):
+        label = label.strip()
+        inside = bool("".join(self.buf).strip())  # the break falls inside a paragraph
         self.flush()
-        self.blocks.append(Block("page", label=label.strip()))
+        self.cont_next = False
+        last = next((b for b in reversed(self.blocks) if b.kind != "anchor"), None)
+        if last is not None and last.kind == "page" and last.label == label:
+            return  # the same page marked twice (list id + content marker)
+        self.blocks.append(Block("page", label=label))
+        self.cont_next = inside
 
     # --- events
     def handle_starttag(self, tag, attrs):
@@ -99,25 +130,25 @@ class _Parser(HTMLParser):
             return
         ident = a.get("id") or a.get("name")
         pagebreak = "pagebreak" in etype or "doc-pagebreak" in etype
-        page_el = tag in ("span", "a", "div", "p") and bool(PAGE_CLASS.search(cls)) and len(cls) < 80
-        swallow = (pagebreak or page_el) and tag not in ("br", "hr", "img")
-        if ident and ident in self.page_ids:
-            self.page(self.page_ids[ident])
-            if swallow:
-                self.page_span, self.page_span_depth, self.capture = tag, 1, False
+        page_el = tag in ("span", "a", "div", "p") and is_page_class(cls)
+        marker = pagebreak or page_el
+        listed = bool(ident) and ident in self.page_ids
+        if listed or marker:
+            # Every page marker in the content is a page break, listed in the page-list or not: Gutenberg's
+            # ebookmaker page-lists omit pages (Kafka, PG 22367: 11 of 71) that the content still marks.
+            label = self.page_ids[ident] if listed else (clean_page_label(a.get("title") or a.get("aria-label") or "")
+                                                         or label_from_id(ident))
+            swallow = marker and tag not in ("br", "hr", "img")
+            if label:
+                self.page(label)
+                if swallow:
+                    self.page_span, self.page_span_depth, self.capture = tag, 1, False
+                    self.buf_page = []
+                    return
+            elif swallow:  # «<span class="pagenum">[23]</span>»: the label is the text inside
+                self.page_span, self.page_span_depth, self.capture = tag, 1, True
                 self.buf_page = []
                 return
-        elif pagebreak and (a.get("title") or a.get("aria-label")):
-            if not self.page_ids:
-                self.page(a.get("title") or a.get("aria-label") or "")
-            if swallow:
-                self.page_span, self.page_span_depth, self.capture = tag, 1, False
-                self.buf_page = []
-            return
-        elif swallow:
-            self.page_span, self.page_span_depth, self.capture = tag, 1, not self.page_ids
-            self.buf_page = []
-            return
         if ident:
             self.ids.append(ident)
         if tag in HEADINGS:
@@ -159,7 +190,7 @@ class _Parser(HTMLParser):
                 self.page_span_depth -= 1
                 if self.page_span_depth == 0:
                     if self.capture:
-                        lab = re.sub(r"[\[\]{}()]|pg\.?|p\.|page", "", "".join(self.buf_page), flags=re.I).strip()
+                        lab = clean_page_label("".join(self.buf_page))
                         if lab:
                             self.page(lab)
                     self.buf_page = []

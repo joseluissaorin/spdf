@@ -24,10 +24,9 @@ NS = {"opf": "http://www.idpf.org/2007/opf", "dc": "http://purl.org/dc/elements/
 
 
 def _clean_label(s: str) -> str:
-    s = unescape(re.sub(r"<[^>]+>", "", s or "")).strip()
-    s = re.sub(r"^\[|\]$", "", s).strip()
-    s = re.sub(r"^(?:p(?:ag|g)?\.?|page|página)\s*", "", s, flags=re.I)
-    return s.strip()
+    from .html import clean_page_label
+
+    return clean_page_label(s)
 
 
 def _split_href(base_dir: str, href: str) -> tuple[str, Optional[str]]:
@@ -176,5 +175,22 @@ def read_epub(data: bytes, path: Optional[str] = None) -> Source:
             o = ids.get(f"{f}#")
         toc.append(TocEntry(title, level, o))
     src = Source(path=path, kind="epub", mime="application/epub+zip", data=data, units=units, toc=toc, hints=hints)
-    src.provenance_note = {"units": kind_note, "page_list": len(pages_raw), "spine": len(spine)}  # type: ignore[attr-defined]
+    note = {"units": kind_note, "page_list": len(pages_raw), "spine": len(spine),
+            "page_markers": sum(1 for b in blocks_all if b.kind == "page")}
+    suspicious = long_pages(units)
+    if suspicious:
+        note["suspicious_long_pages"] = suspicious
+        src.warnings.append(f"EPUB: printed pages {suspicious} hold far more words than the median page: possibly "
+                            f"several pages merged (a page marker missed)")
+    src.provenance_note = note  # type: ignore[attr-defined]
     return src
+
+
+def long_pages(units) -> list[str]:
+    """Coherence check: printed pages with more than 3x the median words (and over 400) are suspicious."""
+    counts = [(u.anchor.get("printed"), len(u.text.split())) for u in units if u.anchor.get("printed")]
+    if len(counts) < 5:
+        return []
+    ws = sorted(c for _, c in counts)
+    med = ws[len(ws) // 2]
+    return [p for p, c in counts if c > max(3 * med, 400)]

@@ -25,6 +25,7 @@ def units_by_pages(blocks: list[Block], reader: str, source: str = "epub",
     titles: list[tuple[int, str]] = []
     label: Optional[str] = None
     started = False
+    starts_cont = False
 
     def close():
         nonlocal cur, figs, titles
@@ -37,6 +38,10 @@ def units_by_pages(blocks: list[Block], reader: str, source: str = "epub",
         roman = bool(printed and ROMAN_STRICT.match(printed) and roman_to_int(printed) > 0)
         u = Unit(ord=o, kind="page", text=text, titles=titles, figures=figs, reader=reader, confidence=1.0,
                  empty=not text, folio_seen=printed)
+        nonlocal starts_cont
+        if starts_cont:
+            u.extra["continues"] = True  # its first paragraph is the end of one split by the page break
+        starts_cont = False
         u.anchor = {"type": "page", "physical": o, "printed": printed, "roman": roman, "foliation": "page",
                     "source": source if printed else "none", "confidence": 1.0 if printed else 0.0}
         u.extra["printed"] = printed
@@ -72,6 +77,8 @@ def units_by_pages(blocks: list[Block], reader: str, source: str = "epub",
             continue
         if b.kind == "title":
             titles.append((b.level, b.text))
+        if b.cont and not cur:
+            starts_cont = True
         cur.append(block_text(b))
     close()
     for i in pending_ids:
