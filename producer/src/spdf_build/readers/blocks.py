@@ -9,6 +9,9 @@ from ..steps.folios import ROMAN_STRICT, roman_to_int
 from .html import Block
 
 
+GUTENBERG = re.compile(r"project gutenberg|\*\*\*\s*(?:start|end) of (?:the|this) project", re.I)
+
+
 def block_text(b: Block) -> str:
     if b.kind == "title":
         return f"{'#' * max(1, min(6, b.level))} {b.text}"
@@ -45,6 +48,8 @@ def units_by_pages(blocks: list[Block], reader: str, source: str = "epub",
         u.anchor = {"type": "page", "physical": o, "printed": printed, "roman": roman, "foliation": "page",
                     "source": source if printed else "none", "confidence": 1.0 if printed else 0.0}
         u.extra["printed"] = printed
+        if not printed:
+            u.anchor["matter"] = "library" if GUTENBERG.search(text[:3000]) else ("front" if not units else "back")
         units.append(u)
         if on_unit:
             on_unit(u)
@@ -107,6 +112,8 @@ def units_by_sections(blocks: list[Block], reader: str, split_level: int = 2, an
         o = len(units) + 1
         a = dict(base_anchor or {})
         a.update({"type": anchor_type, "path": list(cur_path), "paragraph": 0})
+        if GUTENBERG.search(text[:3000]) and anchor_type == "section":
+            a["matter"] = "library"
         u = Unit(ord=o, kind=anchor_type, text=text, titles=titles, figures=figs, reader=reader, confidence=1.0, anchor=a)
         units.append(u)
         cur, figs, titles = [], [], []

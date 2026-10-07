@@ -602,6 +602,24 @@ class PageFolio:
     candidates: list[Candidate] = field(default_factory=list)
     chosen: Optional[Candidate] = None
     pair: Optional[tuple[str, str]] = None
+    kind: str = "text"  # classify_page: text | plate | blank | cover | apparatus | chart | short
+
+
+def matter_of(f: "PageFolio") -> str:
+    """SPDF 5.0 `matter` of a page (SPEC §4.4): body | front | back | plate | cover | library | blank."""
+    if f.kind == "blank" or f.page_type == "endpaper":
+        return "blank"
+    if f.kind in ("apparatus", "chart"):
+        return "library"
+    if f.page_type == "cover" or f.kind == "cover":
+        return "cover"
+    if f.page_type == "plate" or (f.kind == "plate" and f.printed is None):
+        return "plate"
+    if f.page_type in ("title", "prelim"):
+        return "front"
+    if f.page_type == "final":
+        return "back"
+    return "body"
 
 
 @dataclass
@@ -621,6 +639,9 @@ class FolioResult:
         a = {"type": "page", "physical": f.physical, "printed": f.printed, "roman": f.roman,
              "foliation": "leaf" if self.foliation else "page", "source": f.source,
              "confidence": round(f.confidence, 3)}
+        m = matter_of(f)
+        if m != "body":
+            a["matter"] = m
         return a
 
 
@@ -1157,9 +1178,12 @@ def deduce_folios(pages: list[dict], layout: str = "auto", foliation: str | bool
     prep = _prepare(pages, layout, foliation)
     by_labels = folios_from_labels(prep)
     if by_labels:
-        return _trim(prep, by_labels)
-    seq = choose_sequence(prep.cands, prep.step)
-    return _trim(prep, _assemble(prep, seq))
+        r = _trim(prep, by_labels)
+    else:
+        r = _trim(prep, _assemble(prep, choose_sequence(prep.cands, prep.step)))
+    for f, p in zip(r.pages, prep.pages):
+        f.kind = classify_page(p)
+    return r
 
 
 def pages_from_units(units) -> list[dict]:
