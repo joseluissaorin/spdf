@@ -239,7 +239,8 @@ fn writer_round_trip_and_reader_api() {
         assert!(vs.iter().all(|v| v.values.len() as i64 == sp.dims));
     }
     let csl = spdf::export::csl_json(&copy.document().expect("doc"));
-    assert_eq!(csl[0]["id"], copy.document().expect("doc").id);
+    assert_eq!(csl[0]["id"], "darwin1859");
+    assert!(csl[0].get("spdf").is_none());
     assert!(spdf::export::bibtex(&copy.document().expect("doc")).starts_with('@'));
 }
 
@@ -319,5 +320,15 @@ fn anchors_and_citations_from_search_hits() {
         let u = spdf::parse_uri(&h.anchor_uri).expect("uri");
         assert_eq!(u.docref, meta.docref());
         assert_eq!(u.to_string(), h.anchor_uri);
+        // The URI resolves to the unit where the fragment starts.
+        let frag = doc.fragment(&h.fragment_id).expect("frag").expect("exists");
+        let units = doc.locate(&h.anchor_uri).expect("locate");
+        assert!(
+            units.iter().any(|x| x.id == frag.unit),
+            "{} -> {:?}",
+            h.anchor_uri,
+            units
+        );
     }
+    assert!(doc.locate("spdf:sha256-00#p=1").expect("locate").is_empty());
 }

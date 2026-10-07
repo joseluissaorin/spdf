@@ -140,6 +140,8 @@ enum AnchorOp {
         #[arg(long)]
         locator: Option<String>,
     },
+    /// Units of a file an anchor URI points at.
+    Locate { file: PathBuf, uri: String },
 }
 
 type Res<T> = Result<T, Box<dyn std::error::Error>>;
@@ -289,6 +291,10 @@ fn run(cli: Cli) -> Res<ExitCode> {
         }
         Cmd::Anchor { op } => match op {
             AnchorOp::Parse { uri } => print_json(&serde_json::to_value(spdf::parse_uri(&uri)?)?),
+            AnchorOp::Locate { file, uri } => {
+                let doc = open(&file)?;
+                print_json(&serde_json::to_value(doc.locate(&uri)?)?);
+            }
             AnchorOp::Format {
                 docref,
                 anchor,

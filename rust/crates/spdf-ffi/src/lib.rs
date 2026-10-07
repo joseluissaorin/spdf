@@ -513,6 +513,21 @@ pub unsafe extern "C" fn spdf_anchor_uri_parse(
     })
 }
 
+/// Units an anchor URI points at, as a JSON array (empty if the URI names
+/// another document).
+#[no_mangle]
+pub unsafe extern "C" fn spdf_locate(
+    doc: *const SpdfDoc,
+    uri: *const c_char,
+    out_json: *mut *mut c_char,
+) -> c_int {
+    guard(|| {
+        let d = unsafe { doc_ref(doc) }?;
+        let uri = unsafe { str_arg(uri, "uri") }?;
+        unsafe { put_string(out_json, serde_json::to_string(&d.locate(uri)?)?) }
+    })
+}
+
 /// Short citation from CSL metadata. `anchor_end_json` may be NULL;
 /// `locale` is a BCP 47 tag (`es`, `en`…; NULL = `en`).
 #[no_mangle]

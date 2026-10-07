@@ -353,6 +353,9 @@ pub(crate) fn harden(conn: &Connection, opts: &OpenOptions) -> Result<()> {
     conn.set_limit(Limit::SQLITE_LIMIT_LENGTH, max)?;
     conn.set_limit(Limit::SQLITE_LIMIT_ATTACHED, 0)?;
     conn.pragma_update(None, "trusted_schema", "OFF")?;
+    // SPEC §2.4 recommendations for untrusted files.
+    conn.pragma_update(None, "mmap_size", 0)?;
+    conn.pragma_update(None, "cell_size_check", "ON")?;
     conn.pragma_update(None, "query_only", 1)?;
     Ok(())
 }
@@ -1184,6 +1187,77 @@ impl Spdf {
             )?,
             "extension",
         )
+    }
+
+    /// Units an anchor URI points at (SPEC §5.4): by physical page (`p`, up
+    /// to `pe`), else printed folio (`f`), time (`t`), slide, verse, canonical
+    /// reference or section path. Returns an empty list when the URI names
+    /// another document.
+    ///
+    /// ```no_run
+    /// let doc = spdf::Spdf::open("quijote.spdf")?;
+    /// let units = doc.locate("spdf:sha256-…#p=29&f=21&char=118,301")?;
+    /// # Ok::<(), spdf::Error>(())
+    /// ```
+    pub fn locate(&self, uri: &str) -> Result<Vec<Unit>> {
+        let u = crate::anchor::AnchorUri::parse(uri)?;
+        let d = self.document()?;
+        let same = match u.docref.strip_prefix("sha256-") {
+            Some(h) => h.eq_ignore_ascii_case(&d.source_sha256),
+            None => u.docref == d.id,
+        };
+        if !same {
+            return Ok(Vec::new());
+        }
+        let l = &u.locator;
+        let num = |a: &Value, k: &str| a.get(k).and_then(Value::as_f64);
+        let text = |a: &Value, k: &str| match a.get(k) {
+            Some(Value::String(s)) => Some(s.clone()),
+            Some(Value::Number(n)) => Some(n.to_string()),
+            _ => None,
+        };
+        let hit = |unit: &Unit| -> bool {
+            let a = &unit.anchor;
+            if let Some(p) = l.physical {
+                let pe = l.physical_end.unwrap_or(p) as f64;
+                return num(a, "physical")
+                    .map(|x| p as f64 <= x && x <= pe)
+                    .unwrap_or(false);
+            }
+            if let Some(f) = &l.printed {
+                return unit.printed.as_ref() == Some(f) || text(a, "printed").as_ref() == Some(f);
+            }
+            if let Some(t) = l.time.as_ref().and_then(|t| t.first()) {
+                return matches!((num(a, "t0"), num(a, "t1")), (Some(t0), Some(t1)) if t0 <= *t && *t < t1);
+            }
+            if let Some(n) = l.slide {
+                return num(a, "n") == Some(n as f64);
+            }
+            if let Some(v) = l.verse.as_ref().and_then(|v| v.first()) {
+                let from = num(a, "line_from");
+                let to = num(a, "line_to").or(from);
+                return matches!((from, to), (Some(x), Some(y)) if x <= *v as f64 && *v as f64 <= y);
+            }
+            if let Some(r) = &l.reference {
+                return text(a, "scheme").as_deref() == Some(r.scheme.as_str())
+                    && text(a, "ref").as_deref() == Some(r.reference.as_str());
+            }
+            if let Some(s) = &l.section {
+                return a
+                    .get("path")
+                    .and_then(Value::as_array)
+                    .map(|p| {
+                        p.len() >= s.len()
+                            && p.iter().zip(s).all(|(x, y)| x.as_str() == Some(y.as_str()))
+                    })
+                    .unwrap_or(false);
+            }
+            if let Some(sh) = &l.sheet {
+                return text(a, "sheet").as_ref() == Some(sh);
+            }
+            false
+        };
+        Ok(self.units()?.into_iter().filter(|u| hit(u)).collect())
     }
 
     /// True if the optional trigram index exists.

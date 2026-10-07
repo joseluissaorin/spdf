@@ -45,11 +45,18 @@ los 228 casos de la conformidad 0.2.0.
     de la unidad o figura en `fragment_id` (el contrato solo define el de fragmentos).
     Si la especificación quiere otro nombre de campo (`id` + `target`), es un cambio
     pequeño.
-11. **Exportación.** `csl_json` devuelve un array con un ítem, sin el objeto de extensión
-    `spdf` y con `id` = id del documento si falta. BibTeX: tipo por el `type` CSL
-    (`book`, `article`, `incollection`, `inproceedings`, `phdthesis`, `techreport`,
-    `unpublished`, si no `misc`), clave `apellido + año + primera palabra larga del
-    título` en ASCII, y escape de `& % $ # _ { } ~ ^ \`.
+11. **Exportación** (SPEC §19). Igual que la implementación en Python: CSL-JSON sin el
+    objeto `spdf` y con `id` = clave BibTeX; clave = apellido del primer autor (o primera
+    palabra del título) en letras ASCII + año (o `nd`), con `a`, `b`, `c` si chocan;
+    escape solo de `\`, `{` y `}`; las palabras con mayúsculas del título van entre
+    llaves; `csl_citation_item` añade `locator` y `label` (`page`, `folio`, `column`,
+    `timestamp`, `paragraph`, `section`, `verse`, `line`). La batería aún no tiene casos
+    de exportación: sugiero añadirlos para fijar estas decisiones entre lenguajes.
+12. **Resolución de URI** (`Spdf::locate`, SPEC §5.4): por `p` (hasta `pe`), si no por
+    `f`, `t` (t0 dentro de [t0, t1) de la unidad), `sl`, `v`, `ref`, prefijo de `s` y
+    `sh`, como en Python. Lista vacía si el `docref` es de otro documento.
+13. **Apertura**: además de lo obligatorio, `PRAGMA mmap_size = 0` y
+    `PRAGMA cell_size_check = ON`, como recomienda §2.4.
 
 ## Sobre la batería (sin objeciones que bloqueen)
 

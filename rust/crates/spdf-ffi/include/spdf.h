@@ -210,6 +210,12 @@ int spdf_anchor_uri_format_locator(const char *docref, const char *locator_json,
 int spdf_anchor_uri_parse(const char *uri, char **out_json);
 
 /*
+ Units an anchor URI points at, as a JSON array (empty if the URI names
+ another document).
+ */
+int spdf_locate(const struct SpdfDoc *doc, const char *uri, char **out_json);
+
+/*
  Short citation from CSL metadata. `anchor_end_json` may be NULL;
  `locale` is a BCP 47 tag (`es`, `en`…; NULL = `en`).
  */
