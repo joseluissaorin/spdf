@@ -10,6 +10,7 @@
  *   SPDF_SIN_RED=1 npm run build
  */
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { build } from 'esbuild';
@@ -441,7 +442,8 @@ function tituloDe(f: string): string {
 }
 
 function primerParrafo(md: string): string {
-  const p = md.replace(/^#.*$/gm, '').split(/\n\s*\n/).map((x) => x.trim()).find((x) => x && !/^[|`<>-]/.test(x));
+  const bloques = md.replace(/^#.*$/gm, '').split(/\n\s*\n/).map((x) => x.split('\n').map((l) => l.replace(/^>\s?/, '')).join('\n').trim());
+  const p = bloques.find((x) => x && !/^(\||```|<|-\s|\*\s|\d+\.\s)/.test(x) && textoPlano(x).length >= 40);
   const t = p ? textoPlano(p) : '';
   return t.length > 220 ? `${t.slice(0, 217).replace(/\s+\S*$/, '')}…` : t;
 }
@@ -548,6 +550,27 @@ function gobernanza(): void {
       });
     }
   }
+}
+
+/**
+ * El complemento de Zotero: el .xpi (con su versión y como «el último») y el
+ * updates.json al que apunta el update_url de su manifiesto, con el SHA-256
+ * del fichero para que Zotero lo compruebe antes de instalarlo.
+ */
+function zotero(): string | null {
+  const dir = resolve(RAIZ, 'integrations/zotero/dist');
+  if (!existe(dir)) return null;
+  const xpi = readdirSync(dir).filter((f) => /^spdf-zotero-[\d.]+\.xpi$/.test(f)).sort().pop();
+  if (!xpi) return null;
+  const version = /spdf-zotero-([\d.]+)\.xpi/.exec(xpi)![1]!;
+  const datos = readFileSync(join(dir, xpi));
+  escribir(`zotero/${xpi}`, datos);
+  escribir('zotero/spdf-zotero.xpi', datos);
+  const hash = createHash('sha256').update(datos).digest('hex');
+  escribir('zotero/updates.json', JSON.stringify({
+    addons: { 'spdf@joseluissaorin.com': { updates: [{ version, update_link: `${ORIGEN}/zotero/${xpi}`, update_hash: `sha256:${hash}`, applications: { zotero: { strict_min_version: '6.999' } } }] } },
+  }, null, 2));
+  return version;
 }
 
 /** Los JSON Schema de la especificación, en la dirección de su $id: /schema/5.0/<nombre>.schema.json. */
@@ -664,6 +687,13 @@ ${agente}
 /commons/*.json
   Content-Type: application/json; charset=utf-8
   Access-Control-Allow-Origin: *
+
+/zotero/*.xpi
+  Content-Type: application/x-xpinstall
+
+/zotero/updates.json
+  Content-Type: application/json; charset=utf-8
+  Cache-Control: public, max-age=600
 
 /schema/*
   Content-Type: application/schema+json; charset=utf-8
@@ -830,6 +860,7 @@ async function principal(): Promise<void> {
   docsDeLenguaje(e);
   integracionesSubhojas();
   const nEsquemas = esquemas();
+  const vZotero = zotero();
 
   const cuerpo404 = `<div class="marco ancho"><article class="doc"><header class="cabeza con-vineta">${vineta(paginaArrancada, 'en')}<p class="rotulo">404 · n. pag.</p><h1>This page is not in the book</h1><p class="entradilla">A leaf is missing here: the address you followed does not exist, or it has moved.</p><p class="entradilla" lang="es">Aquí faltaba una hoja: la dirección que has seguido no existe o ha cambiado de sitio.</p></header><div class="cuerpo"><p><a href="/">SPDF</a> · <a href="/spec">Specification</a> · <a href="/es" lang="es">Inicio en castellano</a> · <a href="/llms.txt">llms.txt</a></p></div></article></div>`;
   escribir('404.html', html({ clave: '404', lengua: 'en', ruta: '/404', alterna: '/404', titulo: 'Not found', descripcion: 'This page does not exist.', fecha: HOY, cuerpo: cuerpo404, sinAlterna: true }));
@@ -850,7 +881,7 @@ async function principal(): Promise<void> {
   let bytes = 0;
   const contar = (d: string) => { for (const f of readdirSync(d)) { const p = join(d, f); const s = statSync(p); if (s.isDirectory()) contar(p); else bytes += s.size; } };
   contar(DIST);
-  console.log(`web: ${PUBLICADAS.length} hojas (y sus .md), ${(bytes / 1024 / 1024).toFixed(1)} MB en dist · validador ${validador ? 'sí' : 'no'} · lector ${hayLector ? 'sí' : 'provisional'} · commons ${commons.items.length} · esquemas ${nEsquemas} · ${validados} .spdf validados`);
+  console.log(`web: ${PUBLICADAS.length} hojas (y sus .md), ${(bytes / 1024 / 1024).toFixed(1)} MB en dist · validador ${validador ? 'sí' : 'no'} · lector ${hayLector ? 'sí' : 'provisional'} · commons ${commons.items.length} · esquemas ${nEsquemas} · ${validados} .spdf validados · Zotero ${vZotero ?? 'sin .xpi'}`);
 }
 
 await principal();

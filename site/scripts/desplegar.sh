@@ -18,6 +18,11 @@ else
   echo "   sin build web del lector: se publica la hoja provisional"
 fi
 
+echo "== complemento de Zotero (integrations/zotero)"
+if [ -f "$RAIZ/integrations/zotero/package.json" ]; then
+  (cd "$RAIZ/integrations/zotero" && npm ci --silent && npm run build --silent)
+fi
+
 echo "== web"
 cd "$RAIZ/site"
 npm ci --silent

@@ -60,7 +60,7 @@ Un complemento para Zotero 7 y 8 que lleva SPDF a una biblioteca de referencias:
 - **Adjuntar un SPDF** a un ítem que ya existe.
 - **Copiar una cita con el folio**: elige una página o pega una URI de ancla y tendrás `(Darwin, 1859, p. 21)` en el portapapeles, con la URI de ancla al lado.
 
-Se instala desde el fichero `.xpi` (Herramientas → Complementos → Instalar complemento desde un archivo).
+Se instala desde el [fichero `.xpi`](/zotero/spdf-zotero.xpi) (Herramientas → Complementos → Instalar complemento desde un archivo); después Zotero lo actualiza desde esta web. Está probado fuera de Zotero (92 pruebas sobre imitaciones de Zotero y los ficheros de prueba reales); las comprobaciones que faltan en un Zotero 7 y 8 de verdad están en [su hoja](/es/integraciones/zotero).
 
 ## Pandoc {#pandoc}
 

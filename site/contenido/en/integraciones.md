@@ -60,7 +60,7 @@ A plugin for Zotero 7 and 8 that brings SPDF into a reference library:
 - **Attach an SPDF** to an existing item.
 - **Copy a citation with the folio**: pick a page or paste an anchor URI and get `(Darwin, 1859, p. 21)` on the clipboard, with the anchor URI alongside.
 
-Install it from the `.xpi` file (Tools → Plugins → Install Plugin From File).
+Install it from the [`.xpi` file](/zotero/spdf-zotero.xpi) (Tools → Plugins → Install Plugin From File); Zotero then updates it from this site. It has been tested outside Zotero (92 tests over Zotero fakes and the real fixtures); the checks still to do in a real Zotero 7 and 8 are listed in [its page](/integrations/zotero).
 
 ## Pandoc {#pandoc}
 
