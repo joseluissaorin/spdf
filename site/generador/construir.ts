@@ -346,6 +346,7 @@ ${lateral}
     cuerpo, seccion: o.seccion, ld: o.ld, scripts: o.scripts, estiloExtra: o.estiloExtra, sinAlterna: o.sinAlterna,
   };
   escribir(ficheroHtml(o.ruta), html(h));
+  if (o.aviso) mdGemelo = `> ${o.aviso.replace(/\n/g, '\n> ')}\n\n${mdGemelo}`;
   escribir(rutaMd(o.ruta).slice(1), markdownDe({ ...o, alterna: o.sinAlterna ? undefined : o.alterna, lengua: o.l }, mdGemelo));
   PUBLICADAS.push({ ruta: o.ruta, alterna: o.sinAlterna ? undefined : o.alterna, lengua: o.l, titulo: o.titulo, descripcion: o.descripcion, md: enlacesParaMd(mdGemelo), fecha: o.fecha, clave: o.clave });
 }
