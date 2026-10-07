@@ -88,7 +88,7 @@ test('web con WebGPU: EmbeddingGemma 2 (revectorizar y buscar por sentido) y Gem
   await panel.getByRole('button', { name: 'Preguntar' }).click();
   await expect(panel.locator('.afirmacion, [role=alert]').first().or(panel.getByText(/no contiene nada/))).toBeVisible({ timeout: 1_800_000 });
   console.log('respuesta en', Math.round((Date.now() - t0) / 1000), 's');
-  const alerta = await panel.locator('[role=alert]').textContent().catch(() => null);
+  const alerta = (await panel.locator('[role=alert]').count()) ? await panel.locator('[role=alert]').textContent() : null;
   if (alerta) console.log('alerta:', alerta);
   for (const a of await panel.locator('.afirmacion').all()) console.log('afirmación:', (await a.textContent())?.replace(/\s+/g, ' ').slice(0, 300));
   await page.screenshot({ path: resolve(CAPTURAS, 'web-modelos-preguntar.png') });

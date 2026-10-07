@@ -41,6 +41,9 @@ const ruta = (p: string) => resolve(aqui, p);
 function hermana(nombre: string, candidatas: string[], simulacro: string): string {
   if (process.env.SPDF_SIMULACROS === '1') return ruta(simulacro);
   for (const c of candidatas) if (existsSync(ruta(c))) return ruta(c);
+  // Una build para publicar nunca lleva simulacros: npm run build:web compila antes las hermanas.
+  if (process.env.npm_lifecycle_event === 'build:web' || process.env.npm_lifecycle_event === 'build:tauri')
+    throw new Error(`[lector] ${nombre} no está compilada (${candidatas.join(', ')}). Ejecuta scripts/preparar-hermanas.mjs.`);
   console.warn(`[lector] ${nombre}: no está compilada todavía; uso el simulacro ${simulacro}`);
   return ruta(simulacro);
 }

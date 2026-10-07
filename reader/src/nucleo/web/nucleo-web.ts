@@ -6,6 +6,7 @@
 import type { Nucleo, Capacidades, EntradaBiblioteca, Coleccion, ResultadoImport, Progreso, PeticionBusqueda, ResultadoBusqueda, ModeloCatalogo, EstadoClave, MotorIA, OpcionesRevectorizar, OpcionesGenerar, Apoyo } from '../nucleo';
 import type { Ancla, Figura, Fragmento, InformeValidacion, Lengua, Procedencia, Resumen, Unidad, Espacio } from '../tipos';
 import { Canal } from './rpc';
+import { preguntaJuez, leerJuicio } from './gemini';
 
 export class NucleoWeb implements Nucleo {
   readonly plataforma = 'web' as const;
@@ -96,8 +97,55 @@ export class NucleoWeb implements Nucleo {
   revectorizar(id: string, o: OpcionesRevectorizar, alProgreso: (p: Progreso) => void) {
     return this.#c.llamar<EntradaBiblioteca>('revectorizar', [id, o], (e) => alProgreso(e as Progreso));
   }
-  generar(prompt: string, o: OpcionesGenerar, alToken: (t: string) => void) {
-    return this.#c.llamar<string>('generar', [prompt, o], (e) => alToken((e as { token: string }).token));
+  /*
+   * Gemma 4 en la web corre con MediaPipe, cuyo cargador WASM no funciona dentro de un
+   * Worker de módulo («ModuleFactory not set»): el generador y el juez locales van en el
+   * hilo principal (la GPU trabaja de forma asíncrona y la interfaz no se bloquea).
+   * Los vectores, Gemini y el modelo de pruebas siguen en el Worker.
+   */
+  #gestor: Promise<any> | null = null;
+  #generador: { id: string; g: Promise<any> } | null = null;
+  #juez: Promise<any> | null = null;
+  #infer() { return import('spdf-infer-web'); }
+  #mm() { return (this.#gestor ??= this.#infer().then((m) => new (m as any).ModelManager({ store: 'opfs' }))); }
+  async #primero(tipo: 'generate' | 'judge'): Promise<string | undefined> {
+    const g = await this.#mm();
+    for (const c of g.catalog() as any[]) if ((c.kinds ?? [c.kind]).includes(tipo) && (await g.isDownloaded(c.id))) return c.id;
+    return undefined;
   }
-  juzgar(afirmacion: string, pasaje: string, motor: MotorIA) { return this.#l<Apoyo>('juzgar', afirmacion, pasaje, motor); }
+  async #gen(modelo?: string) {
+    const id = modelo ?? (await this.#primero('generate'));
+    if (!id) throw new Error('El modelo de lenguaje no está descargado.');
+    if (!this.#generador || this.#generador.id !== id) {
+      const [m, g] = await Promise.all([this.#infer(), this.#mm()]);
+      this.#generador = { id, g: (m as any).Generator.load(id, { manager: g, temperature: 0.2 }) };
+      this.#generador.g.catch(() => { this.#generador = null; });
+    }
+    return this.#generador.g;
+  }
+
+  async generar(prompt: string, o: OpcionesGenerar, alToken: (t: string) => void) {
+    if (o.motor !== 'local') return this.#c.llamar<string>('generar', [prompt, o], (e) => alToken((e as { token: string }).token));
+    const gen = await this.#gen(o.modelo);
+    let texto = '';
+    await gen.generate(prompt, { maxTokens: o.max_tokens ?? 700, system: o.system, stop: o.stop }, (t: string) => { texto += t; alToken(t); return true; });
+    return texto;
+  }
+
+  async juzgar(afirmacion: string, pasaje: string, motor: MotorIA): Promise<Apoyo> {
+    if (motor !== 'local') return this.#l<Apoyo>('juzgar', afirmacion, pasaje, motor);
+    // Un juez propio (Valen o Gemma en ONNX) si está descargado…
+    const id = await this.#primero('judge').catch(() => undefined);
+    const [m, g] = await Promise.all([this.#infer(), this.#mm()]);
+    if (id && (g.entry(id)?.engine ?? '') !== 'mediapipe') {
+      this.#juez ??= (m as any).Judge.load(id, { manager: g });
+      const j = await this.#juez!.catch(() => null);
+      if (j) { const r = await j.support(afirmacion, pasaje); return { supported: r.supported, label: String(r.label) }; }
+    }
+    // …si no, el mismo Gemma 4 que redacta, con la pregunta de respaldo.
+    const gen = await this.#gen();
+    let salida = '';
+    await gen.generate(preguntaJuez(afirmacion, pasaje), { maxTokens: 60 }, (t: string) => { salida += t; return true; });
+    return leerJuicio(salida);
+  }
 }
