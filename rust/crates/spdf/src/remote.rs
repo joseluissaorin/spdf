@@ -487,8 +487,12 @@ fn download_all(
 static COUNTER: AtomicU64 = AtomicU64::new(0);
 
 /// Opens a remote SPDF by HTTP range requests (falls back to a full
-/// download for servers without `Range` support and for gzip files).
+/// download for servers without `Range` support and for gzip files). A
+/// fragment identifier in the URL is ignored here; use
+/// [`crate::anchor::split_resource_url`] and [`Spdf::locate`] to go to it.
 pub fn open_url(url: &str, opts: &OpenOptions, ropts: &RemoteOptions) -> Result<Spdf> {
+    // A fragment (`#p=5&f=1r`, SPEC §24) designates a place, not the resource.
+    let url = url.split('#').next().unwrap_or(url);
     let agent = agent(ropts.timeout_secs);
     // Probe the first 100 bytes: header, size and range support.
     let mut req = agent.get(url).header("Range", "bytes=0-99");

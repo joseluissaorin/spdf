@@ -1075,6 +1075,44 @@ impl FromStr for AnchorUri {
     }
 }
 
+impl Locator {
+    /// Parses anchor parameters used as a fragment identifier, e.g. of an
+    /// `application/vnd.spdf` resource (`p=5&f=1r`, SPEC §24).
+    pub fn parse_fragment(fragment: &str) -> Result<Self> {
+        let frag = fragment.strip_prefix('#').unwrap_or(fragment);
+        Ok(AnchorUri::parse(&format!("spdf:_#{frag}"))?.locator)
+    }
+
+    /// The canonical parameters (`p=5&f=1r`), without `#`.
+    pub fn to_fragment(&self) -> String {
+        let s = AnchorUri {
+            docref: "_".into(),
+            locator: self.clone(),
+        }
+        .to_string();
+        s.split_once('#')
+            .map(|(_, f)| f.to_string())
+            .unwrap_or_default()
+    }
+}
+
+/// Splits the URL of an SPDF resource into the resource and the anchor
+/// parameters of its fragment identifier (SPEC §24):
+/// `https://example.org/quijote.spdf#p=5&f=1r`.
+///
+/// ```
+/// let (url, loc) = spdf::anchor::split_resource_url("https://example.org/q.spdf#p=5&f=1r").unwrap();
+/// assert_eq!(url, "https://example.org/q.spdf");
+/// assert_eq!(loc.unwrap().physical, Some(5));
+/// ```
+pub fn split_resource_url(url: &str) -> Result<(String, Option<Locator>)> {
+    match url.split_once('#') {
+        None => Ok((url.to_string(), None)),
+        Some((base, "")) => Ok((base.to_string(), None)),
+        Some((base, frag)) => Ok((base.to_string(), Some(Locator::parse_fragment(frag)?))),
+    }
+}
+
 /// Formats the URI of an anchor given as JSON (5.0 names). `docref` is
 /// `sha256-<hex>` or a document id.
 pub fn format_uri(docref: &str, anchor: &Value, end: Option<&Value>) -> Result<String> {

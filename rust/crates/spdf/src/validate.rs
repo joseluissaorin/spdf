@@ -79,6 +79,8 @@ struct Collector {
     errors: Vec<Issue>,
     warnings: Vec<Issue>,
     counts: HashMap<String, usize>,
+    /// Error codes reported as warnings (forward compatibility, SPEC §23).
+    soft: Vec<&'static str>,
 }
 
 impl Collector {
@@ -106,7 +108,8 @@ impl Collector {
         }
     }
     fn err(&mut self, code: &str, message: impl Into<String>, at: impl Into<String>) {
-        self.push(false, code, message, at);
+        let soft = self.soft.contains(&code);
+        self.push(soft, code, message, at);
     }
     fn warn(&mut self, code: &str, message: impl Into<String>, at: impl Into<String>) {
         self.push(true, code, message, at);
@@ -124,6 +127,7 @@ pub fn validate(path: impl AsRef<Path>) -> ValidationReport {
         errors: Vec::new(),
         warnings: Vec::new(),
         counts: HashMap::new(),
+        soft: Vec::new(),
     };
     match reader::open_connection(path, &opts) {
         Ok((conn, gzip, origin)) => validate_connection(conn, gzip, origin, c),
@@ -148,6 +152,7 @@ pub fn validate_bytes(bytes: &[u8]) -> ValidationReport {
         errors: Vec::new(),
         warnings: Vec::new(),
         counts: HashMap::new(),
+        soft: Vec::new(),
     };
     let gzip = bytes.len() >= 2 && bytes[0] == 0x1f && bytes[1] == 0x8b;
     match reader::connection_from_bytes(bytes.to_vec(), &opts) {
@@ -286,6 +291,8 @@ fn validate_connection(
     }
     if version_s != schema::SPDF_VERSION {
         c.warn("W105", format!("newer minor version {version_s}"), "header");
+        // A later minor version may define new anchor types and dtypes.
+        c.soft = vec!["E041", "E032"];
     }
     for obj in info.forbidden_objects(Some(flavor)) {
         c.err("E020", format!("{obj} is not allowed"), obj.clone());

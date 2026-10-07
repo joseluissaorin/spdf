@@ -2,7 +2,7 @@
 
 Decisiones que tomé donde el contrato o la especificación no bajaban al detalle, y
 observaciones sobre la batería. Todas están implementadas y la referencia en Rust pasa
-los 228 casos de la conformidad 0.2.0.
+los 229 casos de la conformidad 0.3.0.
 
 ## Decisiones propias (no las prueba la batería)
 
@@ -57,6 +57,10 @@ los 228 casos de la conformidad 0.2.0.
     `sh`, como en Python. Lista vacía si el `docref` es de otro documento.
 13. **Apertura**: además de lo obligatorio, `PRAGMA mmap_size = 0` y
     `PRAGMA cell_size_check = ON`, como recomienda §2.4.
+14. **Compatibilidad hacia delante** (SPEC §23): en un 5.x más reciente (W105), E041 y
+    E032 van a los avisos. Para la URL de un recurso con fragmento (§24) están
+    `anchor::split_resource_url` y `Locator::parse_fragment`/`to_fragment`;
+    `remote::open_url` ignora el fragmento al pedir el fichero.
 
 ## Sobre la batería (sin objeciones que bloqueen)
 
