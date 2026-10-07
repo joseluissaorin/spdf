@@ -102,7 +102,7 @@ function estadoBloque(l: Lengua, e: Record<string, Estado>): Bloque {
     const s = estadoDe(e, im.carpeta);
     const c = s.conformidad;
     const barra = c && c.pasados + c.fallidos > 0 ? `<span class="barra" aria-hidden="true"><i style="width:${Math.round((100 * c.pasados) / (c.pasados + c.fallidos))}%"></i></span>` : '';
-    return `<tr><td><a href="${RUTAS.docs[l]}/${im.id}">${esc(im.nombre)}</a> <code class="paquete">${esc(im.paquete)}</code><small>${esc(im.nota[l])} · ${nivel(im.nivel)}</small></td><td>${barra}${enlaceRun(s, etiquetaEstado(s, l))}${insignia(im.carpeta, im.nombre)}</td><td>${cuando(s)}</td></tr>`;
+    return `<tr><td><a href="${RUTAS.docs[l]}/${im.id}">${esc(im.nombre)} <code class="paquete">${esc(im.paquete)}</code></a><small>${esc(im.nota[l])} · ${nivel(im.nivel)}</small></td><td>${barra}${enlaceRun(s, etiquetaEstado(s, l))}${insignia(im.carpeta, im.nombre)}</td><td>${cuando(s)}</td></tr>`;
   }).join('');
   const otras = OTRAS_PIEZAS.map((o) => {
     const s = estadoDe(e, o.carpeta);
