@@ -202,7 +202,7 @@ export const LEGACY_COLUMNS: Record<TableName, Record<string, string | null>> = 
     dtype: null, truncated_from: null, task_prefixes: null,
   },
   vectors: { target: 'objetivo', space: 'espacio', document: 'documento', data: 'valores' },
-  blobs: { data: 'datos', sha256: null },
+  blobs: { key: 'clave', data: 'datos', sha256: null },
   provenance: { stage: 'fase', provider: 'proveedor', model: null, detail: 'detalle', at: 'cuando', document: 'documento' },
   extensions: {},
 };

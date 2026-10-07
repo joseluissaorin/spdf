@@ -259,7 +259,7 @@ export async function validate(input: SpdfInput | { source: RandomAccessSource; 
           const hash = await contentSha256OfDump(await dumpDocument(doc));
           if (meta.content_sha256 !== undefined && meta.content_sha256 !== hash) err('E081', 'content_sha256 does not match the content', 'spdf_meta.content_sha256');
           if (meta.signature !== undefined) {
-            const ok = meta.signer ? await verifyContentHash(meta.content_sha256 ?? hash, meta.signature, meta.signer) : false;
+            const ok = meta.signer ? await verifyContentHash(hash, meta.signature, meta.signer) : false;
             if (!ok) err('E082', meta.signer ? 'signature does not verify' : 'signature without signer', 'spdf_meta.signature');
           }
         } finally {
