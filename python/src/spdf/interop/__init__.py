@@ -2,4 +2,4 @@
 
 from __future__ import annotations
 
-__all__ = ["alto", "frames", "iiif", "images"]
+__all__ = ["alto", "frames", "iiif", "images", "tei"]

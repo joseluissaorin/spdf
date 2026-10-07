@@ -61,7 +61,7 @@ from .model import (
 )
 from .reader import SpdfFile, content_hash, open_spdf
 from .validate import validate
-from .writer import Writer, convert_legacy, copy_into
+from .writer import Writer, convert_legacy, copy_into, write_source
 
 open = open_spdf
 
@@ -115,6 +115,7 @@ __all__ = [
     "validate",
     "verify",
     "verify_hash",
+    "write_source",
 ]
 
 

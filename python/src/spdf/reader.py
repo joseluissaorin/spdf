@@ -978,6 +978,12 @@ class SpdfFile:
 
         return to_alto(self)
 
+    def to_tei(self) -> str:
+        """A minimal TEI P5 document (header from the metadata, ``pb``/``p``/``lg``/``u``/``note``)."""
+        from .interop.tei import to_tei
+
+        return to_tei(self)
+
     def to_iiif(self, base_url: str, **kw: Any) -> dict[str, Any]:
         """A IIIF Presentation 3 manifest with page images and text annotations."""
         from .interop.iiif import to_iiif

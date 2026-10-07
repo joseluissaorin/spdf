@@ -303,15 +303,23 @@ def _check_blob_sizes(c: Container, max_blob_size: int) -> None:
             raise UnsafeFileError(f"a value in {table}.{col} exceeds the maximum blob size ({max_blob_size} bytes)")
 
 
-_TOKENIZE_RE = re.compile(r"tokenize\s*=\s*(?:'((?:[^']|'')*)'|\"((?:[^\"]|\"\")*)\")", re.I)
+_TOKENIZE_RE = re.compile(r"""tokenize\s*=\s*(?:'((?:[^']|'')*)'|"((?:[^"]|"")*)"|([A-Za-z0-9_]+))""", re.I)
 
 
 def fts_tokenizer(sql: str | None) -> str | None:
-    """Extract the ``tokenize=`` argument of a ``CREATE VIRTUAL TABLE … USING fts5`` statement."""
+    """The ``tokenize=`` option of a ``CREATE VIRTUAL TABLE … USING fts5`` statement.
+
+    Unquoted, with whitespace collapsed; ``unicode61`` (the FTS5 default) when absent.
+    """
     if not sql:
         return None
     m = _TOKENIZE_RE.search(sql)
     if not m:
         return "unicode61"
-    value = m.group(1) if m.group(1) is not None else (m.group(2) or "")
-    return value.replace("''", "'").replace('""', '"')
+    if m.group(1) is not None:
+        raw = m.group(1).replace("''", "'")
+    elif m.group(2) is not None:
+        raw = m.group(2).replace('""', '"')
+    else:
+        raw = m.group(3) or ""
+    return " ".join(raw.split())

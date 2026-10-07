@@ -125,6 +125,7 @@ of `y` before the sound /i/ (`Gómez e Iglesias`).
 | CSL-JSON (Zotero, citeproc, Pandoc) | `f.to_csl_json()`, `spdf.bibliography.csl_citation_item()` | `spdf export -f csl` |
 | BibTeX | `f.to_bibtex()` | `spdf export -f bibtex` |
 | ALTO 4 XML (page units) | `f.to_alto()` | `spdf export -f alto` |
+| TEI P5 (minimal: header, `pb`, `p`, `lg`/`l`, `u`, `note`) | `f.to_tei()` | `spdf export -f tei` |
 | IIIF Presentation 3 manifest | `f.to_iiif(base_url)` | `spdf export -f iiif --base-url URL [--images-dir DIR]` |
 | JSON Lines of fragments | `spdf.interop.frames.fragment_records(f)` | `spdf export -f jsonl` |
 | pandas DataFrame | `f.to_pandas(vectors="space id")` | |
@@ -137,6 +138,27 @@ image, adds the unit text as a `supplementing` annotation, figure descriptions a
 `describing` annotations on `#xywh=percent:` regions, and sections as ranges; audio and
 video become one time-based canvas with a range per unit.
 
+## Annotations and collections
+
+User annotations and libraries live outside the documents, as the specification's sidecar
+files:
+
+```python
+from spdf import sidecars
+
+with spdf.open("quijote.spdf") as f:
+    hit = f.search("lanza en astillero")[0]
+    note = sidecars.annotation(f, hit.fragment, body="Origen del tópico.")   # W3C Web Annotation
+sidecars.write_annotations("notas.spdfa.json", [note], label="Notas de lectura")
+
+lib = sidecars.library(["quijote.spdf", "lazarillo.spdf"], "Tesis: fuentes")
+sidecars.write_library("fuentes.spdfl.json", lib)
+```
+
+Each annotation targets the document by identity (`spdf:sha256-…`) with an
+`SpdfAnchorSelector` (the anchor URI) and a `TextQuoteSelector` (exact text with a little
+context), so it survives a re-reading that shifts offsets.
+
 ## Command line
 
 ```text
@@ -145,7 +167,7 @@ spdf dump FILE [--pretty]             canonical dump (RFC 8785)
 spdf info FILE | --env                summary; --env shows the SQLite and FTS5 in use
 spdf search FILE QUERY [--vector JSON --space ID] [--mode lexical|vector|hybrid] [--json]
 spdf cite FILE [--fragment ID | --unit ID | --uri URI] [--locale es|en] [--bibtex]
-spdf export FILE -f csl|bibtex|alto|iiif|jsonl
+spdf export FILE -f csl|bibtex|alto|tei|iiif|jsonl
 spdf convert OLD.spdf NEW.spdf        legacy 4.x to 5.0
 spdf sign FILE --key KEY / spdf verify FILE [--public-key ed25519:…]
 spdf conformance [DIR]                run the conformance suite, print the report

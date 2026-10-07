@@ -208,6 +208,8 @@ def cmd_export(args: argparse.Namespace) -> int:
             text = f.to_bibtex()
         elif fmt == "alto":
             text = f.to_alto()
+        elif fmt == "tei":
+            text = f.to_tei()
         elif fmt == "iiif":
             if not args.base_url:
                 raise SystemExit("--format iiif needs --base-url (where manifest.json will be published)")
@@ -327,7 +329,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("export", help="export bibliographic data or the text")
     s.add_argument("file")
-    s.add_argument("--format", "-f", required=True, choices=["csl", "bibtex", "alto", "iiif", "jsonl"])
+    s.add_argument("--format", "-f", required=True, choices=["csl", "bibtex", "alto", "tei", "iiif", "jsonl"])
     s.add_argument("--base-url", help="IIIF: public base URL of the manifest")
     s.add_argument("--images-dir", help="IIIF: also write embedded images/media under DIR/blobs/")
     s.add_argument("--locale", default="es")

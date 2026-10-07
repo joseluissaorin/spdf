@@ -700,3 +700,45 @@ def test_cli(quijote: Path, legacy41: Path, tmp_path: Path, capsys: pytest.Captu
     assert main(["sign", str(out_file), "--key", str(key)]) == 0
     assert main(["verify", str(out_file)]) == 0
     capsys.readouterr()
+
+
+# -- TEI and sidecars --------------------------------------------------------------------------
+
+
+def test_tei(quijote: Path) -> None:
+    with spdf.open(quijote) as f:
+        xml = f.to_tei()
+    root = ET.fromstring(xml)
+    ns = {"t": "http://www.tei-c.org/ns/1.0"}
+    assert root.find("t:teiHeader/t:fileDesc/t:titleStmt/t:author", ns).text == "Cervantes Saavedra, Miguel de"  # type: ignore[union-attr]
+    pbs = root.findall(".//t:body/t:pb", ns)
+    assert [pb.get("n") for pb in pbs] == [None, "23", "24"]
+    assert pbs[0].get("facs") == "blob:pages/0001.png"
+    assert root.find(".//t:body/t:note[@place='foot']", ns) is not None
+    assert root.find(".//t:sourceDesc/t:bibl/t:pubPlace", ns).text == "Madrid"  # type: ignore[union-attr]
+
+
+def test_annotations_and_library(quijote: Path, tmp_path: Path) -> None:
+    from spdf import sidecars
+
+    with spdf.open(quijote) as f:
+        frag = f.fragment("f2")
+        assert frag is not None
+        note = sidecars.annotation(f, frag, body="Comienzo del capítulo.", created="2026-10-07T09:00:00Z")
+        mark = sidecars.annotation(f, f.unit("u3"))  # type: ignore[arg-type]
+    assert note["motivation"] == "commenting" and mark["motivation"] == "highlighting"
+    assert note["target"]["source"] == f"spdf:sha256-{SOURCE_SHA}"
+    sel = note["target"]["selector"]
+    assert sel[0] == {
+        "type": "SpdfAnchorSelector",
+        "value": f"spdf:sha256-{SOURCE_SHA}#p=2&f=23&char=0,{len(TEXTS[1])}",
+    }
+    assert sel[1]["exact"] == TEXTS[1] and sel[1]["prefix"] == ""
+    path = sidecars.write_annotations(tmp_path / "notas.spdfa.json", [note, mark], label="Notas")
+    assert len(sidecars.read_annotations(path)) == 2
+    lib = sidecars.library([quijote], "Fuentes", urls={str(quijote): "https://example.org/q.spdf"})
+    item = lib["items"][0]
+    assert item["sha256"] == SOURCE_SHA and item["year"] == 1605 and item["url"] == "https://example.org/q.spdf"
+    assert len(item["file_sha256"]) == 64
+    lp = sidecars.write_library(tmp_path / "b.spdfl.json", lib)
+    assert sidecars.read_library(lp)["name"] == "Fuentes"
