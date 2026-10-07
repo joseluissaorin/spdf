@@ -1,0 +1,36 @@
+Package: spdf
+Type: Package
+Title: Read, Search and Cite 'SPDF' Documents
+Version: 0.1.0
+Authors@R: person("José Luis", "Saorín Ferrer", email = "jl@joseluissaorin.com", role = c("aut", "cre", "cph"))
+Description: Reads, validates, searches, cites and writes 'SPDF' (Semantic
+    Processed Document Format) files: documents read once and citable forever,
+    stored as 'SQLite' databases in which every passage carries its exact
+    anchor (printed page, folio, second of a recording, slide, verse). Opens
+    'SPDF' 5.0 and legacy 4.x files safely, returns their parts as tibbles,
+    runs the reference lexical (full-text), vector and hybrid searches of the
+    specification, builds anchor URIs and author-date citations, exports
+    'CSL-JSON' and 'BibTeX', and helps to search and count terms over corpora.
+License: MIT + file LICENSE | Apache License (== 2.0)
+URL: https://spdf.joseluissaorin.com, https://github.com/joseluissaorin/spdf
+BugReports: https://github.com/joseluissaorin/spdf/issues
+Encoding: UTF-8
+Depends: R (>= 4.1)
+Imports:
+    DBI,
+    jsonlite,
+    openssl,
+    RSQLite (>= 2.3.0),
+    stringi,
+    tibble,
+    utils,
+    stats
+Suggests:
+    dplyr,
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+Roxygen: list(markdown = TRUE)
+Config/roxygen2/version: 8.1.0

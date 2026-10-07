@@ -1,0 +1,8 @@
+.Rproj.user
+.Rhistory
+*.tar.gz
+spdf.Rcheck/
+conformance.json
+inst/doc
+doc
+Meta

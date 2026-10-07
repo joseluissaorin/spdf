@@ -1,0 +1,149 @@
+---
+title: "Buscar en un corpus de SPDF y contar apariciones por obra y año"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Buscar en un corpus de SPDF y contar apariciones por obra y año}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+Un fichero SPDF guarda un documento ya leído: su texto, su ficha bibliográfica en
+CSL-JSON y, para cada pasaje, el ancla exacta de donde sale (la página impresa, el folio,
+el segundo de una grabación, el verso). Para la investigación en humanidades digitales
+eso significa que cada recuento puede volver a su fuente y que cada cita imprime solo lo
+que dice el original.
+
+Esta viñeta recorre un caso típico: reunir varias obras, buscar en todas a la vez,
+contar cuántas veces aparece cada término por obra y por año, y citar los pasajes.
+
+```{r setup}
+library(spdf)
+```
+
+## El corpus
+
+El paquete trae cuatro fragmentos breves de obras de dominio público: el *Lazarillo de
+Tormes* (1554), las *Obras* de Garcilaso anotadas por Herrera (1580, un fichero del
+formato anterior 4.1 que se lee igual que los nuevos), el *Quijote* (1605) y las
+*Rimas* de Bécquer (1871). En un proyecto real serían cientos de ficheros en una
+carpeta; el código no cambia.
+
+```{r}
+archivos <- list.files(system.file("extdata", package = "spdf"), pattern = "\\.spdf$", full.names = TRUE)
+corpus <- spdf_corpus(archivos)
+corpus[, c("title", "authors", "year", "language", "fragments", "legacy")]
+```
+
+Cada documento se abre en modo de solo lectura y sin ejecutar nada de lo que contenga:
+un SPDF recibido de fuera es un dato, no un programa.
+
+## Buscar en todas las obras
+
+`spdf_corpus_search()` aplica la búsqueda léxica de referencia de la especificación a
+cada fichero y devuelve una fila por pasaje, con su cita y su URI de ancla. La búsqueda
+no distingue mayúsculas ni tildes, admite frases entre comillas y alcanza también la
+capa de ortografía modernizada: en el *Lazarillo* impreso se lee «coſas», pero buscar
+«cosas» lo encuentra.
+
+```{r}
+hallazgos <- spdf_corpus_search(archivos, "cosas")
+hallazgos$text
+hallazgos$citation
+```
+
+La cita sale del ancla, no de un cálculo aproximado. En el *Quijote* se ve mejor: la
+portada no lleva número y se cita «s. p.»; los preliminares conservan su numeración
+romana; un folio que el lector dedujo, porque no estaba impreso, va entre corchetes; y
+un pasaje que cruza de una página a otra se cita con las dos.
+
+```{r}
+quijote <- spdf_open(system.file("extdata", "quijote.spdf", package = "spdf"))
+fragmentos <- spdf_fragments(quijote)
+ficha <- spdf_metadata(quijote)
+vapply(seq_len(nrow(fragmentos)), function(i) {
+  spdf_cite(ficha, fragmentos$anchor[[i]], fragmentos$anchor_end[[i]], locale = "es")
+}, character(1))
+```
+
+La URI de ancla identifica el pasaje de forma portátil, por la huella del original,
+aunque el fichero cambie de nombre o de carpeta:
+
+```{r}
+hallazgos$anchor_uri[1]
+```
+
+## Contar apariciones por obra y año
+
+`spdf_count_terms()` cuenta, para cada obra y cada término, los fragmentos que lo
+contienen y las apariciones del término en ellos.
+
+```{r}
+terminos <- c("vida", "hijo", "cosas", "dulce", "poesía")
+recuento <- spdf_count_terms(archivos, terminos)
+recuento[recuento$occurrences > 0, c("title", "year", "term", "fragments", "occurrences")]
+```
+
+Con R base se agrega por año en una línea:
+
+```{r}
+aggregate(occurrences ~ year + term, data = recuento, FUN = sum, subset = occurrences > 0)
+```
+
+Y con dplyr, si está instalado, la tabla habitual de obra por término:
+
+```{r, eval = requireNamespace("dplyr", quietly = TRUE), message = FALSE}
+library(dplyr)
+recuento |>
+  group_by(year, title) |>
+  summarise(apariciones = sum(occurrences), terminos = sum(occurrences > 0), .groups = "drop") |>
+  arrange(year)
+```
+
+Como los ficheros SPDF de este paquete son fragmentos, los números son pequeños; con
+obras completas el mismo código da series que se pueden comparar por décadas o por
+autores.
+
+## Volver a la fuente
+
+Todo recuento debería poder auditarse. Las tablas de pasajes y de unidades citables
+son tibbles con los nombres de columna de la especificación:
+
+```{r}
+spdf_units(quijote)[, c("ord", "printed", "reader", "confidence")]
+```
+
+`reader` dice qué leyó cada página (la capa de texto del PDF, un modelo de visión, una
+transcripción) y `confidence` con qué seguridad: datos que conviene declarar en la
+metodología de cualquier trabajo con texto digitalizado.
+
+## Exportar la bibliografía
+
+La ficha de cada obra es un ítem CSL-JSON, así que pasa sin pérdidas a Zotero, Pandoc o
+citeproc; también hay BibTeX:
+
+```{r}
+cat(spdf_bibtex(quijote))
+spdf_close(quijote)
+```
+
+## Validar antes de analizar
+
+Antes de procesar un corpus recibido conviene validar cada fichero. `spdf_validate()`
+aplica las comprobaciones de la especificación y devuelve sus códigos de error y de
+aviso:
+
+```{r}
+informe <- lapply(archivos, spdf_validate)
+data.frame(
+  archivo = basename(archivos),
+  valido = vapply(informe, function(r) r$valid, logical(1)),
+  avisos = vapply(informe, function(r) paste(vapply(r$warnings, function(w) w$code, ""), collapse = " "), "")
+)
+```
+
+El aviso W110 de Garcilaso solo señala que es un fichero del formato anterior: se lee
+completo a través de la vista 5.0.

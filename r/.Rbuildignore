@@ -1,0 +1,7 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^PUBLICAR\.md$
+^README\.md$
+^LICENSE\.md$
+^conformance\.json$
+^\.lintr$
