@@ -155,7 +155,7 @@ vendor/bin/spdf conformance ../conformance
 ## Conformance
 
 `php bin/spdf conformance ../conformance` runs the shared suite of the repository and
-prints `{"impl":"php","version":…,"passed":[…],"failed":[…],"skipped":[…]}`. CI runs it on
+prints `{"impl":"joseluissaorin/spdf (PHP)","version":…,"passed":[…],"failed":[…],"skipped":[…]}`. CI runs it on
 PHP 8.1 to 8.4 and publishes the report as the `conformance-php` artifact. All kinds are
 claimed, `export_structure` included.
 

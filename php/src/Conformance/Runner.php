@@ -19,7 +19,7 @@ use Spdf\Writer;
  */
 final class Runner
 {
-    public const IMPL = 'php';
+    public const IMPL = 'joseluissaorin/spdf (PHP)';
     public const VERSION = '0.1.0';
     public const TOLERANCE = 1e-6;
 
