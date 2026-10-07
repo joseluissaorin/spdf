@@ -3,14 +3,14 @@
  * adapter over the fake `Sqlite.sys.mjs`.
  */
 
-import { MEDIA_TYPE } from 'spdf-format/core';
+import { MEDIA_TYPE, toCslJson } from 'spdf-format/core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { copyFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { attachSpdf, canAttach, canCite, copyCitationWithFolio, importSpdfAsItem, isSpdfAttachment, type CommandEnv } from '../src/commands.js';
 import { mozStorageEngine } from '../src/engine.js';
-import { EN, EN_SHA, ES, ES_SHA, LEGACY_41, ROTO, nodeHost, tempDir, translator } from './helpers/env.js';
+import { EN, EN_SHA, ES, ES_SHA, LEGACY_FILES, ROTO, legacyRawMetadata, nodeHost, reference, tempDir, translator } from './helpers/env.js';
 import { fakeUi, fakeZotero, type UiScript } from './helpers/fake-zotero.js';
 
 const dir = tempDir();
@@ -82,23 +82,26 @@ describe('Import SPDF as item…', () => {
   });
 
   it('maps legacy 4.x metadata (gzip-wrapped, Spanish names) to CSL-JSON', async () => {
-    const s = setup({ pickFile: LEGACY_41 });
-    const item = await importSpdfAsItem(s.env);
-    expect(item).not.toBeNull();
-    const csl = s.log.csl[0] as Record<string, unknown>;
-    expect(csl).toMatchObject({
-      type: 'book',
-      title: 'Obras de Garcilaso de la Vega: con anotaciones de Fernando de Herrera',
-      'title-short': 'Obras de Garcilaso de la Vega',
-      author: [{ family: 'Garcilaso de la Vega' }],
-      editor: [{ family: 'Herrera', given: 'Fernando de' }],
-      issued: { 'date-parts': [[1580]] },
-      publisher: 'Alonso de la Barrera',
-      'publisher-place': 'Sevilla',
-    });
-    expect(csl).not.toHaveProperty('spdf');
-    expect(item!.getField('extra')).toMatch(/^SPDF: sha256-[0-9a-f]{64}$/);
-    expect(s.log.imports[0]).toMatchObject({ file: LEGACY_41, contentType: MEDIA_TYPE });
+    for (const path of LEGACY_FILES) {
+      const ref = await reference(path);
+      const expected = toCslJson(ref.document);
+      const docref = ref.docref;
+      await ref.close();
+      const raw = legacyRawMetadata(path); // what the file really says, in Spanish
+      expect(typeof raw.titulo).toBe('string');
+
+      const s = setup({ pickFile: path });
+      const item = await importSpdfAsItem(s.env);
+      expect(item, path).not.toBeNull();
+      const csl = s.log.csl[0] as Record<string, unknown>;
+      expect(csl).toEqual(expected);
+      expect(csl).not.toHaveProperty('spdf');
+      expect(String(csl.title)).toContain(String(raw.titulo));
+      expect(typeof csl.type).toBe('string');
+      if (Array.isArray(raw.autores) && raw.autores.length) expect((csl.author as unknown[]).length).toBe(raw.autores.length);
+      expect(item!.getField('extra')).toBe(`SPDF: ${docref}`);
+      expect(s.log.imports[0]).toMatchObject({ file: path, contentType: MEDIA_TYPE });
+    }
   });
 
   it('refuses a file a reader must refuse, and says why', async () => {

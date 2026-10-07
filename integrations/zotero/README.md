@@ -149,7 +149,10 @@ only line is the absolute path of `dist/addon/`, then start Zotero with `-purgec
 
 There is no Zotero in the test run. Everything that does not need Zotero runs in Node
 with `node:sqlite`, against the shared fixtures (`integrations/fixtures`) and the legacy
-conformance files (`conformance/legacy`):
+conformance files (`conformance/legacy`). That corpus is rebuilt from time to time, so
+the tests find legacy files by the kind of anchor they hold (pages, times, sections)
+and take the expected citations from the official Node engine of `spdf-format`,
+checked against the rules of SPEC §18:
 
 - `test/engine.test.ts`: the adapter runs over a stand-in for `Sqlite.sys.mjs` built on
   `node:sqlite` whose rows behave like `mozIStorageRow` (values by index, no column
@@ -162,8 +165,9 @@ conformance files (`conformance/legacy`):
   splitting, placeholder renaming.
 - `test/locate.test.ts`: folio, page, range and URI lookup and the citations, for
   example `(Saorín Ferrer, 2026, p. 1)` for physical page 2, `p. [3]` for the inferred
-  plate, `s. p.` / `n. pag.` for the cover, roman folios and time anchors in legacy files,
-  and "not found" for folios and pages that do not exist.
+  plate, `s. p.` / `n. pag.` for the cover; in legacy files every printed folio,
+  physical page, time (`h:mm:ss` from one hour on) and section paragraph; and "not
+  found" for folios, pages, times and paragraphs that do not exist.
 - `test/commands.test.ts`: the three commands against a fake `Zotero` that records items,
   CSL-JSON, attachments, Extra and the clipboard.
 - `test/plugin.test.ts`: startup, both menu paths (DOM for Zotero 7, `MenuManager` for

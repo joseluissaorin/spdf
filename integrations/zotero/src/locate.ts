@@ -165,11 +165,15 @@ async function resolveLocator(doc: SpdfDocument, loc: AnchorLocator): Promise<Re
     }
     if (loc.v !== undefined) return !!l.v && l.v[0] <= loc.v[0] && loc.v[0] <= (l.v[1] ?? l.v[0]);
     if (loc.ref !== undefined) return !!l.ref && l.ref.scheme === loc.ref.scheme && l.ref.ref === loc.ref.ref;
-    if (loc.s !== undefined) return sameArray(l.s, loc.s) && (loc.para === undefined || l.para === undefined || l.para === loc.para);
+    // Sections and web pages: the heading path (absent from the URI when empty) and
+    // the paragraph number, whichever the URI gives.
+    if (loc.s !== undefined || loc.para !== undefined) {
+      return (loc.s === undefined || sameArray(l.s ?? [], loc.s)) && (loc.para === undefined || l.para === loc.para);
+    }
     return false;
   });
   if (found.length) return { ok: true, matches: found.map((u) => single(u)) };
-  const any = ['sl', 'sh', 'v', 'ref', 's'].some((k) => (loc as Record<string, unknown>)[k] !== undefined);
+  const any = ['sl', 'sh', 'v', 'ref', 's', 'para'].some((k) => (loc as Record<string, unknown>)[k] !== undefined);
   if (any) return { ok: false, reason: 'not-found', detail: 'locator' };
   // `spdf:<docref>` with no unit-locating parameter designates the whole document.
   return { ok: true, matches: [{ anchor: { type: 'image' } as Anchor, anchorEnd: null, unit: null }] };

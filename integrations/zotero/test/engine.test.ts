@@ -13,7 +13,11 @@ import { openSpdf as openWithNode, validate as validateWithNode } from 'spdf-for
 import { openSpdf, validate, SpdfError } from 'spdf-format/core';
 import { ColumnNamesError, bindParams, mozStorageEngine } from '../src/engine.js';
 import { toLocalBytes } from '../src/bytes.js';
-import { EN, ES, LEGACY_40, LEGACY_41, ROTO, nodeHost, tempDir } from './helpers/env.js';
+import { EN, ES, LEGACY_FILES, ROTO, nodeHost, tempDir } from './helpers/env.js';
+import { basename } from 'node:path';
+
+/** Any legacy (gzip-wrapped 4.x) file of the conformance suite. */
+const LEGACY = LEGACY_FILES[0]!;
 
 const dir = tempDir();
 const host = nodeHost(dir);
@@ -27,9 +31,8 @@ describe('same results as the Node engine', () => {
   for (const [name, path] of [
     ['English fixture', EN],
     ['Spanish fixture', ES],
-    ['legacy 4.1 (gzip)', LEGACY_41],
-    ['legacy 4.0 (gzip)', LEGACY_40],
-  ] as const) {
+    ...LEGACY_FILES.map((f) => [`legacy ${basename(f)} (gzip)`, f] as const),
+  ]) {
     it(`${name}: canonical dump, units, fragments, citations`, async () => {
       const mine = await openSpdf(path, { engine });
       const ref = await openWithNode(path);
@@ -70,7 +73,7 @@ describe('same results as the Node engine', () => {
   });
 
   it('full validation (with the FTS5 integrity check on a temporary copy)', async () => {
-    for (const path of [EN, ES, LEGACY_41, LEGACY_40, ROTO]) {
+    for (const path of [EN, ES, ...LEGACY_FILES, ROTO]) {
       const a = await validate(path, { engine });
       const b = await validateWithNode(path);
       expect({ valid: a.valid, version: a.version, errors: a.errors.map((e) => e.code), warnings: a.warnings.map((w) => w.code) }).toEqual({
@@ -102,7 +105,7 @@ describe('safe opening', () => {
     const before = host.fake.opens.length;
     const doc = await openSpdf(EN, { engine });
     await doc.close();
-    const gz = await openSpdf(LEGACY_41, { engine });
+    const gz = await openSpdf(LEGACY, { engine });
     await gz.close();
     const opened = host.fake.opens.slice(before);
     expect(opened).toEqual([
@@ -141,7 +144,7 @@ describe('safe opening', () => {
   });
 
   it('enforces the decompression limit and reports bad gzip', async () => {
-    const gz = new Uint8Array(readFileSync(LEGACY_41));
+    const gz = new Uint8Array(readFileSync(LEGACY));
     await expect(engine.gunzip!(gz, 1000)).rejects.toThrow(/exceeds the limit/);
     const bad = gz.slice(0, 40);
     await expect(engine.gunzip!(bad, 1 << 30)).rejects.toThrow(/gzip/);

@@ -1,6 +1,8 @@
 /** Paths, the Node engine host and the Fluent strings shared by the tests. */
 
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
+import { openSpdf as openWithNode } from 'spdf-format';
 import { DatabaseSync } from 'node:sqlite';
 import { open, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -14,8 +16,50 @@ export const FIXTURES = join(ROOT, '..', 'fixtures');
 export const EN = join(FIXTURES, 'spdf-in-five-pages.spdf');
 export const ES = join(FIXTURES, 'spdf-en-cinco-paginas.spdf');
 export const ROTO = join(FIXTURES, 'roto.spdf');
-export const LEGACY_41 = join(ROOT, '..', '..', 'conformance', 'legacy', 'garcilaso-4.1.spdf');
-export const LEGACY_40 = join(ROOT, '..', '..', 'conformance', 'legacy', 'kennedy-4.0.spdf');
+
+/**
+ * The legacy 4.x files of the conformance suite (gzip-wrapped Scholaris files). The
+ * corpus is rebuilt from time to time, so tests find what they need in it (a file with
+ * page units, one with time units…) instead of naming files, titles or folios.
+ */
+export const LEGACY_DIR = join(ROOT, '..', '..', 'conformance', 'legacy');
+export const LEGACY_FILES = readdirSync(LEGACY_DIR)
+  .filter((f) => f.endsWith('.spdf'))
+  .sort()
+  .map((f) => join(LEGACY_DIR, f));
+
+/** The first legacy file with a unit whose anchor has this type (and passes `test`). */
+export async function legacyWith(type: string, test: (anchor: Record<string, unknown>) => boolean = () => true): Promise<string> {
+  for (const path of LEGACY_FILES) {
+    const doc = await openWithNode(path);
+    try {
+      if ((await doc.units()).some((u) => (u.anchor as { type?: string }).type === type && test(u.anchor as unknown as Record<string, unknown>))) return path;
+    } finally {
+      await doc.close();
+    }
+  }
+  throw new Error(`no legacy conformance file with a ${type} unit`);
+}
+
+/** The raw `documentos.metadatos` of a legacy file (Spanish `MetadatosDocumento`), read with plain SQL. */
+export function legacyRawMetadata(path: string): Record<string, unknown> {
+  const dir = mkdtempSync(join(tmpdir(), 'spdf-zotero-raw-'));
+  const file = join(dir, 'raw.sqlite');
+  writeFileSync(file, gunzipSync(readFileSync(path)));
+  const db = new DatabaseSync(file, { readOnly: true });
+  try {
+    const row = db.prepare('SELECT metadatos AS m FROM documentos').get() as { m: string };
+    return JSON.parse(row.m) as Record<string, unknown>;
+  } finally {
+    db.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/** Opens a file with the official Node engine of spdf-format: the reference for expectations. */
+export function reference(path: string) {
+  return openWithNode(path);
+}
 
 /**
  * `documents.source_sha256` of a fixture, read with plain SQL. The fixtures are

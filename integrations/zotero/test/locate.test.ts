@@ -4,7 +4,8 @@ import type { SpdfDocument } from 'spdf-format/core';
 import { mozStorageEngine } from '../src/engine.js';
 import { citationFor, parseQuery, resolveQuery, sameDocument, type Citation } from '../src/locate.js';
 import { openDocument } from '../src/spdf.js';
-import { EN, EN_SHA, ES, ES_SHA, LEGACY_40, LEGACY_41, nodeHost, tempDir } from './helpers/env.js';
+import { formatTime } from 'spdf-format/core';
+import { EN, EN_SHA, ES, ES_SHA, legacyWith, nodeHost, reference, tempDir } from './helpers/env.js';
 
 const dir = tempDir();
 const engine = mozStorageEngine(nodeHost(dir));
@@ -127,28 +128,89 @@ describe('citations from the Spanish fixture', () => {
   });
 });
 
-describe('legacy 4.x files', () => {
-  it('roman folios (4.1, gzip-wrapped)', async () => {
-    const doc = await openDocument(LEGACY_41, engine);
+/**
+ * Legacy 4.x files: the conformance corpus is rebuilt from time to time, so the files
+ * are found by the kind of anchor they hold and the expectations come from the
+ * official Node engine of spdf-format, plus the rules of SPEC §18 that make a
+ * citation honest (an inferred folio in brackets, a page without folio unnumbered).
+ */
+describe('legacy 4.x files (whatever the conformance corpus holds)', () => {
+  type PageAnchor = { type: string; physical: number; printed?: string | null; source?: string };
+
+  it('page units: every folio and physical page cites as the reference does', async () => {
+    const path = await legacyWith('page', (a) => typeof a.printed === 'string');
+    const doc = await openDocument(path, engine);
+    const ref = await reference(path);
     try {
-      expect(await citeInput(doc, 'ix', 'es')).toMatchObject({ citation: '(Garcilaso de la Vega, 1580, p. ix)' });
-      expect(await citeInput(doc, 'IX', 'es')).toMatchObject({ citation: '(Garcilaso de la Vega, 1580, p. ix)' });
-      expect(await citeInput(doc, 'x', 'es')).toMatchObject({ citation: '(Garcilaso de la Vega, 1580, p. [x])' });
-      expect(await citeInput(doc, 'p=1', 'es')).toMatchObject({ citation: '(Garcilaso de la Vega, 1580, s. p.)' });
+      let checked = 0;
+      for (const u of await ref.units()) {
+        const a = u.anchor as unknown as PageAnchor;
+        if (a.type !== 'page') continue;
+        for (const locale of ['es', 'en']) {
+          const expected = { citation: ref.cite(u.anchor, locale), uri: ref.anchorUri(u.anchor) };
+          const honest = a.printed ? (a.source === 'inferred' ? `p. [${a.printed}])` : `p. ${a.printed})`) : locale === 'es' ? 's. p.)' : 'n. pag.)';
+          expect(expected.citation.endsWith(honest), `${expected.citation} ends with ${honest}`).toBe(true);
+          expect(await citeInput(doc, `p=${a.physical}`, locale)).toMatchObject(expected);
+          expect(await citeInput(doc, expected.uri, locale)).toMatchObject(expected);
+          if (a.printed) {
+            expect(await citeInput(doc, a.printed, locale)).toMatchObject(expected);
+            expect(await citeInput(doc, `[${a.printed}]`, locale)).toMatchObject(expected);
+            expect(await citeInput(doc, `p. ${a.printed.toUpperCase()}`, locale)).toMatchObject(expected);
+          }
+          checked++;
+        }
+      }
+      expect(checked).toBeGreaterThan(0);
+      expect(await citeInput(doc, 'no-such-folio')).toEqual({ fail: 'not-found', detail: 'no-such-folio' });
+      expect(await citeInput(doc, 'p=99999')).toEqual({ fail: 'not-found', detail: '99999' });
     } finally {
       await doc.close();
+      await ref.close();
     }
   });
 
-  it('time anchors (4.0 recording)', async () => {
-    const doc = await openDocument(LEGACY_40, engine);
+  it('time units: a second inside a unit cites that second', async () => {
+    const path = await legacyWith('time');
+    const doc = await openDocument(path, engine);
+    const ref = await reference(path);
     try {
-      const ref = doc.docref;
-      expect(await citeInput(doc, `spdf:${ref}#t=12`, 'en')).toMatchObject({ citation: '(Kennedy, 1962, 0:12)', uri: expect.stringMatching(new RegExp(`^spdf:${ref}#t=12(,12)?$`)) });
-      expect(await citeInput(doc, `spdf:${ref}#t=0,9.5`, 'en')).toMatchObject({ citation: '(Kennedy, 1962, 0:00)' });
-      expect(await citeInput(doc, '1')).toEqual({ fail: 'not-found', detail: '1' });
+      const timed = (await ref.units()).filter((u) => (u.anchor as { type: string }).type === 'time');
+      for (const u of timed) {
+        const a = u.anchor as unknown as { t0: number; t1: number };
+        const t = Math.floor((a.t0 + a.t1) / 2);
+        const uri = `spdf:${ref.docref}#t=${t}`;
+        const expected = ref.cite({ ...(u.anchor as object), t0: t, t1: t } as never, 'en');
+        // h:mm:ss from one hour on, m:ss below, seconds floored (SPEC §18)
+        expect(expected.endsWith(`, ${formatTime(t)})`)).toBe(true);
+        expect(await citeInput(doc, uri, 'en')).toMatchObject({ citation: expected, uri: expect.stringMatching(new RegExp(`^spdf:${ref.docref}#t=${t}(,${t})?$`)) });
+      }
+      const first = timed[0]!.anchor as unknown as { t0: number };
+      if (first.t0 >= 1) expect(await citeInput(doc, `spdf:${ref.docref}#t=${first.t0 - 1}`)).toEqual({ fail: 'not-found', detail: `t=${first.t0 - 1}` });
     } finally {
       await doc.close();
+      await ref.close();
+    }
+  });
+
+  it('section units: anchor URIs with a heading path or a paragraph', async () => {
+    const path = await legacyWith('section');
+    const doc = await openDocument(path, engine);
+    const ref = await reference(path);
+    try {
+      let checked = 0;
+      for (const u of await ref.units()) {
+        if ((u.anchor as { type: string }).type !== 'section') continue;
+        const uri = ref.anchorUri(u.anchor);
+        for (const locale of ['es', 'en']) {
+          expect(await citeInput(doc, uri, locale)).toMatchObject({ citation: ref.cite(u.anchor, locale), uri });
+          checked++;
+        }
+      }
+      expect(checked).toBeGreaterThan(0);
+      expect(await citeInput(doc, `spdf:${ref.docref}#para=99999`)).toEqual({ fail: 'not-found', detail: 'locator' });
+    } finally {
+      await doc.close();
+      await ref.close();
     }
   });
 });

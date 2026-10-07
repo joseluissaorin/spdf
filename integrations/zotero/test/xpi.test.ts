@@ -14,7 +14,7 @@ import { join } from 'node:path';
 import vm from 'node:vm';
 // @ts-expect-error: plain JS helper shared with the build script
 import { unzip } from '../scripts/zip.mjs';
-import { EN, EN_SHA, LEGACY_41, ROOT, tempDir } from './helpers/env.js';
+import { EN, EN_SHA, ROOT, legacyWith, reference, tempDir } from './helpers/env.js';
 import { fakeGlobals, fakeWindow } from './helpers/fake-globals.js';
 import { fakeZotero } from './helpers/fake-zotero.js';
 
@@ -127,7 +127,14 @@ describe('bootstrap.js in a Zotero-like sandbox', () => {
   });
 
   it('imports a gzip-wrapped legacy file (DecompressionStream from the main window)', async () => {
-    const { ctx, win, z, g, tmp } = sandbox({ files: [LEGACY_41], prompts: ['x'] });
+    // A legacy file with a printed folio, and what the reference engine cites for it.
+    const path = await legacyWith('page', (a) => typeof a.printed === 'string');
+    const ref = await reference(path);
+    const unit = (await ref.units()).find((u) => typeof (u.anchor as { printed?: unknown }).printed === 'string')!;
+    const folio = (unit.anchor as { printed: string }).printed;
+    const expected = `${ref.cite(unit.anchor, 'en')}\n${ref.anchorUri(unit.anchor)}`;
+    await ref.close();
+    const { ctx, win, z, g, tmp } = sandbox({ files: [path], prompts: [folio] });
     expect(vm.runInContext('typeof DecompressionStream', ctx)).toBe('undefined');
     await ctx.startup({ id: 'spdf@joseluissaorin.com', version: pkg.version, rootURI: '' }, 1);
     win.toolsMenu.children[0]!.dispatch('command');
@@ -137,7 +144,7 @@ describe('bootstrap.js in a Zotero-like sandbox', () => {
     z.pane.selected = [item];
     win.itemMenu.children.find((c) => c.id === 'spdf-zotero-item-cite')!.dispatch('command');
     await vi.waitFor(() => expect(z.log.clipboard).toHaveLength(1));
-    expect(z.log.clipboard[0]).toMatch(/^\(Garcilaso de la Vega, 1580, p\. \[x\]\)\nspdf:sha256-[0-9a-f]{64}#p=3&f=x$/);
+    expect(z.log.clipboard[0]).toBe(expected);
     ctx.shutdown({}, 4);
     rmSync(tmp, { recursive: true, force: true });
   });

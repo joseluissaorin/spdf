@@ -9,7 +9,8 @@ import { readdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { createPlugin } from '../src/plugin.js';
 import { MENU_IDS } from '../src/menus.js';
-import { EN, EN_SHA, LEGACY_41, ROTO, tempDir } from './helpers/env.js';
+import { toCslJson } from 'spdf-format/core';
+import { EN, EN_SHA, LEGACY_FILES, ROTO, reference, tempDir } from './helpers/env.js';
 import { fakeGlobals, fakeWindow, type FakeElement } from './helpers/fake-globals.js';
 import { fakeZotero } from './helpers/fake-zotero.js';
 
@@ -130,13 +131,17 @@ describe('Zotero 7: menus in the DOM', () => {
   });
 
   it('reads a gzip-wrapped legacy file with the main window DecompressionStream and cleans the temp copy', async () => {
-    const w = world({ files: [LEGACY_41] });
+    const path = LEGACY_FILES[0]!;
+    const ref = await reference(path);
+    const expected = toCslJson(ref.document);
+    await ref.close();
+    const w = world({ files: [path] });
     expect('DecompressionStream' in w.globals).toBe(false); // like Zotero's sandbox
     const plugin = createPlugin(w.globals as never);
     await plugin.startup(DATA, 1);
     el(w, MENU_IDS.toolsImport).dispatch('command');
     await vi.waitFor(() => expect(w.log.imports).toHaveLength(1));
-    expect(w.log.csl[0]).toMatchObject({ type: 'book', title: 'Obras de Garcilaso de la Vega: con anotaciones de Fernando de Herrera' });
+    expect(w.log.csl[0]).toEqual(expected);
     // the decompressed copy went to Zotero's temp directory, read only, and is gone
     expect(w.sqlite.opens).toEqual([{ path: expect.stringContaining(w.zoteroTmp), readOnly: true }]);
     expect(readdirSync(w.zoteroTmp)).toEqual([]);
