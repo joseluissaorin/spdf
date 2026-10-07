@@ -47,6 +47,7 @@ function fnv(s: string): number {
 
 export class FakeEmbedder {
   constructor(private readonly base = 768) {}
+  get dims() { return this.base; }
   static async load() { return new FakeEmbedder(); }
   space(dims = this.base): Space {
     return { id: `spdf-fake@${dims}`, provider: 'spdf', model: 'spdf-fake', version: '1', dims, dtype: 'f32', normalized: true, truncated_from: dims === this.base ? null : this.base, modalities: ['text'], task_prefixes: null };

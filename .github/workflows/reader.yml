@@ -158,9 +158,9 @@ jobs:
         run: npm ci
       - name: APK
         working-directory: reader
-        env:
-          NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.1.12297006
-        run: npx tauri android build --apk
+        run: |
+          export NDK_HOME="$ANDROID_HOME/ndk/27.1.12297006"
+          npx tauri android build --apk
       - name: "Firmar con una clave de depuración (la de publicación no vive en el repositorio)"
         run: |
           BT=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)

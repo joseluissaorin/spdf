@@ -12,6 +12,7 @@ import type { EntradaBiblioteca, Coleccion, PeticionBusqueda, ResultadoBusqueda,
 import type { Acierto, Ancla, Espacio, Resumen, Unidad } from '../tipos';
 import { fusionarBiblioteca } from '../../util/fusion';
 import * as gemini from './gemini';
+import { generarFalso, juzgarFalso } from '../../util/falsos';
 
 type Doc = Awaited<ReturnType<typeof spdf.openSpdf>>;
 
@@ -154,6 +155,8 @@ const ia = () => (infer ??= import('spdf-infer-web'));
 let gestor: any = null;
 const gestorModelos = async () => (gestor ??= new (await ia()).ModelManager({ store: 'opfs' }));
 
+let generador: any = null;
+let juez: any = null;
 let claveGemini: string | null = null;
 let claveGuardada = false;
 
@@ -168,8 +171,7 @@ async function incrustador(motor: MotorIA, modelo?: string): Promise<Incrustador
       const m = await ia();
       if (motor === 'prueba') {
         if (!pruebas) throw new Error('El modelo de pruebas solo existe en modo pruebas.');
-        const F = (m as any).FakeEmbedder;
-        return (F.load ? await F.load() : new F()) as Incrustador;
+        return new (m as any).FakeEmbedder(768) as Incrustador;
       }
       if (motor === 'gemini') {
         if (!claveGemini) throw new Error('Falta la clave de Gemini.');
@@ -177,14 +179,22 @@ async function incrustador(motor: MotorIA, modelo?: string): Promise<Incrustador
         return G ? (new G(claveGemini) as Incrustador) : gemini.incrustador(claveGemini);
       }
       const g = await gestorModelos();
-      const id = modelo ?? g.recommend?.('embed')?.id;
+      const id = modelo ?? (await primeroDescargado(g, 'embed'));
       if (!id || !(await g.isDownloaded(id))) throw new Error('El modelo de vectores no está descargado.');
-      return (await m.Embedder.load(id, { device: 'auto' })) as unknown as Incrustador;
+      return (await m.Embedder.load(id, { manager: g, device: 'auto', modalities: ['text'] } as never)) as unknown as Incrustador;
     })();
     p.catch(() => incrustadores.delete(k));
     incrustadores.set(k, p);
   }
   return p;
+}
+
+/** El recomendado si está descargado; si no, el primero descargado de ese tipo. */
+async function primeroDescargado(g: any, tipo: 'embed' | 'generate' | 'judge'): Promise<string | undefined> {
+  const rec = g.recommend?.(tipo)?.id;
+  if (rec && (await g.isDownloaded(rec))) return rec;
+  for (const c of g.catalog() as any[]) if ((c.kinds ?? [c.kind]).includes(tipo) && (await g.isDownloaded(c.id))) return c.id;
+  return rec;
 }
 
 /** Motores con los que se podría consultar ahora mismo, en orden de preferencia. */
@@ -407,13 +417,15 @@ atender({
     const rec = new Set(['embed', 'generate', 'judge'].map((k) => g.recommend?.(k)?.id).filter(Boolean));
     const out: ModeloCatalogo[] = [];
     for (const c of g.catalog() as any[]) {
-      out.push({ id: c.id, nombre: c.name, tipo: c.kind, bytes: c.bytes, licencia: c.license, descargado: await g.isDownloaded(c.id), recomendado: rec.has(c.id), motor: c.engine });
+      out.push({ id: c.id, nombre: c.name ?? c.id, tipo: c.kind, bytes: c.bytes ?? (c.files ?? []).reduce((s: number, f: { bytes: number }) => s + f.bytes, 0), licencia: c.license, descargado: await g.isDownloaded(c.id), recomendado: rec.has(c.id), motor: c.engine });
     }
-    return out;
+    // Primero los recomendados; después, de menor a mayor.
+    return out.sort((a, b) => Number(b.recomendado) - Number(a.recomendado) || a.tipo.localeCompare(b.tipo) || a.bytes - b.bytes);
   },
   async descargarModelo(id: string, emitir: (e: Evento) => void) {
     const g = await gestorModelos();
-    await g.download(id, (p: { file: string; done: number; total: number }) => emitir({ fase: 'descargar', hecho: p.done, total: p.total, detalle: p.file } satisfies Progreso));
+    await g.download(id, (p: { file: string; done: number; total: number; overallDone?: number; overallTotal?: number }) =>
+      emitir({ fase: 'descargar', hecho: p.overallDone ?? p.done, total: p.overallTotal ?? p.total, detalle: p.file } satisfies Progreso));
     incrustadores.clear();
   },
   async borrarModelo(id: string) { await (await gestorModelos()).delete(id); incrustadores.clear(); },
@@ -489,15 +501,17 @@ atender({
       await gemini.generar(claveGemini, prompt, o, alToken);
       return texto;
     }
+    if (o.motor === 'prueba') {
+      if (!pruebas) throw new Error('El modelo de pruebas solo existe en modo pruebas.');
+      await generarFalso(prompt, alToken);
+      return texto;
+    }
     const m = await ia();
-    let id = o.modelo;
-    if (o.motor === 'local') {
-      const g = await gestorModelos();
-      id ??= g.recommend?.('generate')?.id;
-      if (!id || !(await g.isDownloaded(id))) throw new Error('El modelo de lenguaje no está descargado.');
-    } else if (!pruebas) throw new Error('El modelo de pruebas solo existe en modo pruebas.');
-    const gen = await m.Generator.load(id ?? 'spdf-fake');
-    await gen.generate(prompt, { max_tokens: o.max_tokens ?? 700, temperature: o.temperature ?? 0.2, system: o.system, stop: o.stop }, alToken);
+    const g = await gestorModelos();
+    const id = o.modelo ?? (await primeroDescargado(g, 'generate'));
+    if (!id || !(await g.isDownloaded(id))) throw new Error('El modelo de lenguaje no está descargado.');
+    generador ??= await m.Generator.load(id, { manager: g } as never);
+    await generador.generate(prompt, { maxTokens: o.max_tokens ?? 700, temperature: o.temperature ?? 0.2, system: o.system, stop: o.stop } as never, alToken);
     return texto;
   },
 
@@ -506,9 +520,13 @@ atender({
       if (!claveGemini) throw new Error('Falta la clave de Gemini.');
       return gemini.juzgar(claveGemini, afirmacion, pasaje);
     }
+    if (motor === 'prueba') return juzgarFalso(afirmacion, pasaje);
     const m = await ia();
-    const j = await m.Judge.load(motor === 'prueba' ? 'spdf-fake' : undefined as never);
-    const r = await j.support(afirmacion, pasaje);
+    const g = await gestorModelos();
+    const id = await primeroDescargado(g, 'judge');
+    if (!id || !(await g.isDownloaded(id))) throw new Error('El modelo del juez no está descargado.');
+    juez ??= await m.Judge.load(id, { manager: g } as never);
+    const r = await juez.support(afirmacion, pasaje);
     return { supported: r.supported, label: String(r.label) };
   },
 });
