@@ -126,3 +126,19 @@ def test_blank_pages_skip_the_vision_engine(tmp_path):
     db = sqlite3.connect(out)
     assert db.execute("SELECT reader, text FROM units WHERE ord = 2").fetchone() == ("blank-page-detector", "")
     assert spdf.validate(str(out)).valid
+
+
+def test_refused_transcription_does_not_kill_the_build(inputs, tmp_path):
+    """Gemini sometimes answers PROHIBITED_CONTENT for a whole recording: the build goes on and says so."""
+    if "audio" not in inputs:
+        pytest.skip("ffmpeg not available")
+
+    class Refusing(FakeTranscriber):
+        def transcribe(self, wav_path, language=None):
+            raise RuntimeError("gemini: no candidates (PROHIBITED_CONTENT)")
+
+    out = tmp_path / "refused.spdf"
+    rep = build([str(inputs["audio"])], str(out), Engines(embedder=FakeEmbedder(8), llm=FakeLLM(), asr=Refusing()),
+                Options(offline=True))
+    assert any("could not be transcribed" in w for w in rep.warnings)
+    assert spdf.validate(str(out)).valid

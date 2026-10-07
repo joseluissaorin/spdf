@@ -90,7 +90,12 @@ Keys are read from the environment only (`GEMINI_API_KEY`, `OPENAI_API_KEY`,
    footnotes.
 5. **Modernized layer** (`search_text`) for old Spanish, Latin, French and Italian: a key
    that the modern query also produces («muger» = «mujer», «dixo» = «dijo»).
-6. **Context** line per fragment (LLM, or extractive), **figures** with region and a
+6. **Recordings**: units of 30-60 s cut at sentence ends; `units.words` holds one timing pair
+   per whitespace token of the unit text **after removing the speaker labels** (`**Name:**`)
+   that mark turns when several people speak. Speaker labels are harmonized across the
+   10-minute transcription chunks; a span the engine refuses is split down to 60 s and, if
+   it still fails, left out and reported (the build goes on).
+7. **Context** line per fragment (LLM, or extractive), **figures** with region and a
    description in the language of the document, **vectors** of fragments, page images and
    figures, **provenance** of every step.
 

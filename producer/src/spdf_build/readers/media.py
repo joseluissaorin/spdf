@@ -222,26 +222,84 @@ def read_media(data: bytes, path: str, kind: str, transcriber, language: Optiona
     word_timing = "asr"
     try:
         # chunks with 2 s overlap; words in the overlap belong to the previous chunk
+        failed: list[list[float]] = []
+
+        def transcribe_span(t0: float, dur: Optional[float], k: str) -> Optional[dict]:
+            """Transcribe [t0, t0+dur]; if the engine refuses (e.g. Gemini PROHIBITED_CONTENT) or fails, split the
+            span in halves down to 60 s; what still fails is left out and reported, the build goes on."""
+            wav = decode_wav(path, os.path.join(tmp, f"c{k}.wav"), t0 if t0 else None, dur)
+            try:
+                r = transcriber.transcribe(wav, lang)
+                for s in r.get("segments", []):
+                    for w in s.get("words") or []:
+                        w["t0"] += t0
+                        w["t1"] += t0
+                    s["t0"] = s.get("t0", 0) + t0
+                    s["t1"] = s.get("t1", 0) + t0
+                return r
+            except Exception as e:
+                if log:
+                    log(f"transcription failed on {t0:.0f}-{t0 + (dur or 0):.0f} s: {str(e)[:120]}")
+                if dur and dur > 120:
+                    half = dur / 2
+                    a = transcribe_span(t0, half + 1.0, k + "a")
+                    b = transcribe_span(t0 + half, dur - half, k + "b")
+                    segs = []
+                    for part, start in ((a, t0), (b, t0 + half)):
+                        if part:
+                            for s in part.get("segments", []):
+                                ws = [w for w in s.get("words") or [] if start == t0 or w["t0"] >= start + 0.5]
+                                if ws or not s.get("words"):
+                                    segs.append({**s, "words": ws})
+                    base = a or b
+                    return {**base, "segments": segs} if base else None
+                failed.append([round(t0, 2), round(t0 + (dur or 0), 2)])
+                return None
+
         t = 0.0
         k = 0
+        prev_words: list[dict] = []
         while t < duration - 0.5 or k == 0:
             dur = min(chunk + 2.0, duration - t) if duration else None
-            wav = decode_wav(path, os.path.join(tmp, f"c{k}.wav"), t if k else None, dur)
-            r = transcriber.transcribe(wav, lang)
-            lang = lang or r.get("language")
-            backend = r.get("backend")
-            word_timing = r.get("word_timing", word_timing)
-            for s in r.get("segments", []):
-                spk = s.get("speaker")
-                for w in s.get("words") or []:
-                    w = dict(w)
-                    w["t0"] += t
-                    w["t1"] += t
+            r = transcribe_span(t, dur, str(k))
+            if r:
+                lang = lang or r.get("language")
+                backend = r.get("backend")
+                word_timing = r.get("word_timing", word_timing)
+                cur = []
+                for s in r.get("segments", []):
+                    spk = s.get("speaker")
+                    for w in s.get("words") or []:
+                        w = dict(w)
+                        if spk and not w.get("speaker"):
+                            w["speaker"] = spk
+                        cur.append(w)
+                if k and prev_words:
+                    # chunk-local speaker labels → the labels of the previous chunk, voted by the words of the
+                    # 2-s overlap (Gemini calls the same reader «Phil Chenevert» in one chunk, «Speaker 1» in the next)
+                    votes: dict[str, dict[str, int]] = {}
+                    for w in cur:
+                        if w["t0"] >= t + 2.5 or not w.get("speaker"):
+                            continue
+                        key = re.sub(r"\W", "", w["w"].lower())
+                        m = next((p for p in prev_words if abs(p["t0"] - w["t0"]) < 0.8 and re.sub(r"\W", "", p["w"].lower()) == key
+                                  and p.get("speaker")), None)
+                        if m:
+                            votes.setdefault(w["speaker"], {}).setdefault(m["speaker"], 0)
+                            votes[w["speaker"]][m["speaker"]] += 1
+                    mapping = {a: max(b, key=b.get) for a, b in votes.items()}
+                    prev_labels = {p.get("speaker") for p in prev_words if p.get("speaker")}
+                    cur_labels = {w.get("speaker") for w in cur if w.get("speaker")}
+                    if not mapping and len(prev_labels) == 1 and len(cur_labels) == 1:
+                        mapping = {next(iter(cur_labels)): next(iter(prev_labels))}  # one voice on both sides
+                    for w in cur:
+                        if w.get("speaker") in mapping:
+                            w["speaker"] = mapping[w["speaker"]]
+                for w in cur:
                     if k and w["t0"] < t + 1.0:  # overlap with the previous chunk
                         continue
-                    if spk and not w.get("speaker"):
-                        w["speaker"] = f"{spk}" if spk else None
                     words.append(w)
+                prev_words = cur
             if log:
                 log(f"transcribed {min(duration, t + chunk):.0f}/{duration:.0f} s")
             k += 1
@@ -249,6 +307,16 @@ def read_media(data: bytes, path: str, kind: str, transcriber, language: Optiona
             if not duration:
                 break
         words.sort(key=lambda w: w["t0"])
+        # no overlapping or duplicated words at the seams
+        clean: list[dict] = []
+        for w in words:
+            if clean and abs(w["t0"] - clean[-1]["t0"]) < 0.3 and re.sub(r"\W", "", w["w"].lower()) == re.sub(r"\W", "", clean[-1]["w"].lower()):
+                continue
+            if clean and w["t0"] < clean[-1]["t1"]:
+                w["t0"] = clean[-1]["t1"]
+                w["t1"] = max(w["t1"], w["t0"] + 0.01)
+            clean.append(w)
+        words = clean
         units = segment(words, reader=getattr(transcriber, "model", "asr"))
         if kind == "video" and frames:
             fdir = os.path.join(tmp, "frames")
@@ -274,7 +342,9 @@ def read_media(data: bytes, path: str, kind: str, transcriber, language: Optiona
         shutil.rmtree(tmp, ignore_errors=True)
     src = Source(path=path, kind=kind, mime=mime, data=data, units=units, hints=hints, duration=duration)
     src.provenance_note = {"duration": duration, "words": len(words), "backend": backend, "language": lang,  # type: ignore[attr-defined]
-                           "word_timing": word_timing}
+                           "word_timing": word_timing, "untranscribed": failed}
+    if failed:
+        src.warnings.append(f"transcription: spans {failed} (seconds) could not be transcribed and are missing")
     if lang:
         src.hints.setdefault("language_detected", lang)
     return src

@@ -237,7 +237,7 @@ def read_with_vision(src: Source, engines: Engines, opts: Options, hint: str) ->
             u.image_mime = "image/jpeg"
         return u.image, u.image_mime  # type: ignore[return-value]
 
-    def run(b: list[Unit]) -> list[tuple[Unit, dict]]:
+    def run(b: list[Unit], attempt: int = 0) -> list[tuple[Unit, dict]]:
         imgs = [image_of(u) for u in b]
         try:
             pages = vision.read_pages(imgs, b[0].ord, hint, opts.language)
@@ -248,12 +248,15 @@ def read_with_vision(src: Source, engines: Engines, opts: Options, hint: str) ->
                 for u in b:
                     out += run([u])
                 return out
+            if attempt < 2:  # a single page gets two more tries before falling back
+                time.sleep(2 * (attempt + 1))
+                return run(b, attempt + 1)
             return [(b[0], {"missing": True, "error": str(e)[:200]})]
         out = []
         for u, p in zip(b, pages):
             bad = p.get("missing") or _too_short(u, p)
-            if bad and len(b) > 1:
-                out += run([u])
+            if bad and (len(b) > 1 or attempt < 1):
+                out += run([u], attempt + (0 if len(b) > 1 else 1))
             else:
                 out.append((u, p))
         return out
@@ -267,6 +270,7 @@ def read_with_vision(src: Source, engines: Engines, opts: Options, hint: str) ->
                 done += 1
                 if p.get("missing"):
                     stats["failed"] += 1
+                    stats.setdefault("failed_pages", []).append(u.ord)
                     _fallback(u)
                     continue
                 u.text = p.get("text", "")
@@ -284,6 +288,12 @@ def read_with_vision(src: Source, engines: Engines, opts: Options, hint: str) ->
             opts.log(f"vision: {done}/{len(todo)} pages")
     stats["seconds"] = round(time.time() - t0, 2)
     stats["seconds_per_page"] = round(stats["seconds"] / max(1, len(todo)), 2)
+    if stats["failed"]:
+        layer = [u.ord for u in todo if u.reader == "pdf-ocr-layer"]
+        msg = (f"vision engine failed on {stats['failed']} page(s) {stats.get('failed_pages')}: "
+               + (f"the old OCR layer was used for {layer} (confidence 0.3)" if layer else "left empty"))
+        src.warnings.append(msg)
+        opts.log("WARNING " + msg)
     return stats
 
 
