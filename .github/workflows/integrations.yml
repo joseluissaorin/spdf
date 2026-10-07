@@ -1,0 +1,91 @@
+# Integraciones del ecosistema (integrations/): servidor MCP, cargadores de
+# LangChain y LlamaIndex en JS y en Python, complemento de Zotero y filtro de
+# Pandoc. Cada una se prueba contra integrations/fixtures con la implementación
+# oficial del repositorio (js/ o python/), sin publicar nada.
+name: integrations
+
+on:
+  push:
+    branches: [main]
+    paths: ['integrations/**', 'js/**', 'python/**', '.github/workflows/integrations.yml']
+  pull_request:
+    paths: ['integrations/**', '.github/workflows/integrations.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  javascript:
+    name: MCP y cargadores JS
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        paquete: [spdf-mcp, langchain-js, llamaindex-js]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: spdf-format (js)
+        working-directory: js
+        run: npm ci && npm run build
+      - name: Pruebas de ${{ matrix.paquete }}
+        working-directory: integrations/${{ matrix.paquete }}
+        run: npm ci && npm test
+
+  python:
+    name: Cargadores Python
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        paquete: [llamaindex-python, langchain-python]
+        python: ['3.10', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Pruebas de ${{ matrix.paquete }} (Python ${{ matrix.python }})
+        working-directory: integrations/${{ matrix.paquete }}
+        run: |
+          uv venv --python ${{ matrix.python }} .venv
+          VIRTUAL_ENV=$PWD/.venv uv pip install -e ../../python -e '.[test]'
+          .venv/bin/python -m pytest -q
+
+  zotero:
+    name: Complemento de Zotero
+    runs-on: ubuntu-latest
+    if: ${{ hashFiles('integrations/zotero/package.json') != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: spdf-format (js)
+        working-directory: js
+        run: npm ci && npm run build
+      - name: Pruebas y .xpi
+        working-directory: integrations/zotero
+        run: npm ci && npm test && npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: spdf-zotero-xpi
+          path: integrations/zotero/dist/*.xpi
+          if-no-files-found: ignore
+
+  pandoc:
+    name: Filtro de Pandoc
+    runs-on: ubuntu-latest
+    if: ${{ hashFiles('integrations/pandoc/spdf.lua') != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pandoc y sqlite3
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq sqlite3
+          curl -sL https://github.com/jgm/pandoc/releases/download/3.9.0.2/pandoc-3.9.0.2-1-amd64.deb -o /tmp/pandoc.deb
+          sudo dpkg -i /tmp/pandoc.deb
+          pandoc --version | head -1
+      - name: Pruebas
+        working-directory: integrations/pandoc
+        run: test/run.sh
