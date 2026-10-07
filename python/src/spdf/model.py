@@ -249,7 +249,7 @@ class Issue:
     where: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return {"code": self.code, "message": self.message, "where": self.where}
+        return {"code": self.code, "message": self.message, "where": self.where or ""}
 
 
 @dataclass

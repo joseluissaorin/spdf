@@ -67,10 +67,8 @@ def _header(f: SpdfFile) -> list[str]:
         if name:
             out.append(f"<editor>{escape(name)}</editor>")
     out += ["</titleStmt>", "<publicationStmt>"]
-    out.append(
-        f"<p>Exported from SPDF <ref target={quoteattr('spdf:' + f.docref)}>spdf:{escape(f.docref)}</ref>"
-        f" with spdf-format {escape(__version__)}.</p>"
-    )
+    out.append(f"<distributor>Exported from SPDF with spdf-format {escape(__version__)}</distributor>")
+    out.append(f'<idno type="SPDF">spdf:{escape(f.docref)}</idno>')
     rights = d.rights or {}
     if rights:
         lic = rights.get("license")
