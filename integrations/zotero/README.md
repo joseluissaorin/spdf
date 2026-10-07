@@ -47,8 +47,11 @@ The plugin needs Zotero 7 or Zotero 8 (`strict_min_version` 6.999, `strict_max_v
 extension (exactly what `spdf-format`'s `toCslJson` exports). Legacy Scholaris files
 (SPDF 4.0 and 4.1, usually gzip-wrapped, with Spanish table names) are read too; their
 metadata is mapped to CSL-JSON by `spdf-format` (`mapLegacyMetadata`). The file is then
-copied into Zotero's storage with `Zotero.Attachments.importFromFile` (media type
-`application/vnd.spdf`), and the new item is selected.
+copied into Zotero's storage with `Zotero.Attachments.importFromFile` (with the media
+type `spdf-format` declares, `MEDIA_TYPE`; the specification fixes
+`application/vnd.spdf+sqlite3`), and the new item is selected. Attachments are
+recognised as SPDF by that type, by the older `application/vnd.spdf` or by the
+`.spdf` extension.
 
 Both Import and Attach add one line to the item's **Extra** field:
 

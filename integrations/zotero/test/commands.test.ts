@@ -3,6 +3,7 @@
  * adapter over the fake `Sqlite.sys.mjs`.
  */
 
+import { MEDIA_TYPE } from 'spdf-format/core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { copyFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
@@ -69,7 +70,7 @@ describe('Import SPDF as item…', () => {
     expect((item as unknown as { collections: number[] }).collections).toEqual([3]);
     expect(item!.getField('title')).toBe('SPDF in five pages');
     expect(item!.getField('extra')).toBe(`SPDF: sha256-${EN_SHA}`);
-    expect(s.log.imports).toEqual([{ file: EN, parentItemID: item!.id, contentType: 'application/vnd.spdf' }]);
+    expect(s.log.imports).toEqual([{ file: EN, parentItemID: item!.id, contentType: MEDIA_TYPE }]);
     expect(s.log.selected).toEqual([item!.id]);
     expect(s.ui.alerts).toEqual([]);
     expect(s.ui.notices).toEqual([['SPDF imported', 'SPDF in five pages']]);
@@ -97,7 +98,7 @@ describe('Import SPDF as item…', () => {
     });
     expect(csl).not.toHaveProperty('spdf');
     expect(item!.getField('extra')).toMatch(/^SPDF: sha256-[0-9a-f]{64}$/);
-    expect(s.log.imports[0]).toMatchObject({ file: LEGACY_41, contentType: 'application/vnd.spdf' });
+    expect(s.log.imports[0]).toMatchObject({ file: LEGACY_41, contentType: MEDIA_TYPE });
   });
 
   it('refuses a file a reader must refuse, and says why', async () => {
@@ -135,7 +136,7 @@ describe('Attach SPDF…', () => {
     s.pane.selected = [parent];
     const att = await attachSpdf(s.env);
     expect(att).not.toBeNull();
-    expect(s.log.imports).toEqual([{ file: ES, parentItemID: parent.id, contentType: 'application/vnd.spdf' }]);
+    expect(s.log.imports).toEqual([{ file: ES, parentItemID: parent.id, contentType: MEDIA_TYPE }]);
     expect(parent.getField('extra')).toBe(`tex.ids: x\nSPDF: sha256-${ES_SHA}`);
     // attaching the same document again does not repeat the line
     await attachSpdf(s.env);
@@ -253,7 +254,7 @@ describe('Copy citation with folio…', () => {
     s.pane.selected = [lonely];
     expect(await copyCitationWithFolio(s.env)).toBeNull();
     const missingParent = await s.addItem();
-    await s.addAttachment(missingParent, false, 'application/vnd.spdf', 'gone.spdf');
+    await s.addAttachment(missingParent, false, MEDIA_TYPE, 'gone.spdf');
     s.pane.selected = [missingParent];
     expect(await copyCitationWithFolio(s.env)).toBeNull();
     expect(s.ui.alerts).toEqual([
@@ -268,7 +269,7 @@ describe('which items the commands apply to', () => {
     const s = setup();
     const parent = await s.addItem();
     expect(isSpdfAttachment(await s.addAttachment(parent, '/x/a.spdf', 'application/octet-stream'))).toBe(true);
-    expect(isSpdfAttachment(await s.addAttachment(parent, '/x/a.bin', 'application/vnd.spdf'))).toBe(true);
+    expect(isSpdfAttachment(await s.addAttachment(parent, '/x/a.bin', MEDIA_TYPE))).toBe(true);
     expect(isSpdfAttachment(await s.addAttachment(parent, '/x/a.pdf', 'application/pdf'))).toBe(false);
     expect(isSpdfAttachment(parent)).toBe(false);
   });

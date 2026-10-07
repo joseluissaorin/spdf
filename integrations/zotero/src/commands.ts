@@ -42,7 +42,9 @@ export interface CommandEnv {
 /** An attachment item holding an SPDF file (by media type or by extension). */
 export function isSpdfAttachment(item: ZItem): boolean {
   if (!item.isAttachment()) return false;
-  if (item.attachmentContentType === MEDIA_TYPE) return true;
+  // El tipo de la biblioteca y los que usaron versiones anteriores (application/vnd.spdf).
+  const tipo = item.attachmentContentType ?? '';
+  if (tipo === MEDIA_TYPE || tipo === 'application/vnd.spdf' || tipo.startsWith('application/vnd.spdf+')) return true;
   return /\.spdf$/i.test(item.attachmentFilename ?? '');
 }
 

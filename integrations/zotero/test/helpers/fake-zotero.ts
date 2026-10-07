@@ -4,6 +4,7 @@
  * the plugin uses is modelled, with Zotero 7/8 names and shapes.
  */
 
+import { MEDIA_TYPE } from 'spdf-format/core';
 import { basename } from 'node:path';
 import type { Ui } from '../../src/commands.js';
 import type { ZImportFromFileOptions, ZItem, ZPane, ZoteroLike } from '../../src/zotero-types.js';
@@ -164,7 +165,7 @@ export function fakeZotero(options: FakeZoteroOptions = {}) {
   }
 
   /** An attachment (file path, or false for a missing file) under `parent`. */
-  async function addAttachment(parent: FakeItem | null, path: string | false, contentType = 'application/vnd.spdf', filename?: string): Promise<FakeItem> {
+  async function addAttachment(parent: FakeItem | null, path: string | false, contentType = MEDIA_TYPE, filename?: string): Promise<FakeItem> {
     const a = new FakeItem('attachment');
     a.parentItemID = parent ? parent.id : false;
     a.attachmentContentType = contentType;
