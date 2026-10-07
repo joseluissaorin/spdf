@@ -4,13 +4,16 @@ name: reader
 # las apps de escritorio (macOS, Windows, Linux) y la APK de Android.
 # Al etiquetar `reader-v*`, los paquetes se publican como release de GitHub.
 
+# Solo cambios del lector: si cada push de js/, rust/ o conformance/ lanzara la matriz
+# entera, se cancelarían unas a otras y ninguna llegaría al final. Las dependencias se
+# prueban en la siguiente ejecución del lector o lanzándola a mano (workflow_dispatch).
 on:
   push:
     branches: [main]
     tags: ["reader-v*"]
-    paths: ["reader/**", "js/**", "rust/crates/spdf/**", "conformance/**", ".github/workflows/reader.yml"]
+    paths: ["reader/**", ".github/workflows/reader.yml"]
   pull_request:
-    paths: ["reader/**", "js/**", "rust/crates/spdf/**", ".github/workflows/reader.yml"]
+    paths: ["reader/**", ".github/workflows/reader.yml"]
   workflow_dispatch:
 
 permissions:

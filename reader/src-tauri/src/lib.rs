@@ -21,6 +21,9 @@ pub fn medir(dir: &std::path::Path, nombre: &str, ms: f64, detalle: &str) {
         return;
     }
     use std::io::Write;
+    // Dos medidas a la vez (la interfaz y el núcleo) no deben mezclar sus líneas.
+    static CERROJO: std::sync::Mutex<()> = std::sync::Mutex::new(());
+    let _g = CERROJO.lock();
     if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(dir.join("medidas.jsonl")) {
         let _ = writeln!(f, "{}", serde_json::json!({ "medida": nombre, "ms": (ms * 10.0).round() / 10.0, "detalle": detalle, "plataforma": std::env::consts::OS }));
     }

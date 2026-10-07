@@ -331,6 +331,9 @@ export function Lector() {
                         <span className="sello">{t('leidoPor', { quien: unidad.reader })}</span>
                         {unidad.confidence < 0.995 && <span className="sello">{t('confianza', { p: Math.round(unidad.confidence * 100) })}</span>}
                         {unidad.anchor.type === 'page' && unidad.anchor.source === 'inferred' && <span className="sello oro">{t('inferido')}</span>}
+                        {unidad.anchor.matter && ['front', 'back', 'plate', 'cover', 'library', 'blank'].includes(unidad.anchor.matter) && (
+                          <span className="sello azul">{t(`matter_${unidad.anchor.matter}` as never)}</span>
+                        )}
                       </div>
                     </div>
                   )}

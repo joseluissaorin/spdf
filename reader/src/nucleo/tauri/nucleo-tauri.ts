@@ -14,13 +14,15 @@ export class NucleoTauri implements Nucleo {
   plataforma: Plataforma = 'macos';
   capacidades: Capacidades = { iaLocal: true, webgpu: false, llavero: true, escribirEnFichero: true, pruebas: false };
   #pruebas: boolean;
+  #consultas: string[] = [];
 
   constructor(o: { pruebas?: boolean } = {}) { this.#pruebas = !!o.pruebas; }
 
   async iniciar() {
-    const r = await invoke<{ plataforma: Plataforma; capacidades: Capacidades }>('iniciar', { pruebas: this.#pruebas });
+    const r = await invoke<{ plataforma: Plataforma; capacidades: Capacidades; consultas: string[] }>('iniciar', { pruebas: this.#pruebas });
     this.plataforma = r.plataforma;
     this.capacidades = r.capacidades;
+    this.#consultas = r.consultas ?? [];
     // Medidas para RENDIMIENTO.md (solo si el proceso se lanzó con SPDF_MEDIR=1; si no, el comando no apunta nada).
     const enviar = (nombre: string, ms: number) => void invoke('medida', { nombre, ms, detalle: null }).catch(() => {});
     new PerformanceObserver((l) => {
@@ -66,7 +68,24 @@ export class NucleoTauri implements Nucleo {
   guardarColeccion(c: Coleccion) { return invoke<void>('guardar_coleccion', { c }); }
   borrarColeccion(id: string) { return invoke<void>('borrar_coleccion', { id }); }
 
-  abrir(id: string) { return invoke<Resumen>('abrir', { id }); }
+  async abrir(id: string) {
+    const r = await invoke<Resumen>('abrir', { id });
+    if (this.#consultas.length) void this.#medirBusquedas(id);
+    return r;
+  }
+
+  /** Modo medición: las consultas de SPDF_MEDIR_CONSULTAS, por el mismo camino que el panel de búsqueda. */
+  async #medirBusquedas(id: string) {
+    const qs = this.#consultas;
+    this.#consultas = [];
+    for (const ambito of [id, 'biblioteca']) {
+      for (const consulta of qs) {
+        const t0 = performance.now();
+        const r = await this.buscar({ ambito, consulta, modo: 'lexica', limite: 60, lengua: 'es' });
+        void invoke('medida', { nombre: ambito === 'biblioteca' ? 'buscar_biblioteca_ida_y_vuelta' : 'buscar_documento_ida_y_vuelta', ms: performance.now() - t0, detalle: `${consulta} · ${r.aciertos.length}` });
+      }
+    }
+  }
   unidades(id: string, desde: number, hasta: number) { return invoke<Unidad[]>('unidades', { id, desde, hasta }); }
   fragmentos(id: string, unidad?: string) { return invoke<Fragmento[]>('fragmentos', { id, unidad: unidad ?? null }); }
   figuras(id: string) { return invoke<Figura[]>('figuras', { id }); }

@@ -40,6 +40,8 @@ fn pruebas_permitidas() -> bool {
 pub struct Inicio {
     plataforma: &'static str,
     capacidades: Capacidades,
+    /// Solo al medir (SPDF_MEDIR=1): consultas que la interfaz lanza sola al abrir un documento.
+    consultas: Vec<String>,
 }
 
 /// La interfaz manda sus marcas (arranque, apertura) cuando se mide (SPDF_MEDIR=1).
@@ -64,6 +66,11 @@ pub async fn iniciar(app: AppHandle, pruebas: bool) -> R<Inicio> {
         Ok(Inicio {
             plataforma: plataforma(),
             capacidades: Capacidades { ia_local: false, webgpu: false, llavero: crate::llavero::HAY_LLAVERO, escribir_en_fichero: !movil, pruebas: p },
+            consultas: if std::env::var("SPDF_MEDIR").is_ok() {
+                std::env::var("SPDF_MEDIR_CONSULTAS").unwrap_or_default().split('|').filter(|q| !q.is_empty()).map(String::from).collect()
+            } else {
+                Vec::new()
+            },
         })
     })
     .await

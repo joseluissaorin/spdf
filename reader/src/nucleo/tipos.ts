@@ -16,6 +16,8 @@ export interface Region { x: number; y: number; w: number; h: number }
 export interface AnclaBase {
   region?: Region;
   chars?: [number, number];
+  /** Qué parte del libro es la unidad (SPEC §4): body (por defecto), front, back, plate, cover, library, blank. */
+  matter?: string;
 }
 export interface AnclaPagina extends AnclaBase {
   type: 'page';
