@@ -243,3 +243,20 @@ describe('package', () => {
     expect(VERSION).toBe(pkg.version);
   });
 });
+
+describe('anchor resolution (SPEC §5.4)', () => {
+  it('resolves p, f, chars and rejects other documents', async () => {
+    const { openSpdf } = await import('../src/entry/node.js');
+    const { readFileSync } = await import('node:fs');
+    const bytes = new Uint8Array(readFileSync(new URL('../../conformance/files/quijote.spdf', import.meta.url)));
+    const doc = await openSpdf(bytes);
+    const f = (await doc.fragments())[3]!;
+    const r = await doc.resolve(f.anchor_uri);
+    expect(r?.unit).toBe(f.unit);
+    expect(r?.chars).toEqual((f.anchor as { chars?: [number, number] }).chars ?? null);
+    const u = (await doc.units()).find((x) => x.printed)!;
+    expect((await doc.resolve(`spdf:${doc.docref}#f=${encodeURIComponent(u.printed!)}`))?.unit).toBe((await doc.unitByPrinted(u.printed!))[0]!.id);
+    await expect(doc.resolve(`spdf:sha256-${'0'.repeat(64)}#p=1`)).rejects.toThrow(/another document/);
+    await doc.close();
+  });
+});

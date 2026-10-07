@@ -34,6 +34,7 @@ export {
   type OpenOptions,
   type SpdfInput,
   type FragmentWithUri,
+  type Resolution,
   type RawOpen,
 } from './document.js';
 export { dump, dumpDocument, type CanonicalDump } from './dump.js';

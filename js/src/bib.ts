@@ -59,17 +59,22 @@ function yearOf(m: CslItem): string | null {
   return null;
 }
 
-/** The base BibTeX key of an item: `cervantessaavedra1605`, `lazarillo1554`, `hookend`. */
+/**
+ * The base BibTeX key of an item (SPEC §19, RFC 0002): the first author's `family` (or
+ * `literal`), else the first word of the title, folded to ASCII letters and lowercased
+ * (`anon` if nothing is left), plus the first year of `issued` (or `nd`):
+ * `cervantessaavedra1605`, `lazarillo1554`, `hookend`.
+ */
 export function citationKey(d: Source): string {
   const m = metadataOf(d);
   let base = '';
   const a = Array.isArray(m.author) ? m.author[0] : undefined;
-  if (a && typeof a === 'object') base = asciiLetters(String(a.family || a.literal || a.given || ''));
+  if (a && typeof a === 'object') base = asciiLetters(String(a.family || a.literal || ''));
   if (!base) {
     const words = String(m.title ?? '').split(/\s+/).filter(Boolean);
     base = words.length ? asciiLetters(words[0] as string) : '';
   }
-  return (base || 'spdf') + (yearOf(m) ?? 'nd');
+  return (base || 'anon') + (yearOf(m) ?? 'nd');
 }
 
 /** Escapes `\`, `{` and `}` (the rest of UTF-8 stays as it is). */

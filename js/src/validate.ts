@@ -54,7 +54,8 @@ export async function validate(input: SpdfInput | { source: RandomAccessSource; 
   let version: string | null = null;
   let profile: string[] = [];
   const result = (): ValidationReport => ({ valid: errors.length === 0, version, profile, errors, warnings });
-  const err = (code: string, message: string, where: string | null = null) => errors.push({ code, message, where });
+  const errHard = (code: string, message: string, where: string | null = null) => errors.push({ code, message, where });
+  let err = errHard;
   const warn = (code: string, message: string, where: string | null = null) => warnings.push({ code, message, where });
 
   let raw: RawOpen;
@@ -80,7 +81,12 @@ export async function validate(input: SpdfInput | { source: RandomAccessSource; 
       return result();
     }
     if (raw.gzipped) warn('E003', 'SPDF 5.0 should not be gzip-wrapped');
-    if (version !== '5.0') warn('W105', `newer minor version ${version}`);
+    if (version !== '5.0') {
+      warn('W105', `newer minor version ${version}`);
+      // Forward compatibility (SPEC §22.1 step 4, §23): a later minor may define new anchor
+      // types and dtypes, so for such a file E041 and E032 are warnings.
+      err = (code: string, message: string, where: string | null = null) => (code === 'E041' || code === 'E032' ? warn : errHard)(code, message, where);
+    }
     for (const r of await conn.all("SELECT name, type FROM sqlite_master WHERE type IN ('trigger', 'view')")) err('E020', `${String(r.type)} ${String(r.name)} present`, String(r.name));
     for (const f of info.forbidden) if (f.type === 'virtual table') err('E020', `virtual table ${f.name} present`, f.name);
 

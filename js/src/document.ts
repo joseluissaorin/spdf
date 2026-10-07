@@ -7,7 +7,7 @@ import { resolveEngine } from './port.js';
 import { SpdfError } from './errors.js';
 import { gunzipWeb, isGzip, isSqlite, sha256Hex, toBytes } from './bytes.js';
 import { inspect, View, type Inspection, type ViewRow } from './view.js';
-import { docrefOf, formatAnchorUri } from './anchors.js';
+import { docrefOf, formatAnchorUri, parseAnchorUri, type AnchorLocator } from './anchors.js';
 import { cite as citeAnchor } from './cite.js';
 import { decodeVector } from './vectors.js';
 import type {
@@ -267,6 +267,14 @@ export function toSpace(r: ViewRow): Space {
 // SpdfDocument
 // ---------------------------------------------------------------------------
 
+/** Where an anchor URI points in a file (SPEC §5.4). */
+export interface Resolution {
+  unit: string;
+  ord: number;
+  chars: [number, number] | null;
+  xywh: [number, number, number, number] | null;
+}
+
 export interface FragmentWithUri extends Fragment {
   anchor_uri: string;
 }
@@ -369,6 +377,59 @@ export class SpdfDocument {
   /** Anchor URI of an anchor of this document. */
   anchorUri(anchor: Anchor, anchorEnd?: Anchor | null): string {
     return formatAnchorUri(this.docref, anchor, anchorEnd);
+  }
+
+  /**
+   * Resolves an anchor URI (or its locator) against this file (SPEC §5.4): the unit it
+   * designates, plus the `char` range and the `xywh` region. Throws if the document
+   * reference is not this document.
+   */
+  async resolve(uri: string | AnchorLocator): Promise<Resolution | null> {
+    let loc: AnchorLocator;
+    if (typeof uri === 'string') {
+      const p = parseAnchorUri(uri);
+      const ok = p.docref === this.docref || p.docref === this.document.id || p.docref === `sha256-${this.document.source_sha256.toLowerCase()}`;
+      if (!ok) throw new SpdfError('E000', `the anchor URI is for another document (${p.docref})`);
+      loc = p.locator;
+    } else loc = uri;
+    const extra = { chars: loc.char ?? null, xywh: loc.xywh ?? null };
+    const units = await this.units();
+    const pick = (u: Unit | undefined): Resolution | null => (u ? { unit: u.id, ord: u.ord, ...extra } : null);
+    const an = (u: { anchor: Anchor }) => u.anchor as Anchor & Record<string, unknown>;
+    if (loc.p !== undefined) return pick(units.find((u) => an(u).type === 'page' && an(u).physical === loc.p));
+    if (loc.f !== undefined) return pick(units.find((u) => u.printed === loc.f));
+    if (loc.t !== undefined) {
+      const t = loc.t[0];
+      const hit = units.find((u) => an(u).type === 'time' && (an(u).t0 as number) <= t && t < (an(u).t1 as number));
+      if (hit) return pick(hit);
+      const last = units[units.length - 1];
+      return last && an(last).type === 'time' && an(last).t1 === t ? pick(last) : null;
+    }
+    const matches = (a: Anchor & Record<string, unknown>): boolean => {
+      if (loc.s !== undefined || loc.para !== undefined) {
+        if (a.type !== 'section' && a.type !== 'web') return false;
+        if (loc.s !== undefined && JSON.stringify(a.path ?? []) !== JSON.stringify(loc.s)) return false;
+        return loc.para === undefined || a.paragraph === loc.para;
+      }
+      if (loc.sl !== undefined) return a.type === 'slide' && a.n === loc.sl;
+      if (loc.sh !== undefined) {
+        if (a.type !== 'sheet' || a.sheet !== loc.sh) return false;
+        return !loc.rows || ((a.row_from as number) <= loc.rows[0] && loc.rows[0] <= (a.row_to as number));
+      }
+      if (loc.v !== undefined) {
+        if (a.type !== 'verse') return false;
+        const from = a.line_from as number;
+        const to = (a.line_to as number | undefined) ?? from;
+        return from <= loc.v[0] && loc.v[0] <= to;
+      }
+      if (loc.ref !== undefined) return a.type === 'canonical' && a.scheme === loc.ref.scheme && a.ref === loc.ref.ref;
+      return false;
+    };
+    const unit = units.find((u) => matches(an(u)));
+    if (unit) return pick(unit);
+    const frag = (await this.fragments()).find((f) => matches(an(f)));
+    if (frag) return pick(units.find((u) => u.id === frag.unit));
+    return null;
   }
 
   /** Short citation `(Family, Year, locator)`. */
