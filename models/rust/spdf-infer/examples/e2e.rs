@@ -21,6 +21,19 @@ fn flag(name: &str) -> bool {
     std::env::args().any(|x| x == name)
 }
 
+/// Peak resident memory of this process, in MB (getrusage; KB on Linux/Android, bytes on Apple).
+fn peak_rss_mb() -> u64 {
+    #[cfg(unix)]
+    unsafe {
+        let mut ru: libc::rusage = std::mem::zeroed();
+        libc::getrusage(libc::RUSAGE_SELF, &mut ru);
+        let v = ru.ru_maxrss as u64;
+        return if cfg!(target_vendor = "apple") { v >> 20 } else { v >> 10 };
+    }
+    #[allow(unreachable_code)]
+    0
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let root = PathBuf::from(arg("--root").unwrap_or_else(|| "spdf-models-e2e".into()));
     let gpu = !flag("--cpu");
@@ -53,19 +66,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Task::Document { title: None }, None)?;
     let dot = |a: &[f32], b: &[f32]| a.iter().zip(b).map(|(x, y)| x * y).sum::<f32>();
     step("embed text", t, json!({"dims": q.len(), "scores": [dot(&q, &docs[0]), dot(&q, &docs[1])], "space": e.space(None)}));
+    let t = Instant::now();
     let q256 = e.embed(&["¿Quién es Dulcinea del Toboso?"], Task::Query, Some(256))?.remove(0);
+    step("embed query 256 (warm)", t, json!({}));
+    let long = "En un lugar de la Mancha, de cuyo nombre no quiero acordarme, no ha mucho tiempo que vivía un hidalgo de los de lanza en astillero, adarga antigua, rocín flaco y galgo corredor. ".repeat(6);
+    let t = Instant::now();
+    let _ = e.embed(&[long.as_str()], Task::Document { title: None }, Some(256))?;
+    step("embed passage ~230 words, 256 (warm)", t, json!({}));
     let sp = e.space(Some(256));
     println!("{}", json!({"step": "MRL 256", "dims": q256.len(), "space": sp.id, "compatible_with_768": compat::is_compatible(&sp, &e.space(None))}));
     if let Some(media) = arg("--media").map(PathBuf::from) {
         if e.modalities().contains(&"image".to_string()) {
+            let img = std::fs::read(media.join("images/aic-61603.jpg"))?;
+            let _ = e.embed_image(&img, Some(256))?;
             let t = Instant::now();
-            let v = e.embed_image(&std::fs::read(media.join("images/aic-61603.jpg"))?, None)?;
-            step("embed image", t, json!({"dims": v.len()}));
+            let v = e.embed_image(&img, Some(256))?;
+            step("embed image, 256 (warm)", t, json!({"dims": v.len()}));
+            let wav = std::fs::read(media.join("audio/don_quijote_vol1_0706_librivox-0.wav"))?;
+            let _ = e.embed_audio_file(&wav, Some(256))?;
             let t = Instant::now();
-            let a = e.embed_audio_file(&std::fs::read(media.join("audio/don_quijote_vol1_0706_librivox-0.wav"))?, None)?;
-            step("embed audio (10 s WAV)", t, json!({"dims": a.len()}));
+            let a = e.embed_audio_file(&wav, Some(256))?;
+            step("embed audio 10 s, 256 (warm)", t, json!({"dims": a.len()}));
         }
     }
+    println!("{}", json!({"step": "peak RSS after embeddings", "mb": peak_rss_mb()}));
     drop(e);
 
     // ---- generation and judge (Gemma 4)
@@ -79,7 +103,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         step("Generator::load", t, json!({}));
         let t = Instant::now();
         let mut chunks = 0;
-        let s = g.generate("¿Quién escribió el Quijote? Responde en una frase.", &GenParams { max_tokens: 60, temperature: 0.0, ..Default::default() },
+        let s = g.generate("¿Quién escribió el Quijote? Explica en unas cinco frases por qué es importante.", &GenParams { max_tokens: 96, temperature: 0.0, ..Default::default() },
             |_| {
                 chunks += 1;
                 true
@@ -110,6 +134,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "…y así, después de muchos nombres que formó, borró y quitó, al fin le vino a llamar Rocinante, nombre a su parecer alto, sonoro y significativo.")?;
         step("judge support (Valen)", t, json!({"label": sup.label, "supported": sup.supported}));
     }
-    println!("{}", json!({"done": true}));
+    println!("{}", json!({"done": true, "peak_rss_mb": peak_rss_mb()}));
     Ok(())
 }

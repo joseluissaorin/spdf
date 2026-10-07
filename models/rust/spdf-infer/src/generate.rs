@@ -50,7 +50,8 @@ pub struct GenOptions {
 
 impl Default for GenOptions {
     fn default() -> Self {
-        Self { gpu: true, n_ctx: 8192, n_threads: None }
+        // phones: 4096 tokens keeps Gemma 4 E2B within ~4.4 GB resident (measured); desktops: 8192
+        Self { gpu: true, n_ctx: if cfg!(any(target_os = "ios", target_os = "android")) { 4096 } else { 8192 }, n_threads: None }
     }
 }
 

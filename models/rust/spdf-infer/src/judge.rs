@@ -187,7 +187,7 @@ impl Judge {
             #[cfg(not(feature = "valen-onnx"))]
             return Err(Error::Unsupported(format!("{id} needs spdf-infer built with the valen-onnx feature")));
         } else {
-            Self::new(Arc::new(Generator::load(mm, id, GenOptions { n_ctx: 8192, ..Default::default() })?))?
+            Self::new(Arc::new(Generator::load(mm, id, GenOptions::default())?))?
         };
         if let Some(c) = mm.entry(id).and_then(|e| e.judge_calibration.clone()) {
             j.calibration = c.choice;
