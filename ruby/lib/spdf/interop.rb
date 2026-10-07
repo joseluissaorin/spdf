@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "cgi"
+require "cgi/escape"
 
 module Spdf
   # Exports to library formats (SPEC §19.4): ALTO 4, a minimal TEI P5 and a IIIF

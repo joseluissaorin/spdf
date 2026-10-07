@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "tmpdir"
-require "cgi"
+require "cgi/escape"
 
 module Spdf
   # Runner of the shared conformance suite (conformance/cases/*.json, §11).
