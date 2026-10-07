@@ -121,7 +121,9 @@ def scores(query: Sequence[float], vectors: list[bytes], dtype: str, normalized:
         mat = _np.frombuffer(b"".join(vectors), dtype=np_dtype).astype("float64").reshape(len(vectors), -1)
         if dtype == "i8":
             mat = mat / 127.0
-        s = mat @ q
+        with _np.errstate(divide="ignore", over="ignore", invalid="ignore"):
+            # Some BLAS builds (Accelerate on macOS) raise spurious FP flags in matmul.
+            s = mat @ q
         if not normalized:
             denom = _np.linalg.norm(mat, axis=1) * float(_np.linalg.norm(q))
             s = _np.divide(s, denom, out=_np.zeros_like(s), where=denom != 0)
