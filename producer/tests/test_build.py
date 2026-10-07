@@ -98,6 +98,21 @@ def test_media(inputs, kind, tmp_path):
         assert db.execute("SELECT count(*) FROM units WHERE image IS NOT NULL").fetchone()[0] >= 1
 
 
+def test_sparse_half_title_is_not_blank():
+    import io
+
+    from PIL import Image, ImageDraw, ImageFont
+
+    from spdf_build.pipeline import ink_ratio
+
+    im = Image.new("RGB", (1000, 1600), (240, 236, 225))
+    ImageDraw.Draw(im).text((430, 700), "LE VIN", fill=(20, 20, 20), font=ImageFont.load_default(size=40))
+    b = io.BytesIO()
+    im.save(b, "JPEG")
+    any_ink, strong = ink_ratio(b.getvalue())
+    assert any_ink < 0.0025 and strong >= 0.0005  # little ink, but printed ink: not blank
+
+
 def test_blank_pages_skip_the_vision_engine(tmp_path):
     import io
 
@@ -114,7 +129,7 @@ def test_blank_pages_skip_the_vision_engine(tmp_path):
         b = io.BytesIO()
         im.save(b, "JPEG")
         if k == 1:
-            assert ink_ratio(b.getvalue()) < 0.0025
+            assert ink_ratio(b.getvalue())[0] < 0.0025
         p = doc.new_page(width=400, height=600)
         p.insert_image(p.rect, stream=b.getvalue())
     path = tmp_path / "b.pdf"

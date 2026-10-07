@@ -73,12 +73,25 @@ def _split_long(f: _Sent, maximum: int) -> list[_Sent]:
             for i, t in enumerate(pieces)]
 
 
+def numbered(u: Unit) -> bool:
+    """A page with a printed folio. Fragments never join numbered and unnumbered pages: the citation of such a
+    fragment would print the folio of one end for text of the other (Kafka p. 75 merged with the Gutenberg licence,
+    an inserted unnumbered leaf after fol. 16v)."""
+    return u.anchor.get("type") != "page" or bool(u.anchor.get("printed"))
+
+
 def _stream(units: list[Unit], sections: list[Section]):
     starts = sorted(sections, key=lambda s: (s.unit_from, s.para_from))
     groups: list[dict] = [{"section": None, "paras": []}]
     si = 0
     prev: Optional[_Para] = None
+    prev_unit: Optional[Unit] = None
     for u in units:
+        if prev_unit is not None and numbered(prev_unit) != numbered(u):
+            # hard boundary: a new group in the same section, and no paragraph continues across it
+            groups.append({"section": groups[-1]["section"], "paras": []})
+            prev = None
+        prev_unit = u
         for i, text in enumerate(paragraphs_of(u)):
             changed = False
             while si < len(starts) and (starts[si].unit_from < u.ord or (starts[si].unit_from == u.ord and starts[si].para_from <= i)):

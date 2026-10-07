@@ -268,7 +268,8 @@ def build_metadata(source, units, kind: str, language: Optional[str], llm=None, 
     if h.get("authors"):
         rec.put("author", [parse_name(a, language) for a in h["authors"]], "embedded", emb)
     elif h.get("author_raw"):
-        parts = re.split(r"\s*(?:;|\band\b|&|, (?=[A-Z][a-z]+ [A-Z]))\s*", h["author_raw"])
+        # «Gilman, Charlotte Perkins, 1860-1935» is ONE author: split only on «;», «and», «&»
+        parts = re.split(r"\s*(?:;|\band\b|&)\s*", h["author_raw"])
         rec.put("author", [parse_name(a, language) for a in parts if a.strip()], "embedded", emb - 0.1 if kind not in ("audio", "video") else 0.5)
     if h.get("language"):
         rec.put("language", h["language"], "embedded", emb)

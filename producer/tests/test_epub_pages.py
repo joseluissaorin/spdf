@@ -79,3 +79,25 @@ def test_kafka_22367_every_page():
     assert labels == [str(i) for i in range(5, 76)]
     p23 = next(u for u in s.units if u.anchor.get("printed") == "23")
     assert p23.text.startswith("Leibe zu spüren bekommt")
+
+
+def test_fragments_never_join_numbered_and_unnumbered_pages(tmp_path):
+    from spdf_build.model import Unit
+    from spdf_build.steps.fragments import chunk
+
+    def page(o, printed, text):
+        u = Unit(ord=o, kind="page", text=text)
+        u.anchor = {"type": "page", "physical": o, "printed": printed, "roman": False, "foliation": "page",
+                    "source": "read" if printed else "none", "confidence": 1}
+        return u
+
+    units = [page(1, None, "Portada y créditos de la edición, con algunas palabras más."),
+             page(2, "1", "Texto de la primera página que sigue sin terminar la frase y"),
+             page(3, "2", "continúa en la segunda página hasta el final del libro. " * 3),
+             page(4, None, "*** END OF THE PROJECT GUTENBERG EBOOK *** licencia " * 3)]
+    frs = chunk(units, [], "d")
+    for f in frs:
+        ends = {f.anchor.get("printed") is None, (f.anchor_end or f.anchor).get("printed") is None}
+        assert len(ends) == 1, (f.text[:60], f.anchor, f.anchor_end)
+    joined = [f for f in frs if "sin terminar la frase y continúa" in f.text]
+    assert joined and joined[0].anchor["printed"] == "1" and joined[0].anchor_end["printed"] == "2"

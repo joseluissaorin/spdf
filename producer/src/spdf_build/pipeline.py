@@ -298,9 +298,10 @@ def read_with_vision(src: Source, engines: Engines, opts: Options, hint: str) ->
     return stats
 
 
-def ink_ratio(image: bytes) -> float:
-    """Share of «ink» pixels (darker than the local background by 40 levels) in the central 90 % of a page image.
-    Blank pages of a 1737 scan measure 0.06-0.15 %, pages with text 4.6-20 %."""
+def ink_ratio(image: bytes) -> tuple[float, float]:
+    """Shares of «ink» pixels in the central 90 % of a page image: darker than the local background by 40 levels
+    (any ink, show-through included) and by 90 levels (printed ink). Blank pages of a 1737 scan: 0.06-0.21 % and
+    at most 0.033 %; a sparse half-title («LE VIN», Baudelaire 1857): 0.18 % and 0.10 %; text pages: over 4 %."""
     from PIL import Image, ImageFilter
 
     im = Image.open(io.BytesIO(image)).convert("L")
@@ -310,11 +311,14 @@ def ink_ratio(image: bytes) -> float:
     a = np.asarray(im, dtype=np.float32)
     bg = np.asarray(im.filter(ImageFilter.MedianFilter(15)), dtype=np.float32)
     h, w = a.shape
-    dark = ((bg - a) > 40)[int(h * 0.05):int(h * 0.95), int(w * 0.05):int(w * 0.95)]
-    return float(dark.mean()) if dark.size else 0.0
+    diff = (bg - a)[int(h * 0.05):int(h * 0.95), int(w * 0.05):int(w * 0.95)]
+    if not diff.size:
+        return 0.0, 0.0
+    return float((diff > 40).mean()), float((diff > 90).mean())
 
 
 BLANK_INK = 0.0025
+BLANK_STRONG_INK = 0.0005
 
 
 def detect_blank_pages(src: Source, opts: Options) -> list[int]:
@@ -328,9 +332,9 @@ def detect_blank_pages(src: Source, opts: Options) -> list[int]:
             u.image_mime = "image/jpeg"
         if u.image is None:
             continue
-        r = ink_ratio(u.image)
-        u.extra["ink"] = round(r, 5)
-        if r < BLANK_INK:
+        r, strong = ink_ratio(u.image)
+        u.extra["ink"] = [round(r, 5), round(strong, 5)]
+        if r < BLANK_INK and strong < BLANK_STRONG_INK:
             u.needs_vision = False
             u.empty, u.text, u.reader, u.confidence = True, "", "blank-page-detector", 0.95
             u.extra["blank"] = True
@@ -386,7 +390,8 @@ def build(inputs: list[str], out: str, engines: Engines, opts: Options) -> Repor
     t = time.time()
     blanks = detect_blank_pages(src, opts)
     if blanks:
-        prov.append(Provenance("read", provider="spdf-build/blank-pages", detail={"pages": blanks, "threshold_ink": BLANK_INK},
+        prov.append(Provenance("read", provider="spdf-build/blank-pages", detail={"pages": blanks, "threshold_ink": BLANK_INK,
+                                                                                    "threshold_strong_ink": BLANK_STRONG_INK},
                                ms=int((time.time() - t) * 1000)))
     if opts.reuse_reading:
         import json as _json
