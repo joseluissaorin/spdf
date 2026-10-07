@@ -58,8 +58,10 @@ Runs the checks of the specification in order and returns `valid`, `version`, `p
 function validate(path::AbstractString)
     errors = Dict{String,Any}[]
     warnings = Dict{String,Any}[]
-    err(code, msg, where = "") = push!(errors, Dict{String,Any}("code" => code, "message" => msg, "where" => where))
+    forward = Ref(false)   # a newer minor version may define new anchor types and dtypes (SPEC §22.1, §23)
     warn(code, msg, where = "") = push!(warnings, Dict{String,Any}("code" => code, "message" => msg, "where" => where))
+    err(code, msg, where = "") = forward[] && code in ("E041", "E032") ? warn(code, msg, where) :
+                                 push!(errors, Dict{String,Any}("code" => code, "message" => msg, "where" => where))
     result(version, profile) = Dict{String,Any}("valid" => isempty(errors), "version" => version, "profile" => profile,
         "errors" => errors, "warnings" => warnings)
     doc = try
@@ -69,13 +71,13 @@ function validate(path::AbstractString)
         return result(nothing, Any[])
     end
     try
-        return _validate(doc, err, warn, result, errors)
+        return _validate(doc, err, warn, result, errors, forward)
     finally
         close(doc)
     end
 end
 
-function _validate(doc::Document, err, warn, result, errors)
+function _validate(doc::Document, err, warn, result, errors, forward)
     db = doc.db
     version = doc.version
     profile = Any[]
@@ -90,7 +92,10 @@ function _validate(doc::Document, err, warn, result, errors)
         return result(version, profile)
     end
     doc.gzipped && warn("E003", "SPDF 5.0 should not be gzip-wrapped")
-    version != "5.0" && warn("W105", "newer minor version $version")
+    if version != "5.0"
+        warn("W105", "newer minor version $version")
+        forward[] = true
+    end
     for (t, n) in doc.forbidden
         err("E020", "$t $n present", n)
     end

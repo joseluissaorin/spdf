@@ -28,8 +28,15 @@ final class Validator
         return (new self())->run($path, $options ?? new Options());
     }
 
+    /** A newer minor version may define new anchor types and dtypes (SPEC §22.1, §23). */
+    private bool $forwardCompatible = false;
+
     private function error(string $code, string $message, ?string $where = null): void
     {
+        if ($this->forwardCompatible && ($code === 'E041' || $code === 'E032')) {
+            $this->warning($code, $message, $where);
+            return;
+        }
         $this->errors[] = ['code' => $code, 'message' => $message, 'where' => $where];
     }
 
@@ -89,6 +96,7 @@ final class Validator
         }
         if ($version !== '5.0') {
             $this->warning('W105', "Newer minor version {$version}.");
+            $this->forwardCompatible = true;
         }
         foreach ($c->forbidden as $f) {
             $this->error('E020', "{$f['type']} {$f['name']} present.", $f['name']);

@@ -19,6 +19,7 @@ module Spdf
     def initialize
       @errors = []
       @warnings = []
+      @forward_compatible = false
     end
 
     def run(path, options)
@@ -78,7 +79,12 @@ module Spdf
 
     private
 
-    def err(code, message, where = "") = @errors << { "code" => code, "message" => message, "where" => where }
+    # A newer minor version may define new anchor types and dtypes (SPEC §22.1, §23).
+    def err(code, message, where = "")
+      return warn(code, message, where) if @forward_compatible && %w[E041 E032].include?(code)
+
+      @errors << { "code" => code, "message" => message, "where" => where }
+    end
     def warn(code, message, where = "") = @warnings << { "code" => code, "message" => message, "where" => where }
 
     def result(version, profile)
@@ -96,7 +102,10 @@ module Spdf
         return result(version, profile)
       end
       warn("E003", "SPDF 5.0 should not be gzip-wrapped") if c.gzipped?
-      warn("W105", "newer minor version #{version}") if version != "5.0"
+      if version != "5.0"
+        warn("W105", "newer minor version #{version}")
+        @forward_compatible = true
+      end
       c.forbidden.each { |f| err("E020", "#{f["type"]} #{f["name"]} present", f["name"]) }
 
       present = {}

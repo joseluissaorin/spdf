@@ -72,8 +72,15 @@ spdf_validate <- function(path) {
   st <- new.env(parent = emptyenv())
   st$errors <- list()
   st$warnings <- list()
-  err <- function(code, message, where = "") st$errors[[length(st$errors) + 1]] <- list(code = code, message = message, where = where)
+  st$forward <- FALSE
   warn <- function(code, message, where = "") st$warnings[[length(st$warnings) + 1]] <- list(code = code, message = message, where = where)
+  err <- function(code, message, where = "") {
+    # A newer minor version may define new anchor types and dtypes (SPEC 22.1, 23).
+    if (st$forward && code %in% c("E041", "E032")) {
+      return(warn(code, message, where))
+    }
+    st$errors[[length(st$errors) + 1]] <- list(code = code, message = message, where = where)
+  }
   result <- function(version, profile) {
     list(valid = length(st$errors) == 0, version = version, profile = profile, errors = st$errors, warnings = st$warnings)
   }
@@ -94,7 +101,10 @@ spdf_validate <- function(path) {
     return(result(version, profile))
   }
   if (doc$gzipped) warn("E003", "SPDF 5.0 should not be gzip-wrapped")
-  if (version != "5.0") warn("W105", paste("newer minor version", version))
+  if (version != "5.0") {
+    warn("W105", paste("newer minor version", version))
+    st$forward <- TRUE
+  }
   for (f in doc$forbidden) err("E020", paste(f$type, f$name, "present"), f$name)
 
   present <- list()
