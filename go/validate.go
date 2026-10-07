@@ -104,246 +104,295 @@ func Validate(path string, opts *Options) ValidationResult {
 	return v.res
 }
 
+func (f *File) schemaObjects(types ...string) [][2]string {
+	ph := strings.TrimSuffix(strings.Repeat("?,", len(types)), ",")
+	args := make([]any, len(types))
+	for i, t := range types {
+		args[i] = t
+	}
+	rows, err := f.conn.QueryContext(f.ctx(), "SELECT name, type FROM sqlite_master WHERE type IN ("+ph+") ORDER BY name", args...)
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+	var out [][2]string
+	for rows.Next() {
+		var n, t string
+		if rows.Scan(&n, &t) == nil {
+			out = append(out, [2]string{n, t})
+		}
+	}
+	return out
+}
+
 func (v *validator) run(f *File) {
 	ctx := context.Background()
 	v.res.Version = f.version
-	if f.gzipped && !f.legacy {
-		v.warn("E003", f.path, "SPDF 5.x files must not be gzip-wrapped")
-	}
-	for _, e := range f.issues {
-		if e.Code == "E020" {
-			v.err(e.Code, e.Where, "%s", e.Message)
+	if f.legacy {
+		v.warn("W110", "", "legacy SPDF %s file", f.version)
+		for _, t := range []string{"spdf", "documentos", "unidades", "fragmentos", "fragmentos_fts"} {
+			if !f.tables[t] {
+				v.err("E010", t, "missing legacy table %s", t)
+			}
 		}
+		for _, o := range f.schemaObjects("trigger", "view") {
+			if !(o[1] == "trigger" && legacyTriggers[o[0]]) {
+				v.err("E020", o[0], "%s %s present", o[1], o[0])
+			}
+		}
+		return
+	}
+	if f.gzipped {
+		v.warn("E003", f.path, "SPDF 5.x files should not be gzip-wrapped")
+	}
+	if f.version != "5.0" {
+		v.warn("W105", "user_version", "newer minor version %s", f.version)
+	}
+	for _, o := range f.schemaObjects("trigger", "view") {
+		v.err("E020", o[0], "%s %s present", o[1], o[0])
 	}
 	// Required tables and columns.
-	missingTable := map[string]bool{}
+	present := map[string]map[string]bool{}
 	for _, t := range requiredTables50 {
-		if f.legacy && t == "extensions" {
+		if !f.tables[t] {
+			v.err("E010", t, "missing table %s", t)
 			continue
 		}
-		if !f.hasTable(t) {
-			missingTable[t] = true
-			v.err("E010", t, "missing required table %s", f.table(t))
+		if t == "fragments_fts" {
+			present[t] = map[string]bool{}
+			continue
+		}
+		have := f.columns[t]
+		present[t] = have
+		for _, c := range tableColumns50[t] {
+			if !have[c] {
+				v.err("E011", t+"."+c, "missing column %s.%s", t, c)
+			}
 		}
 	}
-	for _, t := range requiredTables50 {
-		cols, ok := tableColumns50[t]
-		if !ok || missingTable[t] || (f.legacy && t == "extensions") {
-			continue
+	has := func(t string, cols ...string) bool {
+		p, ok := present[t]
+		if !ok {
+			return false
 		}
-		present := f.columns[f.table(t)]
 		for _, c := range cols {
-			name := c
-			if f.legacy {
-				l := legacyColumns[t][c]
-				if l == "" {
-					continue // not part of 4.x
-				}
-				if (t == "units" && c == "words") || (t == "fragments" && c == "search_text") {
-					if f.version == "4.0" {
-						continue
-					}
-				}
-				name = l
-			}
-			if !present[name] {
-				v.err("E011", t+"."+c, "missing required column %s.%s", f.table(t), name)
+			if !p[c] {
+				return false
 			}
 		}
+		return true
 	}
-	// spdf_meta keys.
-	meta, _ := f.Meta()
-	if !f.legacy && !missingTable["spdf_meta"] {
+	meta := map[string]string{}
+	if has("spdf_meta", "key", "value") {
+		meta, _ = f.Meta()
 		for _, k := range requiredMetaKeys {
 			if _, ok := meta[k]; !ok {
 				v.err("E012", k, "missing spdf_meta key %s", k)
 			}
 		}
+		v.res.Profile = splitProfile(meta["profile"])
 	}
-	if p, ok := meta["profile"]; ok {
-		v.res.Profile = splitProfile(p)
-	}
-	// Exactly one document.
-	var docMeta map[string]any
-	var docKind string
-	var unitCount int64 = -1
-	if !missingTable["documents"] {
-		rows, err := f.queryRows("documents", []string{"id", "kind", "metadata", "rights", "unit_count"}, "ORDER BY "+f.col("documents", "id"))
+	// Documents.
+	var unitCount any
+	nDocs := 0
+	if has("documents", "id", "metadata") {
+		cols := []string{"id", "metadata", "rights", "unit_count"}
+		if !has("documents", "rights", "unit_count") {
+			cols = []string{"id", "metadata"}
+		}
+		rows, err := f.queryRows("documents", cols, "")
 		if err == nil {
-			if len(rows) != 1 {
-				v.err("E013", "documents", "documents must hold exactly one row, found %d", len(rows))
+			nDocs = len(rows)
+			if nDocs != 1 {
+				v.err("E013", "documents", "documents has %d rows", nDocs)
+			} else {
+				unitCount = rows[0]["unit_count"]
 			}
-			if len(rows) > 0 {
-				r := rows[0]
-				docKind, _ = asString(r["kind"])
-				unitCount, _ = asInt(r["unit_count"])
+			for _, r := range rows {
+				id, _ := asString(r["id"])
 				ms, _ := asString(r["metadata"])
 				g, perr := ParseJSON(ms)
-				if perr != nil {
-					v.err("E050", "documents.metadata", "invalid metadata JSON: %v", perr)
-				} else if m, ok := g.(map[string]any); !ok {
-					v.err("E050", "documents.metadata", "metadata is not a JSON object")
+				if perr != nil || r["metadata"] == nil {
+					v.err("E050", id, "metadata is not valid JSON")
 				} else {
-					if f.legacy {
-						m = MapLegacyMetadata(m, docKind).(map[string]any)
-					}
-					docMeta = m
-					t, ok1 := m["type"].(string)
-					ti, ok2 := m["title"].(string)
-					if !ok1 || !ok2 || t == "" || ti == "" {
-						v.err("E051", "documents.metadata", "metadata is not CSL-like (needs string type and title)")
+					m, ok := g.(map[string]any)
+					_, okT := m["type"].(string)
+					_, okTi := m["title"].(string)
+					if !ok || !okT || !okTi {
+						v.err("E051", id, "metadata needs a string type and title")
 					}
 				}
 				if rs, ok := asString(r["rights"]); ok {
-					if g, err := ParseJSON(rs); err != nil {
-						v.err("E050", "documents.rights", "invalid rights JSON: %v", err)
-					} else if _, ok := g.(map[string]any); !ok {
-						v.err("E050", "documents.rights", "rights is not a JSON object")
+					if _, err := ParseJSON(rs); err != nil {
+						v.err("E050", id, "rights is not valid JSON")
 					}
 				}
 			}
 		}
 	}
-	_ = docMeta
 	// Extensions.
-	for _, e := range f.issues {
-		if e.Code == "E060" {
-			v.err(e.Code, e.Where, "%s", e.Message)
+	if has("extensions", "name", "required") {
+		rows, err := f.conn.QueryContext(ctx, "SELECT name, required FROM extensions ORDER BY name")
+		if err == nil {
+			for rows.Next() {
+				var name string
+				var req any
+				if rows.Scan(&name, &req) != nil {
+					continue
+				}
+				if legacyTruthy(normalizeSQLValue(req)) && !knownExtensions[name] {
+					v.err("E060", name, "unknown required extension %s", name)
+				}
+			}
+			rows.Close()
 		}
 	}
-	// units.ord contiguous from 1.
-	unitTexts := map[string]string{}
-	nUnits := 0
+	// Units, fragments, figures.
+	texts := map[string]string{}
 	hasTime := false
-	if !missingTable["units"] {
-		rows, err := f.queryRows("units", []string{"id", "ord", "anchor", "text"}, "ORDER BY "+f.col("units", "ord")+", "+f.col("units", "id"))
+	if has("units", "id", "ord", "anchor", "text") {
+		rows, err := f.queryRows("units", []string{"id", "ord", "anchor", "text"}, "ORDER BY ord, id")
 		if err == nil {
-			nUnits = len(rows)
-			if !f.legacy {
-				for i, r := range rows {
-					ord, ok := asInt(r["ord"])
-					if !ok || ord != int64(i+1) {
-						id, _ := asString(r["id"])
-						v.err("E090", "units."+id, "units.ord not contiguous from 1 (expected %d)", i+1)
-						break
-					}
+			for i, r := range rows {
+				ord, ok := r["ord"].(int64)
+				if !ok || ord != int64(i+1) {
+					v.err("E090", "units", "units.ord is not 1..N")
+					break
+				}
+			}
+			if nDocs == 1 && unitCount != nil {
+				if uc, ok := asInt(unitCount); !ok || uc != int64(len(rows)) {
+					v.warn("W102", "documents.unit_count", "unit_count %v but %d units", unitCount, len(rows))
 				}
 			}
 			for _, r := range rows {
 				id, _ := asString(r["id"])
 				t, _ := asString(r["text"])
-				unitTexts[id] = t
-			}
-			for _, r := range rows {
-				id, _ := asString(r["id"])
-				a := v.checkAnchor(f, r["anchor"], "units."+id+".anchor", unitTexts[id], true)
-				if a != nil && a.Type() == "time" {
+				texts[id] = t
+				if a := v.checkAnchor(r["anchor"], "units/"+id, &t); a != nil && a.Type() == "time" {
 					hasTime = true
 				}
 			}
 		}
 	}
-	if !missingTable["fragments"] {
-		rows, err := f.queryRows("fragments", []string{"id", "unit", "anchor", "anchor_end"}, "ORDER BY "+f.col("fragments", "n"))
+	if has("fragments", "id", "unit", "anchor") {
+		cols := []string{"id", "unit", "anchor", "anchor_end"}
+		rows, err := f.queryRows("fragments", cols, "ORDER BY n")
 		if err == nil {
 			for _, r := range rows {
 				id, _ := asString(r["id"])
 				unit, _ := asString(r["unit"])
-				text, known := unitTexts[unit]
-				v.checkAnchor(f, r["anchor"], "fragments."+id+".anchor", text, known)
+				var tp *string
+				if t, ok := texts[unit]; ok {
+					tp = &t
+				}
+				v.checkAnchor(r["anchor"], "fragments/"+id, tp)
 				if r["anchor_end"] != nil {
-					v.checkAnchor(f, r["anchor_end"], "fragments."+id+".anchor_end", "", false)
+					v.checkAnchor(r["anchor_end"], "fragments/"+id+"/anchor_end", nil)
 				}
 			}
 		}
 	}
-	if !missingTable["figures"] {
-		rows, err := f.queryRows("figures", []string{"id", "unit", "anchor"}, "ORDER BY "+f.col("figures", "id"))
+	if has("figures", "id", "unit", "anchor") {
+		rows, err := f.queryRows("figures", []string{"id", "unit", "anchor"}, "ORDER BY id")
 		if err == nil {
 			for _, r := range rows {
 				id, _ := asString(r["id"])
 				unit, _ := asString(r["unit"])
-				text, known := unitTexts[unit]
-				v.checkAnchor(f, r["anchor"], "figures."+id+".anchor", text, known)
+				var tp *string
+				if t, ok := texts[unit]; ok {
+					tp = &t
+				}
+				v.checkAnchor(r["anchor"], "figures/"+id, tp)
 			}
 		}
 	}
 	// Spaces and vectors.
-	nVectors := 0
-	if !missingTable["spaces"] && !missingTable["vectors"] {
-		spaces, err := f.Spaces()
+	type spaceInfo struct {
+		dims  int64
+		dtype string
+	}
+	spaces := map[string]spaceInfo{}
+	if has("spaces", "id", "dims", "dtype") {
+		rows, err := f.queryRows("spaces", []string{"id", "dims", "dtype"}, "ORDER BY id")
 		if err == nil {
-			byID := map[string]Space{}
-			for _, s := range spaces {
-				byID[s.ID] = s
-				if DTypeSize(s.DType) == 0 {
-					v.err("E032", "spaces."+s.ID, "unknown dtype %q", s.DType)
+			for _, r := range rows {
+				id, _ := asString(r["id"])
+				dims, _ := asInt(r["dims"])
+				dt, _ := asString(r["dtype"])
+				spaces[id] = spaceInfo{dims, dt}
+				if DTypeSize(dt) == 0 {
+					v.err("E032", id, "unknown dtype %q", dt)
 				}
 			}
-			rows, err := f.conn.QueryContext(ctx, "SELECT "+f.selectList("vectors", []string{"target", "id", "space"})+", length("+f.col("vectors", "data")+") FROM "+
-				quoteIdent(f.table("vectors"))+" ORDER BY "+f.col("vectors", "space")+", "+f.col("vectors", "target")+", "+f.col("vectors", "id"))
-			if err == nil {
-				for rows.Next() {
-					var target, id, space string
-					var n int64
-					if rows.Scan(&target, &id, &space, &n) != nil {
-						continue
-					}
-					nVectors++
-					where := "vectors." + target + "." + id + "." + space
-					s, ok := byID[space]
-					if !ok {
-						v.err("E031", where, "vector space %q unknown", space)
-						continue
-					}
-					size := DTypeSize(s.DType)
-					if size == 0 {
-						continue
-					}
-					if n != s.Dims*int64(size) {
-						v.err("E030", where, "vector length %d != dims %d × %d", n, s.Dims, size)
-					}
+		}
+	}
+	nVectors := 0
+	if has("vectors", "target", "id", "space", "data") {
+		rows, err := f.conn.QueryContext(ctx, "SELECT target, id, space, typeof(data), length(data) FROM vectors ORDER BY space, target, id")
+		if err == nil {
+			for rows.Next() {
+				var target, id, space, typ any
+				var n int64
+				if rows.Scan(&target, &id, &space, &typ, &n) != nil {
+					continue
 				}
-				rows.Close()
+				nVectors++
+				ss, _ := asString(space)
+				ts, _ := asString(target)
+				is, _ := asString(id)
+				where := "vectors/" + ss + "/" + ts + "/" + is
+				sp, ok := spaces[ss]
+				if !ok {
+					v.err("E031", where, "unknown space %s", ss)
+					continue
+				}
+				size := DTypeSize(sp.dtype)
+				if size == 0 {
+					continue
+				}
+				if t, _ := asString(typ); t != "blob" || n != sp.dims*int64(size) {
+					v.err("E030", where, "vector length %d != %d x %d", n, sp.dims, size)
+				}
 			}
+			rows.Close()
 		}
 	}
 	// FTS integrity on an in-memory copy.
-	if !missingTable["fragments_fts"] && !missingTable["fragments"] {
+	if f.tables["fragments_fts"] {
 		if err := ftsIntegrity(f); err != nil {
-			v.err("E070", f.table("fragments_fts"), "FTS index out of sync: %v", err)
+			v.err("E070", "fragments_fts", "FTS index out of sync: %v", err)
 		}
 	}
 	// Blobs.
-	if !f.legacy && !missingTable["blobs"] {
+	if has("blobs", "key", "sha256", "data") {
 		rows, err := f.conn.QueryContext(ctx, "SELECT key, sha256, data FROM blobs ORDER BY key")
 		if err == nil {
 			for rows.Next() {
-				var key, sum string
+				var key, sum any
 				var data []byte
 				if rows.Scan(&key, &sum, &data) != nil {
 					continue
 				}
 				h := sha256.Sum256(data)
-				if !strings.EqualFold(hex.EncodeToString(h[:]), sum) {
-					v.err("E080", "blobs."+key, "blob sha256 mismatch")
+				ks, _ := asString(key)
+				if ss, _ := asString(sum); hex.EncodeToString(h[:]) != ss {
+					v.err("E080", ks, "blob sha256 mismatch")
 				}
 			}
 			rows.Close()
 		}
 	}
 	// Integrity (§8).
-	if want, ok := meta["content_sha256"]; ok && !f.legacy {
+	if want, ok := meta["content_sha256"]; ok && len(v.res.Errors) == 0 {
 		got, err := f.ContentSHA256()
-		if err != nil || !strings.EqualFold(got, want) {
-			v.err("E081", "spdf_meta.content_sha256", "content_sha256 mismatch")
+		if err != nil || got != want {
+			v.err("E081", "spdf_meta.content_sha256", "content_sha256 does not match the canonical dump")
 		} else if sig, ok := meta["signature"]; ok {
-			if !verifySignature(got, sig, meta["signer"]) {
-				v.err("E082", "spdf_meta.signature", "bad signature")
+			if !verifySignature(want, sig, meta["signer"]) {
+				v.err("E082", "spdf_meta.signature", "signature does not verify")
 			}
 		}
-	} else if _, ok := meta["signature"]; ok && !f.legacy {
-		v.err("E082", "spdf_meta.signature", "signature without content_sha256")
 	}
 	// Profile warnings.
 	profile := map[string]bool{}
@@ -351,19 +400,10 @@ func (v *validator) run(f *File) {
 		profile[p] = true
 	}
 	if profile["semantic"] && nVectors == 0 {
-		v.warn("W100", "vectors", "profile 'semantic' without vectors")
+		v.warn("W100", "", "profile semantic without vectors")
 	}
-	if profile["media"] && !hasTime {
-		v.warn("W101", "units", "profile 'media' without time anchors")
-	}
-	if unitCount >= 0 && !missingTable["units"] && unitCount != int64(nUnits) {
-		v.warn("W102", "documents.unit_count", "unit_count %d != %d units", unitCount, nUnits)
-	}
-	if !f.legacy && f.userVersion > UserVersion {
-		v.warn("W105", "user_version", "newer minor version %s", f.version)
-	}
-	if f.legacy {
-		v.warn("W110", "", "legacy SPDF %s file", f.version)
+	if profile["media"] && has("units", "anchor") && !hasTime {
+		v.warn("W101", "", "profile media without time anchors")
 	}
 }
 
@@ -383,56 +423,65 @@ func verifySignature(hexHash, sig, signer string) bool {
 }
 
 // checkAnchor reports E040/E041/E042 for one anchor and returns it if valid.
-func (v *validator) checkAnchor(f *File, raw any, where, unitText string, knowText bool) Anchor {
+// text is the NFC text of the anchor's unit, or nil if unknown.
+func (v *validator) checkAnchor(raw any, where string, text *string) Anchor {
 	s, ok := asString(raw)
 	if !ok {
-		v.err("E040", where, "anchor is not text")
+		v.err("E040", where, "anchor is not valid JSON")
 		return nil
 	}
 	g, err := ParseJSON(s)
 	if err != nil {
-		v.err("E040", where, "invalid anchor JSON: %v", err)
+		v.err("E040", where, "anchor is not valid JSON")
 		return nil
 	}
-	if f.legacy {
-		g = MapLegacyAnchor(g)
+	code, msg := CheckAnchor(g, text)
+	if code != "" {
+		v.err(code, where, "%s", msg)
+		return nil
 	}
+	return Anchor(g.(map[string]any))
+}
+
+// CheckAnchor checks a parsed anchor (contract §3 and §12). It returns
+// ("", "") when the anchor is valid, else the error code and a message.
+// text, if not nil, is the unit text that "chars" must fit in.
+func CheckAnchor(g any, text *string) (string, string) {
 	m, ok := g.(map[string]any)
 	if !ok {
-		v.err("E040", where, "anchor is not a JSON object")
-		return nil
+		return "E040", "anchor is not an object"
 	}
 	a := Anchor(m)
 	typ, ok := m["type"].(string)
 	if !ok {
-		v.err("E040", where, "anchor without type")
-		return nil
+		return "E040", "anchor without type"
 	}
 	if !knownAnchorTypes[typ] {
-		v.err("E041", where, "unknown anchor type %q", typ)
-		return nil
+		return "E041", fmt.Sprintf("unknown anchor type %q", typ)
 	}
 	if msg := anchorShapeError(a); msg != "" {
-		v.err("E040", where, "%s", msg)
-		return nil
+		return "E040", msg
+	}
+	if r, has := m["region"]; has {
+		rm, ok := r.(map[string]any)
+		if !ok || !isNum(rm["x"]) || !isNum(rm["y"]) || !isNum(rm["w"]) || !isNum(rm["h"]) {
+			return "E040", "bad region"
+		}
 	}
 	if c, has := m["chars"]; has {
-		cs, ok := a.Chars()
-		if !ok {
-			v.err("E040", where, "chars must be [start, end]")
-			return nil
+		l, ok := c.([]any)
+		if !ok || len(l) != 2 || !isInt(l[0]) || !isInt(l[1]) {
+			return "E040", "bad chars"
 		}
-		_ = c
-		if knowText {
-			n := int64(utf8.RuneCountInString(norm.NFC.String(unitText)))
-			if cs[0] < 0 || cs[1] < cs[0] || cs[1] > n {
-				v.err("E042", where, "chars [%d, %d] out of range (unit has %d code points)", cs[0], cs[1], n)
+		if text != nil {
+			n := int64(utf8.RuneCountInString(norm.NFC.String(*text)))
+			s, e := l[0].(int64), l[1].(int64)
+			if !(0 <= s && s <= e && e <= n) {
+				return "E042", fmt.Sprintf("chars [%d, %d] out of range (unit text has %d code points)", s, e, n)
 			}
-		} else if cs[0] < 0 || cs[1] < cs[0] {
-			v.err("E042", where, "chars [%d, %d] out of range", cs[0], cs[1])
 		}
 	}
-	return a
+	return "", ""
 }
 
 func isInt(v any) bool {
@@ -463,16 +512,19 @@ func anchorShapeError(a Anchor) string {
 			return "page anchor needs printed (string or null)"
 		}
 	case "time":
-		if !isNum(a["t0"]) || !isNum(a["t1"]) {
-			return "time anchor needs numeric t0 and t1"
+		t0, ok0 := asFloat(a["t0"])
+		t1, ok1 := asFloat(a["t1"])
+		if !ok0 || !ok1 || !(0 <= t0 && t0 <= t1) {
+			return "time anchor needs numeric 0 <= t0 <= t1"
 		}
 	case "section":
 		if _, ok := a.Path(); !ok {
 			return "section anchor needs path (string[])"
 		}
 	case "slide":
-		if !isInt(a["n"]) {
-			return "slide anchor needs integer n"
+		n, ok := a["n"].(int64)
+		if !ok || n < 1 {
+			return "slide anchor needs integer n >= 1"
 		}
 	case "sheet":
 		if !isStr(a["sheet"]) || !isInt(a["row_from"]) || !isInt(a["row_to"]) {
@@ -523,7 +575,15 @@ func ftsIntegrity(f *File) error {
 	if err != nil {
 		return err
 	}
-	fts := quoteIdent(f.table("fragments_fts"))
-	_, err = conn.ExecContext(ctx, "INSERT INTO "+fts+"("+fts+", rank) VALUES ('integrity-check', 1)")
-	return err
+	tables := []string{f.table("fragments_fts")}
+	if f.tables["fragments_fts_trigram"] {
+		tables = append(tables, "fragments_fts_trigram")
+	}
+	for _, t := range tables {
+		q := quoteIdent(t)
+		if _, err := conn.ExecContext(ctx, "INSERT INTO "+q+"("+q+", rank) VALUES ('integrity-check', 1)"); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -119,13 +119,17 @@ func (f *File) Dump() (map[string]any, error) {
 	if f.db == nil {
 		return nil, errClosed
 	}
-	out := map[string]any{"spdf_version": f.version}
-	if f.legacy {
-		out["legacy"] = true
-	}
 	meta, err := f.Meta()
 	if err != nil {
 		return nil, err
+	}
+	version := f.version
+	if v, ok := meta["spdf_version"]; ok && v != "" {
+		version = v
+	}
+	out := map[string]any{"spdf_version": version}
+	if f.legacy {
+		out["legacy"] = true
 	}
 	mm := map[string]any{}
 	for k, v := range meta {
@@ -185,6 +189,20 @@ func (f *File) Dump() (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
+	if f.legacy {
+		for _, sp := range spaces {
+			sm := sp.(map[string]any)
+			if l, ok := sm["modalities"].([]any); ok {
+				for i, e := range l {
+					if s, ok := e.(string); ok {
+						if mm, ok := legacyModalities[s]; ok {
+							l[i] = mm
+						}
+					}
+				}
+			}
+		}
+	}
 	out["spaces"] = spaces
 
 	vecs, err := f.vectorDigests()
@@ -199,8 +217,11 @@ func (f *File) Dump() (map[string]any, error) {
 	}
 	out["blobs"] = blobs
 
-	prov, err := f.rowsForDump("provenance", "ORDER BY "+f.col("provenance", "at")+", "+f.col("provenance", "stage")+", "+
-		f.col("provenance", "provider")+", "+f.col("provenance", "model")+", "+f.col("provenance", "detail")+", "+f.col("provenance", "ms"))
+	provOrder := "ORDER BY at, stage, provider, model, detail, ms"
+	if f.legacy {
+		provOrder = "ORDER BY cuando, fase, proveedor, detalle, ms"
+	}
+	prov, err := f.rowsForDump("provenance", provOrder)
 	if err != nil {
 		return nil, err
 	}

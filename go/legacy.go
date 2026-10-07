@@ -1,6 +1,8 @@
 package spdf
 
 import (
+	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -54,30 +56,35 @@ func MapLegacyAnchor(v any) any {
 	return out
 }
 
-// legacy metadata keys mapped one-to-one onto CSL variables.
-var legacyMetaSimple = map[string]string{
-	"tituloOriginal": "original-title",
-	"editorial":      "publisher",
-	"lugar":          "publisher-place",
-	"revista":        "container-title",
-	"coleccion":      "collection-title",
-	"volumen":        "volume",
-	"numero":         "issue",
-	"paginas":        "page",
-	"edicion":        "edition",
-	"doi":            "DOI",
-	"isbn":           "ISBN",
-	"url":            "URL",
-	"idioma":         "language",
-	"tipoCSL":        "type",
-	"resumen":        "abstract",
+// Legacy metadata keys copied verbatim onto CSL variables.
+var legacyMetaSimple = [][2]string{
+	{"editorial", "publisher"}, {"lugar", "publisher-place"}, {"coleccion", "collection-title"},
+	{"volumen", "volume"}, {"numero", "issue"}, {"paginas", "page"}, {"edicion", "edition"},
+	{"doi", "DOI"}, {"isbn", "ISBN"}, {"url", "URL"}, {"idioma", "language"}, {"resumen", "abstract"},
 }
 
-var legacyNameLists = map[string]string{
-	"autores": "author", "editores": "editor", "traductores": "translator", "entrevistadores": "interviewer",
+var legacyNameLists = [][2]string{
+	{"autores", "author"}, {"editores", "editor"}, {"traductores", "translator"}, {"entrevistadores", "interviewer"},
 }
 
-var legacyProvKeys = map[string]string{"fuente": "source", "confianza": "confidence"}
+// Legacy field names (keys of «procedencia») → 5.0 names.
+var legacyFieldNames = map[string]string{
+	"titulo": "title", "subtitulo": "subtitle", "tituloOriginal": "original-title", "autores": "author",
+	"editores": "editor", "traductores": "translator", "entrevistadores": "interviewer", "anio": "issued",
+	"anioOriginal": "original-date", "editorial": "publisher", "lugar": "publisher-place",
+	"revista": "container-title", "contenedor": "container-title", "coleccion": "collection-title",
+	"volumen": "volume", "numero": "issue", "paginas": "page", "edicion": "edition", "doi": "DOI",
+	"isbn": "ISBN", "url": "URL", "idioma": "language", "tipoCSL": "type", "resumen": "abstract",
+	"idiomaOriginal": "original_language", "fecha": "issued", "sinFecha": "undated",
+}
+
+// Legacy provenance sources («fuente») → 5.0.
+var legacyProvenanceSources = map[string]string{
+	"lectura": "reading", "usuario": "user", "colofon": "colophon", "impresores": "printers",
+}
+
+// Legacy modalities → 5.0.
+var legacyModalities = map[string]string{"texto": "text", "imagen": "image", "audio": "audio", "video": "video", "pdf": "pdf"}
 
 // default CSL type of a legacy document without tipoCSL, by legacy kind.
 var legacyDefaultCSLType = map[string]string{
@@ -85,140 +92,155 @@ var legacyDefaultCSLType = map[string]string{
 	"hoja": "dataset", "imagen": "graphic", "fotos": "graphic",
 }
 
-func isEmptyValue(v any) bool {
-	switch t := v.(type) {
-	case nil:
-		return true
-	case string:
-		return t == ""
-	case []any:
-		return len(t) == 0
-	case map[string]any:
-		return len(t) == 0
+// legacyHas: present, not null, not "" and not [].
+func legacyHas(m map[string]any, k string) bool {
+	v, ok := m[k]
+	if !ok || v == nil {
+		return false
 	}
-	return false
+	switch t := v.(type) {
+	case string:
+		return t != ""
+	case []any:
+		return len(t) > 0
+	}
+	return true
+}
+
+func truthyString(v any) (string, bool) {
+	s, ok := v.(string)
+	return s, ok && s != ""
 }
 
 // MapLegacyMetadata converts legacy MetadatosDocumento JSON to a CSL-JSON item
-// with the "spdf" extension object. legacyKind is documentos.tipo (it decides
-// the CSL type when tipoCSL is absent).
+// with the "spdf" extension object (contract §7). legacyKind is documentos.tipo.
 func MapLegacyMetadata(v any, legacyKind string) any {
 	m, ok := v.(map[string]any)
 	if !ok {
 		return v
 	}
-	out := map[string]any{}
+	item := map[string]any{}
 	ext := map[string]any{}
-	orcid := map[string]any{}
-	set := func(k string, val any) {
-		if !isEmptyValue(val) {
-			out[k] = val
-		}
-	}
-	titulo, _ := m["titulo"].(string)
-	set("title", m["titulo"])
-	if sub, ok := m["subtitulo"].(string); ok && sub != "" {
-		if titulo != "" {
-			out["title"] = titulo + ": " + sub
-			out["title-short"] = titulo
+	// type
+	switch {
+	case legacyTruthy(m["tipoCSL"]):
+		item["type"] = m["tipoCSL"]
+	case legacyTruthy(m["revista"]):
+		item["type"] = "article-journal"
+	default:
+		if t, ok := legacyDefaultCSLType[legacyKind]; ok {
+			item["type"] = t
 		} else {
-			out["title"] = sub
+			item["type"] = "book"
 		}
-		ext["subtitle"] = sub
 	}
-	for _, k := range []string{"autores", "editores", "traductores", "entrevistadores"} {
-		csl := legacyNameLists[k]
-		list, ok := m[k].([]any)
-		if !ok {
-			continue
+	title := ""
+	if s, ok := m["titulo"].(string); ok {
+		title = s
+	}
+	if legacyHas(m, "subtitulo") {
+		sub := fmt.Sprint(m["subtitulo"])
+		if s, ok := m["subtitulo"].(string); ok {
+			sub = s
 		}
-		names := make([]any, 0, len(list))
+		item["title"] = title + ": " + sub
+		item["title-short"] = title
+		ext["subtitle"] = m["subtitulo"]
+	} else {
+		item["title"] = title
+	}
+	if legacyHas(m, "tituloOriginal") {
+		item["original-title"] = m["tituloOriginal"]
+	}
+	orcid := map[string]any{}
+	for _, pair := range legacyNameLists {
+		list, _ := m[pair[0]].([]any)
+		names := []any{}
 		for _, e := range list {
 			p, ok := e.(map[string]any)
 			if !ok {
 				continue
 			}
-			name := map[string]any{}
-			family, _ := p["apellidos"].(string)
-			given, _ := p["nombre"].(string)
-			if family != "" {
-				name["family"] = family
+			n := map[string]any{}
+			if legacyTruthy(p["apellidos"]) {
+				n["family"] = p["apellidos"]
 			}
-			if given != "" {
-				name["given"] = given
+			if legacyTruthy(p["nombre"]) {
+				n["given"] = p["nombre"]
 			}
-			if o, ok := p["orcid"].(string); ok && o != "" {
-				key := family
-				if given != "" {
-					key = family + ", " + given
+			if len(n) > 0 {
+				names = append(names, n)
+			}
+			if legacyTruthy(p["orcid"]) {
+				key, _ := p["apellidos"].(string)
+				if g, ok := truthyString(p["nombre"]); ok {
+					key += ", " + g
 				}
-				orcid[key] = o
-			}
-			if len(name) > 0 {
-				names = append(names, name)
+				orcid[key] = p["orcid"]
 			}
 		}
-		set(csl, names)
-	}
-	anio, hasAnio := asInt(m["anio"])
-	if hasAnio {
-		out["issued"] = map[string]any{"date-parts": []any{[]any{anio}}}
-	}
-	if y, ok := asInt(m["anioOriginal"]); ok {
-		out["original-date"] = map[string]any{"date-parts": []any{[]any{y}}}
-	}
-	if fecha, ok := m["fecha"].(string); ok && fecha != "" {
-		if dp := isoDateParts(fecha); dp != nil {
-			if !hasAnio || dp[0].(int64) == anio {
-				out["issued"] = map[string]any{"date-parts": []any{dp}}
-			}
+		if len(names) > 0 {
+			item[pair[1]] = names
 		}
 	}
-	for k, csl := range legacyMetaSimple {
-		set(csl, m[k])
-	}
-	if isEmptyValue(m["revista"]) {
-		set("container-title", m["contenedor"])
-	}
-	if _, ok := out["type"]; !ok {
-		switch {
-		case legacyDefaultCSLType[legacyKind] != "":
-			out["type"] = legacyDefaultCSLType[legacyKind]
-		case !isEmptyValue(m["revista"]):
-			out["type"] = "article-journal"
-		default:
-			out["type"] = "book"
+	var fecha []any
+	if legacyHas(m, "fecha") {
+		if s, ok := m["fecha"].(string); ok {
+			fecha = isoDateParts(s)
 		}
 	}
-	if lo := m["idiomaOriginal"]; !isEmptyValue(lo) {
-		ext["original_language"] = lo
+	if fecha != nil && (!legacyHas(m, "anio") || JSONEqual(fecha[0], m["anio"])) {
+		item["issued"] = map[string]any{"date-parts": []any{fecha}}
+	} else if legacyHas(m, "anio") {
+		item["issued"] = map[string]any{"date-parts": []any{[]any{m["anio"]}}}
 	}
-	if sf, ok := m["sinFecha"].(map[string]any); ok {
+	if legacyHas(m, "anioOriginal") {
+		item["original-date"] = map[string]any{"date-parts": []any{[]any{m["anioOriginal"]}}}
+	}
+	for _, pair := range legacyMetaSimple {
+		if legacyHas(m, pair[0]) {
+			item[pair[1]] = m[pair[0]]
+		}
+	}
+	if legacyHas(m, "revista") {
+		item["container-title"] = m["revista"]
+	} else if legacyHas(m, "contenedor") {
+		item["container-title"] = m["contenedor"]
+	}
+	if legacyHas(m, "idiomaOriginal") {
+		ext["original_language"] = m["idiomaOriginal"]
+	}
+	if legacyHas(m, "sinFecha") {
 		u := map[string]any{}
-		for from, to := range map[string]string{"desde": "from", "hasta": "to", "fundamento": "basis"} {
-			if val, ok := sf[from]; ok && !isEmptyValue(val) {
-				u[to] = val
+		if sf, ok := m["sinFecha"].(map[string]any); ok {
+			if d, ok := sf["desde"]; ok && d != nil {
+				u["from"] = d
+			}
+			if h, ok := sf["hasta"]; ok && h != nil {
+				u["to"] = h
+			}
+			if legacyTruthy(sf["fundamento"]) {
+				u["basis"] = sf["fundamento"]
 			}
 		}
-		if len(u) > 0 {
-			ext["undated"] = u
-		}
+		ext["undated"] = u
 	}
-	if pr, ok := m["procedencia"].(map[string]any); ok && len(pr) > 0 {
+	if legacyHas(m, "procedencia") {
 		prov := map[string]any{}
-		for field, val := range pr {
-			if e, ok := val.(map[string]any); ok {
-				ne := map[string]any{}
-				for k, x := range e {
-					nk := k
-					if mk, ok := legacyProvKeys[k]; ok {
-						nk = mk
-					}
-					ne[nk] = x
+		if pr, ok := m["procedencia"].(map[string]any); ok {
+			for field, val := range pr {
+				key := field
+				if mk, ok := legacyFieldNames[field]; ok {
+					key = mk
 				}
-				prov[field] = ne
-			} else {
-				prov[field] = val
+				e, _ := val.(map[string]any)
+				src := e["fuente"]
+				if s, ok := src.(string); ok {
+					if ms, ok := legacyProvenanceSources[s]; ok {
+						src = ms
+					}
+				}
+				prov[key] = map[string]any{"source": src, "confidence": e["confianza"]}
 			}
 		}
 		ext["provenance"] = prov
@@ -227,24 +249,46 @@ func MapLegacyMetadata(v any, legacyKind string) any {
 		ext["orcid"] = orcid
 	}
 	if len(ext) > 0 {
-		out["spdf"] = ext
+		item["spdf"] = ext
 	}
-	return out
+	return item
 }
 
-// isoDateParts turns "1977-03-20" (or "1977-03", "1977") into CSL date-parts.
-func isoDateParts(s string) []any {
-	s = strings.TrimSpace(s)
-	if i := strings.IndexAny(s, "T "); i > 0 {
-		s = s[:i]
+// legacyTruthy mirrors a truthiness test on JSON values.
+func legacyTruthy(v any) bool {
+	switch t := v.(type) {
+	case nil:
+		return false
+	case bool:
+		return t
+	case string:
+		return t != ""
+	case int64:
+		return t != 0
+	case float64:
+		return t != 0
+	case []any:
+		return len(t) > 0
+	case map[string]any:
+		return len(t) > 0
 	}
-	parts := strings.Split(s, "-")
-	if len(parts) == 0 || len(parts) > 3 {
+	return true
+}
+
+var isoDateRe = regexp.MustCompile(`^(-?\d{1,4})(?:-(\d{1,2})(?:-(\d{1,2}))?)?`)
+
+// isoDateParts turns "1977-03-20" (or "1977-03", "1977", "-0350") into CSL date-parts.
+func isoDateParts(s string) []any {
+	m := isoDateRe.FindStringSubmatch(strings.TrimSpace(s))
+	if m == nil {
 		return nil
 	}
-	out := make([]any, 0, len(parts))
-	for _, p := range parts {
-		n, err := strconv.ParseInt(p, 10, 64)
+	var out []any
+	for _, g := range m[1:] {
+		if g == "" {
+			continue
+		}
+		n, err := strconv.ParseInt(g, 10, 64)
 		if err != nil {
 			return nil
 		}

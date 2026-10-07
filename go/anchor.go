@@ -3,8 +3,10 @@ package spdf
 import (
 	"fmt"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 // Anchor is a JSON anchor (contract §3) kept as a generic object, so members
@@ -122,7 +124,7 @@ func i64(v int64) *int64   { return &v }
 func str(v string) *string { return &v }
 
 // LocatorFromAnchor derives the locator of an anchor and an optional end
-// anchor (for ranges).
+// anchor (for ranges), contract §3.
 func LocatorFromAnchor(a, end Anchor) Locator {
 	var l Locator
 	typ := a.Type()
@@ -130,23 +132,27 @@ func LocatorFromAnchor(a, end Anchor) Locator {
 	case "page":
 		if p, ok := a.Int("physical"); ok {
 			l.P = i64(p)
-			if end != nil && end.Type() == "page" {
-				if pe, ok := end.Int("physical"); ok && pe != p {
-					l.PE = i64(pe)
-				}
+		}
+		if f, ok := a.Str("printed"); ok {
+			l.F = str(f)
+		}
+		if end != nil && end.Type() == "page" {
+			if pe, ok := end.Int("physical"); ok && (l.P == nil || pe != *l.P) {
+				l.PE = i64(pe)
+			}
+			if fe, ok := end.Str("printed"); ok && (l.F == nil || fe != *l.F) {
+				l.FE = str(fe)
 			}
 		}
 	case "time":
-		t0, ok0 := a.Num("t0")
+		t0, _ := a.Num("t0")
 		t1, ok1 := a.Num("t1")
 		if end != nil && end.Type() == "time" {
-			if e1, ok := end.Num("t1"); ok {
-				t1, ok1 = e1, true
-			}
+			t1, ok1 = end.Num("t1")
 		}
-		if ok0 && ok1 {
+		if ok1 {
 			l.T = []float64{t0, t1}
-		} else if ok0 {
+		} else {
 			l.T = []float64{t0}
 		}
 	case "section", "web":
@@ -156,35 +162,6 @@ func LocatorFromAnchor(a, end Anchor) Locator {
 		if n, ok := a.Int("paragraph"); ok {
 			l.Para = i64(n)
 		}
-	case "slide":
-		if n, ok := a.Int("n"); ok {
-			l.Sl = i64(n)
-		}
-	case "sheet":
-		if s, ok := a.Str("sheet"); ok {
-			l.Sh = str(s)
-		}
-		rf, ok1 := a.Int("row_from")
-		rt, ok2 := a.Int("row_to")
-		if ok1 && ok2 {
-			l.Rows = []int64{rf, rt}
-		}
-	case "verse":
-		if lf, ok := a.Int("line_from"); ok {
-			if lt, ok := a.Int("line_to"); ok && lt != lf {
-				l.V = []int64{lf, lt}
-			} else {
-				l.V = []int64{lf}
-			}
-		}
-	case "canonical":
-		sc, ok1 := a.Str("scheme")
-		rf, ok2 := a.Str("ref")
-		if ok1 && ok2 {
-			l.Ref = &CanonicalRef{Scheme: sc, Ref: rf}
-		}
-	}
-	if typ == "page" || typ == "section" || typ == "verse" {
 		if f, ok := a.Str("printed"); ok {
 			l.F = str(f)
 			if end != nil {
@@ -193,6 +170,29 @@ func LocatorFromAnchor(a, end Anchor) Locator {
 				}
 			}
 		}
+	case "slide":
+		n, _ := a.Int("n")
+		l.Sl = i64(n)
+	case "sheet":
+		s, _ := a.Str("sheet")
+		l.Sh = str(s)
+		rf, _ := a.Int("row_from")
+		rt, _ := a.Int("row_to")
+		l.Rows = []int64{rf, rt}
+	case "verse":
+		lf, _ := a.Int("line_from")
+		if lt, ok := a.Int("line_to"); ok && lt != lf {
+			l.V = []int64{lf, lt}
+		} else {
+			l.V = []int64{lf}
+		}
+		if f, ok := a.Str("printed"); ok {
+			l.F = str(f)
+		}
+	case "canonical":
+		sc, _ := a.Str("scheme")
+		rf, _ := a.Str("ref")
+		l.Ref = &CanonicalRef{Scheme: sc, Ref: rf}
 	}
 	if c, ok := a.Chars(); ok {
 		l.Char = []int64{c[0], c[1]}
@@ -220,14 +220,20 @@ func PercentEncode(s string) string {
 	return b.String()
 }
 
-// percentDecode decodes leniently: malformed escapes stay literal.
-func percentDecode(s string) string {
+// percentDecode decodes %XX escapes; a stray '%' or invalid UTF-8 is an error.
+func percentDecode(s string) (string, error) {
 	if !strings.Contains(s, "%") {
-		return s
+		if !utf8.ValidString(s) {
+			return "", fmt.Errorf("not UTF-8")
+		}
+		return s, nil
 	}
 	var b []byte
 	for i := 0; i < len(s); i++ {
-		if s[i] == '%' && i+2 < len(s) && isHex(s[i+1]) && isHex(s[i+2]) {
+		if s[i] == '%' {
+			if i+2 >= len(s) || !isHex(s[i+1]) || !isHex(s[i+2]) {
+				return "", fmt.Errorf("bad percent-encoding")
+			}
 			v, _ := strconv.ParseUint(s[i+1:i+3], 16, 8)
 			b = append(b, byte(v))
 			i += 2
@@ -235,7 +241,10 @@ func percentDecode(s string) string {
 		}
 		b = append(b, s[i])
 	}
-	return string(b)
+	if !utf8.Valid(b) {
+		return "", fmt.Errorf("percent-encoding is not UTF-8")
+	}
+	return string(b), nil
 }
 
 func isHex(c byte) bool {
@@ -296,10 +305,12 @@ func FormatURI(docref string, l Locator) string {
 	if len(l.Rows) == 2 {
 		add("rows", fmt.Sprintf("%d-%d", l.Rows[0], l.Rows[1]))
 	}
-	if len(l.V) == 1 || (len(l.V) == 2 && l.V[0] == l.V[1]) {
-		add("v", strconv.FormatInt(l.V[0], 10))
-	} else if len(l.V) == 2 {
-		add("v", fmt.Sprintf("%d-%d", l.V[0], l.V[1]))
+	if len(l.V) > 0 {
+		vs := make([]string, len(l.V))
+		for i, x := range l.V {
+			vs[i] = strconv.FormatInt(x, 10)
+		}
+		add("v", strings.Join(vs, "-"))
 	}
 	if l.Ref != nil {
 		add("ref", PercentEncode(l.Ref.Scheme)+":"+PercentEncode(l.Ref.Ref))
@@ -315,8 +326,11 @@ func FormatURI(docref string, l Locator) string {
 		add("xywh", "percent:"+strings.Join(vs, ","))
 	}
 	ref := docref
-	if !strings.HasPrefix(docref, "sha256-") {
+	if !shaRefRe.MatchString(docref) {
 		ref = PercentEncode(docref)
+	}
+	if len(parts) == 0 {
+		return "spdf:" + ref
 	}
 	return "spdf:" + ref + "#" + strings.Join(parts, "&")
 }
@@ -326,29 +340,74 @@ func AnchorURI(docref string, a, end Anchor) string {
 	return FormatURI(docref, LocatorFromAnchor(a, end))
 }
 
-// ParseURI parses an anchor URI into its docref and locator. Unknown
-// parameters are ignored; values are decoded leniently.
+var (
+	shaRefRe = regexp.MustCompile(`^sha256-[0-9a-f]{64}$`)
+	intRe    = regexp.MustCompile(`^(0|[1-9][0-9]*)$`)
+	decRe    = regexp.MustCompile(`^[0-9]+(\.[0-9]+)?$`)
+	clockRe  = regexp.MustCompile(`^(?:([0-9]+):)?([0-5]?[0-9]):([0-5][0-9](?:\.[0-9]+)?)$`)
+)
+
+func parseURIInt(s string) (int64, error) {
+	if !intRe.MatchString(s) {
+		return 0, fmt.Errorf("not an integer: %q", s)
+	}
+	return strconv.ParseInt(s, 10, 64)
+}
+
+func parseNPT(s string) (float64, error) {
+	if decRe.MatchString(s) {
+		return strconv.ParseFloat(s, 64)
+	}
+	m := clockRe.FindStringSubmatch(s)
+	if m == nil {
+		return 0, fmt.Errorf("bad time: %q", s)
+	}
+	var h int64
+	if m[1] != "" {
+		h, _ = strconv.ParseInt(m[1], 10, 64)
+	}
+	mi, _ := strconv.ParseInt(m[2], 10, 64)
+	sec, _ := strconv.ParseFloat(m[3], 64)
+	return RoundFloat(float64(h*3600+mi*60) + sec), nil
+}
+
+// ParseURI parses an anchor URI into its docref and locator (contract §3).
+// Unknown parameters are ignored; malformed values are errors.
 func ParseURI(uri string) (string, Locator, error) {
 	var l Locator
 	if !strings.HasPrefix(uri, "spdf:") {
 		return "", l, fmt.Errorf("not an spdf: URI")
 	}
 	rest := uri[len("spdf:"):]
-	docref, frag, _ := strings.Cut(rest, "#")
-	docref = percentDecode(docref)
-	if frag == "" {
-		return docref, l, nil
+	rawRef, frag, _ := strings.Cut(rest, "#")
+	if rawRef == "" {
+		return "", l, fmt.Errorf("empty document reference")
 	}
-	for _, kv := range strings.Split(frag, "&") {
-		if kv == "" {
+	docref, err := percentDecode(rawRef)
+	if err != nil {
+		return "", l, err
+	}
+	seen := map[string]bool{}
+	for _, part := range strings.Split(frag, "&") {
+		if part == "" {
 			continue
 		}
-		k, v, _ := strings.Cut(kv, "=")
+		k, v, eq := strings.Cut(part, "=")
+		if !eq {
+			return "", l, fmt.Errorf("parameter without value: %q", part)
+		}
+		if seen[k] {
+			return "", l, fmt.Errorf("duplicate parameter %s", k)
+		}
+		seen[k] = true
 		switch k {
 		case "p", "pe", "para", "sl":
-			n, err := strconv.ParseInt(percentDecode(v), 10, 64)
+			n, err := parseURIInt(v)
 			if err != nil {
-				continue
+				return "", l, err
+			}
+			if k != "para" && n < 1 {
+				return "", l, fmt.Errorf("%s starts at 1", k)
 			}
 			switch k {
 			case "p":
@@ -360,74 +419,110 @@ func ParseURI(uri string) (string, Locator, error) {
 			case "sl":
 				l.Sl = i64(n)
 			}
-		case "f":
-			l.F = str(percentDecode(v))
-		case "fe":
-			l.FE = str(percentDecode(v))
-		case "sh":
-			l.Sh = str(percentDecode(v))
+		case "f", "fe", "sh":
+			d, err := percentDecode(v)
+			if err != nil {
+				return "", l, err
+			}
+			switch k {
+			case "f":
+				l.F = str(d)
+			case "fe":
+				l.FE = str(d)
+			case "sh":
+				l.Sh = str(d)
+			}
 		case "t":
+			v = strings.TrimPrefix(v, "npt:")
 			var ts []float64
-			ok := true
-			for _, p := range strings.Split(percentDecode(v), ",") {
-				x, err := strconv.ParseFloat(strings.TrimPrefix(p, "npt:"), 64)
+			for _, p := range strings.Split(v, ",") {
+				x, err := parseNPT(p)
 				if err != nil {
-					ok = false
-					break
+					return "", l, err
 				}
-				ts = append(ts, RoundFloat(x))
+				ts = append(ts, x)
 			}
-			if ok && len(ts) > 0 && len(ts) <= 2 {
-				l.T = ts
+			if len(ts) > 2 || (len(ts) == 2 && ts[1] < ts[0]) {
+				return "", l, fmt.Errorf("bad t")
 			}
+			l.T = ts
 		case "s":
 			var es []string
 			for _, e := range strings.Split(v, "/") {
-				es = append(es, percentDecode(e))
+				d, err := percentDecode(e)
+				if err != nil {
+					return "", l, err
+				}
+				es = append(es, d)
 			}
 			l.S = es
 		case "rows":
-			if a, b, ok := cutInts(percentDecode(v), "-"); ok {
-				l.Rows = []int64{a, b}
+			a, b, ok := strings.Cut(v, "-")
+			if !ok {
+				return "", l, fmt.Errorf("rows needs a-b")
 			}
+			x, err1 := parseURIInt(a)
+			y, err2 := parseURIInt(b)
+			if err1 != nil || err2 != nil {
+				return "", l, fmt.Errorf("bad rows")
+			}
+			l.Rows = []int64{x, y}
 		case "v":
-			dv := percentDecode(v)
-			if a, b, ok := cutInts(dv, "-"); ok {
-				l.V = []int64{a, b}
-			} else if n, err := strconv.ParseInt(dv, 10, 64); err == nil {
-				l.V = []int64{n}
+			ps := strings.Split(v, "-")
+			if len(ps) > 2 {
+				return "", l, fmt.Errorf("bad v")
 			}
+			var xs []int64
+			for _, p := range ps {
+				x, err := parseURIInt(p)
+				if err != nil {
+					return "", l, err
+				}
+				xs = append(xs, x)
+			}
+			l.V = xs
 		case "ref":
-			sc, rf, ok := strings.Cut(v, ":")
-			if ok {
-				l.Ref = &CanonicalRef{Scheme: percentDecode(sc), Ref: percentDecode(rf)}
+			a, b, ok := strings.Cut(v, ":")
+			if !ok || a == "" {
+				return "", l, fmt.Errorf("ref needs scheme:ref")
 			}
+			sc, err1 := percentDecode(a)
+			rf, err2 := percentDecode(b)
+			if err1 != nil || err2 != nil {
+				return "", l, fmt.Errorf("bad ref")
+			}
+			l.Ref = &CanonicalRef{Scheme: sc, Ref: rf}
 		case "char":
-			if a, b, ok := cutInts(percentDecode(v), ","); ok {
-				l.Char = []int64{a, b}
+			ps := strings.Split(v, ",")
+			if len(ps) != 2 {
+				return "", l, fmt.Errorf("char needs start,end")
 			}
+			a, err1 := parseURIInt(ps[0])
+			b, err2 := parseURIInt(ps[1])
+			if err1 != nil || err2 != nil {
+				return "", l, fmt.Errorf("bad char")
+			}
+			if b < a {
+				return "", l, fmt.Errorf("char end before start")
+			}
+			l.Char = []int64{a, b}
 		case "xywh":
-			dv := percentDecode(v)
-			if !strings.HasPrefix(dv, "percent:") {
-				continue
+			if !strings.HasPrefix(v, "percent:") {
+				return "", l, fmt.Errorf("xywh must use percent:")
 			}
-			ps := strings.Split(strings.TrimPrefix(dv, "percent:"), ",")
+			ps := strings.Split(v[len("percent:"):], ",")
 			if len(ps) != 4 {
-				continue
+				return "", l, fmt.Errorf("bad xywh")
 			}
 			vals := make([]float64, 4)
-			ok := true
 			for i, p := range ps {
-				x, err := strconv.ParseFloat(p, 64)
-				if err != nil {
-					ok = false
-					break
+				if !decRe.MatchString(p) {
+					return "", l, fmt.Errorf("bad xywh")
 				}
-				vals[i] = roundTo(x/100, 6)
+				x, _ := strconv.ParseFloat(p, 64)
+				vals[i] = RoundFloat(x / 100)
 			}
-			if ok {
-				l.XYWH = vals
-			}
+			l.XYWH = vals
 		}
 	}
 	return docref, l, nil

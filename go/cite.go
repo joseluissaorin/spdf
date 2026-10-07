@@ -4,16 +4,14 @@ import (
 	"fmt"
 	"math"
 	"strings"
-	"unicode"
-
-	"golang.org/x/text/unicode/norm"
 )
 
 // Cite returns the short author-date citation of an anchor (contract §10):
 // "(Family, Year, locator)". end is the optional end anchor of a range;
 // metadata is the CSL-JSON item; locale is "es" or "en" (others → "en").
 func Cite(a, end Anchor, metadata map[string]any, locale string) string {
-	es := locale == "es" || strings.HasPrefix(locale, "es-") || strings.HasPrefix(locale, "es_")
+	lang, _, _ := strings.Cut(locale, "-")
+	es := strings.ToLower(lang) == "es"
 	parts := []string{citeNames(metadata, es), citeYear(metadata, es)}
 	if loc := citeLocator(a, end, es); loc != "" {
 		parts = append(parts, loc)
@@ -78,45 +76,40 @@ func citeNames(md map[string]any, es bool) string {
 	return strings.TrimSpace(t)
 }
 
-// startsWithI: the word begins with the sound /i/ (i, í, hi, hí) not
-// followed by a vowel (so "Iglesias" and "Hidalgo" take "e", "Hierro" "y").
+// startsWithI: the name begins with the sound /i/ (i, í, hi, hí) not
+// followed by a vowel ("Iglesias", "Hidalgo" take "e"; "Hierro" takes "y").
 func startsWithI(s string) bool {
-	rs := []rune(strings.ToLower(norm.NFC.String(s)))
-	i := 0
-	if len(rs) > 0 && rs[0] == 'h' {
-		i = 1
-	}
-	if i >= len(rs) || (rs[i] != 'i' && rs[i] != 'í') {
+	low := []rune(strings.ToLower(s))
+	var rest []rune
+	switch {
+	case len(low) >= 2 && low[0] == 'h' && (low[1] == 'i' || low[1] == 'í'):
+		rest = low[2:]
+	case len(low) >= 1 && (low[0] == 'i' || low[0] == 'í'):
+		rest = low[1:]
+	default:
 		return false
 	}
-	if i+1 < len(rs) && isVowel(rs[i+1]) {
-		return false
-	}
-	return true
-}
-
-func isVowel(r rune) bool {
-	base := []rune(norm.NFD.String(string(unicode.ToLower(r))))
-	if len(base) == 0 {
-		return false
-	}
-	return strings.ContainsRune("aeiou", base[0])
+	return !(len(rest) > 0 && strings.ContainsRune("aeiouáéíóúü", rest[0]))
 }
 
 func citeYear(md map[string]any, es bool) string {
 	if issued, ok := md["issued"].(map[string]any); ok {
 		if dp, ok := issued["date-parts"].([]any); ok && len(dp) > 0 {
 			if first, ok := dp[0].([]any); ok && len(first) > 0 {
-				if y, ok := asInt(first[0]); ok {
-					if y < 0 {
-						if es {
-							return fmt.Sprintf("%d a. C.", -y)
-						}
-						return fmt.Sprintf("%d BC", -y)
+				y, ok := asInt(first[0])
+				if !ok {
+					if f, isF := first[0].(float64); isF {
+						y, ok = int64(f), true
 					}
-					return fmt.Sprintf("%d", y)
-				} else if s, ok := first[0].(string); ok && s != "" {
-					return s
+				}
+				if ok {
+					if y > 0 {
+						return fmt.Sprintf("%d", y)
+					}
+					if es {
+						return fmt.Sprintf("%d a. C.", -y)
+					}
+					return fmt.Sprintf("%d BC", -y)
 				}
 			}
 		}
@@ -136,7 +129,7 @@ func bracketIfInferred(a Anchor, printed string) string {
 
 // pageLocator renders a page-like locator (page anchors, or section/web/verse
 // anchors carrying a printed folio).
-func pageLocator(a, end Anchor, es bool) string {
+func pageLocator(a, end Anchor, es bool, single, plural string) string {
 	printed, ok := a.Str("printed")
 	if !ok {
 		if es {
@@ -144,16 +137,8 @@ func pageLocator(a, end Anchor, es bool) string {
 		}
 		return "n. pag."
 	}
-	fol, _ := a.Str("foliation")
-	single, plural := "p.", "pp."
-	switch fol {
-	case "leaf":
-		single, plural = "fol.", "fols."
-	case "column":
-		single, plural = "col.", "cols."
-	}
 	first := bracketIfInferred(a, printed)
-	if end != nil {
+	if end != nil && end.Type() == a.Type() {
 		if ep, ok := end.Str("printed"); ok && ep != printed {
 			return plural + " " + first + "-" + bracketIfInferred(end, ep)
 		}
@@ -176,7 +161,14 @@ func clock(t float64) string {
 func citeLocator(a, end Anchor, es bool) string {
 	switch a.Type() {
 	case "page":
-		return pageLocator(a, end, es)
+		fol, _ := a.Str("foliation")
+		switch fol {
+		case "leaf":
+			return pageLocator(a, end, es, "fol.", "fols.")
+		case "column":
+			return pageLocator(a, end, es, "col.", "cols.")
+		}
+		return pageLocator(a, end, es, "p.", "pp.")
 	case "time":
 		t0, ok := a.Num("t0")
 		if !ok {
@@ -190,25 +182,20 @@ func citeLocator(a, end Anchor, es bool) string {
 		return clock(t0)
 	case "section", "web":
 		if _, ok := a.Str("printed"); ok {
-			return pageLocator(a, end, es)
+			return pageLocator(a, end, es, "p.", "pp.")
 		}
-		path, _ := a.Path()
-		para, hasPara := a.Int("paragraph")
-		paraWord := "para."
-		if es {
-			paraWord = "párr."
+		var parts []string
+		if path, ok := a.Path(); ok && len(path) > 0 {
+			parts = append(parts, "§ "+path[len(path)-1])
 		}
-		if len(path) > 0 {
-			s := "§ " + path[len(path)-1]
-			if hasPara {
-				s += fmt.Sprintf(", %s %d", paraWord, para)
+		if para, ok := a["paragraph"]; ok && para != nil {
+			word := "para. "
+			if es {
+				word = "párr. "
 			}
-			return s
+			parts = append(parts, word+string(CanonicalJSON(para)))
 		}
-		if hasPara {
-			return fmt.Sprintf("%s %d", paraWord, para)
-		}
-		return ""
+		return strings.Join(parts, ", ")
 	case "slide":
 		n, ok := a.Int("n")
 		if !ok {
@@ -225,6 +212,12 @@ func citeLocator(a, end Anchor, es bool) string {
 		word := "rows"
 		if es {
 			word = "filas"
+		}
+		if ok1 && ok2 && rf == rt {
+			if es {
+				return fmt.Sprintf("%s, fila %d", sheet, rf)
+			}
+			return fmt.Sprintf("%s, row %d", sheet, rf)
 		}
 		if ok1 && ok2 {
 			return fmt.Sprintf("%s, %s %d-%d", sheet, word, rf, rt)

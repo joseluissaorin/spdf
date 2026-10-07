@@ -274,29 +274,23 @@ func openSQLiteMode(physical, display string, o *Options, lenient bool) (*File, 
 	}
 	f.userVersion = userVersion
 	switch {
-	case appID == ApplicationID && userVersion == UserVersion:
-		f.version = "5.0"
-	case appID == ApplicationID && userVersion >= 500 && userVersion < 600:
-		f.version = fmt.Sprintf("5.%d", (userVersion-500)/10)
+	case appID == ApplicationID:
+		if userVersion < 500 || userVersion > 599 {
+			return fail(errf("E002", display, "unknown user_version %d", userVersion))
+		}
+		f.version = fmt.Sprintf("%d.%d", userVersion/100, (userVersion%100)/10)
 	case f.tables["spdf"] && f.tables["documentos"]:
 		f.legacy = true
 		var v sql.NullString
 		_ = conn.QueryRowContext(ctx, "SELECT valor FROM spdf WHERE clave = 'spdf_version'").Scan(&v)
 		switch {
-		case v.Valid && v.String != "":
+		case v.Valid && strings.HasPrefix(v.String, "4."):
 			f.version = v.String
-		case userVersion == 400:
-			f.version = "4.0"
-		case userVersion == 410:
-			f.version = "4.1"
+		case userVersion == 400 || userVersion == 410:
+			f.version = fmt.Sprintf("%d.%d", userVersion/100, (userVersion%100)/10)
 		default:
-			f.version = "4.1"
+			return fail(errf("E002", display, "unknown legacy version"))
 		}
-		if !strings.HasPrefix(f.version, "4.") {
-			return fail(errf("E002", display, "unknown legacy version %q", f.version))
-		}
-	case f.tables["spdf_meta"] && f.tables["documents"] && appID == 0 && userVersion == 0:
-		return fail(errf("E002", display, "missing application_id and user_version"))
 	default:
 		return fail(errf("E002", display, "unknown application_id %d / user_version %d", appID, userVersion))
 	}

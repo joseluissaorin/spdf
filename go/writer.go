@@ -102,6 +102,8 @@ type SpaceDef struct {
 	Modalities    []string
 	TaskPrefixes  map[string]any
 	Created       *string
+	// ModalitiesJSON, if set, is stored verbatim instead of Modalities.
+	ModalitiesJSON any
 }
 
 // ProvenanceEntry records a processing stage.
@@ -120,6 +122,10 @@ type WriterOptions struct {
 	Generator string
 	// Trigram adds the optional CJK index.
 	Trigram bool
+	// Exact writes every value verbatim: no default spdf_meta keys, no
+	// computed unit_count, no automatic ordinals, no NFC normalization.
+	// Used to rebuild a file from a full dump (WriteSource).
+	Exact bool
 }
 
 // Writer builds an SPDF 5.0 file. Rows are written to a temporary file that
@@ -257,6 +263,20 @@ func nullable[T any](p *T) any {
 	return *p
 }
 
+func (w *Writer) nfc(s string) string {
+	if w.opts.Exact {
+		return s
+	}
+	return norm.NFC.String(s)
+}
+
+func (w *Writer) sha(s string) string {
+	if w.opts.Exact {
+		return s
+	}
+	return strings.ToLower(s)
+}
+
 // SetMeta sets a spdf_meta key (overrides the defaults written on Close).
 func (w *Writer) SetMeta(key, value string) { w.meta[key] = value }
 
@@ -295,7 +315,7 @@ func (w *Writer) AddUnit(u Unit) error {
 	if err := w.needDoc(); err != nil {
 		return err
 	}
-	if u.Ord == 0 {
+	if u.Ord == 0 && !w.opts.Exact {
 		u.Ord = w.nextUnit + 1
 	}
 	if u.Ord > w.nextUnit {
@@ -317,16 +337,12 @@ func (w *Writer) AddUnit(u Unit) error {
 	}
 	var words any
 	if u.Words != nil {
-		if s, ok := u.Words.(string); ok {
-			words = s
-		} else {
-			words = jsonText(u.Words)
-		}
+		words = jsonText(u.Words)
 	}
 	w.units++
 	return w.exec(`INSERT INTO units (id, document, ord, anchor, text, notes, header, footer, image, thumbnail, reader, confidence, printed, t0, t1, words)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		u.ID, w.docID, u.Ord, jsonText(u.Anchor), norm.NFC.String(u.Text), notes, nullable(u.Header), nullable(u.Footer),
+		u.ID, w.docID, u.Ord, jsonText(u.Anchor), w.nfc(u.Text), notes, nullable(u.Header), nullable(u.Footer),
 		nullable(u.Image), nullable(u.Thumbnail), u.Reader, conf, nullable(u.Printed), nullable(u.T0), nullable(u.T1), words)
 }
 
@@ -344,13 +360,13 @@ func (w *Writer) AddFragment(fr Fragment) error {
 	if err := w.needDoc(); err != nil {
 		return err
 	}
-	if fr.N == 0 {
+	if fr.N == 0 && !w.opts.Exact {
 		fr.N = w.nextN + 1
 	}
 	if fr.N > w.nextN {
 		w.nextN = fr.N
 	}
-	if fr.Ord == 0 {
+	if fr.Ord == 0 && !w.opts.Exact {
 		fr.Ord = w.nextFrag + 1
 	}
 	if fr.Ord > w.nextFrag {
@@ -369,7 +385,7 @@ func (w *Writer) AddFragment(fr Fragment) error {
 	}
 	return w.exec(`INSERT INTO fragments (n, id, document, unit, ord, text, context, section, anchor, anchor_end, search_text)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		fr.N, fr.ID, w.docID, fr.Unit, fr.Ord, norm.NFC.String(fr.Text), fr.Context, section, jsonText(fr.Anchor), end, nullable(fr.SearchText))
+		fr.N, fr.ID, w.docID, fr.Unit, fr.Ord, w.nfc(fr.Text), fr.Context, section, jsonText(fr.Anchor), end, nullable(fr.SearchText))
 }
 
 // AddFigure writes a figure.
@@ -393,9 +409,12 @@ func (w *Writer) AddSpace(s SpaceDef) error {
 	if s.Normalized != nil && !*s.Normalized {
 		norm = 0
 	}
-	mods := s.Modalities
-	if mods == nil {
+	var mods any = s.Modalities
+	if s.Modalities == nil {
 		mods = []string{"text"}
+	}
+	if s.ModalitiesJSON != nil {
+		mods = s.ModalitiesJSON
 	}
 	var tp any
 	if s.TaskPrefixes != nil {
@@ -452,11 +471,7 @@ func (w *Writer) AddProvenance(p ProvenanceEntry) error {
 	}
 	var detail any
 	if p.Detail != nil {
-		if s, ok := p.Detail.(string); ok {
-			detail = s
-		} else {
-			detail = jsonText(p.Detail)
-		}
+		detail = jsonText(p.Detail)
 	}
 	return w.exec(`INSERT INTO provenance (document, stage, provider, model, detail, ms, at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		w.docID, p.Stage, nullable(p.Provider), nullable(p.Model), detail, nullable(p.MS), p.At)
@@ -520,7 +535,7 @@ func (w *Writer) Close() error {
 		return errors.New("spdf: no document")
 	}
 	d := w.doc
-	if d.UnitCount == 0 {
+	if d.UnitCount == 0 && !w.opts.Exact {
 		d.UnitCount = w.units
 	}
 	var rights any
@@ -529,7 +544,7 @@ func (w *Writer) Close() error {
 	}
 	if err := w.exec(`INSERT INTO documents (id, kind, metadata, source_sha256, source_ref, mime, bytes, unit_count, duration, created, updated, title, authors, year, language, rights)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		d.ID, d.Kind, jsonText(d.Metadata), strings.ToLower(d.SourceSHA256), nullable(d.SourceRef), d.Mime, d.Bytes, d.UnitCount,
+		d.ID, d.Kind, jsonText(d.Metadata), w.sha(d.SourceSHA256), nullable(d.SourceRef), d.Mime, d.Bytes, d.UnitCount,
 		nullable(d.Duration), d.Created, d.Updated, nullable(d.Title), nullable(d.Authors), nullable(d.Year), nullable(d.Language), rights); err != nil {
 		w.Abort()
 		return err
@@ -540,6 +555,9 @@ func (w *Writer) Close() error {
 		"created":      d.Created,
 		"generator":    w.opts.Generator,
 		"document_id":  d.ID,
+	}
+	if w.opts.Exact {
+		meta = map[string]string{}
 	}
 	for k, v := range w.meta {
 		meta[k] = v
