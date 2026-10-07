@@ -392,7 +392,10 @@ class Writer:
         if space not in self._spaces:
             raise WriterError(f"declare space {space!r} with add_space() before its vectors")
         dims, dtype = self._spaces[space]
-        blob = encode(data, dtype)
+        try:
+            blob = encode(data, dtype)
+        except ValueError as exc:
+            raise WriterError(f"vector {target}/{id}: {exc}") from exc
         if len(blob) != dims * DTYPE_SIZES[dtype]:
             raise WriterError(f"vector {target}/{id} has {len(blob)} bytes; space {space!r} needs {dims} × {dtype}")
         doc = document or (str(self._document["id"]) if self._document else "")

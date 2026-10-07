@@ -57,6 +57,7 @@ class Container:
     application_id: int
     user_version: int
     schema_objects: list[tuple[str, str, str]] = field(default_factory=list)  # (type, name, tbl_name)
+    virtual_tables: dict[str, str] = field(default_factory=dict)  # name -> CREATE VIRTUAL TABLE sql
 
     @property
     def legacy(self) -> bool:
@@ -193,9 +194,13 @@ def open_container(
     try:
         app_id = int(conn.execute("PRAGMA application_id").fetchone()[0])
         uv = int(conn.execute("PRAGMA user_version").fetchone()[0])
-        objects = [
-            (str(t), str(n), str(tb)) for t, n, tb in conn.execute("SELECT type, name, tbl_name FROM sqlite_master")
-        ]
+        rows = list(conn.execute("SELECT type, name, tbl_name, sql FROM sqlite_master"))
+        objects = [(str(t), str(n), str(tb)) for t, n, tb, _ in rows]
+        virtual = {
+            str(n): str(sql)
+            for t, n, _, sql in rows
+            if t == "table" and isinstance(sql, str) and sql.upper().startswith("CREATE VIRTUAL TABLE")
+        }
     except sqlite3.DatabaseError as exc:
         conn.close()
         fail(NotSpdfError(f"{label} is not a valid SQLite database: {exc}", "E001"))
@@ -245,6 +250,7 @@ def open_container(
         application_id=app_id,
         user_version=uv,
         schema_objects=objects,
+        virtual_tables=virtual,
     )
     if check_objects:
         bad = forbidden_objects(container)
@@ -257,8 +263,17 @@ def open_container(
     return container
 
 
+_FTS5_USING = re.compile(r"USING\s+fts5\s*\(", re.I)
+ALLOWED_VIRTUAL_TABLES = frozenset({"fragments_fts", "fragments_fts_trigram"})
+LEGACY_VIRTUAL_TABLES = frozenset({"fragmentos_fts"})
+
+
 def forbidden_objects(c: Container) -> list[tuple[str, str]]:
-    """Triggers and views a safe reader must refuse (legacy FTS triggers are tolerated)."""
+    """Schema objects a safe reader must refuse (E020).
+
+    Triggers and views (except the three FTS triggers of legacy files), and virtual
+    tables other than the FTS5 indexes of the format.
+    """
     out: list[tuple[str, str]] = []
     for t, name, tbl in c.schema_objects:
         if t not in ("trigger", "view"):
@@ -266,6 +281,10 @@ def forbidden_objects(c: Container) -> list[tuple[str, str]]:
         if c.legacy and t == "trigger" and name in LEGACY_TRIGGERS and tbl == "fragmentos":
             continue
         out.append((t, name))
+    allowed = LEGACY_VIRTUAL_TABLES if c.legacy else ALLOWED_VIRTUAL_TABLES
+    for name, sql in c.virtual_tables.items():
+        if name not in allowed or not _FTS5_USING.search(sql):
+            out.append(("virtual table", name))
     return out
 
 

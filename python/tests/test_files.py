@@ -378,6 +378,13 @@ def test_refuses_triggers_and_views(mutate: Callable[..., Path]) -> None:
         spdf.open(mutate("CREATE VIEW v AS SELECT * FROM units"))
 
 
+def test_refuses_foreign_virtual_tables(mutate: Callable[..., Path]) -> None:
+    bad = mutate("CREATE VIRTUAL TABLE x_stuff USING fts5(a)")
+    with pytest.raises(spdf.UnsafeFileError):
+        spdf.open(bad)
+    assert spdf.validate(bad).codes == {"E020"}
+
+
 def test_legacy_tolerates_only_fts_triggers(tmp_path: Path) -> None:
     p = build_legacy(tmp_path / "l.spdf", gzipped=False)
     c = sqlite3.connect(p)

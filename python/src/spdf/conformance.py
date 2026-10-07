@@ -26,6 +26,7 @@ from .cite import cite
 from .model import SearchResult
 from .reader import content_hash, open_spdf
 from .validate import validate
+from .vectors import quantize
 from .writer import write_source
 
 __all__ = ["IMPL", "find_conformance_dir", "json_equal", "run"]
@@ -216,6 +217,18 @@ def _case_cite(case: Mapping[str, Any], root: Path) -> None:
     _check(text == e["text"], f"cite gave {text!r} != {e['text']!r}")
 
 
+def _case_quantize(case: Mapping[str, Any], root: Path) -> None:
+    i, e = case["input"], case["expect"]
+    if e.get("error"):
+        try:
+            quantize(i["values"], i["dtype"])
+        except ValueError:
+            return
+        raise CaseFailure(f"quantize({i['values']!r}, {i['dtype']}) should fail")
+    got = quantize(i["values"], i["dtype"]).hex()
+    _check(got == e["hex"], f"quantize gave {got} != {e['hex']}")
+
+
 HANDLERS: dict[str, Callable[[Mapping[str, Any], Path], None]] = {
     "dump": _case_dump,
     "legacy_dump": _case_dump,
@@ -226,6 +239,7 @@ HANDLERS: dict[str, Callable[[Mapping[str, Any], Path], None]] = {
     "search_hybrid": _case_search_hybrid,
     "anchor_uri": _case_anchor_uri,
     "cite": _case_cite,
+    "quantize": _case_quantize,
 }
 
 

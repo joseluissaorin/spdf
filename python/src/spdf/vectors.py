@@ -13,7 +13,7 @@ from typing import Any
 
 from .schema import DTYPE_SIZES
 
-__all__ = ["HAS_NUMPY", "decode", "dot", "encode", "norm"]
+__all__ = ["HAS_NUMPY", "decode", "dot", "encode", "norm", "quantize"]
 
 _np: Any
 try:  # pragma: no cover - depends on the environment
@@ -40,15 +40,30 @@ def encode(values: Any, dtype: str = "f32") -> bytes:
     """
     if isinstance(values, (bytes, bytearray, memoryview)):
         return bytes(values)
+    return quantize(values, dtype)
+
+
+def quantize(values: Any, dtype: str = "f32") -> bytes:
+    """Writer-side encoding of float values (contract §2).
+
+    ``f32``/``f16``: IEEE round-to-nearest-even; a value that overflows the format is an
+    error. ``i8``: ``clamp(round_half_away_from_zero(v × 127), −127, 127)``. NaN and
+    infinities are always errors. Raises :class:`ValueError`.
+    """
     if dtype not in _FMT:
         raise ValueError(f"unknown dtype {dtype!r} (expected f32, f16 or i8)")
     if _np is not None and isinstance(values, _np.ndarray):
         values = values.astype("float64").ravel().tolist()
     vals = [float(v) for v in values]
+    if any(not math.isfinite(v) for v in vals):
+        raise ValueError("vector values must be finite numbers")
     if dtype == "i8":
         q = [max(-127, min(127, _round_half_away(v * 127.0))) for v in vals]
         return struct.pack(f"<{len(q)}b", *q)
-    return struct.pack(f"<{len(vals)}{_FMT[dtype]}", *vals)
+    try:
+        return struct.pack(f"<{len(vals)}{_FMT[dtype]}", *vals)
+    except (OverflowError, struct.error) as exc:
+        raise ValueError(f"a value is out of range for {dtype}") from exc
 
 
 def decode(data: bytes, dtype: str = "f32") -> list[float]:
