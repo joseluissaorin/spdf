@@ -5,13 +5,15 @@
 //	spdf search FILE QUERY [-n N] lexical search
 //	spdf vsearch FILE SPACE V1,V2,… [-n N]
 //	spdf cite FILE FRAGMENT_ID [-locale es|en]
-//	spdf export FILE csl|bibtex
+//	spdf export FILE csl|bibtex|alto|tei|iiif
 //	spdf uri parse URI
 //	spdf build SOURCE.json OUT.spdf
+//	spdf seal FILE [-key SEED]
 //	spdf conformance [DIR] [-o conformance.json]
 package main
 
 import (
+	"crypto/ed25519"
 	"flag"
 	"fmt"
 	"os"
@@ -29,9 +31,10 @@ func usage() {
   spdf search FILE QUERY [-n N]
   spdf vsearch FILE SPACE V1,V2,... [-n N]
   spdf cite FILE FRAGMENT_ID [-locale es|en]
-  spdf export FILE csl|bibtex
+  spdf export FILE csl|bibtex|alto|tei|iiif
   spdf uri parse URI
   spdf build SOURCE.json OUT.spdf
+  spdf seal FILE [-key SEED]       content_sha256 (and Ed25519 signature) in place
   spdf conformance [DIR] [-o conformance.json]
   spdf version
 `)
@@ -65,6 +68,7 @@ func main() {
 	n := fs.Int("n", 10, "maximum number of results")
 	locale := fs.String("locale", "es", "citation locale (es, en)")
 	output := fs.String("o", "", "also write the report to this file")
+	keyFile := fs.String("key", "", "Ed25519 seed file (32 bytes, raw, hex or base64) to sign with")
 	var pos []string
 	for len(args) > 0 {
 		if err := fs.Parse(args); err != nil {
@@ -171,6 +175,24 @@ func main() {
 				die(err)
 			}
 			fmt.Print(b)
+		case "alto":
+			b, err := f.ExportALTO()
+			if err != nil {
+				die(err)
+			}
+			fmt.Print(b)
+		case "tei":
+			b, err := f.ExportTEI()
+			if err != nil {
+				die(err)
+			}
+			fmt.Print(b)
+		case "iiif":
+			m, err := f.ExportIIIF("")
+			if err != nil {
+				die(err)
+			}
+			out(m)
 		default:
 			usage()
 		}
@@ -191,6 +213,19 @@ func main() {
 			die(err)
 		}
 		if err := spdf.WriteSource(src, pos[1]); err != nil {
+			die(err)
+		}
+	case "seal":
+		need(1)
+		var key ed25519.PrivateKey
+		if *keyFile != "" {
+			k, err := spdf.ReadSigningKey(*keyFile)
+			if err != nil {
+				die(err)
+			}
+			key = k
+		}
+		if err := spdf.Seal(pos[0], key); err != nil {
 			die(err)
 		}
 	case "conformance":

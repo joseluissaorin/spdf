@@ -2,8 +2,10 @@ package spdf
 
 import (
 	"context"
+	"crypto/ed25519"
 	"crypto/sha256"
 	"database/sql"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -123,9 +125,15 @@ type WriterOptions struct {
 	// Trigram adds the optional CJK index.
 	Trigram bool
 	// Exact writes every value verbatim: no default spdf_meta keys, no
-	// computed unit_count, no automatic ordinals, no NFC normalization.
-	// Used to rebuild a file from a full dump (WriteSource).
+	// computed unit_count, no automatic ordinals, no NFC normalization, no
+	// generated content_sha256. Used to rebuild a file from a full dump
+	// (WriteSource).
 	Exact bool
+	// NoContentHash skips spdf_meta.content_sha256 (written by default, §8).
+	NoContentHash bool
+	// SigningKey, if set, signs the content hash with Ed25519 (spdf_meta
+	// signer and signature, §8).
+	SigningKey ed25519.PrivateKey
 }
 
 // Writer builds an SPDF 5.0 file. Rows are written to a temporary file that
@@ -590,6 +598,12 @@ func (w *Writer) Close() error {
 	}
 	w.tx = nil
 	ctx := context.Background()
+	if !w.opts.Exact && (!w.opts.NoContentHash || w.opts.SigningKey != nil) {
+		if err := w.seal(ctx); err != nil {
+			w.Abort()
+			return err
+		}
+	}
 	for _, s := range []string{"INSERT INTO fragments_fts(fragments_fts) VALUES ('optimize')", "VACUUM"} {
 		if _, err := w.conn.ExecContext(ctx, s); err != nil {
 			w.Abort()
@@ -606,3 +620,40 @@ func (w *Writer) Close() error {
 	}
 	return nil
 }
+
+// seal computes the content hash of the finished file (§8) and stores it,
+// with the Ed25519 signature when a key was given.
+func (w *Writer) seal(ctx context.Context) error {
+	f, err := openSQLite(w.tmp, w.path, &Options{})
+	if err != nil {
+		return fmt.Errorf("spdf: reopening the new file to hash it: %w", err)
+	}
+	sum, err := f.ContentSHA256()
+	f.Close()
+	if err != nil {
+		return err
+	}
+	meta := map[string]string{"content_sha256": sum}
+	if w.opts.SigningKey != nil {
+		if len(w.opts.SigningKey) != ed25519.PrivateKeySize {
+			return fmt.Errorf("spdf: invalid Ed25519 private key")
+		}
+		pub := w.opts.SigningKey.Public().(ed25519.PublicKey)
+		sig := ed25519.Sign(w.opts.SigningKey, []byte(SignaturePrefix+sum))
+		meta["signer"] = "ed25519:" + base64.StdEncoding.EncodeToString(pub)
+		meta["signature"] = base64.StdEncoding.EncodeToString(sig)
+	}
+	for _, k := range []string{"content_sha256", "signer", "signature"} {
+		v, ok := meta[k]
+		if !ok {
+			continue
+		}
+		if _, err := w.conn.ExecContext(ctx, "INSERT INTO spdf_meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", k, v); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// SignaturePrefix is the domain separator of the signed message (§8).
+const SignaturePrefix = "spdf-content-sha256:"

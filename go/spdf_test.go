@@ -3,6 +3,7 @@ package spdf
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/ed25519"
 	"database/sql"
 	"os"
 	"path/filepath"
@@ -242,5 +243,47 @@ func TestCiteRules(t *testing.T) {
 	}
 	if c := Cite(Anchor{"type": "page", "physical": int64(3), "printed": "1r", "foliation": "leaf"}, Anchor{"type": "page", "physical": int64(4), "printed": "2v", "foliation": "leaf"}, map[string]any{"title": "Obra: sub"}, "en"); c != "(Obra, n.d., fols. 1r-2v)" {
 		t.Fatal(c)
+	}
+}
+
+func TestWriterSealsAndSigns(t *testing.T) {
+	dir := t.TempDir()
+	seed := make([]byte, ed25519.SeedSize)
+	for i := range seed {
+		seed[i] = byte(i)
+	}
+	key := ed25519.NewKeyFromSeed(seed)
+	path := filepath.Join(dir, "signed.spdf")
+	w, err := Create(path, &WriterOptions{Generator: "test/1", SigningKey: key})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := w.SetDocument(Document{ID: "d", Kind: "document", Mime: "text/plain", Bytes: 1, SourceSHA256: strings.Repeat("0", 64),
+		Created: "2026-10-07T00:00:00Z", Metadata: map[string]any{"type": "book", "title": "Firmado"}}); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.AddUnit(Unit{ID: "u1", Anchor: Anchor{"type": "page", "physical": int64(1), "printed": "1"}, Text: "Hola", Reader: "test"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.Close(); err != nil {
+		t.Fatal(err)
+	}
+	res := Validate(path, nil)
+	if !res.Valid {
+		t.Fatalf("signed file invalid: %+v", res)
+	}
+	f, _ := Open(path, nil)
+	defer f.Close()
+	meta, _ := f.Meta()
+	sum, _ := f.ContentSHA256()
+	if meta["content_sha256"] != sum || !strings.HasPrefix(meta["signer"], "ed25519:") || meta["signature"] == "" {
+		t.Fatalf("meta: %v", meta)
+	}
+	// Tampering with the signature must give E082.
+	if !verifySignature(sum, meta["signature"], meta["signer"]) {
+		t.Fatal("signature does not verify")
+	}
+	if verifySignature(strings.Repeat("0", 64), meta["signature"], meta["signer"]) {
+		t.Fatal("signature verifies for another hash")
 	}
 }

@@ -26,8 +26,8 @@ go get github.com/joseluissaorin/spdf/go
 | Search | lexical (FTS5 BM25, CJK route with `trigram` or substring), vector (`f32`, `f16`, `i8`), hybrid (reciprocal rank fusion, k = 10) |
 | Anchors | anchor ↔ URI (`spdf:sha256-…#p=29&f=21&char=118,301`), strict parser; resolution of a URI or of a `.spdf` URL with a fragment to units and fragments (`Locate`, SPEC §5.4) |
 | Citation | short author-date citation in Spanish and English |
-| Export | CSL-JSON (also citations with `label`/`locator`) and BibTeX, one or several documents with the keys of SPEC §19 (`cervantessaavedra1605`, `lazarillo1554`, collision suffixes); the page sequence of the ALTO/TEI/IIIF exports (`PageSequence`; the full ALTO, TEI and IIIF exporters, optional in the spec, are not included) |
-| Writer | builds valid SPDF 5.0 files (FTS kept in sync, `VACUUM`, no triggers) |
+| Export | CSL-JSON (also citations with `label`/`locator`) and BibTeX, one or several documents with the keys of SPEC §19 (`cervantessaavedra1605`, `lazarillo1554`, collision suffixes); ALTO 4, minimal TEI and IIIF Presentation 3 (`ExportALTO`, `ExportTEI`, `ExportIIIF`; no invented coordinates or dimensions) |
+| Writer | builds valid SPDF 5.0 files (FTS kept in sync, `VACUUM`, no triggers) with `content_sha256` and, given a key, an Ed25519 signature (§8); `Seal` hashes and signs an existing file in place |
 
 ## Reading and searching
 
@@ -122,6 +122,12 @@ if err := w.Close(); err != nil { // rebuilds FTS, VACUUM, atomic rename
 }
 ```
 
+Every file the Writer produces carries `spdf_meta.content_sha256`; pass
+`WriterOptions{SigningKey: ed25519.NewKeyFromSeed(seed)}` to sign it too (`signer`,
+`signature`). Files signed this way verify with the Rust, Python and JavaScript
+implementations (and tampering gives E081 or E082 in all of them).
+`spdf.Seal(path, key)` does the same for an existing file.
+
 `spdf.WriteSource(source, path)` builds a file from a full JSON dump (the format of
 `conformance/sources/`).
 
@@ -136,6 +142,8 @@ spdf cite file.spdf q4 -locale en
 spdf export file.spdf bibtex
 spdf uri parse 'spdf:sha256-…#p=29&f=21'
 spdf build source.json out.spdf
+spdf seal out.spdf -key seed.hex             # content_sha256 + Ed25519 signature
+spdf export file.spdf alto                   # also tei, iiif
 spdf conformance ../conformance -o conformance.json
 ```
 

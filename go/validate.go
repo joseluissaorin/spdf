@@ -431,7 +431,7 @@ func verifySignature(hexHash, sig, signer string) bool {
 	if err != nil || len(s) != ed25519.SignatureSize {
 		return false
 	}
-	return ed25519.Verify(ed25519.PublicKey(pub), []byte("spdf-content-sha256:"+strings.ToLower(hexHash)), s)
+	return ed25519.Verify(ed25519.PublicKey(pub), []byte(SignaturePrefix+strings.ToLower(hexHash)), s)
 }
 
 // checkAnchor reports E040/E041/E042 for one anchor and returns it if valid.
