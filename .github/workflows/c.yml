@@ -1,0 +1,43 @@
+name: c
+
+on:
+  push:
+    branches: [main]
+    paths: ["c/**", "rust/**", "conformance/**", ".github/workflows/c.yml"]
+  pull_request:
+    paths: ["c/**", "rust/**", "conformance/**", ".github/workflows/c.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        shared: ["OFF"]
+        include:
+          - os: ubuntu-latest
+            shared: "ON"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust -> ../c/build/rust-target
+      - name: Configure
+        run: cmake -S c -B c/build -DCMAKE_BUILD_TYPE=Release -DSPDF_SHARED=${{ matrix.shared }}
+      - name: Build
+        run: cmake --build c/build --parallel
+      - name: Tests and conformance
+        run: ctest --test-dir c/build --output-on-failure
+      - name: Upload conformance report
+        if: always() && matrix.os == 'ubuntu-latest' && matrix.shared == 'OFF'
+        uses: actions/upload-artifact@v4
+        with:
+          name: conformance-c
+          path: c/build/conformance.json
+          if-no-files-found: warn

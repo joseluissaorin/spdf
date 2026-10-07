@@ -1,0 +1,10 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
+
+Name: spdf
+Description: C ABI of SPDF (Semantic Processed Document Format)
+Version: @PROJECT_VERSION@
+Libs: -L${libdir} -lspdf_ffi
+Libs.private: -lpthread -ldl -lm
+Cflags: -I${includedir}
