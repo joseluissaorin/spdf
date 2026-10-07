@@ -13,8 +13,14 @@ import { megas } from './commons';
 interface Fichero { plataforma: string; nombre: string; bytes: number; sha256: string; clave: string }
 interface Inventario { version: string | null; files: Fichero[] }
 
+/** Avisos honestos sobre la firma de cada plataforma (mientras no haya certificados de distribución). */
+const AVISOS: Record<string, Record<Lengua, string>> = {
+  macos: { en: 'Signed ad hoc, not notarised: the first time, right-click the app and choose Open.', es: 'Firmado ad hoc, sin notarizar: la primera vez, clic derecho sobre la aplicación y Abrir.' },
+  android: { en: 'Debug-signed APK: allow installing apps from this source when Android asks.', es: 'APK con firma de depuración: permite instalar aplicaciones de este origen cuando Android lo pida.' },
+};
+
 const PLATAFORMAS: { id: string; nombre: Record<Lengua, string>; detalle: Record<Lengua, string> }[] = [
-  { id: 'macos', nombre: { en: 'macOS', es: 'macOS' }, detalle: { en: 'Apple silicon and Intel, .dmg', es: 'Apple silicon e Intel, .dmg' } },
+  { id: 'macos', nombre: { en: 'macOS', es: 'macOS' }, detalle: { en: 'Apple silicon, .dmg', es: 'Apple silicon, .dmg' } },
   { id: 'windows', nombre: { en: 'Windows', es: 'Windows' }, detalle: { en: 'Windows 10 and 11, .msi', es: 'Windows 10 y 11, .msi' } },
   { id: 'linux', nombre: { en: 'Linux', es: 'Linux' }, detalle: { en: 'AppImage and .deb', es: 'AppImage y .deb' } },
   { id: 'android', nombre: { en: 'Android', es: 'Android' }, detalle: { en: '.apk, Android 10 or later', es: '.apk, Android 10 o posterior' } },
@@ -29,7 +35,8 @@ export function descargasBloque(l: Lengua, hayLector: boolean): Bloque {
     const enlaces = fs.length
       ? fs.map((f) => `<a href="/download/files/${f.clave}" download>${esc(f.nombre)}</a> <span class="rotulo">${megas(f.bytes)}</span>`).join('<br>')
       : `<span class="estado">${pronto}</span>`;
-    return `<li><strong>${p.nombre[l]}</strong><span>${p.detalle[l]}</span>${enlaces}</li>`;
+    const aviso = fs.length && AVISOS[p.id] ? `<span class="rotulo">${AVISOS[p.id]![l]}</span>` : '';
+    return `<li><strong>${p.nombre[l]}</strong><span>${p.detalle[l]}</span>${enlaces}${aviso}</li>`;
   });
   tarjetas.push(`<li><strong>Web</strong><span>${l === 'es' ? 'En cualquier navegador moderno' : 'In any modern browser'}</span>${hayLector ? `<a href="/reader/">${l === 'es' ? 'Abrir el lector web' : 'Open the web reader'}</a>` : `<span class="estado">${pronto}</span>`}</li>`);
   const version = inv.version ? `<p class="rotulo">${l === 'es' ? 'Versión' : 'Version'} ${esc(inv.version)}</p>` : '';
