@@ -240,9 +240,14 @@ fn main() {
         .prepend_enum_name(false)
         .derive_default(true)
         .layout_tests(false);
-    if ios || android {
+    if ios {
         // bindgen parses with the host clang; point it at the target triple
         b = b.clang_arg(format!("--target={}", target.replace("aarch64-apple-ios-sim", "arm64-apple-ios-simulator")));
+    }
+    if android {
+        // NDK r30+ headers refuse unversioned triples: use the same API level as the CMake build
+        let t = target.replace("armv7-linux-androideabi", "armv7a-linux-androideabi");
+        b = b.clang_arg(format!("--target={t}28"));
     }
     if android {
         // ...and at the NDK sysroot, or it picks up the host's libc headers
