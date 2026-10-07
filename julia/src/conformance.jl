@@ -144,7 +144,7 @@ function conf_case(dir, c)
         end
         return length(want) == length(got) ? nothing : "expected $(length(want)) lines, got $(length(got))"
     elseif kind == "export_structure"
-        return :skip
+        return open(d -> conf_compare(ex["pages"], export_pages(d, input["format"]), "pages"), p(input["file"]))
     elseif kind == "quantize"
         hex = try
             bytes2hex(quantize(input["values"], input["dtype"]))
@@ -157,6 +157,30 @@ function conf_case(dir, c)
         return hex == ex["hex"] ? nothing : "expected $(ex["hex"]), got $hex"
     end
     return "unknown case kind $kind"
+end
+
+function xml_attr(tag, name)
+    m = match(Regex("\\s" * name * "=\"([^\"]*)\""), tag)
+    m === nothing && return nothing
+    return replace(m[1], "&lt;" => "<", "&gt;" => ">", "&quot;" => "\"", "&#39;" => "'", "&amp;" => "&")
+end
+
+"Page sequence of an ALTO, TEI or IIIF export, read back from the exported document."
+function export_pages(doc, format)
+    if format == "alto"
+        return Any[Dict{String,Any}("physical" => parse(Int, xml_attr(t.match, "PHYSICAL_IMG_NR")), "printed" => xml_attr(t.match, "PRINTED_IMG_NR"))
+                   for t in eachmatch(r"<Page\s[^>]*>", alto(doc))]
+    elseif format == "tei"
+        xml = tei(doc)
+        body = xml[findfirst("<body>", xml)[1]:end]
+        return Any[Dict{String,Any}("n" => xml_attr(t.match, "n")) for t in eachmatch(r"<pb(\s[^>]*)?/>", body)]
+    elseif format == "iiif"
+        base = "https://example.org/iiif"
+        manifest = json_parse(JSON.json(iiif(doc, base)))
+        pagecanvases = Set("$base/canvas/$(u["ord"])" for u in units(doc) if u["anchor"] isa AbstractDict && get(u["anchor"], "type", nothing) == "page")
+        return Any[Dict{String,Any}("label" => haskey(c, "label") ? first(values(c["label"]))[1] : nothing) for c in manifest["items"] if c["id"] in pagecanvases]
+    end
+    spdf_error("E000", "unknown format $format")
 end
 
 """

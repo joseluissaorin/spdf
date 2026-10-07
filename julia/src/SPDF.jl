@@ -30,7 +30,7 @@ export SpdfError, Document, metadata, title, docref, units, fragments, sections,
        blobs, blob, provenance, extensions, meta, vectors, dump, dump_json, content_sha256,
        search_lexical, search_vector, search_hybrid, anchor_uri, locator, format_locator,
        parse_uri, cite, csl_item, csl_json, bibtex, validate, write_source, Writer,
-       canonical_json, quantize, conformance, locate, bibtex_key, csl_export, bibtex_export
+       canonical_json, quantize, conformance, locate, bibtex_key, csl_export, bibtex_export, alto, tei, iiif
 
 include("errors.jl")
 include("json.jl")
@@ -44,6 +44,7 @@ include("anchoruri.jl")
 include("cite.jl")
 include("bibliography.jl")
 include("search.jl")
+include("interop.jl")
 include("validate.jl")
 include("writer.jl")
 include("conformance.jl")

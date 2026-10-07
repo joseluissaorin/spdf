@@ -46,6 +46,14 @@ csl_item(doc)["id"]                       # "cervantessaavedra1605", the BibTeX 
 validate("file.spdf")       # Dict("valid" => true, "errors" => [], "warnings" => [], …)
 ```
 
+## ALTO, TEI and IIIF
+
+```julia
+write("quijote.alto.xml", alto(doc))     # ALTO 4, one Page per page unit
+write("quijote.tei.xml", tei(doc))       # TEI P5: pb, p, lg/l, u, note
+manifest = iiif(doc, "https://example.org/iiif/quijote")   # IIIF Presentation 3 (a Dict)
+```
+
 ## Write
 
 ```julia
@@ -73,8 +81,8 @@ files before opening them. Signatures are verified with a small pure-Julia Ed255
 `SPDF.conformance("path/to/spdf/conformance")` runs the shared suite; `Pkg.test()`
 runs it too when the package lives in the SPDF repository, and
 `julia --project=. bin/conformance.jl ../conformance` prints the JSON report. CI
-publishes it as the `conformance-julia` artifact. All kinds are claimed except
-`export_structure` (ALTO, TEI and IIIF exports are optional and not implemented).
+publishes it as the `conformance-julia` artifact. All kinds are claimed,
+`export_structure` included.
 
 ## License
 

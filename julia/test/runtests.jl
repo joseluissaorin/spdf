@@ -62,6 +62,16 @@ end
         end
     end
 
+    @testset "ALTO, TEI and IIIF" begin
+        SPDF.open(path) do doc
+            @test occursin("<Page ID=\"P9\" PHYSICAL_IMG_NR=\"9\" PRINTED_IMG_NR=\"3\"", alto(doc))
+            @test occursin("<pb n=\"[4]\"/>", tei(doc))
+            m = iiif(doc, "https://example.org/iiif/lazarillo")
+            @test m["type"] == "Manifest"
+            @test m["items"][1]["label"] == Dict("none" => ["3"])
+        end
+    end
+
     @testset "anchor URIs" begin
         a = Dict("type" => "section", "path" => ["Cap. 3", "a/b"], "paragraph" => 4, "region" => Dict("x" => 0.125, "y" => 0, "w" => 0.5, "h" => 1))
         u = anchor_uri("doc 1", a)
