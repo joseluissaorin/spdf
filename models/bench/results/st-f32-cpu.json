@@ -1,0 +1,49 @@
+{
+ "engine": "st-f32-cpu",
+ "machine": {
+  "chip": "Apple M4 Max",
+  "memory_gb": 36,
+  "os": "macOS-26.5-arm64-arm-64bit"
+ },
+ "date": "2026-10-07",
+ "latency": {
+  "text_short": {
+   "n": 4,
+   "median_ms": 34.77,
+   "p90_ms": 51.59,
+   "mean_ms": 37.93
+  },
+  "text_medium": {
+   "n": 1,
+   "median_ms": 104.38,
+   "p90_ms": 104.38,
+   "mean_ms": 104.38
+  },
+  "image": {
+   "n": 5,
+   "median_ms": 728.28,
+   "p90_ms": 780.65,
+   "mean_ms": 733.82
+  }
+ },
+ "memory": {
+  "baseline_mb": 350.7,
+  "after_load_mb": 3499.4,
+  "peak_mb": 3892.4,
+  "model_mb": 3148.8
+ },
+ "meta": {
+  "load_s": 1.26,
+  "torch": "2.14.1",
+  "transformers": "5.19.0",
+  "sentence_transformers": "6.1.0",
+  "device": "cpu",
+  "dtype": "f32",
+  "batch": 1,
+  "weights": "google/embeddinggemma-2 (safetensors bf16, rev 914f7f89)"
+ },
+ "counts": {
+  "text": 5,
+  "image": 5
+ }
+}
