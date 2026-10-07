@@ -1,0 +1,4 @@
+# The wrapper script must keep LF endings (CI runs it with bash on Windows too).
+/gradlew        text eol=lf
+*.bat           text eol=crlf
+*.jar           binary
