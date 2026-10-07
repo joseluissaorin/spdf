@@ -1148,7 +1148,9 @@ ground elapsed time `109:24:48`). A range is printed only when both ends have a 
 folio and the folios differ; brackets mark each inferred end separately. An end without
 a printed folio never takes part in a range: the citation prints the folio of the other
 end alone (`p. 211`, never `pp. s. p.-211`), and `s. p.` / `n. pag.` only when neither end
-has one. The locator is omitted when it would be empty, giving `(Hooke, 1665)`.
+has one. Labels always come from the foliation of the end that is printed: an unnumbered
+page followed by leaf Ir gives `fol. Ir`; a range whose two printed ends have different
+foliations labels each end (`p. xiv-fol. 1r`); `section` and `web` anchors count as pages. The locator is omitted when it would be empty, giving `(Hooke, 1665)`.
 
 ### 18.2 Citing a passage
 

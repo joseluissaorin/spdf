@@ -2,6 +2,13 @@
 
 Newest first. Implementers: read this before updating your runner.
 
+## 0.4.2 (2026-10-07)
+
+- SPEC §18.1, gap reported by site: in a range where only one end has a printed folio,
+  the label (`p.`, `fol.`, `col.`) comes from the foliation of that end, not from the
+  start anchor. A range whose two printed ends have different foliations labels each end:
+  `p. xiv-fol. 1r`. Six new `cite` cases (`cite-range-*`). 347 cases.
+
 ## 0.4.1 (2026-10-07)
 
 Literal texts from identified sources, and citations of passages. 341 cases. **Every

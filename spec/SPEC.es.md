@@ -1247,7 +1247,11 @@ se reinician: tiempo de misión `109:24:48`). Un rango solo se imprime cuando lo
 extremos tienen folio impreso y los folios son distintos; los corchetes marcan por
 separado cada extremo inferido. Un extremo sin folio impreso nunca forma parte de un
 rango: la cita imprime solo el folio del otro extremo (`p. 211`, nunca `pp. s. p.-211`), y
-`s. p.` / `n. pag.` solo cuando ninguno de los dos lo tiene. El localizador se omite cuando
+`s. p.` / `n. pag.` solo cuando ninguno de los dos lo tiene. Las etiquetas salen siempre de
+la foliación del extremo que tiene folio impreso: una página sin numerar seguida de la
+hoja Ir da `fol. Ir`; un rango cuyos dos extremos impresos tienen foliaciones distintas
+etiqueta cada extremo (`p. xiv-fol. 1r`); las anclas `section` y `web` cuentan como
+páginas. El localizador se omite cuando
 quedaría vacío, lo que da `(Hooke, 1665)`.
 
 ### 18.2 Cita de un pasaje

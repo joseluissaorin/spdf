@@ -2820,5 +2820,283 @@
   "expect": {
    "text": "(Cervantes Saavedra, 1605, n. pag.)"
   }
+ },
+ {
+  "id": "cite-range-unnumbered-page-to-leaf-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 14,
+    "printed": null,
+    "roman": false,
+    "foliation": "page",
+    "source": "none",
+    "confidence": 1,
+    "matter": "front"
+   },
+   "anchor_end": {
+    "type": "page",
+    "physical": 29,
+    "printed": "Ir",
+    "roman": true,
+    "foliation": "leaf",
+    "source": "read",
+    "confidence": 1,
+    "matter": "body"
+   },
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo Don Quixote de la Mancha",
+    "title-short": "Don Quixote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1608
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1608, fol. Ir)"
+  }
+ },
+ {
+  "id": "cite-range-leaf-to-unnumbered-page-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 29,
+    "printed": "Ir",
+    "roman": true,
+    "foliation": "leaf",
+    "source": "read",
+    "confidence": 1,
+    "matter": "body"
+   },
+   "anchor_end": {
+    "type": "page",
+    "physical": 30,
+    "printed": null,
+    "roman": false,
+    "foliation": "page",
+    "source": "none",
+    "confidence": 1,
+    "matter": "front"
+   },
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo Don Quixote de la Mancha",
+    "title-short": "Don Quixote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1608
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1608, fol. Ir)"
+  }
+ },
+ {
+  "id": "cite-range-mixed-foliation-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 12,
+    "printed": "xiv",
+    "roman": true,
+    "foliation": "page",
+    "source": "read",
+    "confidence": 1
+   },
+   "anchor_end": {
+    "type": "page",
+    "physical": 13,
+    "printed": "1r",
+    "roman": false,
+    "foliation": "leaf",
+    "source": "read",
+    "confidence": 1
+   },
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo Don Quixote de la Mancha",
+    "title-short": "Don Quixote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1608
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1608, p. xiv-fol. 1r)"
+  }
+ },
+ {
+  "id": "cite-range-unnumbered-page-to-leaf-en",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 14,
+    "printed": null,
+    "roman": false,
+    "foliation": "page",
+    "source": "none",
+    "confidence": 1,
+    "matter": "front"
+   },
+   "anchor_end": {
+    "type": "page",
+    "physical": 29,
+    "printed": "Ir",
+    "roman": true,
+    "foliation": "leaf",
+    "source": "read",
+    "confidence": 1,
+    "matter": "body"
+   },
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo Don Quixote de la Mancha",
+    "title-short": "Don Quixote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1608
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1608, fol. Ir)"
+  }
+ },
+ {
+  "id": "cite-range-leaf-to-unnumbered-page-en",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 29,
+    "printed": "Ir",
+    "roman": true,
+    "foliation": "leaf",
+    "source": "read",
+    "confidence": 1,
+    "matter": "body"
+   },
+   "anchor_end": {
+    "type": "page",
+    "physical": 30,
+    "printed": null,
+    "roman": false,
+    "foliation": "page",
+    "source": "none",
+    "confidence": 1,
+    "matter": "front"
+   },
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo Don Quixote de la Mancha",
+    "title-short": "Don Quixote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1608
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1608, fol. Ir)"
+  }
+ },
+ {
+  "id": "cite-range-mixed-foliation-en",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 12,
+    "printed": "xiv",
+    "roman": true,
+    "foliation": "page",
+    "source": "read",
+    "confidence": 1
+   },
+   "anchor_end": {
+    "type": "page",
+    "physical": 13,
+    "printed": "1r",
+    "roman": false,
+    "foliation": "leaf",
+    "source": "read",
+    "confidence": 1
+   },
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo Don Quixote de la Mancha",
+    "title-short": "Don Quixote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1608
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1608, p. xiv-fol. 1r)"
+  }
  }
 ]

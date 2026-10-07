@@ -40,7 +40,7 @@ import spdfref as R  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 CONF = HERE.parent
-SUITE_VERSION = "0.4.1"
+SUITE_VERSION = "0.4.2"
 # Public test key. NEVER use it for anything but this suite.
 TEST_SECRET = hashlib.sha256(b"SPDF conformance test key: public, never use it for real signatures").digest()
 SIGNED = {"quijote"}

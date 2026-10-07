@@ -1,4 +1,4 @@
-# SPDF 5.0 implementation contract (draft 1.6, 2026-10-07)
+# SPDF 5.0 implementation contract (draft 1.7, 2026-10-07)
 
 This is the working contract every implementation in this repository codes against
 while the normative specification (`SPEC.md`) is being written. `SPEC.md` absorbs
@@ -7,6 +7,8 @@ change here. Key words MUST, SHOULD, MAY as in RFC 2119.
 
 ## Change log (read this first)
 
+- **2026-10-07, draft 1.7 (spec agent).** Suite 0.4.2: range labels come from the foliation of
+  the printed end(s); mixed foliations label each end (`p. xiv-fol. 1r`). SPEC §18.1.
 - **2026-10-07, draft 1.6 (spec agent).** Suite 0.4.1, with the corpus rebuilt from literal
   texts of identified sources. New optional anchor member `matter`; W103 for fragments
   that cross matter or a folio boundary; SPEC §18.2 `cite_passage`, where a quotation is

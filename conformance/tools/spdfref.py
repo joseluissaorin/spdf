@@ -1204,30 +1204,36 @@ def _hms(t: float) -> str:
     return f"{h}:{m:02d}:{x:02d}" if h else f"{m}:{x:02d}"
 
 
-def _page_locator(anchor, end, es, label_single, label_plural):
-    """Units without a printed folio never contribute to a range (SPEC §18)."""
+SINGLE = {"page": "p.", "leaf": "fol.", "column": "col."}
+PLURAL = {"page": "pp.", "leaf": "fols.", "column": "cols."}
+
+
+def _foliation(a):
+    return a.get("foliation", "page") if a.get("type") == "page" else "page"
+
+
+def _page_locator(anchor, end, es):
+    """SPEC §18.1: an end without a printed folio never takes part in a range, and every
+    label comes from the foliation of the end(s) actually printed."""
     def lab(a):
         p = a.get("printed")
-        if p is None:
-            return None
         return f"[{p}]" if a.get("source") == "inferred" else p
     ends = [anchor] + ([end] if end and end.get("type") == anchor.get("type") else [])
     with_folio = [x for x in ends if x.get("printed") is not None]
     if not with_folio:
         return "s. p." if es else "n. pag."
     first, last = with_folio[0], with_folio[-1]
-    if last is not first and last.get("printed") != first.get("printed"):
-        return f"{label_plural} {lab(first)}-{lab(last)}"
-    return f"{label_single} {lab(first)}"
+    if last is first or last.get("printed") == first.get("printed"):
+        return f"{SINGLE[_foliation(first)]} {lab(first)}"
+    if _foliation(first) == _foliation(last):
+        return f"{PLURAL[_foliation(first)]} {lab(first)}-{lab(last)}"
+    return f"{SINGLE[_foliation(first)]} {lab(first)}-{SINGLE[_foliation(last)]} {lab(last)}"
 
 
 def locator(anchor: dict, end: dict | None, es: bool) -> str | None:
     t = anchor.get("type")
     if t == "page":
-        fol = anchor.get("foliation", "page")
-        single = {"page": "p.", "leaf": "fol.", "column": "col."}[fol]
-        plural = {"page": "pp.", "leaf": "fols.", "column": "cols."}[fol]
-        return _page_locator(anchor, end, es, single, plural)
+        return _page_locator(anchor, end, es)
     if t == "time":
         s = _hms(anchor["t0"])
         if end and end.get("type") == "time":
@@ -1235,7 +1241,7 @@ def locator(anchor: dict, end: dict | None, es: bool) -> str | None:
         return s
     if t in ("section", "web"):
         if anchor.get("printed") is not None:
-            return _page_locator(anchor, end, es, "p.", "pp.")
+            return _page_locator(anchor, end, es)
         parts = []
         if anchor.get("path"):
             parts.append("§ " + anchor["path"][-1])
