@@ -14,7 +14,7 @@ and 4.1 formats. It is installed as `spdf-format` and imported as `spdf`.
 - Python 3.10 or newer, **standard library only** (`sqlite3`).
 - Optional extras: `numpy` (fast vector search), `crypto` (Ed25519 through
   `cryptography`; a pure-Python fallback is included), `pandas`, `arrow`.
-- Passes the whole SPDF conformance suite (0.4.1, 341 cases): reader, semantic reader, writer and validator,
+- Passes the whole SPDF conformance suite (0.4.2, 347 cases): reader, semantic reader, writer and validator,
   profiles `core`, `semantic` and `media`.
 
 ```sh

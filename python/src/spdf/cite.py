@@ -145,19 +145,29 @@ def _folio(a: Mapping[str, Any]) -> str:
     return f"[{printed}]" if a.get("source") == "inferred" else printed
 
 
-def _page_label(a: Mapping[str, Any], e: Mapping[str, Any] | None, locale: str, page_only: bool = False) -> str:
-    """Page locator; ends without a printed folio never contribute to a range (SPEC §18)."""
-    words = _l10n(locale)
-    foliation = "page" if page_only else (a.get("foliation") or "page")
-    single, plural = {"leaf": ("fol.", "fols."), "column": ("col.", "cols.")}.get(foliation, ("p.", "pp."))
+_SINGLE = {"page": "p.", "leaf": "fol.", "column": "col."}
+_PLURAL = {"page": "pp.", "leaf": "fols.", "column": "cols."}
+
+
+def _foliation(a: Mapping[str, Any]) -> str:
+    f = a.get("foliation") or "page" if a.get("type") == "page" else "page"
+    return f if f in _SINGLE else "page"
+
+
+def _page_label(a: Mapping[str, Any], e: Mapping[str, Any] | None, locale: str) -> str:
+    """Page locator (SPEC §18.1): ends without a printed folio never take part in a range,
+    and every label comes from the foliation of the printed end(s) (``p. xiv-fol. 1r``)."""
     ends = [a] + ([e] if e is not None and e.get("type") == a.get("type") else [])
     with_folio = [x for x in ends if x.get("printed") is not None]
     if not with_folio:
-        return words["np"]
+        return _l10n(locale)["np"]
     first, last = with_folio[0], with_folio[-1]
-    if last is not first and last.get("printed") != first.get("printed"):
-        return f"{plural} {_folio(first)}-{_folio(last)}"
-    return f"{single} {_folio(first)}"
+    f1, f2 = _foliation(first), _foliation(last)
+    if last is first or last.get("printed") == first.get("printed"):
+        return f"{_SINGLE[f1]} {_folio(first)}"
+    if f1 == f2:
+        return f"{_PLURAL[f1]} {_folio(first)}-{_folio(last)}"
+    return f"{_SINGLE[f1]} {_folio(first)}-{_SINGLE[f2]} {_folio(last)}"
 
 
 def locator_label(
@@ -182,7 +192,7 @@ def locator_label(
         return label
     if t in ("section", "web"):
         if a.get("printed") is not None:
-            return _page_label(a, e, locale, page_only=True)
+            return _page_label(a, e, locale)
         parts = []
         path = a.get("path")
         if isinstance(path, Sequence) and not isinstance(path, str) and path:
