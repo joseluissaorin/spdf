@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/spdf", "crates/spdf-cli", "crates/spdf-ffi"]
+members = ["crates/spdf", "crates/spdf-tools", "crates/spdf-ffi"]
 
 [workspace.package]
 version = "0.1.0"

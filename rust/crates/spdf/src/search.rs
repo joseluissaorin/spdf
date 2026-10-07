@@ -13,6 +13,26 @@ use crate::schema;
 use crate::text::ParsedQuery;
 use crate::vector;
 
+/// Vectors of one space and target held in memory (raw stored bytes plus
+/// tie-break keys), so that repeated searches skip SQLite.
+#[derive(Debug)]
+pub(crate) struct Matrix {
+    ids: Vec<String>,
+    tb: Vec<i64>,
+    data: Vec<u8>,
+    stride: usize,
+}
+
+/// Cached matrices by (space, target).
+type MatrixMap = HashMap<(String, Target), std::sync::Arc<Matrix>>;
+
+/// Per-document cache of [`Matrix`] by (space, target), with the bytes used.
+#[derive(Debug, Default)]
+pub(crate) struct VectorCache {
+    pub limit: usize,
+    used: std::sync::Mutex<(usize, MatrixMap)>,
+}
+
 /// RRF constant of the reference hybrid search.
 pub const RRF_K: f64 = 10.0;
 /// Minimum depth of each list before fusion.
@@ -144,41 +164,113 @@ impl Spdf {
             )));
         }
         let q: Vec<f64> = query.iter().map(|x| f64::from(*x)).collect();
-        let mut scored: Vec<(String, f64)> = Vec::new();
-        for (_, id, data) in self.raw_vectors(space, Some(target))? {
-            let v = vector::decode_f64(&data, dtype, dims)?;
-            let s = if sp.normalized {
-                vector::dot(&q, &v)
+        let qnorm = vector::dot(&q, &q).sqrt();
+        let m = self.matrix(space, target, dtype, dims)?;
+        let mut scored: Vec<(f64, i64, &str)> = Vec::with_capacity(m.ids.len());
+        for (i, id) in m.ids.iter().enumerate() {
+            let data = &m.data[i * m.stride..(i + 1) * m.stride];
+            let (dot, vnorm2) = vector::dot_stored(&q, data, dtype, dims)?;
+            let score = if sp.normalized {
+                dot
             } else {
-                vector::cosine(&q, &v)
+                let vn = vnorm2.sqrt();
+                if qnorm == 0.0 || vn == 0.0 {
+                    0.0
+                } else {
+                    dot / (qnorm * vn)
+                }
             };
-            scored.push((id, s));
+            scored.push((score, m.tb[i], id.as_str()));
         }
-        // Tie-break keys per target.
-        let keys: HashMap<String, (i64, String)> = match target {
-            Target::Fragment => self
-                .fragment_keys()?
-                .into_iter()
-                .map(|(id, n)| (id, (n, String::new())))
-                .collect(),
-            Target::Unit => self
-                .units()?
-                .into_iter()
-                .map(|u| (u.id.clone(), (u.ord, String::new())))
-                .collect(),
+        scored.sort_by(|a, b| {
+            b.0.total_cmp(&a.0)
+                .then(a.1.cmp(&b.1))
+                .then_with(|| a.2.as_bytes().cmp(b.2.as_bytes()))
+        });
+        Ok(scored
+            .into_iter()
+            .map(|(s, _, id)| (id.to_string(), s))
+            .collect())
+    }
+
+    /// Loads (or takes from the cache) the vectors of a space and target.
+    fn matrix(
+        &self,
+        space: &str,
+        target: Target,
+        dtype: crate::model::Dtype,
+        dims: usize,
+    ) -> Result<std::sync::Arc<Matrix>> {
+        let key = (space.to_string(), target);
+        if let Ok(g) = self.vector_cache.used.lock() {
+            if let Some(m) = g.1.get(&key) {
+                return Ok(m.clone());
+            }
+        }
+        let keys: HashMap<String, i64> = match target {
+            Target::Fragment => self.fragment_keys()?.into_iter().collect(),
+            Target::Unit => self.unit_keys()?.into_iter().collect(),
             Target::Figure => HashMap::new(),
         };
-        scored.sort_by(|a, b| {
-            b.1.partial_cmp(&a.1)
-                .unwrap_or(std::cmp::Ordering::Equal)
-                .then_with(|| {
-                    let ka = keys.get(&a.0).cloned().unwrap_or((i64::MAX, a.0.clone()));
-                    let kb = keys.get(&b.0).cloned().unwrap_or((i64::MAX, b.0.clone()));
-                    ka.cmp(&kb)
-                })
-                .then_with(|| a.0.as_bytes().cmp(b.0.as_bytes()))
-        });
-        Ok(scored)
+        let stride = dims * dtype.size();
+        let mut m = Matrix {
+            ids: Vec::new(),
+            tb: Vec::new(),
+            data: Vec::new(),
+            stride,
+        };
+        if let Some(table) = self.table_name("vectors") {
+            let tc = self.col_expr(&schema::VECTORS, "target");
+            let ic = self.col_expr(&schema::VECTORS, "id");
+            let sc = self.col_expr(&schema::VECTORS, "space");
+            let dc = self.col_expr(&schema::VECTORS, "data");
+            let tval = if self.is_legacy() {
+                schema::target_to_legacy(target.as_str())
+            } else {
+                target.as_str()
+            };
+            let mut st = self.conn.prepare(&format!(
+                "SELECT {ic}, {dc} FROM \"{table}\" WHERE {sc} = ?1 AND {tc} = ?2"
+            ))?;
+            let mut rows = st.query(rusqlite::params![space, tval])?;
+            while let Some(r) = rows.next()? {
+                let id: String = r.get(0)?;
+                let data = match r.get_ref(1)? {
+                    rusqlite::types::ValueRef::Blob(b) => b,
+                    _ => &[][..],
+                };
+                if data.len() != stride {
+                    return Err(Error::Vector(format!(
+                        "vector `{id}` has {} bytes, expected {stride}",
+                        data.len()
+                    )));
+                }
+                m.data.extend_from_slice(data);
+                m.tb.push(keys.get(&id).copied().unwrap_or(i64::MAX));
+                m.ids.push(id);
+            }
+        }
+        let m = std::sync::Arc::new(m);
+        let size = m.data.len();
+        if let Ok(mut g) = self.vector_cache.used.lock() {
+            if size > 0 && g.0 + size <= self.vector_cache.limit {
+                g.0 += size;
+                g.1.insert(key, m.clone());
+            }
+        }
+        Ok(m)
+    }
+
+    /// Drops the in-memory vector cache.
+    pub fn clear_vector_cache(&self) {
+        if let Ok(mut g) = self.vector_cache.used.lock() {
+            g.0 = 0;
+            g.1.clear();
+        }
+    }
+
+    fn unit_keys(&self) -> Result<Vec<(String, i64)>> {
+        Ok(self.units()?.into_iter().map(|u| (u.id, u.ord)).collect())
     }
 
     fn fragment_keys(&self) -> Result<Vec<(String, i64)>> {
@@ -209,12 +301,12 @@ impl Spdf {
         let docref = self.docref();
         match target {
             Target::Fragment => {
-                let by_id: HashMap<String, Fragment> = self
-                    .fragments()?
-                    .into_iter()
-                    .filter(|f| top.iter().any(|(id, _)| id == &f.id))
-                    .map(|f| (f.id.clone(), f))
-                    .collect();
+                let mut by_id: HashMap<String, Fragment> = HashMap::new();
+                for (id, _) in &top {
+                    if let Some(f) = self.fragment(id)? {
+                        by_id.insert(id.clone(), f);
+                    }
+                }
                 Ok(top
                     .iter()
                     .filter_map(|(id, s)| {

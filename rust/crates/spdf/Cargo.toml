@@ -11,6 +11,7 @@ repository.workspace = true
 homepage.workspace = true
 keywords.workspace = true
 categories.workspace = true
+include = ["src/**/*.rs", "Cargo.toml", "README.md", "LICENSE-MIT", "LICENSE-APACHE"]
 
 [features]
 default = []
@@ -35,8 +36,10 @@ ureq = { version = "3", optional = true }
 [dev-dependencies]
 proptest = "1"
 tempfile = "3"
-criterion = { version = "0.5", default-features = false }
 
 [[bench]]
 name = "spdf"
 harness = false
+
+[package.metadata.docs.rs]
+all-features = true

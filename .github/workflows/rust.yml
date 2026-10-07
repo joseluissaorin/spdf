@@ -24,6 +24,7 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: "1"
+  SPDF_REQUIRE_CONFORMANCE: "1"
 
 jobs:
   test:
@@ -52,7 +53,7 @@ jobs:
       - name: Tests (unit, properties, API, remote, conformance, doc)
         run: cargo test --workspace --all-features
       - name: Build the CLI
-        run: cargo build --release -p spdf-cli
+        run: cargo build --release -p spdf-tools
       - name: Conformance runner
         shell: bash
         run: |

@@ -10,6 +10,7 @@ authors.workspace = true
 repository.workspace = true
 homepage.workspace = true
 keywords.workspace = true
+include = ["src/**/*.rs", "cbindgen.toml", "include/spdf.h", "Cargo.toml", "README.md", "LICENSE-MIT", "LICENSE-APACHE"]
 categories = ["external-ffi-bindings", "text-processing"]
 
 [lib]

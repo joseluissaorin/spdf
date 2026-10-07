@@ -122,6 +122,45 @@ pub fn encode(values: &[f32], dtype: Dtype) -> Vec<u8> {
     }
 }
 
+/// Dot product of an f64 query with a stored vector, and the squared norm
+/// of the stored vector, computed in f64 component by component (the same
+/// sequential sums as the reference), without allocating.
+pub fn dot_stored(q: &[f64], data: &[u8], dtype: Dtype, dims: usize) -> Result<(f64, f64)> {
+    if data.len() != dims * dtype.size() || q.len() != dims {
+        return Err(Error::Vector(format!(
+            "vector has {} bytes, expected {}",
+            data.len(),
+            dims * dtype.size()
+        )));
+    }
+    let mut dot = 0.0f64;
+    let mut nn = 0.0f64;
+    match dtype {
+        Dtype::F32 => {
+            for (c, a) in data.chunks_exact(4).zip(q) {
+                let b = f64::from(f32::from_le_bytes([c[0], c[1], c[2], c[3]]));
+                dot += a * b;
+                nn += b * b;
+            }
+        }
+        Dtype::F16 => {
+            for (c, a) in data.chunks_exact(2).zip(q) {
+                let b = f64::from(f16::from_le_bytes([c[0], c[1]]).to_f32());
+                dot += a * b;
+                nn += b * b;
+            }
+        }
+        Dtype::I8 => {
+            for (c, a) in data.iter().zip(q) {
+                let b = f64::from(*c as i8) / 127.0;
+                dot += a * b;
+                nn += b * b;
+            }
+        }
+    }
+    Ok((dot, nn))
+}
+
 /// Dot product in f64.
 pub fn dot(a: &[f64], b: &[f64]) -> f64 {
     a.iter().zip(b).map(|(x, y)| x * y).sum()

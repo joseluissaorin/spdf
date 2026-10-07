@@ -38,6 +38,9 @@ pub struct OpenOptions {
     /// Open even if the file declares unknown required extensions (used by
     /// validators and dump tools; never by end-user readers).
     pub ignore_required_extensions: bool,
+    /// Keep the vectors of a space in memory after the first vector search
+    /// (spaces larger than this many bytes are not cached; 0 disables it).
+    pub vector_cache_bytes: usize,
 }
 
 impl Default for OpenOptions {
@@ -47,6 +50,7 @@ impl Default for OpenOptions {
             max_decompressed_bytes: DEFAULT_MAX_DECOMPRESSED,
             known_extensions: Vec::new(),
             ignore_required_extensions: false,
+            vector_cache_bytes: 256 * 1024 * 1024,
         }
     }
 }
@@ -355,6 +359,7 @@ pub struct Spdf {
     pub(crate) resolved: HashMap<&'static str, Resolved>,
     pub(crate) origin: Origin,
     blob_keys: OnceLock<HashSet<String>>,
+    pub(crate) vector_cache: crate::search::VectorCache,
 }
 
 impl std::fmt::Debug for Spdf {
@@ -410,7 +415,8 @@ impl Spdf {
         if !bad.is_empty() {
             return Err(Error::UnsafeSchema(bad.join(", ")));
         }
-        let doc = Self::assemble(conn, gzip, origin, info, flavor)?;
+        let mut doc = Self::assemble(conn, gzip, origin, info, flavor)?;
+        doc.vector_cache.limit = opts.vector_cache_bytes;
         doc.check_version()?;
         if flavor == Flavor::V5 && !opts.ignore_required_extensions {
             for ext in doc.extensions().unwrap_or_default() {
@@ -440,6 +446,7 @@ impl Spdf {
             resolved: HashMap::new(),
             origin,
             blob_keys: OnceLock::new(),
+            vector_cache: Default::default(),
         };
         doc.resolve_tables()?;
         doc.version = doc.best_effort_version();

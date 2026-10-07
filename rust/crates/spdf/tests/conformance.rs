@@ -6,7 +6,14 @@ use std::path::PathBuf;
 fn conformance_suite() {
     let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../conformance");
     if !dir.join("cases").exists() {
-        panic!("conformance suite not found at {}", dir.display());
+        // Outside the repository (e.g. a packaged crate) there is no suite.
+        assert!(
+            std::env::var_os("SPDF_REQUIRE_CONFORMANCE").is_none(),
+            "conformance suite not found at {}",
+            dir.display()
+        );
+        eprintln!("conformance suite not found at {}; skipped", dir.display());
+        return;
     }
     let report = spdf::conformance::run_dir(&dir, None).expect("runner");
     if !report.failed.is_empty() {

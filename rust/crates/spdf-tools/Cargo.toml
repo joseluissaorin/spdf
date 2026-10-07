@@ -1,5 +1,5 @@
 [package]
-name = "spdf-cli"
+name = "spdf-tools"
 description = "Command-line tool for SPDF files: validate, dump, search, cite, export, convert, sign and run the conformance suite."
 readme = "README.md"
 version.workspace = true
@@ -10,6 +10,7 @@ authors.workspace = true
 repository.workspace = true
 homepage.workspace = true
 keywords.workspace = true
+include = ["src/**/*.rs", "Cargo.toml", "README.md", "LICENSE-MIT", "LICENSE-APACHE"]
 categories = ["command-line-utilities", "text-processing"]
 
 [[bin]]
