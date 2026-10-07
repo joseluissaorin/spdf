@@ -72,7 +72,8 @@ async function desdeR2(env: Env, req: Request, clave: string, nombre: string): P
   h.set('Content-Disposition', `attachment; filename="${nombre.replace(/"/g, '')}"`);
   if (!('body' in obj)) return new Response(null, { status: 304, headers: h });
   const cuerpo = (obj as R2ObjectBody).body;
-  if (obj.range && 'offset' in obj.range) {
+  // Solo es parcial si se pidió un rango (R2 devuelve range también en las peticiones completas).
+  if (req.headers.has('range') && obj.range && 'offset' in obj.range) {
     const r = obj.range as { offset: number; length?: number };
     const fin = r.offset + (r.length ?? obj.size - r.offset) - 1;
     h.set('Content-Range', `bytes ${r.offset}-${fin}/${obj.size}`);
