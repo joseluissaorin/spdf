@@ -7,7 +7,7 @@ name: site
 on:
   push:
     branches: [main]
-    paths: ['site/**', 'spec/**', 'governance/**', 'js/**', '.github/workflows/site.yml', '*/README.md']
+    paths: ['site/**', 'spec/**', 'governance/**', 'js/**', 'reader/**', 'integrations/**', '.github/workflows/site.yml', '*/README.md']
   pull_request:
     paths: ['site/**', 'spec/**', 'governance/**', '.github/workflows/site.yml']
   workflow_dispatch:
@@ -29,6 +29,12 @@ jobs:
       - name: spdf-format (js)
         working-directory: js
         run: npm ci && npm run build
+      - name: Complemento de Zotero (la web sirve el .xpi)
+        working-directory: integrations/zotero
+        run: npm ci && npm run build
+      - name: Lector web (/reader)
+        working-directory: reader
+        run: npm ci && npm run build:web
       - name: Dependencias de la web
         working-directory: site
         run: npm ci
