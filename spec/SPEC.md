@@ -704,7 +704,11 @@ Given a query string and a limit:
     WHERE fragments_fts MATCH ?1 ORDER BY r, f.n LIMIT ?2
    ```
    The score is −r. Because `search_text` is the fourth indexed column, a query in modern
-   spelling finds old spelling without any special step.
+   spelling finds old spelling without any special step. Since `n` is the rowid of the
+   index, implementations MAY rank inside the index alone (`SELECT rowid, bm25(…) FROM
+   fragments_fts WHERE fragments_fts MATCH ?1 ORDER BY 2, 1 LIMIT ?2`) and look up the
+   fragment ids of the returned rows only; the result is identical. Readers that fetch
+   files by HTTP ranges SHOULD do so, as it avoids reading every matching fragment.
 7. **CJK route**: if `q` contains a code point in one of the ranges U+2E80–U+2FDF,
    U+3040–U+30FF, U+3100–U+312F, U+3130–U+318F, U+31A0–U+31FF, U+3400–U+4DBF,
    U+4E00–U+9FFF, U+A960–U+A97F, U+AC00–U+D7AF, U+F900–U+FAFF, U+FF66–U+FF9F or
