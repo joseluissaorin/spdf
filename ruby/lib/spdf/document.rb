@@ -300,6 +300,11 @@ module Spdf
     def csl_json(pretty: true) = Json.generate([csl_item], pretty: pretty)
     def bibtex = Bibliography.bibtex(Bibliography.base(metadata))
 
+    # ALTO 4, TEI P5 and IIIF Presentation 3 exports (SPEC §19.4).
+    def alto = Interop.alto(self)
+    def tei = Interop.tei(self)
+    def iiif(base_url) = Interop.iiif(self, base_url)
+
     private
 
     def int?(v) = v.is_a?(Integer) || (v.is_a?(Float) && v.finite? && v == v.floor)

@@ -61,6 +61,16 @@ class TestDocument < Minitest::Test
     end
   end
 
+  def test_library_exports
+    Spdf::Document.open(@file) do |d|
+      assert_includes d.alto, '<Page ID="P9" PHYSICAL_IMG_NR="9" PRINTED_IMG_NR="3"'
+      assert_includes d.tei, '<pb n="[4]"/>'
+      m = d.iiif("https://example.org/iiif/lazarillo")
+      assert_equal "Manifest", m["type"]
+      assert_equal({ "none" => ["3"] }, m["items"][0]["label"])
+    end
+  end
+
   def test_rejects_views
     db = SQLite3::Database.new(@file)
     db.execute("CREATE VIEW v AS SELECT 1")

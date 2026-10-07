@@ -60,6 +60,18 @@ File.write("lazarillo.bib", doc.bibtex)      # @book{lazarillo1554, ... (SPEC §
 Spdf::Bibliography.csl_items([meta], anchor, anchor_end)   # adds CSL "label" and "locator"
 ```
 
+### ALTO, TEI and IIIF
+
+```ruby
+File.write("lazarillo.alto.xml", doc.alto)   # ALTO 4, one Page per page unit
+File.write("lazarillo.tei.xml", doc.tei)     # TEI P5: pb, p, lg/l, u, note
+manifest = doc.iiif("https://biblioteca.example.org/iiif/lazarillo")   # IIIF Presentation 3
+```
+
+These are the optional exports of SPEC §19.4: printed folios only where the page carries
+them (`[iv]` marks an inferred folio in TEI and IIIF), sections as IIIF ranges, figures as
+`describing` annotations, and no invented coordinates.
+
 ## Validate
 
 ```ruby
@@ -101,8 +113,7 @@ spdf conformance path/to/spdf/conformance
 
 `spdf conformance` runs every case of the shared suite and prints the report of the
 specification (§21). CI publishes it as the `conformance-ruby` artifact. All kinds are
-claimed except `export_structure` (ALTO, TEI and IIIF exports are optional and not
-implemented).
+claimed, `export_structure` included.
 
 ## License
 

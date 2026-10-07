@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "tmpdir"
+require "cgi"
 
 module Spdf
   # Runner of the shared conformance suite (conformance/cases/*.json, §11).
@@ -160,7 +161,7 @@ module Spdf
 
         nil
       when "export_structure"
-        :skip
+        Document.open(path(input["file"])) { |d| self.class.compare(ex["pages"], pages(d, input["format"]), "pages") }
       when "quantize"
         hex = begin
           Vectors.encode(input["values"], input["dtype"]).unpack1("H*")
@@ -174,6 +175,28 @@ module Spdf
         text = Cite.short(input["metadata"] || {}, input["anchor"], input["anchor_end"], locale: input.fetch("locale", "en"))
         text == ex["text"] ? nil : "expected #{ex["text"]}, got #{text}"
       else "unknown case kind #{c["kind"]}"
+      end
+    end
+
+    def xml_attr(tag, name)
+      m = tag.match(/\s#{name}="([^"]*)"/)
+      m && CGI.unescapeHTML(m[1])
+    end
+
+    # Page sequence of an ALTO, TEI or IIIF export, read back from the exported document.
+    def pages(doc, format)
+      case format
+      when "alto"
+        doc.alto.scan(/<Page\s[^>]*>/).map { |t| { "physical" => xml_attr(t, "PHYSICAL_IMG_NR").to_i, "printed" => xml_attr(t, "PRINTED_IMG_NR") } }
+      when "tei"
+        xml = doc.tei
+        xml[xml.index("<body>")..].scan(%r{<pb(?:\s[^>]*)?/>}).map { |t| { "n" => xml_attr(t, "n") } }
+      when "iiif"
+        base = "https://example.org/iiif"
+        manifest = JSON.parse(JSON.generate(doc.iiif(base)))
+        page_canvases = doc.units.select { |u| u["anchor"].is_a?(Hash) && u["anchor"]["type"] == "page" }.map { |u| "#{base}/canvas/#{u["ord"]}" }
+        manifest["items"].select { |c| page_canvases.include?(c["id"]) }.map { |c| { "label" => c["label"]&.values&.first&.first } }
+      else raise Error.new("E000", "unknown format #{format}")
       end
     end
 
