@@ -442,9 +442,16 @@ final class Document
         return $r === [] ? null : (string) $r[0]['data'];
     }
 
+    /** Provenance entries, sorted by the UTF-8 bytes of each entry's JCS form (§5). */
     public function provenance(): array
     {
-        return $this->rows('provenance', 'ORDER BY {at}, {stage}, {provider}, {model}, {detail}, {ms}');
+        $rows = array_map(function ($r) {
+            unset($r['document']);
+            return $r;
+        }, $this->rows('provenance'));
+        $keyed = array_map(fn ($r) => [Json::canonical($r), $r], $rows);
+        usort($keyed, fn ($a, $b) => strcmp($a[0], $b[0]));
+        return array_column($keyed, 1);
     }
 
     public function extensions(): array

@@ -32,10 +32,27 @@ final class Search
         return array_map([self::class, 'public'], $this->vectorRaw($query, $space, $limit, $target));
     }
 
+    /**
+     * Lexical search with its trace: `route` (fts, trigram, substring), `match` (the
+     * FTS5 MATCH string, or null) and `results`.
+     */
+    public function lexicalDetailed(string $query, int $limit = 10): array
+    {
+        $this->route = 'fts';
+        $this->match = null;
+        $results = array_map([self::class, 'public'], $this->lexicalRaw($query, $limit));
+        return ['route' => $this->route, 'match' => $this->match, 'results' => $results];
+    }
+
+    private string $route = 'fts';
+    private ?string $match = null;
+
     private function lexicalRaw(string $query, int $limit): array
     {
         $plan = Text::queryTerms($query);
         $terms = $plan['terms'];
+        $this->route = 'fts';
+        $this->match = null;
         if ($terms === [] || $limit <= 0) {
             return [];
         }
@@ -51,6 +68,8 @@ final class Search
                 }
             }
             if (!$legacy && $this->doc->container()->hasTable('fragments_fts_trigram') && $long) {
+                $this->route = 'trigram';
+                $this->match = $match;
                 $st = $pdo->prepare('SELECT rowid AS n, bm25(fragments_fts_trigram) AS r FROM fragments_fts_trigram'
                     . ' WHERE fragments_fts_trigram MATCH ? ORDER BY r, n LIMIT ?');
                 $st->execute([$match, $limit]);
@@ -58,6 +77,7 @@ final class Search
                     $hits[] = [(int) $row['n'], -(float) $row['r']];
                 }
             } else {
+                $this->route = 'substring';
                 $table = Container::quoteIdent($this->doc->tableName('fragments') ?? 'fragments');
                 $text = $legacy ? '"texto"' : '"text"';
                 $sum = implode(' + ', array_fill(0, count($terms), "(instr({$text}, ?) > 0)"));
@@ -74,6 +94,7 @@ final class Search
             }
         } else {
             $fts = $legacy ? 'fragmentos_fts' : 'fragments_fts';
+            $this->match = $match;
             $st = $pdo->prepare("SELECT rowid AS n, bm25({$fts}, 1.0, 0.5, 0.5, 1.0) AS r FROM {$fts}"
                 . " WHERE {$fts} MATCH ? ORDER BY r, n LIMIT ?");
             $st->execute([$match, $limit]);

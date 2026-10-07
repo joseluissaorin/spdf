@@ -57,24 +57,131 @@ final class Runner
         return rtrim($this->dir, '/') . '/' . $rel;
     }
 
+    private function json(string $rel): mixed
+    {
+        return Json::decode((string) file_get_contents($this->path($rel)));
+    }
+
     /** Returns null on success, 'skip', or the failure reason. */
     private function runCase(array $case): ?string
     {
         $kind = (string) ($case['kind'] ?? '');
         $in = $case['input'] ?? [];
-        $expect = $case['expect'] ?? [];
+        $ex = $case['expect'] ?? [];
         switch ($kind) {
             case 'dump':
             case 'legacy_dump':
-                $actual = Document::open($this->path($in['file']))->dump();
-                $want = isset($expect['dump_file']) ? Json::decode((string) file_get_contents($this->path($expect['dump_file']))) : ($expect['dump'] ?? $expect);
-                return self::compare($want, $actual, 'dump');
+                $doc = Document::open($this->path($in['file']));
+                $r = self::compare($this->json($ex['dump']), $doc->dump(), 'dump');
+                if ($r !== null) {
+                    return $r;
+                }
+                if (isset($ex['content_sha256']) && $doc->contentSha256() !== $ex['content_sha256']) {
+                    return 'content_sha256: expected ' . $ex['content_sha256'] . ', got ' . $doc->contentSha256();
+                }
+                return null;
+            case 'roundtrip':
+                $tmp = tempnam(sys_get_temp_dir(), 'spdfrt');
+                @unlink($tmp);
+                $tmp .= '.spdf';
+                try {
+                    Writer::fromSource($this->json($in['source']), $tmp);
+                    return self::compare($this->json($ex['dump']), Document::open($tmp)->dump(), 'dump');
+                } finally {
+                    @unlink($tmp);
+                }
             case 'validate':
-                $r = Validator::validate($this->path($in['file']));
-                return self::compareValidation($expect, $r);
+                return self::compareValidation($ex, Validator::validate($this->path($in['file'])));
+            case 'search_lexical':
+                $doc = Document::open($this->path($in['file']));
+                $got = (new \Spdf\Search($doc))->lexicalDetailed((string) $in['query'], (int) ($in['limit'] ?? 10));
+                foreach (['route', 'match'] as $k) {
+                    if (array_key_exists($k, $ex) && $ex[$k] !== $got[$k]) {
+                        return "{$k}: expected " . json_encode($ex[$k], JSON_UNESCAPED_UNICODE) . ', got ' . json_encode($got[$k], JSON_UNESCAPED_UNICODE);
+                    }
+                }
+                return self::compareResults($ex['results'], $got['results'], true);
+            case 'search_vector':
+                $doc = Document::open($this->path($in['file']));
+                $got = $doc->searchVector($in['query_vector'], (string) $in['space'], (int) ($in['limit'] ?? 10), (string) ($in['target'] ?? 'fragment'));
+                return self::compareResults($ex['results'], $got, false);
+            case 'search_hybrid':
+                $doc = Document::open($this->path($in['file']));
+                $got = $doc->searchHybrid((string) $in['query'], $in['query_vector'], (string) $in['space'], (int) ($in['limit'] ?? 10));
+                return self::compareResults($ex['results'], $got, true);
+            case 'anchor_uri':
+                return self::anchorUriCase($in, $ex);
+            case 'cite':
+                $meta = $in['metadata'] instanceof \stdClass ? [] : (array) $in['metadata'];
+                $end = is_array($in['anchor_end'] ?? null) ? $in['anchor_end'] : null;
+                $text = Cite::short($meta, $in['anchor'], $end, (string) ($in['locale'] ?? 'en'));
+                return $text === $ex['text'] ? null : 'expected ' . $ex['text'] . ', got ' . $text;
             default:
                 return "unknown case kind {$kind}";
         }
+    }
+
+    private static function anchorUriCase(array $in, array $ex): ?string
+    {
+        if (isset($in['uri'])) {
+            if (($ex['error'] ?? false) === true) {
+                try {
+                    $r = AnchorUri::parse((string) $in['uri']);
+                    return 'expected a parse error, got ' . Json::canonical($r['locator'] === [] ? new \stdClass() : $r['locator']);
+                } catch (SpdfException) {
+                    return null;
+                }
+            }
+            $p = AnchorUri::parse((string) $in['uri']);
+            if ($p['docref'] !== $ex['docref']) {
+                return "docref: expected {$ex['docref']}, got {$p['docref']}";
+            }
+            $r = self::compare($ex['locator'], $p['locator'], 'locator');
+            if ($r !== null) {
+                return $r;
+            }
+            $f = AnchorUri::format($p['docref'], $p['locator']);
+            return $f === $ex['canonical'] ? null : "format(parse(uri)): expected {$ex['canonical']}, got {$f}";
+        }
+        $end = is_array($in['anchor_end'] ?? null) ? $in['anchor_end'] : null;
+        $uri = AnchorUri::fromAnchor((string) $in['docref'], $in['anchor'], $end);
+        if ($uri !== $ex['uri']) {
+            return "uri: expected {$ex['uri']}, got {$uri}";
+        }
+        $p = AnchorUri::parse($uri);
+        if ($p['docref'] !== $in['docref']) {
+            return "parse(uri).docref: expected {$in['docref']}, got {$p['docref']}";
+        }
+        $r = self::compare($ex['locator'], $p['locator'], 'locator');
+        if ($r !== null) {
+            return $r;
+        }
+        $f = AnchorUri::format($p['docref'], $p['locator']);
+        return $f === $uri ? null : "format(parse(uri)): expected {$uri}, got {$f}";
+    }
+
+    private static function compareResults(array $want, array $got, bool $via): ?string
+    {
+        if (count($want) !== count($got)) {
+            return 'results: expected ' . count($want) . ' (' . implode(',', array_column($want, 'fragment_id')) . '), got '
+                . count($got) . ' (' . implode(',', array_column($got, 'fragment_id')) . ')';
+        }
+        foreach ($want as $i => $w) {
+            $g = $got[$i];
+            if ($w['fragment_id'] !== $g['fragment_id']) {
+                return "results[{$i}].fragment_id: expected {$w['fragment_id']}, got {$g['fragment_id']}";
+            }
+            if (abs((float) $w['score'] - (float) $g['score']) > self::TOLERANCE) {
+                return "results[{$i}].score: expected {$w['score']}, got {$g['score']}";
+            }
+            if ($w['anchor_uri'] !== $g['anchor_uri']) {
+                return "results[{$i}].anchor_uri: expected {$w['anchor_uri']}, got {$g['anchor_uri']}";
+            }
+            if ($via && isset($w['via']) && $w['via'] !== $g['via']) {
+                return "results[{$i}].via: expected " . implode(',', $w['via']) . ', got ' . implode(',', $g['via']);
+            }
+        }
+        return null;
     }
 
     /** Structural comparison; numbers within TOLERANCE. Returns null or a reason. */
@@ -141,6 +248,9 @@ final class Runner
 
     private static function compareValidation(array $expect, array $r): ?string
     {
+        if (array_key_exists('version', $expect) && $expect['version'] !== $r['version']) {
+            return 'version: expected ' . json_encode($expect['version']) . ', got ' . json_encode($r['version']);
+        }
         if (array_key_exists('valid', $expect) && $expect['valid'] !== $r['valid']) {
             return 'valid: expected ' . json_encode($expect['valid']) . ', got ' . json_encode($r['valid'])
                 . ' (errors ' . implode(',', array_column($r['errors'], 'code')) . ')';
