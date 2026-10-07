@@ -223,3 +223,9 @@ def test_page_labels_that_contradict_what_is_seen_are_not_followed():
     r = deduce_folios(pages)
     assert r.origin == "sequence"
     assert [p.printed for p in r.pages[20:30]] == [str(i) for i in range(21, 31)]
+
+
+def test_early_modern_romans_with_final_j():
+    assert [c.value for c in candidates_in_line("iij", "header")] == [3]
+    assert [c.value for c in candidates_in_line("xviij", "footer")] == [18]
+    assert not [c for c in candidates_in_line("ojo", "footer") if c.roman]

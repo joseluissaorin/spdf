@@ -77,14 +77,21 @@ Keys are read from the environment only (`GEMINI_API_KEY`, `OPENAI_API_KEY`,
 1. **Read** each unit: PDF text layer where it is good (quality diagnosis per page,
    header/footer zones, running heads, titles by font size, footnotes, embedded figures);
    page images to the vision engine where it is not (a scan's old OCR layer included).
+   Blank pages are detected by measuring ink and never sent to a model.
 2. **Folios**: candidates from header, footer, body edges and what the reader saw; the
    longest coherent chain (dynamic programming); piecewise deduction (interpolation,
    plates, missing leaves, roman → arabic, foliation `12r/12v`); PDF page labels when they
    agree with what is seen; covers and endpapers without folio. Inferred folios are
-   marked `source: inferred` (cited in brackets). No reading at all → no folio invented.
+   marked `source: inferred` (cited in brackets). Before inferring, every page is classified
+   (book text, plate or inserted leaf, blank, cover, library apparatus, colour chart): only
+   book text gets an inferred folio; after the last reading a folio is carried forward only
+   with proof (running head, text or catchword continuity); a gap that does not add up is
+   left without folios. No reading at all → no folio invented. EPUB: every page marker of the
+   content is a page break, even when the page-list omits it.
 3. **Record** (CSL-JSON + `spdf.provenance` per field): embedded metadata, identifiers in
    the credits (ISBN with check digit, DOI, arXiv), the LLM reading the first and last
-   pages, Crossref, OpenAlex and Open Library when online.
+   pages, Crossref, OpenAlex, Open Library and Internet Archive (when the file points to an
+   archive.org item: date of a recording, licence, readers) when online.
 4. **Sections** from the outline/TOC, or from titles; **fragments** of ~250-450 tokens that
    never cross sections, join paragraphs split across pages (`anchor_end`) and carry their
    footnotes.

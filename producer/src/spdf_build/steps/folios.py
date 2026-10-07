@@ -140,6 +140,13 @@ def read_token(raw: str, romans: bool = True, fix_ocr: bool = True) -> Optional[
         fixed = re.sub(r"[Oo]", "0", re.sub(r"[lI|]", "1", tok))
         if fixed.isdigit():
             return _Reading(int(fixed), False, False, True)
+    if romans and not ROMAN_STRICT.match(tok) and re.fullmatch(r"[ivxlcdm]*j|[IVXLCDM]*J", tok) and len(tok) >= 2:
+        # early-modern romans end in j: «ij», «iij», «vj», «xviij» (Madrid 1790)
+        alt = tok[:-1] + ("i" if tok[-1] == "j" else "I")
+        if ROMAN_STRICT.match(alt):
+            v = roman_to_int(alt)
+            if v > 0:
+                return _Reading(v, True, alt == alt.upper(), False)
     if romans and ROMAN_STRICT.match(tok):
         lower, upper = tok == tok.lower(), tok == tok.upper()
         if not lower and not upper:
@@ -539,7 +546,8 @@ def classify_page(p: dict) -> str:
     if is_cover(p) or re.search(r"\b(?:spine|lomo|dust\s*jacket)\b", around, re.I):
         return "cover"
     letters = sum(1 for c in text if c.isalpha())
-    if p.get("figures") and letters < 300:
+    prose = any(len(par.split()) >= 15 for par in re.split(r"\n\s*\n", text) if not par.lstrip().startswith("#"))
+    if p.get("figures") and letters < 300 and not prose:  # an ornament above a chapter opening is not a plate
         return "plate"
     if re.match(r"^\s*(?:l[áa]m(?:ina)?|plate|tav(?:ola)?|taf(?:el)?|planche|fig(?:ura|ure)?)\.?\s*[\divxlc]+", text, re.I) and letters < 400:
         return "plate"

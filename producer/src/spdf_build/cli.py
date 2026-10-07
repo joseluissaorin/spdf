@@ -32,6 +32,7 @@ def _add_build_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--rights-note")
     p.add_argument("--no-labels", action="store_true", help="ignore PDF page labels (deduce folios only from what is seen)")
     p.add_argument("--force-vision", action="store_true", help="read every PDF page with the vision engine")
+    p.add_argument("--trust-ocr", action="store_true", help="economical: keep a scan's OCR layer where it passes the quality bar")
     p.add_argument("--no-context", action="store_true", help="extractive context lines only (no LLM)")
     p.add_argument("--no-figures", action="store_true")
     p.add_argument("--page-images", choices=["none", "scans", "all"], default="scans")
@@ -102,7 +103,7 @@ def cmd_build(args) -> int:
     opts = Options(offline=args.offline, use_labels=not args.no_labels, language=args.language, metadata=user, rights=rights,
                    context=not args.no_context, figures=not args.no_figures, page_images=args.page_images,
                    image_vectors=args.image_vectors, dtype=args.dtype, embed_source=args.embed_source, max_units=args.max_units,
-                   force_vision=args.force_vision, concurrency=args.concurrency, save_reading=args.save_reading,
+                   force_vision=args.force_vision, trust_ocr=args.trust_ocr, concurrency=args.concurrency, save_reading=args.save_reading,
                    reuse_reading=args.reuse_reading, log=log)
     out = args.output
     if not out:

@@ -75,6 +75,7 @@ class Options:
     embed_source: bool = False
     max_units: Optional[int] = None
     force_vision: bool = False
+    trust_ocr: bool = False  # economical mode: keep a scan's OCR layer when it passes the quality bar
     save_reading: Optional[str] = None  # write what the readers saw (JSON) to replay later steps
     reuse_reading: Optional[str] = None  # skip the vision engine: take the pages from such a JSON
     log: Callable[[str], None] = lambda m: None
@@ -180,7 +181,7 @@ def _read_file(data: bytes, path: str, kind: str, engines: Engines, opts: Option
     if kind == "pdf":
         from .readers.pdf import read_pdf
 
-        return read_pdf(data, path, use_labels=opts.use_labels, force_vision=opts.force_vision)
+        return read_pdf(data, path, use_labels=opts.use_labels, force_vision=opts.force_vision, trust_ocr=opts.trust_ocr)
     if kind == "epub":
         from .readers.epub import read_epub
 

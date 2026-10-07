@@ -274,7 +274,8 @@ def _image_regions(page) -> tuple[float, list[dict]]:
 CAPTION = re.compile(r"^\s*(fig(?:ure|ura)?\.?|lám(?:ina)?\.?|plate|tabla|table|mapa|map|grabado|ilustraci[óo]n)\s*[\dIVXLC]*", re.I)
 
 
-def read_pdf(data: bytes, path: Optional[str] = None, use_labels: bool = True, force_vision: bool = False) -> Source:
+def read_pdf(data: bytes, path: Optional[str] = None, use_labels: bool = True, force_vision: bool = False,
+             trust_ocr: bool = False) -> Source:
     import pymupdf as fitz
 
     doc = fitz.open(stream=data, filetype="pdf")
@@ -364,8 +365,12 @@ def read_pdf(data: bytes, path: Optional[str] = None, use_labels: bool = True, f
         units.append(u)
 
     vision = sum(1 for u in units if u.needs_vision)
-    kind = "scanned_pdf" if vision > n / 2 else "pdf"
-    if kind == "scanned_pdf":
+    scans = sum(1 for layer in layers if layer["coverage"] >= 0.85)
+    # A scan is a scan even when it carries a passable OCR layer (Internet Archive adds one to every book):
+    # that layer reads the long s as f and glues running heads to the text, so its pages go to vision too,
+    # unless the caller trusts it (`trust_ocr`, the economical mode).
+    kind = "scanned_pdf" if (vision > n / 2 or scans > n / 2) else "pdf"
+    if kind == "scanned_pdf" and not trust_ocr:
         # In a scan, an OCR layer that passed the quality bar is still an old OCR (long s read as f,
         # running heads glued to the text): the vision reader reads those pages too, for consistency.
         for u, layer in zip(units, layers):
@@ -395,7 +400,7 @@ def read_pdf(data: bytes, path: Optional[str] = None, use_labels: bool = True, f
         return pix.tobytes("jpeg", jpg_quality=82)
 
     src = Source(path=path, kind=kind, mime="application/pdf", data=data, units=units, toc=toc, hints=hints, render=render)
-    src.provenance_note = {"pages": n, "text_layer": n - vision, "vision": vision, "labels": has_labels,  # type: ignore[attr-defined]
+    src.provenance_note = {"pages": n, "text_layer": n - vision, "vision": vision, "scanned_pages": scans, "labels": has_labels,  # type: ignore[attr-defined]
                            "body_size": base}
     return src
 
