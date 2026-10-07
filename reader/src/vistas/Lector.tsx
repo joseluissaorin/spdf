@@ -98,7 +98,7 @@ export function Lector() {
 
   // Medida: primera página con texto en pantalla.
   useEffect(() => {
-    if (!unidad || performance.getEntriesByName('spdf:apertura').length) return;
+    if (!unidad || performance.getEntriesByName('spdf:abierto').length > performance.getEntriesByName('spdf:abrir').length - 1) return;
     requestAnimationFrame(() => {
       performance.mark('spdf:abierto');
       try { performance.measure('spdf:apertura', 'spdf:abrir', 'spdf:abierto'); } catch { /* sin marca previa */ }

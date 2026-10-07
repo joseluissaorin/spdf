@@ -21,6 +21,14 @@ export class NucleoTauri implements Nucleo {
     const r = await invoke<{ plataforma: Plataforma; capacidades: Capacidades }>('iniciar', { pruebas: this.#pruebas });
     this.plataforma = r.plataforma;
     this.capacidades = r.capacidades;
+    // Medidas para RENDIMIENTO.md (solo si el proceso se lanzó con SPDF_MEDIR=1; si no, el comando no apunta nada).
+    const enviar = (nombre: string, ms: number) => void invoke('medida', { nombre, ms, detalle: null }).catch(() => {});
+    new PerformanceObserver((l) => {
+      for (const e of l.getEntries()) {
+        if (e.name === 'spdf:interfaz') enviar('webview_hasta_interfaz', e.startTime);
+        if (e.name === 'spdf:apertura') enviar('apertura_hasta_texto', e.duration);
+      }
+    }).observe({ entryTypes: ['mark', 'measure'] });
   }
 
   /** Ficheros abiertos «con» el lector (doble clic, Abrir con…, compartir en el móvil). */

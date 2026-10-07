@@ -62,7 +62,7 @@ for (const ruta of libros.length ? libros : [dato('quijote-cap1.spdf')]) {
 
     // Pasar página: 20 veces, mediana del tiempo hasta que cambia el texto.
     const pasos: number[] = [];
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < Math.min(20, total - 1); i++) {
       const antes = await page.locator('.hoja').getAttribute('data-unidad', { timeout: 10_000 });
       t = performance.now();
       await page.keyboard.press('ArrowRight');
@@ -83,7 +83,9 @@ for (const ruta of libros.length ? libros : [dato('quijote-cap1.spdf')]) {
     await page.reload();
     await expect(page.locator('.ficha-libro')).toHaveCount(1);
     r.arranque_caliente_ms = r1((await marca(page, 'spdf:interfaz'))!);
-    r.abrir_desde_biblioteca_ms = await cronometrar(page, () => page.locator('.ficha-libro').first().click(), TEXTO_VISIBLE);
+    // El clic se da desde la página: el de Playwright espera a que acabe la animación de entrada de la ficha.
+    await page.locator('.ficha-libro').first().waitFor();
+    r.abrir_desde_biblioteca_ms = await cronometrar(page, () => page.evaluate(() => (document.querySelector('.ficha-libro') as HTMLElement).click()), TEXTO_VISIBLE);
     r.apertura_hasta_texto_ms = r1((await medida(page, 'spdf:apertura')) ?? NaN);
 
     // Buscar en el documento: varias consultas, tiempo del worker y de punta a punta.

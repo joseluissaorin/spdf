@@ -87,7 +87,9 @@ function abierto(id: string): Promise<Abierto> {
   p = (async () => {
     const f = await almacen.leer(fichero(id));
     if (!f) throw new Error('El fichero ya no está en la biblioteca.');
-    const doc = await spdf.openBlob(f);
+    // Hasta 256 MB se lee entero (una sola lectura de OPFS: 10 MB en ~10 ms); más grande, a trozos
+    // con openBlob, para no llenar la memoria (más lento: muchas lecturas pequeñas).
+    const doc = f.size <= 256 * 1024 * 1024 ? await spdf.openSpdf(new Uint8Array(await f.arrayBuffer())) : await spdf.openBlob(f);
     const unidades = (await doc.units()) as unknown as Unidad[];
     return { doc, unidades, ordDe: new Map(unidades.map((u) => [u.id, u.ord])) };
   })();

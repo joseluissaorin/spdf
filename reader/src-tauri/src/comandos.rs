@@ -42,9 +42,22 @@ pub struct Inicio {
     capacidades: Capacidades,
 }
 
+/// La interfaz manda sus marcas (arranque, apertura) cuando se mide (SPDF_MEDIR=1).
+#[tauri::command]
+pub async fn medida(app: AppHandle, nombre: String, ms: f64, detalle: Option<String>) -> R<bool> {
+    bloq(app, move |st| {
+        crate::medir(&st.dir, &nombre, ms, detalle.as_deref().unwrap_or(""));
+        Ok(std::env::var("SPDF_MEDIR").is_ok())
+    })
+    .await
+}
+
 #[tauri::command]
 pub async fn iniciar(app: AppHandle, pruebas: bool) -> R<Inicio> {
     bloq(app, move |st| {
+        if let Some(t0) = crate::INICIO.get() {
+            crate::medir(&st.dir, "proceso_hasta_nucleo", t0.elapsed().as_secs_f64() * 1000.0, "");
+        }
         let p = pruebas && pruebas_permitidas();
         *st.pruebas.lock().unwrap() = p;
         let movil = matches!(plataforma(), "ios" | "android");
@@ -78,6 +91,7 @@ pub async fn biblioteca(app: AppHandle) -> R<Vec<Entrada>> {
 }
 
 fn importar_uno(st: &Estado, ruta: &Path, nombre: &str, temporal: bool) -> ResultadoImport {
+    let t0 = Instant::now();
     let r = (|| -> R<(Entrada, bool)> {
         let id = sha256_fichero(ruta).map_err(err)?;
         if let Some(e) = st.bib.lock().unwrap().entrada(&id) {
@@ -100,6 +114,7 @@ fn importar_uno(st: &Estado, ruta: &Path, nombre: &str, temporal: bool) -> Resul
         b.guardar().map_err(err)?;
         Ok((e, false))
     })();
+    crate::medir(&st.dir, "importar", t0.elapsed().as_secs_f64() * 1000.0, nombre);
     match r {
         Ok((e, repetido)) => ResultadoImport { nombre: nombre.into(), ok: true, entrada: Some(e), repetido, error: None },
         Err(e) => ResultadoImport { nombre: nombre.into(), ok: false, entrada: None, repetido: false, error: Some(e) },
@@ -233,7 +248,9 @@ pub async fn borrar_coleccion(app: AppHandle, id: String) -> R<()> {
 #[tauri::command]
 pub async fn abrir(app: AppHandle, id: String) -> R<Resumen> {
     bloq(app, move |st| {
+        let t0 = Instant::now();
         let a = st.abierto(&id)?;
+        crate::medir(&st.dir, "abrir_documento", t0.elapsed().as_secs_f64() * 1000.0, &a.documento.title.clone().unwrap_or_default());
         let doc = a.doc.lock().unwrap();
         let d = a.documento.clone();
         let medio = match (&d.source_ref, d.kind.as_str()) {
@@ -453,7 +470,9 @@ pub async fn buscar(app: AppHandle, p: PeticionBusqueda) -> R<ResultadoBusqueda>
             modo = "lexica".into();
         }
         let aciertos = if ids.len() == 1 { listas.pop().unwrap_or_default() } else { fusionar(listas, limite) };
-        Ok(ResultadoBusqueda { aciertos, modo, avisos, ms: t0.elapsed().as_millis() as u64 })
+        let ms = t0.elapsed().as_secs_f64() * 1000.0;
+        crate::medir(&st.dir, if ids.len() == 1 { "buscar_documento" } else { "buscar_biblioteca" }, ms, &format!("{} · {} · {} aciertos · {} documentos", p.consulta, modo, aciertos.len(), ids.len()));
+        Ok(ResultadoBusqueda { aciertos, modo, avisos, ms: ms.round() as u64 })
     })
     .await
 }

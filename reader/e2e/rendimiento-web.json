@@ -1,0 +1,200 @@
+{
+  "discarded-4.1.spdf": {
+    "fichero": "discarded-4.1.spdf",
+    "bytes": 7930594,
+    "navegador": "Chromium (Playwright, sin cabeza)",
+    "fecha": "2026-10-07T10:03:33.538Z",
+    "arranque_frio_ms": 39,
+    "importar_y_abrir_ms": 507.3,
+    "unidades": 245,
+    "pasar_pagina_mediana_ms": 28.1,
+    "ir_a_folio_ms": 39.5,
+    "folio": "145",
+    "arranque_caliente_ms": 21.6,
+    "abrir_desde_biblioteca_ms": 416,
+    "apertura_hasta_texto_ms": 105.1,
+    "busqueda_documento": [
+      {
+        "q": "astronomy",
+        "n": 18,
+        "worker_ms": 5,
+        "total_ms": 37.9
+      },
+      {
+        "q": "Ptolemy",
+        "n": 2,
+        "worker_ms": 1,
+        "total_ms": 34.6
+      },
+      {
+        "q": "medieval model",
+        "n": 60,
+        "worker_ms": 2,
+        "total_ms": 46.3
+      },
+      {
+        "q": "\"the discarded image\"",
+        "n": 60,
+        "worker_ms": 2,
+        "total_ms": 41
+      },
+      {
+        "q": "angels heaven",
+        "n": 47,
+        "worker_ms": 2,
+        "total_ms": 45.9
+      }
+    ],
+    "busqueda_documento_mediana_ms": 2,
+    "busqueda_biblioteca": [
+      {
+        "q": "astronomy",
+        "n": 47,
+        "worker_ms": 2
+      },
+      {
+        "q": "Ptolemy",
+        "n": 2,
+        "worker_ms": 57
+      },
+      {
+        "q": "medieval model",
+        "n": 60,
+        "worker_ms": 56
+      }
+    ],
+    "documentos_biblioteca": 10
+  },
+  "discarded-5.0.spdf": {
+    "fichero": "discarded-5.0.spdf",
+    "bytes": 9936896,
+    "navegador": "Chromium (Playwright, sin cabeza)",
+    "fecha": "2026-10-07T10:03:40.125Z",
+    "arranque_frio_ms": 35.5,
+    "importar_y_abrir_ms": 411.4,
+    "unidades": 245,
+    "pasar_pagina_mediana_ms": 27.1,
+    "ir_a_folio_ms": 35.7,
+    "folio": "145",
+    "arranque_caliente_ms": 24.3,
+    "abrir_desde_biblioteca_ms": 77.5,
+    "apertura_hasta_texto_ms": 67.3,
+    "busqueda_documento": [
+      {
+        "q": "astronomy",
+        "n": 18,
+        "worker_ms": 4,
+        "total_ms": 44.1
+      },
+      {
+        "q": "Ptolemy",
+        "n": 2,
+        "worker_ms": 0,
+        "total_ms": 32.5
+      },
+      {
+        "q": "medieval model",
+        "n": 60,
+        "worker_ms": 3,
+        "total_ms": 45.3
+      },
+      {
+        "q": "\"the discarded image\"",
+        "n": 60,
+        "worker_ms": 2,
+        "total_ms": 39.5
+      },
+      {
+        "q": "angels heaven",
+        "n": 47,
+        "worker_ms": 2,
+        "total_ms": 44.2
+      }
+    ],
+    "busqueda_documento_mediana_ms": 2,
+    "busqueda_biblioteca": [
+      {
+        "q": "astronomy",
+        "n": 47,
+        "worker_ms": 2
+      },
+      {
+        "q": "Ptolemy",
+        "n": 2,
+        "worker_ms": 28
+      },
+      {
+        "q": "medieval model",
+        "n": 60,
+        "worker_ms": 21
+      }
+    ],
+    "documentos_biblioteca": 10
+  },
+  "quijote-cap1.spdf": {
+    "fichero": "quijote-cap1.spdf",
+    "bytes": 200704,
+    "navegador": "Chromium (Playwright, sin cabeza)",
+    "fecha": "2026-10-07T10:04:07.905Z",
+    "arranque_frio_ms": 37.7,
+    "importar_y_abrir_ms": 387.1,
+    "unidades": 9,
+    "pasar_pagina_mediana_ms": 29.3,
+    "ir_a_folio_ms": 35.4,
+    "folio": "3",
+    "arranque_caliente_ms": 19.6,
+    "abrir_desde_biblioteca_ms": 59.8,
+    "apertura_hasta_texto_ms": 44.6,
+    "busqueda_documento": [
+      {
+        "q": "hidalgo",
+        "n": 5,
+        "worker_ms": 3,
+        "total_ms": 31.3
+      },
+      {
+        "q": "Mancha",
+        "n": 3,
+        "worker_ms": 1,
+        "total_ms": 33.4
+      },
+      {
+        "q": "lantejas",
+        "n": 1,
+        "worker_ms": 1,
+        "total_ms": 33.7
+      },
+      {
+        "q": "caballero andante",
+        "n": 3,
+        "worker_ms": 0,
+        "total_ms": 32.9
+      },
+      {
+        "q": "Rocinante",
+        "n": 1,
+        "worker_ms": 0,
+        "total_ms": 33
+      }
+    ],
+    "busqueda_documento_mediana_ms": 1,
+    "busqueda_biblioteca": [
+      {
+        "q": "hidalgo",
+        "n": 1,
+        "worker_ms": 0
+      },
+      {
+        "q": "Mancha",
+        "n": 5,
+        "worker_ms": 18
+      },
+      {
+        "q": "lantejas",
+        "n": 2,
+        "worker_ms": 17
+      }
+    ],
+    "documentos_biblioteca": 10
+  }
+}

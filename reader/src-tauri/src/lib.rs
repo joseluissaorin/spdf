@@ -12,6 +12,20 @@ mod ia;
 mod llavero;
 mod tipos;
 
+/// Instante en que arranca el proceso (para medir el arranque con SPDF_MEDIR=1).
+pub static INICIO: std::sync::OnceLock<std::time::Instant> = std::sync::OnceLock::new();
+
+/// Con SPDF_MEDIR=1, apunta una medida en `medidas.jsonl` (carpeta de datos de la app).
+pub fn medir(dir: &std::path::Path, nombre: &str, ms: f64, detalle: &str) {
+    if std::env::var("SPDF_MEDIR").is_err() {
+        return;
+    }
+    use std::io::Write;
+    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(dir.join("medidas.jsonl")) {
+        let _ = writeln!(f, "{}", serde_json::json!({ "medida": nombre, "ms": (ms * 10.0).round() / 10.0, "detalle": detalle, "plataforma": std::env::consts::OS }));
+    }
+}
+
 use estado::Estado;
 use tauri::{Emitter, Manager};
 
@@ -42,6 +56,7 @@ fn entregar(app: &tauri::AppHandle, rutas: Vec<String>) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    INICIO.get_or_init(std::time::Instant::now);
     let constructor = tauri::Builder::default().plugin(tauri_plugin_dialog::init());
     #[cfg(target_os = "android")]
     let constructor = constructor.plugin(tauri_plugin_fs::init());
@@ -99,6 +114,7 @@ pub fn run() {
             comandos::revectorizar,
             comandos::generar,
             comandos::juzgar,
+            comandos::medida,
         ])
         .build(tauri::generate_context!())
         .expect("no se pudo construir el Lector SPDF");
