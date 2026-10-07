@@ -4,12 +4,39 @@
  * Texts are from Don Quijote (1605), public domain.
  */
 
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { gzipSync } from 'node:zlib';
 import { SpdfWriter, type SqlEngine } from '../src/entry/node.js';
 
 const here = new URL('./fixtures/', import.meta.url);
+
+const HAS_SERIALIZE = typeof (DatabaseSync.prototype as { serialize?: unknown }).serialize === 'function';
+
+/** Opens a writable database (from bytes, or empty), runs `fn`, returns the new bytes. Works on Node 22 too. */
+function withDatabase(bytes: Uint8Array | null, fn: (db: DatabaseSync) => void): Uint8Array {
+  if (HAS_SERIALIZE) {
+    const db = new DatabaseSync(':memory:');
+    if (bytes) (db as unknown as { deserialize(b: Uint8Array): void }).deserialize(bytes);
+    fn(db);
+    const out = (db as unknown as { serialize(): Uint8Array }).serialize();
+    db.close();
+    return out;
+  }
+  const dir = mkdtempSync(join(tmpdir(), 'spdf-fixture-'));
+  const file = join(dir, 'db.sqlite');
+  try {
+    if (bytes) writeFileSync(file, bytes);
+    const db = new DatabaseSync(file);
+    fn(db);
+    db.close();
+    return new Uint8Array(readFileSync(file));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
 
 export const QUIJOTE = [
   'En un lugar de la Mancha, de cuyo nombre no quiero acordarme, no ha mucho tiempo que vivía un hidalgo de los de lanza en astillero, adarga antigua, rocín flaco y galgo corredor.',
@@ -83,7 +110,7 @@ export async function buildQuijote50(options: { engine?: SqlEngine; contentHash?
 /** A legacy 4.x file (gzip-wrapped SQLite with the Scholaris schema). */
 export function buildLegacy(version: '4.0' | '4.1' = '4.1', options: { gzip?: boolean; extraSql?: string } = {}): Uint8Array {
   const schema = readFileSync(new URL(`legacy-v${version}.sql`, here), 'utf8');
-  const db = new DatabaseSync(':memory:');
+  const bytes = withDatabase(null, (db) => {
   db.exec(schema);
   db.exec(`PRAGMA user_version = ${version === '4.0' ? 400 : 410}`);
   const ins = (sql: string, ...p: unknown[]) => db.prepare(sql).run(...(p as never[]));
@@ -140,17 +167,11 @@ export function buildLegacy(version: '4.0' | '4.1' = '4.1', options: { gzip?: bo
   ins("INSERT INTO blobs (clave, mime, datos) VALUES ('pagina-1.webp', 'image/webp', ?)", new Uint8Array([82, 73, 70, 70]));
   ins("INSERT INTO procedencia (documento, fase, proveedor, detalle, ms, cuando) VALUES ('doc1', 'lectura', 'gemini', '{\"paginas\":3}', 1500, '2025-11-02T10:00:00.000Z')");
   if (options.extraSql) db.exec(options.extraSql);
-  const bytes = db.serialize();
-  db.close();
+  });
   return options.gzip === false ? bytes : new Uint8Array(gzipSync(bytes));
 }
 
 /** Rewrites a 5.0 file with raw SQL (for invalid fixtures). */
 export function mutate(bytes: Uint8Array, sql: string): Uint8Array {
-  const db = new DatabaseSync(':memory:');
-  db.deserialize(bytes);
-  db.exec(sql);
-  const out = db.serialize();
-  db.close();
-  return out;
+  return withDatabase(bytes, (db) => db.exec(sql));
 }
