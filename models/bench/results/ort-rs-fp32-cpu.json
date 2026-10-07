@@ -1,0 +1,63 @@
+{
+ "engine": "ort-rs-fp32-cpu",
+ "machine": {
+  "chip": "Apple M4 Max",
+  "memory_gb": 36,
+  "os": "macOS-26.5-arm64-arm-64bit"
+ },
+ "date": "2026-10-07",
+ "latency": {
+  "text_short": {
+   "n": 79,
+   "median_ms": 20.11,
+   "p90_ms": 27.6,
+   "mean_ms": 20.1
+  },
+  "text_medium": {
+   "n": 114,
+   "median_ms": 41.85,
+   "p90_ms": 60.7,
+   "mean_ms": 44.24
+  },
+  "text_long": {
+   "n": 97,
+   "median_ms": 94.05,
+   "p90_ms": 135.7,
+   "mean_ms": 101.61
+  },
+  "text_query": {
+   "n": 40,
+   "median_ms": 13.53,
+   "p90_ms": 14.71,
+   "mean_ms": 13.55
+  },
+  "image": {
+   "n": 54,
+   "median_ms": 1317.28,
+   "p90_ms": 1342.07,
+   "mean_ms": 1318.85
+  },
+  "audio_10s": {
+   "n": 24,
+   "median_ms": 162.21,
+   "p90_ms": 176.34,
+   "mean_ms": 164.34
+  }
+ },
+ "memory": {
+  "after_load_mb": 2258.2,
+  "peak_mb": 3154.4
+ },
+ "meta": {
+  "load_s": 0.7,
+  "ort_crate": "2.0.0-rc.13 (download-binaries)",
+  "ep": "cpu",
+  "dtype": "fp32",
+  "note": "latency excludes preprocessing (reference processor, dumped once)"
+ },
+ "counts": {
+  "text": 330,
+  "image": 54,
+  "audio": 24
+ }
+}

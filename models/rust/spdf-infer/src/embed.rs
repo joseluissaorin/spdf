@@ -387,3 +387,20 @@ mod tests {
         assert_eq!(f.space(Some(32)).truncated_from, Some(64));
     }
 }
+
+#[cfg(test)]
+mod fixture_tests {
+    use super::*;
+    #[test]
+    fn fake_matches_fixtures() {
+        let fx = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../web/test/fixtures/fake.json");
+        let cases: Vec<serde_json::Value> = serde_json::from_str(&std::fs::read_to_string(fx).unwrap()).unwrap();
+        for c in cases {
+            let f = FakeEmbedder::new(c["dims"].as_u64().unwrap() as usize);
+            let v = f.embed(&[c["text"].as_str().unwrap()], Task::Document { title: None }, None).unwrap().remove(0);
+            for (a, b) in v.iter().zip(c["vec"].as_array().unwrap()) {
+                assert!((*a as f64 - b.as_f64().unwrap()).abs() < 1e-6);
+            }
+        }
+    }
+}

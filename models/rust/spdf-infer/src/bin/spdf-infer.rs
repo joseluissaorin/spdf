@@ -21,7 +21,7 @@ use std::{
 
 use serde_json::{json, Value};
 use spdf_infer::{
-    judge::SourceInfo, Embed, Embedder, EmbedderOptions, GenOptions, GenParams, Generator, Judge, Label, ModelManager, Task,
+    judge::SourceInfo, Embed, Embedder, EmbedderOptions, GenOptions, GenParams, Generator, Judge, ModelManager, Task,
 };
 
 fn args() -> (String, HashMap<String, String>, Vec<String>) {
@@ -204,13 +204,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("{}", serde_json::to_string_pretty(&s)?);
         }
         "judge-eval" => {
-            // input lines: {"id","kind":"support"|"relevance"|"classify","claim"/"query","passage","instruction","labels":[...],
-            //               "source":{"author","title","year"}}
+            // input lines: {"id","kind":"support"|"relevance","claim"|"query","passage","source":{…}}
+            // output: raw option logits per question (calibration is fitted offline), plus the
+            // content-free logits once (for prior correction).
+            use spdf_infer::judge::{relation_labels, relevance_labels, support_labels, RELATION_TASK, RELEVANCE_TASK, SUPPORT_TASK};
             let g = Arc::new(Generator::from_file(&PathBuf::from(&kv["model"]), GenOptions { gpu, n_ctx: 8192, ..Default::default() })?);
             let j = Judge::new(g)?;
-            let f = std::fs::File::open(&kv["input"])?;
             let out = std::io::stdout();
             let mut out = out.lock();
+            writeln!(out, "{}", json!({"priors": {
+                "support": j.option_logits(SUPPORT_TASK, "N/A", &support_labels())?,
+                "relation": j.option_logits(RELATION_TASK, "N/A", &relation_labels())?,
+                "relevance": j.option_logits(RELEVANCE_TASK, "N/A", &relevance_labels())?}}))?;
+            let f = std::fs::File::open(&kv["input"])?;
             for line in std::io::BufReader::new(f).lines() {
                 let line = line?;
                 if line.trim().is_empty() {
@@ -218,17 +224,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
                 let it: Value = serde_json::from_str(&line)?;
                 let t = Instant::now();
-                let r = match it["kind"].as_str().unwrap_or("support") {
-                    "relevance" => json!({"relevance": j.relevance(it["query"].as_str().unwrap(), it["passage"].as_str().unwrap())?}),
-                    "classify" => {
-                        let labels: Vec<Label> = serde_json::from_value(it["labels"].clone())?;
-                        json!({"probs": j.classify(it["instruction"].as_str().unwrap(), it["content"].as_str().unwrap(), &labels)?})
-                    }
-                    _ => {
-                        let src: Option<SourceInfo> = serde_json::from_value(it["source"].clone()).ok();
-                        let s = j.support_with(it["claim"].as_str().unwrap(), it["passage"].as_str().unwrap(), src.as_ref())?;
-                        json!({"supported": s.supported, "label": s.label, "probs": s.probs})
-                    }
+                let r = if it["kind"] == "relevance" {
+                    let c = Judge::relevance_content(it["query"].as_str().unwrap(), it["passage"].as_str().unwrap());
+                    json!({"relevance_logits": j.option_logits(RELEVANCE_TASK, &c, &relevance_labels())?})
+                } else {
+                    let src: Option<SourceInfo> = serde_json::from_value(it["source"].clone()).ok();
+                    let c = Judge::pair_content(it["claim"].as_str().unwrap(), it["passage"].as_str().unwrap(), src.as_ref());
+                    json!({"support_logits": j.option_logits(SUPPORT_TASK, &c, &support_labels())?,
+                           "relation_logits": j.option_logits(RELATION_TASK, &c, &relation_labels())?})
                 };
                 writeln!(out, "{}", json!({"id": it["id"], "ms": t.elapsed().as_secs_f64() * 1000.0, "result": r}))?;
                 out.flush()?;

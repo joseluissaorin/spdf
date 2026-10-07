@@ -1,0 +1,31 @@
+{
+  "name": "spdf-infer-web",
+  "version": "0.1.0",
+  "description": "Local inference for SPDF in the browser: EmbeddingGemma 2 embeddings (text, image, audio) with transformers.js (WebGPU, WASM fallback), Gemma 4 E2B generation with MediaPipe, and a Jev-style judge (Valen or Gemma 4), with OPFS model storage.",
+  "license": "MIT OR Apache-2.0",
+  "repository": { "type": "git", "url": "https://github.com/joseluissaorin/spdf", "directory": "models/web" },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "files": ["dist", "README.md"],
+  "sideEffects": false,
+  "scripts": {
+    "sync-manifest": "node scripts/sync-manifest.mjs",
+    "build": "node scripts/sync-manifest.mjs && tsc -p tsconfig.json",
+    "check-manifest": "node scripts/sync-manifest.mjs --check",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "4.3.1",
+    "@mediapipe/tasks-genai": "0.10.29",
+    "@noble/hashes": "^2.0.0",
+    "onnxruntime-web": "1.31.0-dev.20260914-8d85527a0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@webgpu/types": "^0.1.60",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}

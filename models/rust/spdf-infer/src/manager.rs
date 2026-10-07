@@ -106,6 +106,9 @@ pub struct CatalogEntry {
     /// `spaces.version` written by this embedder (models/COMPATIBILIDAD.md).
     #[serde(default)]
     pub space_version: Option<String>,
+    /// Weight format inside the family (q4, q8, int8, fp16…) when the engine needs it.
+    #[serde(default)]
+    pub dtype: Option<String>,
     #[serde(default)]
     pub judge_calibration: Option<JudgeCalibration>,
     #[serde(default)]

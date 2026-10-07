@@ -178,3 +178,36 @@ mod tests {
         assert_eq!(r.data, img.data);
     }
 }
+
+#[cfg(test)]
+mod fixture_tests {
+    use super::*;
+    use sha2::{Digest, Sha256};
+
+    #[test]
+    fn pillow_bicubic_is_bit_exact() {
+        let fx = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../web/test/fixtures/image.json");
+        let v: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(fx).unwrap()).unwrap();
+        for s in v["sizes"].as_array().unwrap() {
+            let (w, h) = (s["w"].as_u64().unwrap() as u32, s["h"].as_u64().unwrap() as u32);
+            let t = (s["target"][0].as_u64().unwrap() as u32, s["target"][1].as_u64().unwrap() as u32);
+            assert_eq!(target_size(w, h, 280, 16, 3), t, "{w}x{h}");
+        }
+        let (w, h) = (v["synthetic"]["w"].as_u64().unwrap() as u32, v["synthetic"]["h"].as_u64().unwrap() as u32);
+        let mut data = Vec::with_capacity((w * h * 3) as usize);
+        for y in 0..h {
+            for x in 0..w {
+                for c in 0..3u32 {
+                    data.push(((x * 7 + y * 13 + c * 101) % 256) as u8);
+                }
+            }
+        }
+        let img = Rgb { width: w, height: h, data };
+        for (k, want) in v["pillow_bicubic_sha256"].as_object().unwrap() {
+            let (tw, th) = k.split_once('x').unwrap();
+            let r = resize_bicubic(&img, tw.parse().unwrap(), th.parse().unwrap());
+            let got: String = Sha256::digest(&r.data).iter().map(|b| format!("{b:02x}")).collect();
+            assert_eq!(got.as_str(), want.as_str().unwrap(), "resize {k}");
+        }
+    }
+}

@@ -24,6 +24,8 @@ pub mod manager;
 pub mod mtmd;
 #[cfg(feature = "gemini")]
 pub mod gemini;
+#[cfg(feature = "valen-onnx")]
+pub mod valen;
 
 pub use embed::{Embed, Embedder, EmbedderOptions, FakeEmbedder, Space, Task};
 pub use generate::{GenOptions, GenParams, GenStats, Generator, Message, Role};

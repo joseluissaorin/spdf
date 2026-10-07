@@ -116,21 +116,77 @@ pub struct SourceInfo {
     pub year: Option<i32>,
 }
 
+pub const SUPPORT_TASK: &str = "Checking academic citations. Does the passage support the claim, so that a skeptical reader checking the citation would agree the source says it?";
+pub const SUPPORT_YES: &str = "The passage states or clearly entails the claim.";
+pub const SUPPORT_NO: &str = "The passage only shares the topic, says something different, or contradicts the claim.";
+pub const RELATION_TASK: &str = "Checking academic citations. How does the passage relate to the claim?";
+pub const RELEVANCE_TASK: &str = "Search relevance. How well does the passage answer the query?";
+
+/// The 0-3 relevance rubric (same as Scholaris' judgments).
+pub fn relevance_labels() -> [Label; 4] {
+    [
+        Label::new("0", "Irrelevant: unrelated to the query."),
+        Label::new("1", "Related: same topic, but does not help answer the query."),
+        Label::new("2", "Relevant: partially answers the query or gives useful evidence for it."),
+        Label::new("3", "Highly relevant: directly and fully answers the query."),
+    ]
+}
+
+pub fn support_labels() -> [Label; 2] {
+    [Label::new("YES", SUPPORT_YES), Label::new("NO", SUPPORT_NO)]
+}
+
+pub fn relation_labels() -> Vec<Label> {
+    Relation::ALL.iter().map(|r| Label::new(r.name(), r.description())).collect()
+}
+
 const SYSTEM: &str = "You are a careful, skeptical judge. Read the task, the content and the options, and choose the single best option. Answer with the letter of that option only.";
 
+enum Engine {
+    /// A generative model scored by the logits of the option letters.
+    Gemma { gen: Arc<Generator>, letters: Vec<i32> },
+    /// Valen, a native decision model (onnxruntime).
+    #[cfg(feature = "valen-onnx")]
+    Valen(crate::valen::ValenOnnx),
+}
+
+/// Valen reads plain questions: drop the "Checking academic citations." style framing.
+#[cfg(feature = "valen-onnx")]
+fn valen_question(task: &str) -> String {
+    match task {
+        SUPPORT_TASK => "Does the passage support the claim, so that a skeptical reader checking the citation would agree the source says it?".into(),
+        RELATION_TASK => "How does the passage relate to the claim?".into(),
+        RELEVANCE_TASK => "How well does the passage answer the search query?".into(),
+        t => t.to_string(),
+    }
+}
+
 pub struct Judge {
-    gen: Arc<Generator>,
+    engine: Engine,
     pub calibration: Calibration,
     /// Calibration of the yes/no support question (fitted separately from the relation choice).
     pub support_calibration: Calibration,
-    letters: Vec<i32>,
     priors: Mutex<HashMap<String, Vec<f32>>>,
 }
 
 impl Judge {
+    /// Loads a judge from the catalog: Gemma 4 GGUF (llama.cpp) or, with the `valen-onnx`
+    /// feature, Valen ONNX (onnxruntime).
     pub fn load(mm: &ModelManager, id: &str) -> Result<Self> {
-        let gen = Generator::load(mm, id, GenOptions { n_ctx: 8192, ..Default::default() })?;
-        let mut j = Self::new(Arc::new(gen))?;
+        let e = mm.entry(id).ok_or_else(|| Error::NotFound(id.into()))?.clone();
+        let mut j = if e.engine == "onnxruntime" {
+            #[cfg(feature = "valen-onnx")]
+            {
+                if !mm.is_downloaded(id) {
+                    return Err(Error::NotDownloaded(id.into()));
+                }
+                Self::valen(crate::valen::ValenOnnx::load(&mm.dir(id), e.dtype.as_deref().unwrap_or("int8"), None)?)
+            }
+            #[cfg(not(feature = "valen-onnx"))]
+            return Err(Error::Unsupported(format!("{id} needs spdf-infer built with the valen-onnx feature")));
+        } else {
+            Self::new(Arc::new(Generator::load(mm, id, GenOptions { n_ctx: 8192, ..Default::default() })?))?
+        };
         if let Some(c) = mm.entry(id).and_then(|e| e.judge_calibration.clone()) {
             j.calibration = c.choice;
             j.support_calibration = c.noul;
@@ -149,16 +205,34 @@ impl Judge {
             letters.push(t[0]);
         }
         Ok(Self {
-            gen,
+            engine: Engine::Gemma { gen, letters },
             calibration: Calibration::default(),
             support_calibration: Calibration::default(),
-            letters,
             priors: Mutex::new(HashMap::new()),
         })
     }
 
-    pub fn generator(&self) -> &Arc<Generator> {
-        &self.gen
+    /// A judge on Valen (ONNX).
+    #[cfg(feature = "valen-onnx")]
+    pub fn valen(v: crate::valen::ValenOnnx) -> Self {
+        Self { engine: Engine::Valen(v), calibration: Calibration::default(), support_calibration: Calibration::default(), priors: Mutex::new(HashMap::new()) }
+    }
+
+    /// The generator behind a Gemma judge (None for Valen).
+    pub fn generator(&self) -> Option<&Arc<Generator>> {
+        match &self.engine {
+            Engine::Gemma { gen, .. } => Some(gen),
+            #[cfg(feature = "valen-onnx")]
+            Engine::Valen(_) => None,
+        }
+    }
+
+    pub fn engine_name(&self) -> &'static str {
+        match &self.engine {
+            Engine::Gemma { .. } => "gemma-logits",
+            #[cfg(feature = "valen-onnx")]
+            Engine::Valen(_) => "valen",
+        }
     }
 
     fn prompt(task: &str, content: &str, labels: &[Label]) -> String {
@@ -179,13 +253,41 @@ impl Judge {
         s
     }
 
+    /// Raw logits of the option letters (no softmax, no calibration).
+    pub fn option_logits(&self, task: &str, content: &str, labels: &[Label]) -> Result<Vec<f32>> {
+        self.raw_scores(task, content, labels)
+    }
+
+    /// Option scores: letter logits (Gemma) or log-probabilities of a choice question (Valen).
     fn raw_scores(&self, task: &str, content: &str, labels: &[Label]) -> Result<Vec<f32>> {
         if labels.is_empty() || labels.len() > 26 {
             return Err(Error::Input("between 1 and 26 labels".into()));
         }
-        let msgs = [Message::system(SYSTEM), Message::user(Self::prompt(task, content, labels))];
-        let logits = self.gen.next_token_logits(&msgs, "")?;
-        Ok(labels.iter().enumerate().map(|(i, _)| logits[self.letters[i] as usize]).collect())
+        match &self.engine {
+            Engine::Gemma { gen, letters } => {
+                let msgs = [Message::system(SYSTEM), Message::user(Self::prompt(task, content, labels))];
+                let logits = gen.next_token_logits(&msgs, "")?;
+                Ok(labels.iter().enumerate().map(|(i, _)| logits[letters[i] as usize]).collect())
+            }
+            #[cfg(feature = "valen-onnx")]
+            Engine::Valen(v) => {
+                use crate::valen::{Criteria, Question, QuestionType, Request};
+                let (yes_no, crit) = if labels.len() == 2 && labels[0].name == "YES" && labels[1].name == "NO" {
+                    (true, Criteria::None)
+                } else {
+                    (false, Criteria::Map(labels.iter().map(|l| (l.name.clone(), l.description.clone().unwrap_or_else(|| l.name.clone()))).collect()))
+                };
+                let q = Question { kind: if yes_no { QuestionType::Noul } else { QuestionType::Choice }, instructions: valen_question(task), criteria: crit };
+                let (ans, _) = v.predict(&Request { state: content.to_string(), questions: vec![("q".into(), q)] }, 1.0)?;
+                let a = &ans["q"];
+                Ok(if yes_no {
+                    let y = a.noul.unwrap_or(0.5).clamp(1e-9, 1.0 - 1e-9);
+                    vec![y.ln(), (1.0 - y).ln()]
+                } else {
+                    a.probabilities.iter().map(|(_, p)| p.max(1e-12).ln()).collect()
+                })
+            }
+        }
     }
 
     fn softmax(logits: &[f32], t: f32) -> Vec<f32> {
@@ -232,7 +334,8 @@ impl Judge {
         Ok(self.calibrated(question, content, &labels, &self.support_calibration)?[0])
     }
 
-    fn pair_content(claim: &str, passage: &str, source: Option<&SourceInfo>) -> String {
+    /// Content shown to the judge for a claim–passage pair.
+    pub fn pair_content(claim: &str, passage: &str, source: Option<&SourceInfo>) -> String {
         let mut s = String::new();
         if let Some(src) = source {
             let mut parts = vec![];
@@ -260,29 +363,32 @@ impl Judge {
 
     pub fn support_with(&self, claim: &str, passage: &str, source: Option<&SourceInfo>) -> Result<Support> {
         let content = Self::pair_content(claim, passage, source);
-        let supported = self.yes_no(
-            "Checking academic citations. Does the passage support the claim, so that a skeptical reader checking the citation would agree the source says it?",
-            &content,
-            "The passage states or clearly entails the claim.",
-            "The passage only shares the topic, says something different, or contradicts the claim.",
-        )?;
-        let labels: Vec<Label> = Relation::ALL.iter().map(|r| Label::new(r.name(), r.description())).collect();
-        let p = self.calibrated("Checking academic citations. How does the passage relate to the claim?", &content, &labels, &self.calibration)?;
+        let supported = self.yes_no(SUPPORT_TASK, &content, SUPPORT_YES, SUPPORT_NO)?;
+        let p = self.calibrated(RELATION_TASK, &content, &relation_labels(), &self.calibration)?;
         let probs: Vec<(Relation, f32)> = Relation::ALL.iter().copied().zip(p).collect();
         let label = probs.iter().max_by(|a, b| a.1.total_cmp(&b.1)).map(|x| x.0).unwrap();
         Ok(Support { label, probs, supported })
     }
 
+    pub fn relevance_content(query: &str, passage: &str) -> String {
+        format!("Query: {}\nPassage: {}", query.trim(), passage.trim())
+    }
+
     /// Relevance of a passage to a search query in [0, 1] (expected grade of a 0–3 rubric / 3).
     pub fn relevance(&self, query: &str, passage: &str) -> Result<f32> {
-        let labels = [
-            Label::new("0", "Irrelevant: unrelated to the query."),
-            Label::new("1", "Related: same topic, but does not help answer the query."),
-            Label::new("2", "Relevant: partially answers the query or gives useful evidence for it."),
-            Label::new("3", "Highly relevant: directly and fully answers the query."),
-        ];
-        let content = format!("Query: {}\nPassage: {}", query.trim(), passage.trim());
-        let p = self.calibrated("Search relevance. How well does the passage answer the query?", &content, &labels, &self.calibration)?;
+        #[cfg(feature = "valen-onnx")]
+        if let Engine::Valen(v) = &self.engine {
+            use crate::valen::{Criteria, Question, QuestionType, Request};
+            let q = Question {
+                kind: QuestionType::Score,
+                instructions: valen_question(RELEVANCE_TASK),
+                criteria: Criteria::List(relevance_labels().iter().map(|l| l.description.clone().unwrap()).collect()),
+            };
+            let (ans, _) = v.predict(&Request { state: Self::relevance_content(query, passage), questions: vec![("q".into(), q)] }, self.calibration.temperature)?;
+            return Ok(ans["q"].score.unwrap_or(0.0) / 3.0);
+        }
+        let content = Self::relevance_content(query, passage);
+        let p = self.calibrated(RELEVANCE_TASK, &content, &relevance_labels(), &self.calibration)?;
         Ok(p.iter().enumerate().map(|(i, x)| i as f32 * x).sum::<f32>() / 3.0)
     }
 }

@@ -1,0 +1,64 @@
+{
+ "engine": "spdf-infer-bf16-mmbf16-metal",
+ "machine": {
+  "chip": "Apple M4 Max",
+  "memory_gb": 36,
+  "os": "macOS-26.5-arm64-arm-64bit"
+ },
+ "date": "2026-10-07",
+ "latency": {
+  "text_short": {
+   "n": 79,
+   "median_ms": 8.95,
+   "p90_ms": 9.81,
+   "mean_ms": 9.15
+  },
+  "text_medium": {
+   "n": 114,
+   "median_ms": 12.53,
+   "p90_ms": 14.7,
+   "mean_ms": 12.99
+  },
+  "text_long": {
+   "n": 97,
+   "median_ms": 24.18,
+   "p90_ms": 35.12,
+   "mean_ms": 28.42
+  },
+  "text_query": {
+   "n": 40,
+   "median_ms": 8.43,
+   "p90_ms": 8.62,
+   "mean_ms": 8.41
+  },
+  "image": {
+   "n": 54,
+   "median_ms": 174.47,
+   "p90_ms": 184.17,
+   "mean_ms": 174.03
+  },
+  "audio_10s": {
+   "n": 24,
+   "median_ms": 50.34,
+   "p90_ms": 52.35,
+   "mean_ms": 50.78
+  }
+ },
+ "memory": {
+  "after_load_mb": 1343.3,
+  "peak_mb": 2641.0
+ },
+ "meta": {
+  "load_s": 1.86,
+  "llama.cpp": "36a73916e",
+  "backend": "Metal",
+  "gguf": "embeddinggemma-2-BF16.gguf",
+  "mmproj": "BF16",
+  "note": "in-process (no HTTP); image latency includes decode + reference resize"
+ },
+ "counts": {
+  "text": 330,
+  "image": 54,
+  "audio": 24
+ }
+}

@@ -1,0 +1,63 @@
+{
+ "engine": "ort-rs-q8-cpu",
+ "machine": {
+  "chip": "Apple M4 Max",
+  "memory_gb": 36,
+  "os": "macOS-26.5-arm64-arm-64bit"
+ },
+ "date": "2026-10-07",
+ "latency": {
+  "text_short": {
+   "n": 79,
+   "median_ms": 52.07,
+   "p90_ms": 58.15,
+   "mean_ms": 52.32
+  },
+  "text_medium": {
+   "n": 114,
+   "median_ms": 73.61,
+   "p90_ms": 89.4,
+   "mean_ms": 75.07
+  },
+  "text_long": {
+   "n": 97,
+   "median_ms": 124.55,
+   "p90_ms": 168.94,
+   "mean_ms": 132.96
+  },
+  "text_query": {
+   "n": 40,
+   "median_ms": 46.65,
+   "p90_ms": 51.62,
+   "mean_ms": 47.28
+  },
+  "image": {
+   "n": 54,
+   "median_ms": 1416.13,
+   "p90_ms": 2492.84,
+   "mean_ms": 1699.75
+  },
+  "audio_10s": {
+   "n": 24,
+   "median_ms": 293.29,
+   "p90_ms": 382.77,
+   "mean_ms": 313.46
+  }
+ },
+ "memory": {
+  "after_load_mb": 46.1,
+  "peak_mb": 1028.2
+ },
+ "meta": {
+  "load_s": 0.15,
+  "ort_crate": "2.0.0-rc.13 (download-binaries)",
+  "ep": "cpu",
+  "dtype": "q8",
+  "note": "latency excludes preprocessing (reference processor, dumped once)"
+ },
+ "counts": {
+  "text": 330,
+  "image": 54,
+  "audio": 24
+ }
+}

@@ -1,0 +1,68 @@
+{
+ "engine": "st-bf16-mps",
+ "machine": {
+  "chip": "Apple M4 Max",
+  "memory_gb": 36,
+  "os": "macOS-26.5-arm64-arm-64bit"
+ },
+ "date": "2026-10-07",
+ "latency": {
+  "text_short": {
+   "n": 79,
+   "median_ms": 45.17,
+   "p90_ms": 166.03,
+   "mean_ms": 62.19
+  },
+  "text_medium": {
+   "n": 114,
+   "median_ms": 51.46,
+   "p90_ms": 85.29,
+   "mean_ms": 59.16
+  },
+  "text_long": {
+   "n": 97,
+   "median_ms": 76.82,
+   "p90_ms": 157.78,
+   "mean_ms": 93.69
+  },
+  "text_query": {
+   "n": 40,
+   "median_ms": 29.65,
+   "p90_ms": 55.15,
+   "mean_ms": 52.83
+  },
+  "image": {
+   "n": 54,
+   "median_ms": 309.51,
+   "p90_ms": 416.96,
+   "mean_ms": 293.94
+  },
+  "audio_10s": {
+   "n": 24,
+   "median_ms": 68.13,
+   "p90_ms": 77.76,
+   "mean_ms": 71.3
+  }
+ },
+ "memory": {
+  "baseline_mb": 352.5,
+  "after_load_mb": 2271.6,
+  "peak_mb": 3929.0,
+  "model_mb": 1919.1
+ },
+ "meta": {
+  "load_s": 4.04,
+  "torch": "2.14.1",
+  "transformers": "5.19.0",
+  "sentence_transformers": "6.1.0",
+  "device": "mps",
+  "dtype": "bf16",
+  "batch": 1,
+  "weights": "google/embeddinggemma-2 (safetensors bf16, rev 914f7f89)"
+ },
+ "counts": {
+  "text": 330,
+  "image": 54,
+  "audio": 24
+ }
+}

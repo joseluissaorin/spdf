@@ -1,0 +1,64 @@
+{
+ "engine": "spdf-infer-q8_0-mmq8_0-cpu",
+ "machine": {
+  "chip": "Apple M4 Max",
+  "memory_gb": 36,
+  "os": "macOS-26.5-arm64-arm-64bit"
+ },
+ "date": "2026-10-07",
+ "latency": {
+  "text_short": {
+   "n": 79,
+   "median_ms": 21.07,
+   "p90_ms": 33.37,
+   "mean_ms": 22.62
+  },
+  "text_medium": {
+   "n": 114,
+   "median_ms": 59.93,
+   "p90_ms": 90.57,
+   "mean_ms": 63.47
+  },
+  "text_long": {
+   "n": 97,
+   "median_ms": 209.21,
+   "p90_ms": 373.63,
+   "mean_ms": 240.68
+  },
+  "text_query": {
+   "n": 40,
+   "median_ms": 19.74,
+   "p90_ms": 23.55,
+   "mean_ms": 19.91
+  },
+  "image": {
+   "n": 54,
+   "median_ms": 2347.89,
+   "p90_ms": 3171.84,
+   "mean_ms": 2662.52
+  },
+  "audio_10s": {
+   "n": 24,
+   "median_ms": 376.54,
+   "p90_ms": 379.61,
+   "mean_ms": 378.72
+  }
+ },
+ "memory": {
+  "after_load_mb": 1000.9,
+  "peak_mb": 2453.9
+ },
+ "meta": {
+  "load_s": 0.64,
+  "llama.cpp": "36a73916e",
+  "backend": "CPU",
+  "gguf": "embeddinggemma-2-Q8_0.gguf",
+  "mmproj": "Q8_0",
+  "note": "in-process (no HTTP); image latency includes decode + reference resize"
+ },
+ "counts": {
+  "text": 330,
+  "image": 54,
+  "audio": 24
+ }
+}
