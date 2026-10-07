@@ -1,0 +1,54 @@
+{
+  "name": "spdf-langchain",
+  "version": "0.1.0",
+  "description": "LangChain.js document loader for SPDF files: every passage with its exact citation (printed folio, second) and anchor URI in the metadata.",
+  "keywords": [
+    "spdf",
+    "langchain",
+    "document-loader",
+    "rag",
+    "citation"
+  ],
+  "license": "MIT OR Apache-2.0",
+  "author": "José Luis Saorín Ferrer <jl@joseluissaorin.com> (https://joseluissaorin.com)",
+  "homepage": "https://spdf.joseluissaorin.com/integrations#loaders",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joseluissaorin/spdf.git",
+    "directory": "integrations/langchain-js"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && vitest run"
+  },
+  "peerDependencies": {
+    "@langchain/core": ">=0.3.0"
+  },
+  "dependencies": {
+    "spdf-format": "file:../../js"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "langchain": "^1.5.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.3",
+    "vitest": "^5.0.3",
+    "@langchain/core": "^1.2.17"
+  }
+}

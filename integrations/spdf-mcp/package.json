@@ -1,0 +1,56 @@
+{
+  "name": "spdf-mcp",
+  "version": "0.1.0",
+  "description": "Model Context Protocol server for SPDF: point it at a folder of .spdf files and any agent can search, read a passage, cite with the exact printed folio and look at figures, without being able to invent a page.",
+  "keywords": [
+    "spdf",
+    "mcp",
+    "model-context-protocol",
+    "citation",
+    "rag",
+    "agents"
+  ],
+  "license": "MIT OR Apache-2.0",
+  "author": "José Luis Saorín Ferrer <jl@joseluissaorin.com> (https://joseluissaorin.com)",
+  "homepage": "https://spdf.joseluissaorin.com/integrations#mcp",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joseluissaorin/spdf.git",
+    "directory": "integrations/spdf-mcp"
+  },
+  "type": "module",
+  "bin": {
+    "spdf-mcp": "./dist/cli.js"
+  },
+  "main": "./dist/server.js",
+  "types": "./dist/server.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/server.d.ts",
+      "default": "./dist/server.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && vitest run",
+    "start": "node dist/cli.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "spdf-format": "file:../../js",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.3",
+    "vitest": "^5.0.3"
+  }
+}

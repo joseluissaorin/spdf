@@ -1,0 +1,54 @@
+{
+  "name": "spdf-llamaindex",
+  "version": "0.1.0",
+  "description": "LlamaIndex.TS reader for SPDF files: every passage with its exact citation (printed folio, second) and anchor URI in the metadata, and optionally the vectors already stored in the file.",
+  "keywords": [
+    "spdf",
+    "llamaindex",
+    "reader",
+    "rag",
+    "citation"
+  ],
+  "license": "MIT OR Apache-2.0",
+  "author": "José Luis Saorín Ferrer <jl@joseluissaorin.com> (https://joseluissaorin.com)",
+  "homepage": "https://spdf.joseluissaorin.com/integrations#loaders",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joseluissaorin/spdf.git",
+    "directory": "integrations/llamaindex-js"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && vitest run"
+  },
+  "peerDependencies": {
+    "@llamaindex/core": ">=0.6.0"
+  },
+  "dependencies": {
+    "spdf-format": "file:../../js"
+  },
+  "devDependencies": {
+    "@llamaindex/core": "^0.6.23",
+    "@types/node": "^26.6.4",
+    "llamaindex": "^0.12.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.3",
+    "vitest": "^5.0.3"
+  }
+}
