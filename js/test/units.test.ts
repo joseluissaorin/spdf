@@ -123,7 +123,10 @@ describe('vectors', () => {
   it('f16 round trip and rounding', () => {
     for (const x of [0, 1, -1, 0.5, 65504, 6.103515625e-5, 5.960464477539063e-8]) expect(f16ToNumber(numberToF16(x))).toBe(x);
     expect(f16ToNumber(numberToF16(1 / 3))).toBeCloseTo(0.33325, 5);
-    expect(f16ToNumber(numberToF16(1e6))).toBe(Infinity);
+    expect(() => numberToF16(1e6)).toThrow();
+    expect(f16ToNumber(numberToF16(1e6, true))).toBe(Infinity);
+    expect(numberToF16(65504)).toBe(0x7bff);
+    expect(() => numberToF16(65520)).toThrow();
   });
   it('i8 quantization is round half away from zero, clamped', () => {
     expect(Array.from(encodeVector([1, -1, 0.5 / 127, -0.5 / 127, 2, -3], 'i8')).map((b) => (b > 127 ? b - 256 : b))).toEqual([127, -127, 1, -1, 127, -127]);

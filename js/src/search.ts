@@ -152,13 +152,17 @@ export async function lexicalRanking(doc: SpdfDocument, query: string, limit: nu
   const nCol = await view.expr('fragments', 'n');
   const idCol = await view.expr('fragments', 'id');
   const lim = Math.max(0, Math.floor(limit));
+  const withIds = async (rows: Array<Record<string, unknown>>): Promise<LexicalRanking['results']> => {
+    if (!rows.length) return [];
+    const ns = rows.map((r) => Number(r.n));
+    const ids = new Map<number, string>();
+    for (const r of await conn.all(`SELECT ${nCol} AS n, ${idCol} AS id FROM ${q(ft)} WHERE ${nCol} IN (${ns.map(() => '?').join(',')})`, ns)) ids.set(Number(r.n), String(r.id));
+    return rows.filter((r) => ids.has(Number(r.n))).map((r) => ({ n: Number(r.n), id: ids.get(Number(r.n)) as string, score: -Number(r.r) }));
+  };
   if (isCjk(query.normalize('NFC'))) {
     if (info.trigram && parsed.terms.every((t) => cpLength(t) >= 3)) {
-      const rows = await conn.all(
-        `SELECT f.${nCol} AS n, f.${idCol} AS id, bm25(fragments_fts_trigram) AS r FROM fragments_fts_trigram JOIN ${q(ft)} f ON f.${nCol} = fragments_fts_trigram.rowid WHERE fragments_fts_trigram MATCH ? ORDER BY r, f.${nCol} LIMIT ?`,
-        [match, lim],
-      );
-      return { route: 'trigram', match, results: rows.map((r) => ({ n: Number(r.n), id: String(r.id), score: -Number(r.r) })) };
+      const rows = await conn.all('SELECT rowid AS n, bm25(fragments_fts_trigram) AS r FROM fragments_fts_trigram WHERE fragments_fts_trigram MATCH ? ORDER BY r, rowid LIMIT ?', [match, lim]);
+      return { route: 'trigram', match, results: await withIds(rows) };
     }
     const textCol = await view.expr('fragments', 'text');
     const hitsSql = parsed.terms.map(() => `(instr(${textCol}, ?) > 0)`).join(' + ');
@@ -172,11 +176,14 @@ export async function lexicalRanking(doc: SpdfDocument, query: string, limit: nu
   if (!info.fts) return { route: 'fts', match, results: [] };
   const fts = q(info.fts.table);
   const weights = [1.0, 0.5, 0.5, 1.0].slice(0, Math.max(1, Math.min(4, info.fts.columns.length || 4)));
+  // Rank inside the FTS index alone (rowid = fragments.n) and look the ids up only for the
+  // hits: joining every match with `fragments` would read a page per match, which matters
+  // a lot when the file is read remotely.
   const rows = await conn.all(
-    `SELECT f.${nCol} AS n, f.${idCol} AS id, bm25(${fts}, ${weights.map((w) => w.toFixed(1)).join(', ')}) AS r FROM ${fts} JOIN ${q(ft)} f ON f.${nCol} = ${fts}.rowid WHERE ${fts} MATCH ? ORDER BY r, f.${nCol} LIMIT ?`,
+    `SELECT rowid AS n, bm25(${fts}, ${weights.map((w) => w.toFixed(1)).join(', ')}) AS r FROM ${fts} WHERE ${fts} MATCH ? ORDER BY r, rowid LIMIT ?`,
     [match, lim],
   );
-  return { route: 'fts', match, results: rows.map((r) => ({ n: Number(r.n), id: String(r.id), score: -Number(r.r) })) };
+  return { route: 'fts', match, results: await withIds(rows) };
 }
 
 async function hydrate(doc: SpdfDocument, ranking: Array<{ n: number; score: number; via: Array<'lexical' | 'vector'> }>): Promise<SearchHit[]> {

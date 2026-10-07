@@ -54,7 +54,7 @@ export class BlobSource implements RandomAccessSource {
 export interface HttpSourceOptions {
   /** Smallest request, in bytes (a power of two ≥ 512). Default 4096 (the SPDF page size). */
   chunkSize?: number;
-  /** Largest request when sequential reads grow the read-ahead. Default 1 MiB. */
+  /** Largest request when sequential reads grow the read-ahead. Default 256 KiB. */
   maxReadAhead?: number;
   /** Cache budget in bytes (least recently used chunks are evicted). Default 64 MiB. */
   cacheBytes?: number;
@@ -69,58 +69,47 @@ export class RangeNotSupportedError extends Error {
   override readonly name = 'RangeNotSupportedError';
 }
 
+/** Fetches bytes `[start, end]` (inclusive) synchronously. */
+export type RangeTransport = (start: number, end: number) => Uint8Array;
+
+export interface RangeSourceStats extends SourceStats {
+  /** Distinct chunks SQLite actually asked for (the rest was read-ahead). */
+  chunksUsed: number;
+  chunkSize: number;
+}
+
 /**
- * An HTTP resource read with synchronous Range requests, a chunk cache and an adaptive
- * read-ahead: a request that continues the previous one doubles in size (up to
- * `maxReadAhead`), which turns B-tree scans and long FTS doclists into few requests.
+ * A random-access source over any synchronous range transport, with a chunk cache and an
+ * adaptive read-ahead: a miss that continues the previous fetch doubles the next request
+ * (up to `maxReadAhead`), which turns B-tree scans and long FTS doclists into few
+ * requests; a jump resets it to one chunk.
  */
-export class HttpRangeSource implements RandomAccessSource {
+export class RangeSource implements RandomAccessSource {
   readonly chunkSize: number;
   private readonly maxReadAhead: number;
   private readonly cacheBytes: number;
   private readonly cache = new Map<number, Uint8Array>(); // chunk index → bytes (LRU order)
+  private readonly used = new Set<number>();
   private cached = 0;
-  private requests = 0;
-  private fetched = 0;
-  private lastEnd = -1; // chunk index after the last fetched range
-  private ahead = 1; // chunks to fetch on the next sequential miss
-  private readonly binaryText: boolean;
+  protected requests = 0;
+  protected fetched = 0;
+  private lastEnd = -1;
+  private ahead = 1;
 
   constructor(
-    readonly url: string,
     readonly size: number,
-    private readonly options: HttpSourceOptions = {},
+    private readonly transport: RangeTransport,
+    options: HttpSourceOptions = {},
   ) {
     const cs = options.chunkSize ?? 4096;
     if (cs < 512 || (cs & (cs - 1)) !== 0) throw new Error('chunkSize must be a power of two ≥ 512.');
     this.chunkSize = cs;
-    this.maxReadAhead = Math.max(cs, options.maxReadAhead ?? 1024 * 1024);
+    this.maxReadAhead = Math.max(cs, options.maxReadAhead ?? 256 * 1024);
     this.cacheBytes = Math.max(this.maxReadAhead * 4, options.cacheBytes ?? 64 * 1024 * 1024);
-    // Synchronous XHR may only return binary through responseText outside Workers.
-    this.binaryText = typeof (globalThis as { WorkerGlobalScope?: unknown }).WorkerGlobalScope === 'undefined';
   }
 
-  /** Opens a URL: one small asynchronous request learns the size and checks Range support. */
-  static async open(url: string, options: HttpSourceOptions = {}): Promise<{ source: HttpRangeSource; head: Uint8Array }> {
-    const headers = { ...(options.headers ?? {}), Range: 'bytes=0-4095' };
-    const res = await fetch(url, { headers, credentials: options.withCredentials ? 'include' : 'same-origin' });
-    if (!res.ok) throw new Error(`GET ${url}: HTTP ${res.status}`);
-    const head = new Uint8Array(await res.arrayBuffer());
-    if (res.status !== 206) {
-      throw new RangeNotSupportedError(`${url} does not support Range requests (HTTP ${res.status}).`);
-    }
-    const cr = res.headers.get('Content-Range');
-    const total = cr ? /\/(\d+)\s*$/.exec(cr)?.[1] : undefined;
-    if (!total) throw new RangeNotSupportedError(`${url}: no readable Content-Range header (CORS must expose it).`);
-    const source = new HttpRangeSource(url, Number(total), options);
-    source.requests = 1;
-    source.fetched = head.byteLength;
-    if (head.byteLength >= source.chunkSize) source.store(0, head.subarray(0, source.chunkSize));
-    return { source, head };
-  }
-
-  stats(): SourceStats {
-    return { requests: this.requests, bytesFetched: this.fetched };
+  stats(): RangeSourceStats {
+    return { requests: this.requests, bytesFetched: this.fetched, chunksUsed: this.used.size, chunkSize: this.chunkSize };
   }
 
   /** Forgets the cache (for measurements). */
@@ -134,6 +123,12 @@ export class HttpRangeSource implements RandomAccessSource {
   resetStats(): void {
     this.requests = 0;
     this.fetched = 0;
+    this.used.clear();
+  }
+
+  /** Seeds the cache with bytes already fetched from offset 0 (the first request). */
+  protected seed(head: Uint8Array): void {
+    for (let i = 0; (i + 1) * this.chunkSize <= head.byteLength; i++) this.store(i, head.subarray(i * this.chunkSize, (i + 1) * this.chunkSize));
   }
 
   private store(index: number, bytes: Uint8Array): void {
@@ -156,29 +151,11 @@ export class HttpRangeSource implements RandomAccessSource {
     return v;
   }
 
-  private fetchRange(first: number, count: number): void {
+  private fetchChunks(first: number, count: number): void {
     const start = first * this.chunkSize;
     const end = Math.min(this.size, (first + count) * this.chunkSize) - 1;
     if (end < start) return;
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', this.url, false);
-    if (this.options.withCredentials) xhr.withCredentials = true;
-    for (const [k, v] of Object.entries(this.options.headers ?? {})) xhr.setRequestHeader(k, v);
-    xhr.setRequestHeader('Range', `bytes=${start}-${end}`);
-    if (this.binaryText) xhr.overrideMimeType('text/plain; charset=x-user-defined');
-    else xhr.responseType = 'arraybuffer';
-    xhr.send(null);
-    if (xhr.status !== 206 && !(xhr.status === 200 && start === 0 && end === this.size - 1)) {
-      throw new Error(`Range ${start}-${end} of ${this.url}: HTTP ${xhr.status}`);
-    }
-    let bytes: Uint8Array;
-    if (this.binaryText) {
-      const text = xhr.responseText;
-      bytes = new Uint8Array(text.length);
-      for (let i = 0; i < text.length; i++) bytes[i] = text.charCodeAt(i) & 0xff;
-    } else {
-      bytes = new Uint8Array(xhr.response as ArrayBuffer);
-    }
+    const bytes = this.transport(start, end);
     this.requests++;
     this.fetched += bytes.byteLength;
     for (let i = 0; i * this.chunkSize < bytes.byteLength; i++) {
@@ -194,14 +171,13 @@ export class HttpRangeSource implements RandomAccessSource {
     const maxChunks = Math.max(1, Math.floor(this.maxReadAhead / this.chunkSize));
     const totalChunks = Math.ceil(this.size / this.chunkSize);
     for (let c = firstChunk; c <= lastChunk; c++) {
+      this.used.add(c);
       if (this.get(c)) continue;
-      // Sequential continuation grows the read-ahead; a jump resets it.
       this.ahead = c === this.lastEnd ? Math.min(maxChunks, this.ahead * 2) : 1;
       let n = Math.max(this.ahead, lastChunk - c + 1);
       n = Math.min(n, totalChunks - c);
-      // Do not refetch chunks already cached at the end of the range.
-      while (n > 1 && this.cache.has(c + n - 1)) n--;
-      this.fetchRange(c, n);
+      while (n > lastChunk - c + 1 && this.cache.has(c + n - 1)) n--;
+      this.fetchChunks(c, n);
       this.lastEnd = c + n;
     }
     if (firstChunk === lastChunk) {
@@ -219,5 +195,60 @@ export class HttpRangeSource implements RandomAccessSource {
       pos += to - from;
     }
     return out;
+  }
+}
+
+/** A synchronous range transport over `XMLHttpRequest` (Workers; also the main thread). */
+export function xhrTransport(url: string, options: HttpSourceOptions = {}): RangeTransport {
+  // Outside Workers a synchronous XHR can only return binary through responseText.
+  const binaryText = typeof (globalThis as { WorkerGlobalScope?: unknown }).WorkerGlobalScope === 'undefined';
+  return (start, end) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', url, false);
+    if (options.withCredentials) xhr.withCredentials = true;
+    for (const [k, v] of Object.entries(options.headers ?? {})) xhr.setRequestHeader(k, v);
+    xhr.setRequestHeader('Range', `bytes=${start}-${end}`);
+    if (binaryText) xhr.overrideMimeType('text/plain; charset=x-user-defined');
+    else xhr.responseType = 'arraybuffer';
+    xhr.send(null);
+    if (xhr.status !== 206 && xhr.status !== 200) throw new Error(`Range ${start}-${end} of ${url}: HTTP ${xhr.status}`);
+    let bytes: Uint8Array;
+    if (binaryText) {
+      const text = xhr.responseText;
+      bytes = new Uint8Array(text.length);
+      for (let i = 0; i < text.length; i++) bytes[i] = text.charCodeAt(i) & 0xff;
+    } else {
+      bytes = new Uint8Array(xhr.response as ArrayBuffer);
+    }
+    if (xhr.status === 200) bytes = bytes.subarray(start, end + 1); // server ignored Range
+    return bytes;
+  };
+}
+
+/** An HTTP resource read lazily with synchronous Range requests (see {@link RangeSource}). */
+export class HttpRangeSource extends RangeSource {
+  constructor(
+    readonly url: string,
+    size: number,
+    options: HttpSourceOptions = {},
+  ) {
+    super(size, xhrTransport(url, options), options);
+  }
+
+  /** Opens a URL: one small asynchronous request learns the size and checks Range support. */
+  static async open(url: string, options: HttpSourceOptions = {}): Promise<{ source: HttpRangeSource; head: Uint8Array }> {
+    const headers = { ...(options.headers ?? {}), Range: 'bytes=0-4095' };
+    const res = await fetch(url, { headers, credentials: options.withCredentials ? 'include' : 'same-origin' });
+    if (!res.ok) throw new Error(`GET ${url}: HTTP ${res.status}`);
+    const head = new Uint8Array(await res.arrayBuffer());
+    if (res.status !== 206) throw new RangeNotSupportedError(`${url} does not support Range requests (HTTP ${res.status}).`);
+    const cr = res.headers.get('Content-Range');
+    const total = cr ? /\/(\d+)\s*$/.exec(cr)?.[1] : undefined;
+    if (!total) throw new RangeNotSupportedError(`${url}: no readable Content-Range header (CORS must expose it).`);
+    const source = new HttpRangeSource(url, Number(total), options);
+    source.requests = 1;
+    source.fetched = head.byteLength;
+    source.seed(head);
+    return { source, head };
   }
 }

@@ -22,33 +22,47 @@ export function f16ToNumber(h: number): number {
   return s * (1 + f / 1024) * 2 ** (e - 15);
 }
 
-const f32buf = new Float32Array(1);
-const u32buf = new Uint32Array(f32buf.buffer);
+/** Thrown when a value does not fit the dtype (f16 or f32 overflow). */
+export class QuantizeError extends RangeError {
+  override readonly name = 'QuantizeError';
+}
 
-/** number → half-precision bits, round to nearest even. */
-export function numberToF16(value: number): number {
-  f32buf[0] = value;
-  const x = u32buf[0] as number;
-  const sign = (x >>> 16) & 0x8000;
-  const exp = (x >>> 23) & 0xff;
-  let mant = x & 0x7fffff;
-  if (exp === 0xff) return sign | 0x7c00 | (mant ? 0x200 : 0);
-  const e = exp - 127 + 15;
-  if (e >= 0x1f) return sign | 0x7c00;
-  if (e <= 0) {
-    if (e < -10) return sign;
-    mant |= 0x800000;
-    const shift = 14 - e;
-    let half = mant >> shift;
-    const rem = mant & ((1 << shift) - 1);
-    const mid = 1 << (shift - 1);
-    if (rem > mid || (rem === mid && half & 1)) half++;
-    return sign | half;
+function roundHalfEven(y: number): number {
+  const f = Math.floor(y);
+  const d = y - f;
+  if (d > 0.5) return f + 1;
+  if (d < 0.5) return f;
+  return f % 2 === 0 ? f : f + 1;
+}
+
+/**
+ * number → IEEE 754 binary16 bits, rounding the exact double to nearest even (like
+ * Python's `struct.pack('<e')`). Overflow (|x| ≥ 65520) throws, unless `saturate`
+ * is set, which returns ±Infinity.
+ */
+export function numberToF16(value: number, saturate = false): number {
+  if (Number.isNaN(value)) return 0x7e00;
+  const sign = value < 0 || Object.is(value, -0) ? 0x8000 : 0;
+  const a = Math.abs(value);
+  if (a === Infinity) return sign | 0x7c00;
+  if (a === 0) return sign;
+  if (a < 2 ** -14) {
+    const r = roundHalfEven(a * 2 ** 24); // exact scaling by a power of two
+    return sign | r; // r = 1024 is the smallest normal, which has the same bits
   }
-  let half = (e << 10) | (mant >> 13);
-  const rem = mant & 0x1fff;
-  if (rem > 0x1000 || (rem === 0x1000 && half & 1)) half++;
-  return sign | half;
+  let e = Math.floor(Math.log2(a));
+  if (2 ** e > a) e--;
+  if (2 ** (e + 1) <= a) e++;
+  let r = roundHalfEven(a / 2 ** (e - 10));
+  if (r === 2048) {
+    r = 1024;
+    e++;
+  }
+  if (e + 15 >= 31) {
+    if (saturate) return sign | 0x7c00;
+    throw new QuantizeError(`${value} is out of range for f16`);
+  }
+  return sign | ((e + 15) << 10) | (r - 1024);
 }
 
 /** Decodes a vector blob into a Float32Array. */
@@ -77,14 +91,22 @@ export function decodeVector(data: Uint8Array, dtype: Dtype | string = 'f32'): F
   }
 }
 
-/** Encodes a vector in the given dtype (f16: round to nearest even; i8: q = clamp(round_half_away(v × 127), ±127)). */
+/**
+ * Writer-side quantization (contract §2): f32 and f16 round to nearest even and fail on
+ * overflow ({@link QuantizeError}); i8 is q = clamp(round_half_away_from_zero(v × 127), ±127).
+ */
 export function encodeVector(v: ArrayLike<number>, dtype: Dtype | string = 'f32'): Uint8Array {
   const n = v.length;
   switch (dtype) {
     case 'f32': {
       const out = new Uint8Array(n * 4);
       const dv = new DataView(out.buffer);
-      for (let i = 0; i < n; i++) dv.setFloat32(i * 4, v[i] as number, true);
+      for (let i = 0; i < n; i++) {
+        const x = v[i] as number;
+        const f = Math.fround(x);
+        if (Number.isFinite(x) && !Number.isFinite(f)) throw new QuantizeError(`${x} is out of range for f32`);
+        dv.setFloat32(i * 4, f, true);
+      }
       return out;
     }
     case 'f16': {

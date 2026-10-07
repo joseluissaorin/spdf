@@ -52,12 +52,13 @@ try {
   if (!w.opfs?.copyValid) problems.push('the copy written through OPFS is not valid');
   if (!w.blob?.lazy) problems.push('openBlob did not read lazily in the worker');
   if (w.legacyRemote?.version !== '4.1') problems.push('legacy file by URL');
-  if (w.measure && !(w.searchOnly.bytes < w.measure.size / 10)) problems.push(`a lexical search downloaded ${w.searchOnly.bytes} of ${w.measure.size} bytes`);
-  if (w.measure) {
+  const lexical = w.measure?.steps?.['lexical: molinos de viento'];
+  if (w.measure && !(lexical && lexical.bytes < w.measure.size / 20)) problems.push(`a lexical search downloaded ${lexical?.bytes} of ${w.measure.size} bytes`);
+  if (w.measure?.steps) {
     const mb = (n) => `${(n / 1024 / 1024).toFixed(2)} MiB`;
-    const kb = (n) => `${(n / 1024).toFixed(1)} KiB`;
-    console.log(`remote file: ${mb(w.measure.size)}; open + one lexical search: ${kb(w.searchOnly.bytes)} in ${w.searchOnly.requests} requests`);
-    for (const [k, v] of Object.entries(w.measure.steps)) console.log(`  ${k}: ${kb(v.bytes)} in ${v.requests} requests, ${v.ms} ms`);
+    const kb = (n) => `${(n / 1024).toFixed(0)} KiB`;
+    console.log(`remote file ${mb(w.measure.size)}; each line opens it afresh (bytes include opening):`);
+    for (const [k, v] of Object.entries(w.measure.steps)) console.log(`  ${k}: ${v.bytes >= 1024 * 1024 ? mb(v.bytes) : kb(v.bytes)} in ${v.requests} requests (${(100 * v.bytes / w.measure.size).toFixed(2)} %), ${v.ms} ms`);
     console.log(`  main thread (sync XHR): open ${kb(results.remoteMain.opened.bytesFetched)}, search ${kb(results.remoteMain.search.bytes)}`);
   }
   if (problems.length) {

@@ -18,6 +18,8 @@ import { formatAnchorUri, formatLocator, parseAnchorUri, type AnchorLocator } fr
 import { cite } from './cite.js';
 import { SpdfWriter, type SpdfSource } from './writer.js';
 import { canonicalize } from './canonical.js';
+import { encodeVector } from './vectors.js';
+import { toHex } from './bytes.js';
 import type { Anchor, CslItem, VectorTarget } from './types.js';
 
 export interface ConformanceIO {
@@ -223,6 +225,18 @@ async function runCase(c: Case, io: ConformanceIO, engine: SqlEngine | undefined
     case 'cite': {
       const text = cite(input.anchor as Anchor, input.metadata as CslItem, String(input.locale), (input.anchor_end ?? null) as Anchor | null);
       if (text !== expect.text) fail(`${text} ≠ ${String(expect.text)}`);
+      return;
+    }
+    case 'quantize': {
+      let bytes: Uint8Array;
+      try {
+        bytes = encodeVector(input.values as number[], String(input.dtype));
+      } catch (e) {
+        if (expect.error === true) return;
+        throw e;
+      }
+      if (expect.error === true) fail(`encoded ${toHex(bytes)} instead of failing`);
+      if (toHex(bytes) !== expect.hex) fail(`${toHex(bytes)} ≠ ${String(expect.hex)}`);
       return;
     }
     default:

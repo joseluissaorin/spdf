@@ -88,4 +88,4 @@ export { encodeVector, decodeVector, f16ToNumber, numberToF16, dot, cosine, norm
 export { canonicalJson, canonicalize, round6 } from './canonical.js';
 export { mapLegacyAnchor, mapLegacyMetadata, mapLegacyKind } from './legacy.js';
 export { isGzip, isSqlite, sha256Hex, gunzipWeb, gzipWeb, toHex, fromHex, toBase64, fromBase64 } from './bytes.js';
-export { BytesSource, BlobSource, HttpRangeSource, RangeNotSupportedError, type HttpSourceOptions } from './sources.js';
+export { BytesSource, BlobSource, HttpRangeSource, RangeSource, RangeNotSupportedError, xhrTransport, type HttpSourceOptions, type RangeTransport, type RangeSourceStats } from './sources.js';

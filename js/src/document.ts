@@ -380,8 +380,10 @@ export class SpdfDocument {
   /** Units in reading order (`ord` from 1), optionally a range of ords. */
   async units(range: { from?: number; to?: number } = {}): Promise<Unit[]> {
     const ord = await this.col('units', 'ord');
-    const where: string[] = [];
-    const params: SqlValue[] = [];
+    // `document = ?` lets SQLite use the units_doc (document, ord) index: a remote reader
+    // then fetches a few pages instead of scanning the table.
+    const where: string[] = [`${await this.col('units', 'document')} = ?`];
+    const params: SqlValue[] = [this.document.id];
     if (range.from !== undefined) {
       where.push(`${ord} >= ?`);
       params.push(range.from);
@@ -390,7 +392,7 @@ export class SpdfDocument {
       where.push(`${ord} <= ?`);
       params.push(range.to);
     }
-    const rows = await this.view.rows('units', { ...(where.length ? { where: where.join(' AND ') } : {}), params, orderBy: 'ord, id' });
+    const rows = await this.view.rows('units', { where: where.join(' AND '), params, orderBy: 'ord, id' });
     return rows.map(toUnit);
   }
 
@@ -405,7 +407,11 @@ export class SpdfDocument {
 
   /** Units whose printed folio is `printed` ("go to page 145"). */
   async unitByPrinted(printed: string): Promise<Unit[]> {
-    const rows = await this.view.rows('units', { where: `${await this.col('units', 'printed')} = ?`, params: [printed], orderBy: 'ord, id' });
+    const rows = await this.view.rows('units', {
+      where: `${await this.col('units', 'document')} = ? AND ${await this.col('units', 'printed')} = ?`,
+      params: [this.document.id, printed],
+      orderBy: 'ord, id',
+    });
     return rows.map(toUnit);
   }
 

@@ -66,10 +66,16 @@ export async function inspect(conn: SqlConnection): Promise<Inspection> {
     legacy = true;
   }
   const tolerated = new Set<string>(legacy ? LEGACY_TRIGGERS : []);
+  const allowedVtables = new Set(legacy ? ['fragmentos_fts'] : ['fragments_fts', 'fragments_fts_trigram']);
   const forbidden = [
     ...views.map((name) => ({ type: 'view', name })),
     ...triggers.filter((t) => !(tolerated.has(t.name) && t.tbl === 'fragmentos')).map((t) => ({ type: 'trigger', name: t.name })),
   ];
+  for (const r of master) {
+    const sql = String(r.sql ?? '');
+    if (r.type !== 'table' || !/^\s*CREATE\s+VIRTUAL\s+TABLE/i.test(sql)) continue;
+    if (!allowedVtables.has(String(r.name)) || !/USING\s+fts5\s*\(/i.test(sql)) forbidden.push({ type: 'virtual table', name: String(r.name) });
+  }
   const ftsName = legacy ? 'fragmentos_fts' : 'fragments_fts';
   let fts: Inspection['fts'] = null;
   if (tables.has(ftsName)) {

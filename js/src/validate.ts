@@ -82,6 +82,7 @@ export async function validate(input: SpdfInput | { source: RandomAccessSource; 
     if (raw.gzipped) warn('E003', 'SPDF 5.0 should not be gzip-wrapped');
     if (version !== '5.0') warn('W105', `newer minor version ${version}`);
     for (const r of await conn.all("SELECT name, type FROM sqlite_master WHERE type IN ('trigger', 'view')")) err('E020', `${String(r.type)} ${String(r.name)} present`, String(r.name));
+    for (const f of info.forbidden) if (f.type === 'virtual table') err('E020', `virtual table ${f.name} present`, f.name);
 
     const present = new Map<string, Set<string>>();
     for (const [t, cols] of Object.entries(REQUIRED_TABLES)) {
