@@ -97,8 +97,10 @@ text := spdf.Cite(a, nil, map[string]any{
 ## Citing a quotation
 
 ```go
-p, _ := f.CitePassage("m4", "Schem. XXXIV.", "en")   // the unit the quotation is in, not the fragment start
-fmt.Println(p.Text, p.URI)
+// A fragment of Micrographia runs from a plate into page 211: the quotation is cited
+// by the unit(s) it actually touches, not by the start anchor of its fragment.
+p, _ := f.CitePassage("m4", "XXXIV.\ntube N N", "es")
+fmt.Println(p.Text, p.URI) // (Hooke, 1665, p. 211) spdf:sha256-ba9d…#p=319&pe=321&fe=211
 ```
 
 ## Resolving references
