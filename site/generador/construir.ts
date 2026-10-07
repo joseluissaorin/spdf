@@ -80,6 +80,18 @@ const VINETAS: Partial<Record<Clave, Dibujo>> = {
 
 export interface Bloque { html: string; md: string }
 
+/** El estado enlaza a su run de GitHub Actions (el repositorio es público). */
+function enlaceRun(s: Estado, html: string): string {
+  return REPO_PUBLICO && s.url ? `<a class="run" href="${esc(s.url)}" rel="noopener">${html}</a>` : html;
+}
+
+/** La insignia de GitHub del workflow de la carpeta, si existe el workflow. */
+function insignia(carpeta: string, nombre: string): string {
+  if (!REPO_PUBLICO || !existe(resolve(RAIZ, `.github/workflows/${carpeta}.yml`))) return '';
+  const w = `${REPO}/actions/workflows/${carpeta}.yml`;
+  return `<a class="insignia" href="${w}" rel="noopener"><img src="${w}/badge.svg?branch=main" alt="${esc(`CI ${nombre}`)}" height="20" width="120" loading="lazy" decoding="async"></a>`;
+}
+
 function estadoBloque(l: Lengua, e: Record<string, Estado>): Bloque {
   const cab = l === 'es'
     ? ['Implementación', 'Paquete', 'Nivel', 'CI en main', 'Último run']
@@ -90,11 +102,11 @@ function estadoBloque(l: Lengua, e: Record<string, Estado>): Bloque {
     const s = estadoDe(e, im.carpeta);
     const c = s.conformidad;
     const barra = c && c.pasados + c.fallidos > 0 ? `<span class="barra" aria-hidden="true"><i style="width:${Math.round((100 * c.pasados) / (c.pasados + c.fallidos))}%"></i></span>` : '';
-    return `<tr><td><a href="${RUTAS.docs[l]}/${im.id}">${esc(im.nombre)}</a> <code class="paquete">${esc(im.paquete)}</code><small>${esc(im.nota[l])} · ${nivel(im.nivel)}</small></td><td>${barra}${etiquetaEstado(s, l)}</td><td>${cuando(s)}</td></tr>`;
+    return `<tr><td><a href="${RUTAS.docs[l]}/${im.id}">${esc(im.nombre)}</a> <code class="paquete">${esc(im.paquete)}</code><small>${esc(im.nota[l])} · ${nivel(im.nivel)}</small></td><td>${barra}${enlaceRun(s, etiquetaEstado(s, l))}${insignia(im.carpeta, im.nombre)}</td><td>${cuando(s)}</td></tr>`;
   }).join('');
   const otras = OTRAS_PIEZAS.map((o) => {
     const s = estadoDe(e, o.carpeta);
-    return `<tr><td>${esc(o.nombre[l])} <code class="paquete">${o.carpeta}/</code></td><td>${etiquetaEstado(s, l)}</td><td>${cuando(s)}</td></tr>`;
+    return `<tr><td>${esc(o.nombre[l])} <code class="paquete">${o.carpeta}/</code></td><td>${enlaceRun(s, etiquetaEstado(s, l))}${insignia(o.carpeta, o.nombre[l])}</td><td>${cuando(s)}</td></tr>`;
   }).join('');
   const nota = l === 'es'
     ? `<p class="rotulo">Comprobado al construir esta web, el ${fechaLegible(HOY, l)}. También en <a href="/status.json">/status.json</a>.</p>`

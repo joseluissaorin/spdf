@@ -17,8 +17,8 @@ export const OTRA: Record<Lengua, Lengua> = { en: 'es', es: 'en' };
 export const ORIGEN = process.env.SPDF_ORIGEN || 'https://spdf.joseluissaorin.com';
 export const AUTOR = { nombre: 'José Luis Saorín Ferrer', web: 'https://joseluissaorin.com', correo: 'jl@joseluissaorin.com' };
 export const REPO = 'https://github.com/joseluissaorin/spdf';
-/** Mientras el repositorio sea privado, la web no enlaza a GitHub (serían enlaces rotos para el público). */
-export const REPO_PUBLICO = process.env.SPDF_REPO_PUBLICO === '1';
+/** El repositorio es público desde el 7 de octubre de 2026: la web enlaza a GitHub (SPDF_REPO_PUBLICO=0 lo evita). */
+export const REPO_PUBLICO = process.env.SPDF_REPO_PUBLICO !== '0';
 export const VERSION = '5.0';
 export const PUBLICADO = '2026-10-07';
 

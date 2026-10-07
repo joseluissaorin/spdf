@@ -300,6 +300,10 @@ p, li { text-wrap: pretty; }
 .cuerpo table.estado-impl td:nth-child(2), .cuerpo table.estado-impl td:nth-child(3) { white-space: nowrap; }
 .cuerpo table.estado-impl .paquete { font-size: 0.74rem; color: var(--apagado); background: none; padding: 0; margin-left: 0.3rem; overflow-wrap: anywhere; }
 .estado-impl .barra { display: block; margin: 0.35rem 0 0.3rem; }
+.estado-impl a.run { text-decoration: none; }
+.estado-impl a.run:hover .estado { text-decoration: underline; }
+.estado-impl .insignia { display: block; margin-top: 0.35rem; }
+.estado-impl .insignia img { height: 20px; width: auto; }
 .barra { display: inline-block; width: 6rem; height: 0.42rem; background: var(--papel-2); border: 1px solid var(--filete-2); vertical-align: middle; margin-right: 0.4rem; }
 .barra i { display: block; height: 100%; background: var(--tinta); }
 

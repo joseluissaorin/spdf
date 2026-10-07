@@ -119,7 +119,7 @@ def test_anchor_uri_round_trip(path) -> None:
         assert loc["char"] == json.loads(md["anchor"])["chars"]
         assert spdf.format_uri(parsed["docref"], loc) == md["anchor_uri"]
         with spdf.open(path) as f:
-            assert [u.id for u in f.locate(md["anchor_uri"])] == [md["unit_id"]]
+            assert list(f.locate(md["anchor_uri"]).units) == [md["unit_id"]]
 
 
 def test_unit_granularity() -> None:
