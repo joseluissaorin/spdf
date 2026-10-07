@@ -79,6 +79,18 @@ word of the short title, folded to ASCII and lowercased, plus the year
 colliding keys with `a`, `b`, `c`…; `cslItems([$meta], $anchor, $anchorEnd)` adds the CSL
 `label` and `locator` of a citation.
 
+### ALTO, TEI and IIIF
+
+```php
+file_put_contents('lazarillo.alto.xml', $doc->alto());   // ALTO 4, one Page per page unit
+file_put_contents('lazarillo.tei.xml', $doc->tei());     // TEI P5: pb, p, lg/l, u, note
+$manifest = $doc->iiif('https://revista.example.org/iiif/lazarillo');   // IIIF Presentation 3
+```
+
+These are the optional exports of SPEC §19.4: printed folios only where the page carries
+them (`[iv]` marks an inferred folio in TEI and IIIF), sections as IIIF ranges, figures as
+`describing` annotations on their region, and no invented coordinates.
+
 ## Validate
 
 ```php
@@ -145,8 +157,7 @@ vendor/bin/spdf conformance ../conformance
 `php bin/spdf conformance ../conformance` runs the shared suite of the repository and
 prints `{"impl":"php","version":…,"passed":[…],"failed":[…],"skipped":[…]}`. CI runs it on
 PHP 8.1 to 8.4 and publishes the report as the `conformance-php` artifact. All kinds are
-claimed except `export_structure` (ALTO, TEI and IIIF exports are optional and not
-implemented).
+claimed, `export_structure` included.
 
 ## License
 

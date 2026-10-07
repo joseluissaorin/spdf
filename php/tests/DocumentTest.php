@@ -99,6 +99,22 @@ final class DocumentTest extends TestCase
         $this->assertStringStartsWith("@book{lazarillo1554,\n  title = {{La} vida de {Lazarillo} de {Tormes:}", $d->bibtex());
     }
 
+    public function testLibraryExports(): void
+    {
+        $d = Document::open(self::$file);
+        $alto = $d->alto();
+        $this->assertStringContainsString('<Page ID="P9" PHYSICAL_IMG_NR="9" PRINTED_IMG_NR="3"', $alto);
+        $this->assertStringContainsString('<Page ID="P10" PHYSICAL_IMG_NR="10" PC=', $alto);   // inferred folio: not printed
+        $this->assertStringContainsString('<pb n="[4]"/>', $d->tei());
+        $manifest = $d->iiif('https://example.org/iiif/lazarillo');
+        $this->assertSame('Manifest', $manifest['type']);
+        $this->assertSame(['none' => ['3']], $manifest['items'][0]['label']);
+        if (class_exists(\DOMDocument::class)) {
+            $this->assertTrue((new \DOMDocument())->loadXML($alto));
+            $this->assertTrue((new \DOMDocument())->loadXML($d->tei()));
+        }
+    }
+
     public function testLegacyView(): void
     {
         $d = Document::open(self::$legacy);

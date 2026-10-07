@@ -146,7 +146,8 @@ final class Runner
                 }
                 return count($got) === count($want) ? null : 'expected ' . count($want) . ' lines, got ' . count($got);
             case 'export_structure':
-                return 'skip';
+                $doc = Document::open($this->path($in['file']));
+                return self::compare($ex['pages'], self::pages($doc, (string) $in['format']), 'pages');
             case 'cite':
                 $meta = $in['metadata'] instanceof \stdClass ? [] : (array) $in['metadata'];
                 $end = is_array($in['anchor_end'] ?? null) ? $in['anchor_end'] : null;
@@ -194,6 +195,45 @@ final class Runner
         }
         $f = AnchorUri::format($p['docref'], $p['locator']);
         return $f === $uri ? null : "format(parse(uri)): expected {$uri}, got {$f}";
+    }
+
+    /** Page sequence of an ALTO, TEI or IIIF export, read back from the exported document. */
+    private static function pages(Document $doc, string $format): array
+    {
+        $attr = function (string $tag, string $name): ?string {
+            return preg_match('/\s' . $name . '="([^"]*)"/', $tag, $m) ? html_entity_decode($m[1], ENT_XML1 | ENT_QUOTES, 'UTF-8') : null;
+        };
+        $pages = [];
+        if ($format === 'alto') {
+            preg_match_all('/<Page\s[^>]*>/', $doc->alto(), $m);
+            foreach ($m[0] as $tag) {
+                $pages[] = ['physical' => (int) $attr($tag, 'PHYSICAL_IMG_NR'), 'printed' => $attr($tag, 'PRINTED_IMG_NR')];
+            }
+        } elseif ($format === 'tei') {
+            $xml = $doc->tei();
+            $body = substr($xml, (int) strpos($xml, '<body>'));
+            preg_match_all('/<pb(\s[^>]*)?\/>/', $body, $m);
+            foreach ($m[0] as $tag) {
+                $pages[] = ['n' => $attr($tag, 'n')];
+            }
+        } elseif ($format === 'iiif') {
+            $base = 'https://example.org/iiif';
+            $manifest = Json::decode(Json::encode($doc->iiif($base)));
+            $pageCanvases = [];
+            foreach ($doc->units() as $u) {
+                if (($u['anchor']['type'] ?? null) === 'page') {
+                    $pageCanvases["{$base}/canvas/{$u['ord']}"] = true;
+                }
+            }
+            foreach ($manifest['items'] as $canvas) {
+                if (isset($pageCanvases[$canvas['id']])) {
+                    $pages[] = ['label' => isset($canvas['label']) ? array_values($canvas['label'])[0][0] : null];
+                }
+            }
+        } else {
+            throw new SpdfException('E000', "unknown format {$format}");
+        }
+        return $pages;
     }
 
     /** @return list<string> */

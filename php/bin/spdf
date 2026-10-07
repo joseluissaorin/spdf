@@ -41,6 +41,8 @@ spdf (PHP) - read, validate, search and cite SPDF files
   spdf parse-uri URI                 parse an anchor URI into its locator
   spdf csl FILE                      CSL-JSON
   spdf bibtex FILE                   BibTeX
+  spdf alto FILE | tei FILE          ALTO 4 or TEI P5 export
+  spdf iiif FILE BASE_URL            IIIF Presentation 3 manifest
   spdf conformance [DIR]             run the conformance suite (default ../conformance)
 
 TXT;
@@ -105,6 +107,16 @@ try {
                 }
                 fwrite(STDOUT, Json::encode($res) . "\n");
             }
+            break;
+        case 'alto':
+            $out(Document::open($args[1] ?? throw new InvalidArgumentException('FILE missing'))->alto());
+            break;
+        case 'tei':
+            $out(Document::open($args[1] ?? throw new InvalidArgumentException('FILE missing'))->tei());
+            break;
+        case 'iiif':
+            $d = Document::open($args[1] ?? throw new InvalidArgumentException('FILE missing'));
+            $out(Json::encode($d->iiif($args[2] ?? throw new InvalidArgumentException('BASE_URL missing')), true));
             break;
         case 'conformance':
             $dir = $args[1] ?? __DIR__ . '/../../conformance';

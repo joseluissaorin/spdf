@@ -758,6 +758,24 @@ final class Document
         return Json::encode([$this->cslItem()], $pretty);
     }
 
+    /** ALTO 4 XML of the page units (SPEC §19.4). */
+    public function alto(): string
+    {
+        return Interop::alto($this);
+    }
+
+    /** A minimal TEI P5 document (SPEC §19.4). */
+    public function tei(): string
+    {
+        return Interop::tei($this);
+    }
+
+    /** A IIIF Presentation 3 manifest; `$baseUrl` is where it will be published. */
+    public function iiif(string $baseUrl): array
+    {
+        return Interop::iiif($this, $baseUrl);
+    }
+
     public function bibtex(): string
     {
         return Bibliography::bibtex(Bibliography::cslItem($this->metadata()));
