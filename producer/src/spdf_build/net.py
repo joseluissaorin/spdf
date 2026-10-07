@@ -96,8 +96,9 @@ def offline_env() -> dict[str, str]:
 def request(method: str, url: str, headers: Optional[dict] = None, body: Any = None, timeout: float = 60,
             retries: int = 2, raw: bool = False) -> Any:
     """HTTP with JSON in and out (or raw bytes). Retries 429/5xx with backoff."""
-    if OfflineGuard.active:
-        OfflineGuard.attempts.append(urllib.parse.urlparse(url).hostname or url)
+    host = urllib.parse.urlparse(url).hostname
+    if OfflineGuard.active and not _is_local(host):
+        OfflineGuard.attempts.append(host or url)
         raise OfflineError(f"--offline: blocked request to {url}")
     h = {"User-Agent": USER_AGENT, **(headers or {})}
     data = None
