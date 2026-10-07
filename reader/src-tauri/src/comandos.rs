@@ -42,6 +42,8 @@ pub struct Inicio {
     capacidades: Capacidades,
     /// Solo al medir (SPDF_MEDIR=1): consultas que la interfaz lanza sola al abrir un documento.
     consultas: Vec<String>,
+    /// Solo en pruebas (SPDF_GUION=/ruta/guion.json): pasos que la interfaz ejecuta sola.
+    guion: Option<Value>,
 }
 
 /// La interfaz manda sus marcas (arranque, apertura) cuando se mide (SPDF_MEDIR=1).
@@ -65,7 +67,8 @@ pub async fn iniciar(app: AppHandle, pruebas: bool) -> R<Inicio> {
         let movil = matches!(plataforma(), "ios" | "android");
         Ok(Inicio {
             plataforma: plataforma(),
-            capacidades: Capacidades { ia_local: false, webgpu: false, llavero: crate::llavero::HAY_LLAVERO, escribir_en_fichero: !movil, pruebas: p },
+            capacidades: Capacidades { ia_local: ia::local::HAY, webgpu: false, llavero: crate::llavero::HAY_LLAVERO, escribir_en_fichero: !movil, pruebas: p },
+            guion: std::env::var("SPDF_GUION").ok().and_then(|r| std::fs::read(r).ok()).and_then(|b| serde_json::from_slice(&b).ok()),
             consultas: if std::env::var("SPDF_MEDIR").is_ok() {
                 std::env::var("SPDF_MEDIR_CONSULTAS").unwrap_or_default().split('|').filter(|q| !q.is_empty()).map(String::from).collect()
             } else {
@@ -348,6 +351,10 @@ fn vector_para(st: &Estado, espacios: &[spdf::Space], q: &str) -> Result<(spdf::
     }
     let clave = st.clave.lock().unwrap().clone();
     let mut motores: Vec<&str> = Vec::new();
+    #[cfg(not(target_os = "android"))]
+    if st.local().ok().and_then(|l| l.hay_embed()).is_some() {
+        motores.push("local");
+    }
     if clave.is_some() {
         motores.push("gemini");
     }
@@ -359,8 +366,8 @@ fn vector_para(st: &Estado, espacios: &[spdf::Space], q: &str) -> Result<(spdf::
     }
     for e in espacios {
         for m in &motores {
-            let Some(qs) = ia::espacio(m, e.dims as usize) else { continue };
-            if !ia::compatible(e, &qs) {
+            let Some(qs) = espacio_motor(st, m, e.dims as usize) else { continue };
+            if !compatible(e, &qs, m) {
                 continue;
             }
             let k = format!("{}|{}|{q}", qs.id, m);
@@ -368,8 +375,8 @@ fn vector_para(st: &Estado, espacios: &[spdf::Space], q: &str) -> Result<(spdf::
                 return Ok((e.clone(), v.clone()));
             }
             let v = match *m {
-                "gemini" => ia::gemini_vectores(clave.as_deref().unwrap_or(""), &[q.to_string()], true, e.dims as usize).ok().and_then(|mut v| v.pop()),
-                _ => ia::falso(&[q.to_string()], e.dims as usize).pop(),
+                "gemini" => ia::gemini_vectores(clave.as_deref().unwrap_or(""), &[q.to_string()], true, e.dims as usize, ia::estilo_task_type(Some(e)), None).ok().and_then(|mut v| v.pop()),
+                _ => vectores_locales(st, m, &[q.to_string()], true, None, e.dims as usize).ok().and_then(|(_, mut v)| v.pop()),
             };
             if let Some(v) = v {
                 st.consultas.lock().unwrap().insert(k, v.clone());
@@ -378,6 +385,43 @@ fn vector_para(st: &Estado, espacios: &[spdf::Space], q: &str) -> Result<(spdf::
         }
     }
     Err("incompatible")
+}
+
+/// El espacio que produciría un motor con un recorte dado.
+fn espacio_motor(st: &Estado, motor: &str, dims: usize) -> Option<spdf::Space> {
+    match motor {
+        "gemini" => ia::espacio("gemini", dims),
+        #[cfg(not(target_os = "android"))]
+        _ => st.local().ok()?.espacio(motor, dims),
+        #[cfg(target_os = "android")]
+        _ => { let _ = st; ia::espacio(motor, dims) }
+    }
+}
+
+fn compatible(guardado: &spdf::Space, consulta: &spdf::Space, motor: &str) -> bool {
+    #[cfg(not(target_os = "android"))]
+    if motor != "gemini" {
+        return ia::local::compatible(guardado, consulta);
+    }
+    let _ = motor;
+    ia::compatible(guardado, consulta)
+}
+
+/// Vectores con un motor local (EmbeddingGemma 2 o el de pruebas).
+fn vectores_locales(st: &Estado, motor: &str, textos: &[String], consulta: bool, titulo: Option<String>, dims: usize) -> R<(spdf::Space, Vec<Vec<f32>>)> {
+    if motor == "prueba" && !*st.pruebas.lock().unwrap() {
+        return Err("El modelo de pruebas solo existe en modo pruebas.".into());
+    }
+    #[cfg(not(target_os = "android"))]
+    {
+        st.local()?.vectores(motor, None, textos, consulta, titulo, dims)
+    }
+    #[cfg(target_os = "android")]
+    {
+        let _ = (consulta, titulo);
+        let e = ia::espacio(motor, dims).ok_or("Sin modelos locales en Android: usa Gemini.")?;
+        Ok((e, ia::falso(textos, dims)))
+    }
 }
 
 fn buscar_en(st: &Estado, id: &str, p: &PeticionBusqueda, limite: usize) -> R<(Vec<Acierto>, String, Option<String>)> {
@@ -565,26 +609,52 @@ pub async fn escribir_fichero(app: AppHandle, ruta: String, datos: Vec<u8>) -> R
 #[tauri::command]
 pub async fn modelos(app: AppHandle) -> R<Vec<ModeloCatalogo>> {
     bloq(app, |st| {
-        let dir = st.dir.join("modelos");
-        Ok(ia::catalogo(&|id| dir.join(id).exists()))
+        #[cfg(not(target_os = "android"))]
+        {
+            Ok(st.local()?.catalogo())
+        }
+        #[cfg(target_os = "android")]
+        {
+            let _ = st;
+            Ok(Vec::new())
+        }
     })
     .await
 }
 
 #[tauri::command]
 pub async fn descargar_modelo(app: AppHandle, id: String, canal: Channel<Progreso>) -> R<()> {
-    let _ = canal;
-    bloq(app, move |_| ia::descargar(&id)).await
+    bloq(app, move |st| {
+        #[cfg(not(target_os = "android"))]
+        {
+            let mut ultimo = std::time::Instant::now() - std::time::Duration::from_secs(1);
+            st.local()?.descargar(&id, |hecho, total, fichero| {
+                // Un aviso cada 200 ms basta para la barra.
+                if ultimo.elapsed().as_millis() >= 200 || hecho == total {
+                    ultimo = std::time::Instant::now();
+                    let _ = canal.send(Progreso { fase: "descargar".into(), hecho, total, detalle: Some(fichero.to_string()) });
+                }
+            })
+        }
+        #[cfg(target_os = "android")]
+        {
+            let _ = (st, canal);
+            ia::descargar(&id)
+        }
+    })
+    .await
 }
 
 #[tauri::command]
 pub async fn borrar_modelo(app: AppHandle, id: String) -> R<()> {
     bloq(app, move |st| {
-        let p = st.dir.join("modelos").join(&id);
-        if p.is_dir() {
-            std::fs::remove_dir_all(p).map_err(err)
-        } else {
-            let _ = std::fs::remove_file(p);
+        #[cfg(not(target_os = "android"))]
+        {
+            st.local()?.borrar(&id)
+        }
+        #[cfg(target_os = "android")]
+        {
+            let _ = (st, id);
             Ok(())
         }
     })
@@ -634,25 +704,23 @@ pub async fn borrar_clave(app: AppHandle) -> R<()> {
 #[tauri::command]
 pub async fn espacio_de(app: AppHandle, motor: String, dims: usize, modelo: Option<String>) -> R<Option<spdf::Space>> {
     let _ = modelo;
-    bloq(app, move |_| Ok(ia::espacio(&motor, dims))).await
+    bloq(app, move |st| Ok(espacio_motor(st, &motor, dims))).await
 }
 
-fn incrustar(st: &Estado, motor: &str, textos: &[String], dims: usize) -> R<Vec<Vec<f32>>> {
+fn incrustar(st: &Estado, motor: &str, textos: &[String], titulo: Option<String>, dims: usize) -> R<Vec<Vec<f32>>> {
     match motor {
         "gemini" => {
             let c = st.clave.lock().unwrap().clone().ok_or("Falta la clave de Gemini.")?;
-            ia::gemini_vectores(&c, textos, false, dims)
+            ia::gemini_vectores(&c, textos, false, dims, true, titulo.as_deref())
         }
-        "prueba" if *st.pruebas.lock().unwrap() => Ok(ia::falso(textos, dims)),
-        "prueba" => Err("El modelo de pruebas solo existe en modo pruebas.".into()),
-        _ => Err(ia::descargar("").unwrap_err()),
+        _ => vectores_locales(st, motor, textos, false, titulo, dims).map(|(_, v)| v),
     }
 }
 
 #[tauri::command]
 pub async fn revectorizar(app: AppHandle, id: String, o: OpcionesRevectorizar, canal: Channel<Progreso>) -> R<Entrada> {
     bloq(app, move |st| {
-        let mut espacio = ia::espacio(&o.motor, o.dims).ok_or_else(|| ia::descargar("").unwrap_err())?;
+        let mut espacio = espacio_motor(st, &o.motor, o.dims).ok_or("No hay modelo de vectores descargado.")?;
         espacio.created = Some(biblioteca::ahora());
         let (entrada, original) = {
             let b = st.bib.lock().unwrap();
@@ -666,12 +734,13 @@ pub async fn revectorizar(app: AppHandle, id: String, o: OpcionesRevectorizar, c
             (doc.fragments().map_err(err)?, spdf::Writer::from_spdf(&doc).map_err(err)?)
         };
         let total = frags.len() as u64;
+        let titulo = a.documento.metadata.get("title").and_then(|t| t.as_str()).map(String::from);
         w.add_space(&espacio).map_err(err)?;
         let lote = if o.motor == "gemini" { 64 } else { 16 };
         for (i, parte) in frags.chunks(lote).enumerate() {
             let _ = canal.send(Progreso { fase: "vectores".into(), hecho: (i * lote) as u64, total, detalle: None });
             let textos: Vec<String> = parte.iter().map(|f| f.text.clone()).collect();
-            let vs = incrustar(st, &o.motor, &textos, o.dims)?;
+            let vs = incrustar(st, &o.motor, &textos, titulo.clone(), o.dims)?;
             for (f, v) in parte.iter().zip(vs) {
                 w.add_vector(spdf::Target::Fragment, &f.id, &espacio.id, &v).map_err(err)?;
             }
@@ -744,7 +813,11 @@ pub async fn generar(app: AppHandle, prompt: String, o: OpcionesGenerar, canal: 
         "prueba" if *st.pruebas.lock().unwrap() => Ok(ia::falso_generar(&prompt, |t| {
             let _ = canal.send(t.to_string());
         })),
-        _ => Err(ia::descargar("").unwrap_err()),
+        #[cfg(not(target_os = "android"))]
+        "local" => st.local()?.generar(&prompt, &o, |t| {
+            let _ = canal.send(t.to_string());
+        }),
+        _ => Err("En este dispositivo no hay modelo de lenguaje local: usa Gemini con tu clave.".into()),
     })
     .await
 }
@@ -757,7 +830,9 @@ pub async fn juzgar(app: AppHandle, afirmacion: String, pasaje: String, motor: S
             ia::gemini_juzgar(&c, &afirmacion, &pasaje)
         }
         "prueba" => Ok(ia::falso_juzgar(&afirmacion, &pasaje)),
-        _ => Err(ia::descargar("").unwrap_err()),
+        #[cfg(not(target_os = "android"))]
+        "local" => st.local()?.juzgar(&afirmacion, &pasaje),
+        _ => Err("En este dispositivo no hay juez local: usa Gemini con tu clave.".into()),
     })
     .await
 }

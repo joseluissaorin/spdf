@@ -163,8 +163,8 @@ let claveGuardada = false;
 interface Incrustador { space(dims?: number): Espacio; embed(t: string[], o: { task: string; title?: string; dims?: number }): Promise<Float32Array[]> }
 const incrustadores = new Map<string, Promise<Incrustador>>();
 
-async function incrustador(motor: MotorIA, modelo?: string): Promise<Incrustador> {
-  const k = `${motor}:${modelo ?? ''}`;
+async function incrustador(motor: MotorIA, modelo?: string, estilo: gemini.Estilo = 'taskType'): Promise<Incrustador> {
+  const k = `${motor}:${modelo ?? ''}:${motor === 'gemini' ? estilo : ''}`;
   let p = incrustadores.get(k);
   if (!p) {
     p = (async (): Promise<Incrustador> => {
@@ -175,8 +175,7 @@ async function incrustador(motor: MotorIA, modelo?: string): Promise<Incrustador
       }
       if (motor === 'gemini') {
         if (!claveGemini) throw new Error('Falta la clave de Gemini.');
-        const G = (m as any).GeminiEmbedder;
-        return G ? (new G(claveGemini) as Incrustador) : gemini.incrustador(claveGemini);
+        return gemini.incrustador(claveGemini, estilo);
       }
       const g = await gestorModelos();
       const id = modelo ?? (await primeroDescargado(g, 'embed'));
@@ -223,9 +222,11 @@ async function vectorPara(espacios: Espacio[], q: string): Promise<{ espacio: Es
   for (const e of espacios) {
     for (const mo of motores) {
       let inc: Incrustador;
-      try { inc = await incrustador(mo.motor, mo.modelo); } catch { continue; }
+      const estilo = gemini.estiloDe(e.task_prefixes);
+      try { inc = await incrustador(mo.motor, mo.modelo, estilo); } catch { continue; }
       const qs = inc.space(e.dims);
-      if (!(await compatible(e, qs))) continue;
+      // Gemini se adapta al estilo del espacio guardado (taskType o prefijos): basta con que sea el mismo modelo.
+      if (mo.motor === 'gemini' ? !gemini.sirve(e) : !(await compatible(e, qs))) continue;
       const k = `${qs.id}|${mo.motor}|${q}`;
       let v = vectoresConsulta.get(k);
       if (!v) { [v] = await inc.embed([q], { task: 'query', dims: e.dims }); vectoresConsulta.set(k, v); }
@@ -523,10 +524,23 @@ atender({
     if (motor === 'prueba') return juzgarFalso(afirmacion, pasaje);
     const m = await ia();
     const g = await gestorModelos();
-    const id = await primeroDescargado(g, 'judge');
-    if (!id || !(await g.isDownloaded(id))) throw new Error('El modelo del juez no está descargado.');
-    juez ??= await m.Judge.load(id, { manager: g } as never);
-    const r = await juez.support(afirmacion, pasaje);
-    return { supported: r.supported, label: String(r.label) };
+    // Un juez propio (Valen o Gemma en ONNX) si está descargado y se puede cargar…
+    if (!juez) {
+      const id = await primeroDescargado(g, 'judge');
+      if (id && (await g.isDownloaded(id))) juez = await m.Judge.load(id, { manager: g } as never).catch(() => null);
+    }
+    if (juez) {
+      const r = await juez.support(afirmacion, pasaje);
+      return { supported: r.supported, label: String(r.label) };
+    }
+    // …si no, el mismo Gemma 4 que redacta, con la pregunta de respaldo (como el juez con Gemini).
+    if (!generador) {
+      const idg = await primeroDescargado(g, 'generate');
+      if (!idg || !(await g.isDownloaded(idg))) throw new Error('El modelo de lenguaje no está descargado.');
+      generador = await m.Generator.load(idg, { manager: g } as never);
+    }
+    let salida = '';
+    await generador.generate(gemini.preguntaJuez(afirmacion, pasaje), { maxTokens: 60, temperature: 0 } as never, (t: string) => { salida += t; return true; });
+    return gemini.leerJuicio(salida);
   },
 });

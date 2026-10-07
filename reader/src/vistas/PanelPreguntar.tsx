@@ -12,6 +12,8 @@ import { Cerrar } from '../componentes/Iconos';
 import { Progreso } from '../componentes/Dialogo';
 import { Boceto } from '../dibujo/BocetoReact';
 import { preguntar, type Respuesta } from '../util/preguntar';
+import { modeloPorDefecto } from '../util/modelos';
+import { tamano } from '../i18n';
 
 export function PanelPreguntar({ id, resumen, alCerrar, alIr }: { id: string; resumen: Resumen; alCerrar: () => void; alIr: (ord: number, f: string) => void }) {
   const { nucleo, lengua, ir } = useApp();
@@ -24,19 +26,20 @@ export function PanelPreguntar({ id, resumen, alCerrar, alIr }: { id: string; re
   const [tokens, setTokens] = useState(0);
   const [r, setR] = useState<Respuesta | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [descarga, setDescarga] = useState<{ hecho: number; total: number } | null>(null);
 
   useEffect(() => {
     void nucleo.modelos().then(setModelos).catch(() => setModelos([]));
     void nucleo.estadoClave().then((c) => { setClave(c); if (c !== 'ninguna') setMotor((m) => m); });
   }, [nucleo]);
-  const gen = modelos.find((m) => m.tipo === 'generate' && m.recomendado) ?? modelos.find((m) => m.tipo === 'generate');
+  const gen = modeloPorDefecto(modelos, 'generate');
   const listo = motor === 'prueba' || (motor === 'gemini' ? clave !== 'ninguna' : !!gen?.descargado);
 
   const enviar = async () => {
     if (!pregunta.trim()) return;
     setR(null); setError(null); setTokens(0);
     try {
-      const res = await preguntar(nucleo, { ambito: id, pregunta, motor, lengua }, { fase: setFase, token: () => setTokens((n) => n + 1) });
+      const res = await preguntar(nucleo, { ambito: id, pregunta, motor, lengua, modelo: motor === 'local' ? gen?.id : undefined }, { fase: setFase, token: () => setTokens((n) => n + 1) });
       setR(res);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setFase(null); }
@@ -65,7 +68,17 @@ export function PanelPreguntar({ id, resumen, alCerrar, alIr }: { id: string; re
           </fieldset>
           {!listo && (motor === 'gemini'
             ? <button type="button" className="boton chico" style={{ alignSelf: 'flex-start' }} onClick={() => ir({ vista: 'ajustes' })}>{t('faltaClave')}</button>
-            : <button type="button" className="boton chico" style={{ alignSelf: 'flex-start' }} onClick={() => ir({ vista: 'ajustes' })}>{t('modelos')}</button>)}
+            : gen && (
+              <button type="button" className="boton chico" style={{ alignSelf: 'flex-start' }} disabled={!!descarga}
+                onClick={async () => {
+                  setDescarga({ hecho: 0, total: gen.bytes });
+                  try { await nucleo.descargarModelo(gen.id, (p) => setDescarga({ hecho: p.hecho, total: p.total })); setModelos(await nucleo.modelos()); }
+                  catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+                  finally { setDescarga(null); }
+                }}>
+                {descarga ? t('descargando', { p: descarga.total ? Math.round((100 * descarga.hecho) / descarga.total) : 0 }) : `${gen.nombre} · ${t('descargar', { tam: tamano(gen.bytes, lengua) })}`}
+              </button>
+            ))}
           <button className="boton tinta" type="submit" disabled={!listo || !!fase || !pregunta.trim()} style={{ alignSelf: 'flex-start' }}>{t('enviar')}</button>
         </form>
 

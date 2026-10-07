@@ -15,11 +15,15 @@ export class NucleoTauri implements Nucleo {
   capacidades: Capacidades = { iaLocal: true, webgpu: false, llavero: true, escribirEnFichero: true, pruebas: false };
   #pruebas: boolean;
   #consultas: string[] = [];
+  /** Pasos de prueba (SPDF_GUION), si los hay. */
+  guion: unknown[] | null = null;
+  apuntar(nombre: string, ms: number, detalle: string) { void invoke('medida', { nombre, ms, detalle }).catch(() => {}); }
 
   constructor(o: { pruebas?: boolean } = {}) { this.#pruebas = !!o.pruebas; }
 
   async iniciar() {
-    const r = await invoke<{ plataforma: Plataforma; capacidades: Capacidades; consultas: string[] }>('iniciar', { pruebas: this.#pruebas });
+    const r = await invoke<{ plataforma: Plataforma; capacidades: Capacidades; consultas: string[]; guion: unknown[] | null }>('iniciar', { pruebas: this.#pruebas });
+    this.guion = r.guion ?? null;
     this.plataforma = r.plataforma;
     this.capacidades = r.capacidades;
     this.#consultas = r.consultas ?? [];

@@ -38,6 +38,9 @@ jobs:
       - name: spdf-format (js/)
         working-directory: js
         run: npm ci && npm run build
+      - name: spdf-infer-web (models/web)
+        working-directory: models/web
+        run: npm ci && npm run build
       - name: Dependencias del lector
         working-directory: reader
         run: npm ci
@@ -109,6 +112,9 @@ jobs:
       - name: Compilar y empaquetar
         working-directory: reader
         shell: bash
+        env:
+          # bindgen (spdf-llama-sys) necesita libclang; en Windows viene con el LLVM del runner.
+          LIBCLANG_PATH: ${{ runner.os == 'Windows' && 'C:\Program Files\LLVM\bin' || '' }}
         run: npx tauri build --bundles ${{ matrix.paquetes }}
       - name: Recoger paquetes
         shell: bash

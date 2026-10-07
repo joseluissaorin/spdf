@@ -25,6 +25,9 @@ pub struct Estado {
     pub ui_lista: Mutex<bool>,
     pub pruebas: Mutex<bool>,
     pub consultas: Mutex<HashMap<String, Vec<f32>>>,
+    /// Modelos locales (spdf-infer): se crea al primer uso.
+    #[cfg(not(target_os = "android"))]
+    pub local: Mutex<Option<Arc<crate::ia::local::Local>>>,
 }
 
 pub type R<T> = Result<T, String>;
@@ -47,7 +50,20 @@ impl Estado {
             ui_lista: Mutex::new(false),
             pruebas: Mutex::new(false),
             consultas: Mutex::new(HashMap::new()),
+            #[cfg(not(target_os = "android"))]
+            local: Mutex::new(None),
         }
+    }
+
+    #[cfg(not(target_os = "android"))]
+    pub fn local(&self) -> R<Arc<crate::ia::local::Local>> {
+        let mut l = self.local.lock().unwrap();
+        if let Some(x) = l.as_ref() {
+            return Ok(x.clone());
+        }
+        let x = Arc::new(crate::ia::local::Local::nuevo(self.dir.join("modelos"))?);
+        *l = Some(x.clone());
+        Ok(x)
     }
 
     /// El documento abierto (de la caché o recién abierto), con sus unidades.

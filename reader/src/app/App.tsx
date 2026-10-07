@@ -41,6 +41,16 @@ export function App() {
     return () => { removeEventListener('dragenter', entra); removeEventListener('dragleave', sale); removeEventListener('dragover', sobre); removeEventListener('drop', suelta); };
   }, [importar]);
 
+  // Guion de pruebas de la app nativa (SPDF_GUION): la interfaz se maneja sola.
+  useEffect(() => {
+    const n = nucleo as { guion?: unknown[] | null; apuntar?: (a: string, b: number, c: string) => void };
+    if (!n.guion?.length || !n.apuntar) return;
+    const pasos = n.guion;
+    n.guion = null;
+    const t = setTimeout(() => void import('../util/guion').then((m) => m.ejecutarGuion(nucleo, pasos as never, n.apuntar!)), 1500);
+    return () => clearTimeout(t);
+  }, [nucleo]);
+
   // Ficheros abiertos con el lector desde el sistema (solo Tauri).
   useEffect(() => {
     const n = nucleo as { alAbrirFicheros?: (f: (rutas: string[]) => void) => () => void };

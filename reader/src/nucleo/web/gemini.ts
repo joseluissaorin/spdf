@@ -13,6 +13,18 @@ const BASE = 'https://generativelanguage.googleapis.com/v1beta';
 export const MODELO_VECTORES = 'gemini-embedding-2';
 export const MODELO_TEXTO = 'gemini-flash-latest';
 export const PREFIJOS = { query: 'task: search result | query: ', document: 'title: none | text: ' };
+/** Cómo declara el productor (spdf build) y SPDF Commons sus vectores de Gemini: con `taskType`. */
+export const TASK_TYPE = { query: 'taskType=RETRIEVAL_QUERY', document: 'taskType=RETRIEVAL_DOCUMENT; title={title}' };
+
+/** Dos maneras de codificar con gemini-embedding-2: `taskType` de la API (5.0, productor) o prefijos en el texto (Scholaris 4.x). */
+export type Estilo = 'taskType' | 'prefijo';
+export function estiloDe(tp: unknown): Estilo {
+  return tp && typeof tp === 'object' && Object.values(tp as Record<string, string>).some((v) => String(v).startsWith('taskType=')) ? 'taskType' : 'prefijo';
+}
+/** ¿Sirve una consulta de Gemini para estos vectores? Se adapta el estilo al del espacio guardado. */
+export function sirve(guardado: { model: string; dims: number }): boolean {
+  return guardado.model === MODELO_VECTORES;
+}
 
 async function pedir(clave: string, ruta: string, cuerpo: unknown): Promise<Response> {
   const r = await fetch(`${BASE}/${ruta}`, {
@@ -34,18 +46,26 @@ function normalizar(v: Float32Array): Float32Array {
   return v;
 }
 
-export function incrustador(clave: string) {
+export function incrustador(clave: string, estilo: Estilo = 'taskType') {
   return {
-    space(dims = 1536): Espacio {
-      return { id: `${MODELO_VECTORES}@${dims}`, provider: 'google', model: MODELO_VECTORES, version: null, dims, dtype: 'f32', normalized: 1, truncated_from: null, modalities: ['text'], task_prefixes: PREFIJOS, created: null };
+    space(dims = 768): Espacio {
+      return estilo === 'taskType'
+        ? { id: `${MODELO_VECTORES}@${dims}`, provider: 'google', model: MODELO_VECTORES, version: MODELO_VECTORES, dims, dtype: 'f32', normalized: 1, truncated_from: dims < 3072 ? 3072 : null, modalities: ['text'], task_prefixes: TASK_TYPE, created: null }
+        : { id: `${MODELO_VECTORES}@${dims}`, provider: 'google', model: MODELO_VECTORES, version: null, dims, dtype: 'f32', normalized: 1, truncated_from: null, modalities: ['text'], task_prefixes: PREFIJOS, created: null };
     },
-    async embed(textos: string[], o: { task: string; dims?: number }): Promise<Float32Array[]> {
-      const pref = o.task === 'query' ? PREFIJOS.query : PREFIJOS.document;
+    async embed(textos: string[], o: { task: string; dims?: number; title?: string }): Promise<Float32Array[]> {
+      const consulta = o.task === 'query';
+      const pref = consulta ? PREFIJOS.query : PREFIJOS.document;
       const out: Float32Array[] = [];
       for (let i = 0; i < textos.length; i += 100) {
         const parte = textos.slice(i, i + 100);
         const r = await pedir(clave, `models/${MODELO_VECTORES}:batchEmbedContents`, {
-          requests: parte.map((t) => ({ model: `models/${MODELO_VECTORES}`, content: { parts: [{ text: pref + t.slice(0, 24000) }] }, outputDimensionality: o.dims ?? 1536 })),
+          requests: parte.map((t) => ({
+            model: `models/${MODELO_VECTORES}`,
+            content: { parts: [{ text: (estilo === 'prefijo' ? pref : '') + t.slice(0, 24000) }] },
+            outputDimensionality: o.dims ?? 768,
+            ...(estilo === 'taskType' ? { taskType: consulta ? 'RETRIEVAL_QUERY' : 'RETRIEVAL_DOCUMENT', ...(!consulta && o.title ? { title: o.title } : {}) } : {}),
+          })),
         });
         const j = (await r.json()) as { embeddings?: { values: number[] }[] };
         for (const e of j.embeddings ?? []) out.push(normalizar(Float32Array.from(e.values)));
@@ -82,6 +102,19 @@ export async function generar(clave: string, prompt: string, o: OpcionesGenerar,
 }
 
 const RELACIONES = ['APOYO_DIRECTO', 'APLICACION_DE_MARCO', 'CONTEXTO', 'CONTRADICCION', 'IMPOSIBLE_TEMPORAL', 'OPINION_REFERIDA', 'AFIRMACION_NEGATIVA'];
+
+/** La pregunta de respaldo (la usan Gemini y, en la web, Gemma 4 cuando no hay juez propio). */
+export function preguntaJuez(afirmacion: string, pasaje: string): string {
+  return `¿El PASAJE respalda la AFIRMACIÓN? Responde SOLO con JSON {"relacion": una de ${RELACIONES.join(', ')}, "probabilidad": número entre 0 y 1 de que el pasaje la respalde directamente o por aplicación de su marco}.\n\nAFIRMACIÓN: ${afirmacion}\n\nPASAJE: ${pasaje}`;
+}
+
+export function leerJuicio(texto: string): { supported: number; label: string } {
+  const a = texto.indexOf('{'), b = texto.lastIndexOf('}');
+  try {
+    const o = JSON.parse(texto.slice(a, b + 1)) as { relacion?: string; probabilidad?: number };
+    return { label: o.relacion ?? 'CONTEXTO', supported: Math.max(0, Math.min(1, Number(o.probabilidad ?? 0))) };
+  } catch { return { label: 'CONTEXTO', supported: 0 }; }
+}
 
 /** El juez con Gemini: misma pregunta y mismas etiquetas que el juez local. */
 export async function juzgar(clave: string, afirmacion: string, pasaje: string): Promise<{ supported: number; label: string }> {

@@ -11,6 +11,7 @@ import type { EntradaBiblioteca, ModeloCatalogo, MotorIA, Progreso as P } from '
 import type { Resumen } from '../nucleo/tipos';
 import { Dialogo, Progreso } from '../componentes/Dialogo';
 import { Boceto } from '../dibujo/BocetoReact';
+import { modeloPorDefecto } from '../util/modelos';
 
 export function DialogoRevectorizar({ id, resumen, alCerrar, alTerminar }: { id: string; resumen: Resumen; alCerrar: () => void; alTerminar: (e: EntradaBiblioteca) => void }) {
   const { nucleo, lengua, avisar, ir } = useApp();
@@ -29,8 +30,7 @@ export function DialogoRevectorizar({ id, resumen, alCerrar, alTerminar }: { id:
     void nucleo.estadoClave().then(setClave);
   }, [nucleo]);
 
-  const embed = modelos?.filter((m) => m.tipo === 'embed') ?? [];
-  const modelo = embed.find((m) => m.recomendado) ?? embed[0];
+  const modelo = modelos ? modeloPorDefecto(modelos, 'embed') : undefined;
   const opcionesDims = motor === 'gemini' ? [3072, 1536, 768] : [768, 512, 256, 128];
   useEffect(() => { if (!opcionesDims.includes(dims)) setDims(opcionesDims[motor === 'gemini' ? 1 : 0]); }, [motor]); // eslint-disable-line react-hooks/exhaustive-deps
 

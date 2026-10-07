@@ -78,14 +78,14 @@ export function fraseLiteral(pasaje: string, cita: string): { frase: string; lit
   return mejor.s >= 0.8 ? { frase: mejor.f, literal: false } : null;
 }
 
-export async function preguntar(nucleo: Nucleo, o: { ambito: string; pregunta: string; motor: MotorIA; lengua: Lengua },
+export async function preguntar(nucleo: Nucleo, o: { ambito: string; pregunta: string; motor: MotorIA; lengua: Lengua; modelo?: string },
   ev: { fase?: (f: 'buscar' | 'redactar' | 'verificar') => void; token?: (t: string) => void } = {}): Promise<Respuesta> {
   ev.fase?.('buscar');
   const r = await nucleo.buscar({ ambito: o.ambito, consulta: o.pregunta, modo: 'hibrida', limite: 8, lengua: o.lengua });
   const pasajes = r.aciertos.slice(0, 8);
   if (!pasajes.length) return { aceptadas: [], descartadas: [], pasajes };
   ev.fase?.('redactar');
-  const salida = await nucleo.generar(construirPrompt(o.pregunta, pasajes, o.lengua), { motor: o.motor, system: instrucciones(o.lengua), temperature: 0.1, max_tokens: 900 }, (t) => ev.token?.(t));
+  const salida = await nucleo.generar(construirPrompt(o.pregunta, pasajes, o.lengua), { motor: o.motor, modelo: o.modelo, system: instrucciones(o.lengua), temperature: 0.1, max_tokens: 900 }, (t) => ev.token?.(t));
   ev.fase?.('verificar');
   const aceptadas: Afirmacion[] = [];
   const descartadas: Afirmacion[] = [];

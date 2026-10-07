@@ -80,7 +80,7 @@ export class Embedder {
 
 /** Generador falso: devuelve en JSON la primera frase del primer pasaje que reciba. */
 export class Generator {
-  static async load(_id: string) { return new Generator(); }
+  static async load(_id: string, _o: unknown = {}) { return new Generator(); }
   async generate(prompt: string, _p: unknown, onToken?: (t: string) => boolean | void): Promise<{ text: string }> {
     const m = /\[(P\d+)\][^\n]*\n([^\n]+)/.exec(prompt);
     const frase = m ? (m[2].match(/[^.;:]+[.;:]/)?.[0] ?? m[2]).trim() : '';
@@ -92,7 +92,7 @@ export class Generator {
 
 /** Juez falso: proporción de palabras de la afirmación que están en el pasaje. */
 export class Judge {
-  static async load(_id?: string) { return new Judge(); }
+  static async load(_id?: string, _o: unknown = {}) { return new Judge(); }
   async support(claim: string, passage: string) {
     const pal = (s: string) => new Set(s.toLowerCase().match(/[\p{L}\p{N}]{3,}/gu) ?? []);
     const a = pal(claim), b = pal(passage);
