@@ -243,6 +243,37 @@ module Spdf
 
     def anchor_uri(anchor, anchor_end = nil) = AnchorUri.format(docref, anchor, anchor_end)
 
+    # Units an anchor URI points at (SPEC §5.4); [] if the URI designates another document.
+    def locate(uri)
+      parsed = AnchorUri.parse(uri)
+      ref = parsed["docref"]
+      d = document
+      if ref.start_with?("sha256-")
+        return [] if ref[7..] != d["source_sha256"].to_s.downcase
+      elsif ref != d["id"].to_s
+        return []
+      end
+      l = parsed["locator"]
+      units.select do |u|
+        a = u["anchor"].is_a?(Hash) ? u["anchor"] : {}
+        if l.key?("p")
+          ph = a["physical"]
+          !ph.nil? && l["p"] <= ph && ph <= (l["pe"] || l["p"])
+        elsif l.key?("f") then u["printed"] == l["f"] || a["printed"] == l["f"]
+        elsif l.key?("t")
+          t = l["t"][0]
+          !a["t0"].nil? && !a["t1"].nil? && a["t0"] <= t && t < a["t1"]
+        elsif l.key?("sl") then a["n"] == l["sl"]
+        elsif l.key?("v")
+          from = a["line_from"]
+          !from.nil? && from <= l["v"][0] && l["v"][0] <= (a["line_to"] || from)
+        elsif l.key?("ref") then a["scheme"] == l["ref"]["scheme"] && a["ref"] == l["ref"]["ref"]
+        elsif l.key?("s") then a["path"].is_a?(Array) && a["path"][0, l["s"].length] == l["s"]
+        else false
+        end
+      end
+    end
+
     def cite(anchor, anchor_end = nil, locale: "es") = Cite.short(metadata, anchor, anchor_end, locale: locale)
 
     def cite_fragment(id, locale: "es")
@@ -250,9 +281,10 @@ module Spdf
       cite(f["anchor"], f["anchor_end"].is_a?(Hash) ? f["anchor_end"] : nil, locale: locale)
     end
 
-    def csl_item(with_extension: false) = Bibliography.csl_item(metadata, document["id"].to_s, with_extension: with_extension)
+    # CSL-JSON item ("spdf" member removed, "id" = BibTeX key, SPEC §19).
+    def csl_item = Bibliography.csl_item(metadata)
     def csl_json(pretty: true) = Json.generate([csl_item], pretty: pretty)
-    def bibtex = Bibliography.bibtex(csl_item)
+    def bibtex = Bibliography.bibtex(Bibliography.base(metadata))
 
     private
 

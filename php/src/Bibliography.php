@@ -4,145 +4,214 @@ declare(strict_types=1);
 
 namespace Spdf;
 
-/** Bibliographic exports: CSL-JSON and BibTeX. */
+/**
+ * Bibliographic exports (specification §19): CSL-JSON and BibTeX.
+ *
+ * CSL-JSON: the metadata item without its `spdf` member, `id` = BibTeX key.
+ * BibTeX key: first author's family name (or the first word of the title) folded to
+ * ASCII letters and lowercased, plus the year (or `nd`); collisions inside one export
+ * get `a`, `b`, `c`… Exports never invent data.
+ */
 final class Bibliography
 {
-    /** CSL type => BibTeX entry type. */
-    private const BIBTEX_TYPES = [
+    private const TYPES = [
         'book' => 'book', 'article-journal' => 'article', 'article-magazine' => 'article',
-        'article-newspaper' => 'article', 'article' => 'article', 'chapter' => 'incollection',
-        'paper-conference' => 'inproceedings', 'thesis' => 'phdthesis', 'report' => 'techreport',
-        'manuscript' => 'unpublished', 'entry-encyclopedia' => 'incollection', 'entry-dictionary' => 'incollection',
+        'article-newspaper' => 'article', 'chapter' => 'incollection', 'paper-conference' => 'inproceedings',
+        'thesis' => 'phdthesis', 'report' => 'techreport',
     ];
 
-    /** A CSL-JSON item with `id`; the `spdf` extension object is dropped unless asked. */
-    public static function cslItem(array $metadata, string $id, bool $withExtension = false): array
+    private const FIELDS = [
+        'publisher' => 'publisher', 'publisher-place' => 'address', 'collection-title' => 'series',
+        'volume' => 'volume', 'issue' => 'number', 'page' => 'pages', 'edition' => 'edition', 'DOI' => 'doi',
+        'ISBN' => 'isbn', 'URL' => 'url', 'language' => 'language', 'note' => 'note',
+    ];
+
+    /** The CSL item without `spdf`, with `id` = BibTeX key. */
+    public static function cslItem(array $metadata): array
     {
-        $item = ['id' => $id] + $metadata;
-        $item['id'] = $id;
-        if (!$withExtension) {
-            unset($item['spdf']);
-        }
+        $item = self::base($metadata);
+        $item['id'] = self::key($item);
         return $item;
     }
 
-    /** One BibTeX entry for a CSL item. */
-    public static function bibtex(array $item): string
+    /** CSL-JSON items of several metadata records (keys disambiguated). @return list<array> */
+    public static function cslItems(array $metadatas): array
     {
-        $type = self::BIBTEX_TYPES[$item['type'] ?? ''] ?? 'misc';
-        $fields = [];
-        $people = fn (string $k) => isset($item[$k]) && is_array($item[$k])
-            ? implode(' and ', array_filter(array_map([self::class, 'bibName'], $item[$k])))
-            : '';
-        foreach (['author' => 'author', 'editor' => 'editor', 'translator' => 'translator'] as $csl => $bib) {
-            $v = $people($csl);
-            if ($v !== '') {
-                $fields[$bib] = $v;
-            }
+        $items = array_map([self::class, 'base'], $metadatas);
+        foreach (self::keys($items) as $i => $k) {
+            $items[$i]['id'] = $k;
         }
-        if (isset($item['title'])) {
-            $fields['title'] = (string) $item['title'];
-        }
-        $container = $item['container-title'] ?? null;
-        if (is_string($container) && $container !== '') {
-            $fields[$type === 'article' ? 'journal' : 'booktitle'] = $container;
-        }
-        $parts = $item['issued']['date-parts'][0] ?? [];
-        if (isset($parts[0])) {
-            $fields['year'] = (string) $parts[0];
-            if (isset($parts[1])) {
-                $fields['month'] = (string) $parts[1];
-            }
-        }
-        $map = [
-            'publisher' => 'publisher', 'publisher-place' => 'address', 'collection-title' => 'series',
-            'volume' => 'volume', 'issue' => 'number', 'page' => 'pages', 'edition' => 'edition',
-            'DOI' => 'doi', 'ISBN' => 'isbn', 'URL' => 'url', 'language' => 'language', 'abstract' => 'abstract',
-            'original-title' => 'origtitle',
-        ];
-        foreach ($map as $csl => $bib) {
-            if (isset($item[$csl]) && is_scalar($item[$csl]) && (string) $item[$csl] !== '') {
-                $fields[$bib] = (string) $item[$csl];
-            }
-        }
-        if ($type === 'phdthesis' && isset($fields['publisher'])) {
-            $fields['school'] = $fields['publisher'];
-            unset($fields['publisher']);
-        }
-        if ($type === 'techreport' && isset($fields['publisher'])) {
-            $fields['institution'] = $fields['publisher'];
-            unset($fields['publisher']);
-        }
-        if (isset($fields['pages'])) {
-            $fields['pages'] = preg_replace('/(?<=\d)\s*[-–]\s*(?=\d)/u', '--', $fields['pages']);
-        }
-        $lines = ['@' . $type . '{' . self::key($item) . ','];
-        foreach ($fields as $k => $v) {
-            $value = in_array($k, ['url', 'doi'], true) ? $v : self::escape($v);
-            $lines[] = '  ' . $k . ' = {' . $value . '},';
-        }
-        $lines[] = '}';
-        return implode("\n", $lines) . "\n";
+        return $items;
     }
 
-    private static function bibName(mixed $p): ?string
+    private static function base(array $m): array
     {
-        if (!is_array($p)) {
-            return null;
-        }
-        if (isset($p['literal'])) {
-            return '{' . $p['literal'] . '}';
-        }
-        $family = trim((($p['non-dropping-particle'] ?? '') . ' ' . ($p['family'] ?? '')));
-        $given = trim((($p['given'] ?? '') . ' ' . ($p['dropping-particle'] ?? '')));
-        if ($family === '' && $given === '') {
-            return null;
-        }
-        if ($family === '') {
-            return $given;
-        }
-        return $given === '' ? $family : "{$family}, {$given}";
+        unset($m['spdf']);
+        return $m;
     }
 
-    /** Citation key: family name of the first author + year + first title word (ASCII). */
+    private static function asciiLetters(string $s): string
+    {
+        $d = \Normalizer::normalize($s, \Normalizer::FORM_KD);
+        $d = preg_replace('/\p{Mn}+/u', '', $d === false ? $s : $d) ?? $s;
+        return strtolower(preg_replace('/[^A-Za-z]/', '', $d) ?? '');
+    }
+
+    private static function year(array $item): ?string
+    {
+        $y = $item['issued']['date-parts'][0][0] ?? null;
+        if (is_bool($y) || $y === null) {
+            return null;
+        }
+        if (is_int($y) || (is_float($y) && floor($y) == $y)) {
+            return (string) (int) $y;
+        }
+        if (is_string($y) && preg_match('/^\s*-?\d+\s*$/', $y)) {
+            return (string) (int) trim($y);
+        }
+        return null;
+    }
+
+    /** Base key: `cervantessaavedra1605`, `lazarillo1554`, `hookend`. */
     public static function key(array $item): string
     {
-        $who = '';
-        foreach (['author', 'editor'] as $k) {
-            if (isset($item[$k][0]) && is_array($item[$k][0])) {
-                $who = (string) ($item[$k][0]['family'] ?? $item[$k][0]['literal'] ?? $item[$k][0]['given'] ?? '');
-                break;
-            }
+        $base = '';
+        $a = $item['author'][0] ?? null;
+        if (is_array($a)) {
+            $who = $a['family'] ?? null ?: ($a['literal'] ?? null ?: ($a['given'] ?? ''));
+            $base = self::asciiLetters((string) $who);
         }
-        $year = (string) ($item['issued']['date-parts'][0][0] ?? '');
-        $word = '';
-        foreach (Text::words((string) ($item['title'] ?? '')) as $w) {
-            if (mb_strlen($w, 'UTF-8') > 3) {
-                $word = $w;
-                break;
-            }
+        if ($base === '') {
+            $words = preg_split('/\s+/u', trim((string) ($item['title'] ?? '')), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+            $base = $words === [] ? '' : self::asciiLetters($words[0]);
         }
-        $key = self::ascii($who) . $year . self::ascii($word);
-        if ($key === '') {
-            $key = self::ascii((string) ($item['id'] ?? 'spdf'));
-        }
-        return $key === '' ? 'spdf' : $key;
+        return ($base === '' ? 'spdf' : $base) . (self::year($item) ?? 'nd');
     }
 
-    private static function ascii(string $s): string
+    /** @param list<array> $items @return list<string> */
+    public static function keys(array $items): array
     {
-        $d = \Normalizer::normalize($s, \Normalizer::FORM_KD) ?: $s;
-        $d = preg_replace('/\p{M}+/u', '', $d) ?? $d;
-        $d = strtr($d, ['ß' => 'ss', 'æ' => 'ae', 'Æ' => 'AE', 'ø' => 'o', 'Ø' => 'O', 'œ' => 'oe', 'Œ' => 'OE', 'ł' => 'l', 'Ł' => 'L']);
-        return preg_replace('/[^A-Za-z0-9]+/', '', $d) ?? '';
+        $bases = array_map([self::class, 'key'], $items);
+        $counts = array_count_values($bases);
+        $seen = [];
+        $out = [];
+        foreach ($bases as $b) {
+            if ($counts[$b] === 1) {
+                $out[] = $b;
+                continue;
+            }
+            $n = $seen[$b] ?? 0;
+            $seen[$b] = $n + 1;
+            $out[] = $b . self::suffix($n);
+        }
+        return $out;
     }
 
-    /** Escapes LaTeX specials; Unicode is kept (biber and modern BibTeX read UTF-8). */
+    private static function suffix(int $n): string
+    {
+        $letters = '';
+        $n++;
+        while ($n > 0) {
+            $r = ($n - 1) % 26;
+            $n = intdiv($n - 1, 26);
+            $letters = chr(97 + $r) . $letters;
+        }
+        return $letters;
+    }
+
     private static function escape(string $s): string
     {
-        return strtr($s, [
-            '\\' => '\\textbackslash{}', '{' => '\\{', '}' => '\\}', '&' => '\\&', '%' => '\\%', '$' => '\\$',
-            '#' => '\\#', '_' => '\\_', '~' => '\\textasciitilde{}', '^' => '\\textasciicircum{}',
-        ]);
+        return strtr($s, ['\\' => '\\textbackslash{}', '{' => '\\{', '}' => '\\}']);
+    }
+
+    /** Escapes and braces every word the source capitalizes. */
+    private static function protectTitle(string $t): string
+    {
+        $parts = preg_split('/(\s+)/u', $t, -1, PREG_SPLIT_DELIM_CAPTURE) ?: [];
+        $out = '';
+        foreach ($parts as $tok) {
+            $esc = self::escape($tok);
+            $out .= preg_match('/\p{Lu}/u', $tok) ? '{' . $esc . '}' : $esc;
+        }
+        return $out;
+    }
+
+    private static function names(mixed $people): ?string
+    {
+        if (!is_array($people) || !array_is_list($people)) {
+            return null;
+        }
+        $out = [];
+        foreach ($people as $p) {
+            if (!is_array($p)) {
+                continue;
+            }
+            if (isset($p['literal']) && $p['literal'] !== '') {
+                $out[] = '{' . self::escape((string) $p['literal']) . '}';
+                continue;
+            }
+            $family = (string) ($p['family'] ?? '');
+            $particle = (string) ($p['non-dropping-particle'] ?? '');
+            if ($particle !== '' && $family !== '') {
+                $family = "{$particle} {$family}";
+            }
+            $given = (string) ($p['given'] ?? '');
+            if ($family !== '' && $given !== '') {
+                $out[] = self::escape($family) . ', ' . self::escape($given);
+            } elseif ($family !== '' || $given !== '') {
+                $out[] = '{' . self::escape($family !== '' ? $family : $given) . '}';
+            }
+        }
+        return $out === [] ? null : implode(' and ', $out);
+    }
+
+    /** One BibTeX entry of a CSL item. */
+    public static function bibtex(array $item, ?string $key = null): string
+    {
+        $entry = self::TYPES[(string) ($item['type'] ?? '')] ?? 'misc';
+        $fields = [];
+        if (($v = self::names($item['author'] ?? null)) !== null) {
+            $fields[] = ['author', $v];
+        }
+        if (($v = self::names($item['editor'] ?? null)) !== null) {
+            $fields[] = ['editor', $v];
+        }
+        if (isset($item['title']) && $item['title'] !== '') {
+            $fields[] = ['title', self::protectTitle((string) $item['title'])];
+        }
+        if (($y = self::year($item)) !== null) {
+            $fields[] = ['year', $y];
+        }
+        if (isset($item['container-title']) && $item['container-title'] !== '') {
+            $fields[] = [$entry === 'article' ? 'journal' : 'booktitle', self::protectTitle((string) $item['container-title'])];
+        }
+        foreach (self::FIELDS as $csl => $bib) {
+            $v = $item[$csl] ?? null;
+            if ($v === null || $v === '' || $v === []) {
+                continue;
+            }
+            $fields[] = [$bib, self::escape(is_scalar($v) ? self::str($v) : Json::encode($v))];
+        }
+        $body = implode(",\n", array_map(fn ($f) => "  {$f[0]} = {{$f[1]}}", $fields));
+        return '@' . $entry . '{' . ($key ?? self::key($item)) . ",\n" . $body . "\n}\n";
+    }
+
+    private static function str(mixed $v): string
+    {
+        if (is_bool($v)) {
+            return $v ? 'True' : 'False';
+        }
+        if (is_float($v)) {
+            return floor($v) == $v ? sprintf('%.1f', $v) : (string) $v;
+        }
+        return (string) $v;
+    }
+
+    /** BibTeX of several metadata records (keys disambiguated with a, b, c…). */
+    public static function bibtexAll(array $metadatas): string
+    {
+        $items = array_map([self::class, 'base'], $metadatas);
+        $keys = self::keys($items);
+        return implode("\n", array_map(fn ($it, $k) => self::bibtex($it, $k), $items, $keys));
     }
 }

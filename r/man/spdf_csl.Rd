@@ -6,27 +6,28 @@
 \alias{spdf_bibtex}
 \title{Bibliographic exports}
 \usage{
-spdf_csl(doc, extension = FALSE)
+spdf_csl(...)
 
-spdf_csl_json(doc)
+spdf_csl_json(...)
 
-spdf_bibtex(doc)
+spdf_bibtex(...)
 }
 \arguments{
-\item{doc}{A \code{spdf_document}.}
-
-\item{extension}{Keep the \code{spdf} extension object.}
+\item{...}{\code{spdf_document} objects or paths to SPDF files.}
 }
 \value{
 A list (\code{spdf_csl()}) or a string.
 }
 \description{
-\code{spdf_csl()} returns the CSL-JSON item of the document (with its \code{id}; the \code{spdf}
-extension object is dropped unless \code{extension = TRUE}); \code{spdf_csl_json()} the CSL-JSON
-array that Zotero, Pandoc and citeproc import; \code{spdf_bibtex()} one BibTeX entry.
+\code{spdf_csl()} returns the CSL-JSON item of a document without the \code{spdf} member and
+with \code{id} set to its BibTeX key (specification section 19); \code{spdf_csl_json()} the
+CSL-JSON array that Zotero, Pandoc and citeproc import; \code{spdf_bibtex()} the BibTeX
+entry. Both accept several documents or paths, and then disambiguate colliding keys
+with \code{a}, \code{b}, \code{c}...
 }
 \examples{
 doc <- spdf_open(system.file("extdata", "quijote.spdf", package = "spdf"))
 cat(spdf_bibtex(doc))
+spdf_csl(doc)$id
 spdf_close(doc)
 }

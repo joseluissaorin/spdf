@@ -280,3 +280,44 @@ function content_sha256(doc::Document)
     d["meta"] = filter(p -> !(p.first in ("content_sha256", "signature", "signer")), d["meta"])
     return bytes2hex(sha256(canonical_json(d)))
 end
+
+"""
+    locate(doc, uri) -> Vector{Dict}
+
+Units an anchor URI points at (SPEC §5.4): by physical page (and end page), else printed
+folio, time, slide, verse, canonical reference or section path. Returns an empty vector
+when the URI designates another document.
+"""
+function locate(doc::Document, uri::AbstractString)
+    parsed = parse_uri(uri)
+    ref = parsed["docref"]
+    d = document(doc)
+    if startswith(ref, "sha256-")
+        ref[8:end] == lowercase(string(something(d["source_sha256"], ""))) || return Dict{String,Any}[]
+    elseif ref != string(d["id"])
+        return Dict{String,Any}[]
+    end
+    l = parsed["locator"]
+    return filter(units(doc)) do u
+        a = u["anchor"] isa AbstractDict ? u["anchor"] : Dict{String,Any}()
+        g(k) = get(a, k, nothing)
+        if haskey(l, "p")
+            g("physical") !== nothing && l["p"] <= g("physical") <= get(l, "pe", l["p"])
+        elseif haskey(l, "f")
+            get(u, "printed", nothing) == l["f"] || g("printed") == l["f"]
+        elseif haskey(l, "t")
+            t = l["t"][1]
+            g("t0") !== nothing && g("t1") !== nothing && g("t0") <= t < g("t1")
+        elseif haskey(l, "sl")
+            g("n") == l["sl"]
+        elseif haskey(l, "v")
+            g("line_from") !== nothing && g("line_from") <= l["v"][1] <= something(g("line_to"), g("line_from"))
+        elseif haskey(l, "ref")
+            g("scheme") == l["ref"]["scheme"] && g("ref") == l["ref"]["ref"]
+        elseif haskey(l, "s")
+            g("path") isa AbstractVector && length(g("path")) >= length(l["s"]) && g("path")[1:length(l["s"])] == l["s"]
+        else
+            false
+        end
+    end
+end

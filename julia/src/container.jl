@@ -154,6 +154,8 @@ function _open!(doc, path, max_blob_bytes, max_inflated_bytes, strict)
     try
         doc.db = SQLite.DB("file:" * uri_path(real) * "?mode=ro")
         @ccall SQLite.C.libsqlite.sqlite3_db_config(doc.db.handle::Ptr{Cvoid}, 1010::Cint; 1::Cint, C_NULL::Ptr{Cint})::Cint
+        # Largest BLOB or TEXT value SQLite will hand back (SPEC §2.4, step 5).
+        @ccall SQLite.C.libsqlite.sqlite3_limit(doc.db.handle::Ptr{Cvoid}, 0::Cint, Cint(min(max_blob_bytes, typemax(Int32)))::Cint)::Cint
         for p in ("PRAGMA query_only = 1", "PRAGMA trusted_schema = OFF", "PRAGMA cell_size_check = ON")
             exec!(doc.db, p)
         end

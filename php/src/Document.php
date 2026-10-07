@@ -606,6 +606,55 @@ final class Document
         return AnchorUri::fromAnchor($this->docref(), $anchor, $anchorEnd);
     }
 
+    /**
+     * Units an anchor URI points at (SPEC §5.4): by physical page (and end page), else
+     * printed folio, time, slide, verse, canonical reference or section path. Returns []
+     * when the URI designates another document.
+     */
+    public function locate(string $uri): array
+    {
+        $parsed = AnchorUri::parse($uri);
+        $ref = $parsed['docref'];
+        $d = $this->document();
+        if (str_starts_with($ref, 'sha256-')) {
+            if (substr($ref, 7) !== strtolower((string) ($d['source_sha256'] ?? ''))) {
+                return [];
+            }
+        } elseif ($ref !== (string) $d['id']) {
+            return [];
+        }
+        $l = $parsed['locator'];
+        $out = [];
+        foreach ($this->units() as $u) {
+            $a = is_array($u['anchor']) ? $u['anchor'] : [];
+            if (isset($l['p'])) {
+                $ph = $a['physical'] ?? null;
+                $hit = $ph !== null && $l['p'] <= $ph && $ph <= ($l['pe'] ?? $l['p']);
+            } elseif (isset($l['f'])) {
+                $hit = ($u['printed'] ?? null) === $l['f'] || ($a['printed'] ?? null) === $l['f'];
+            } elseif (isset($l['t'])) {
+                $t = $l['t'][0];
+                $hit = isset($a['t0'], $a['t1']) && $a['t0'] <= $t && $t < $a['t1'];
+            } elseif (isset($l['sl'])) {
+                $hit = ($a['n'] ?? null) == $l['sl'];
+            } elseif (isset($l['v'])) {
+                $from = $a['line_from'] ?? null;
+                $hit = $from !== null && $from <= $l['v'][0] && $l['v'][0] <= ($a['line_to'] ?? $from);
+            } elseif (isset($l['ref'])) {
+                $hit = ($a['scheme'] ?? null) === $l['ref']['scheme'] && ($a['ref'] ?? null) === $l['ref']['ref'];
+            } elseif (isset($l['s'])) {
+                $path = $a['path'] ?? null;
+                $hit = is_array($path) && array_slice(array_values($path), 0, count($l['s'])) === $l['s'];
+            } else {
+                $hit = false;
+            }
+            if ($hit) {
+                $out[] = $u;
+            }
+        }
+        return $out;
+    }
+
     /** Short author-date citation of an anchor, e.g. "(Cervantes, 1605, p. 45)". */
     public function cite(array $anchor, ?array $anchorEnd = null, string $locale = 'es'): string
     {
@@ -619,10 +668,10 @@ final class Document
         return $this->cite((array) $f['anchor'], is_array($f['anchor_end']) ? $f['anchor_end'] : null, $locale);
     }
 
-    /** CSL-JSON item (with `id`; the `spdf` extension removed unless asked). */
-    public function cslItem(bool $withExtension = false): array
+    /** CSL-JSON item (`spdf` member removed, `id` = BibTeX key, SPEC §19). */
+    public function cslItem(): array
     {
-        return Bibliography::cslItem($this->metadata(), (string) $this->document()['id'], $withExtension);
+        return Bibliography::cslItem($this->metadata());
     }
 
     /** CSL-JSON array (what Zotero, Pandoc and citeproc import). */
@@ -633,6 +682,6 @@ final class Document
 
     public function bibtex(): string
     {
-        return Bibliography::bibtex($this->cslItem());
+        return Bibliography::bibtex(Bibliography::cslItem($this->metadata()));
     }
 }

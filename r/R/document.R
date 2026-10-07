@@ -170,13 +170,21 @@ container_open <- function(path, max_blob_bytes, max_inflated_bytes, strict) {
     spdf_abort("E020", sprintf("the file contains a %s (%s); refusing to open it", f$type, f$name))
   }
   if (strict) {
-    checks <- if (doc$legacy) c(blobs = "datos", vectores = "valores") else c(blobs = "data", vectors = "data")
+    # Largest BLOB or TEXT values a reader may meet (SPEC 2.4, step 5).
+    checks <- if (doc$legacy) {
+      c(blobs = "datos", vectores = "valores", unidades = "texto", fragmentos = "texto", documentos = "metadatos")
+    } else {
+      c(blobs = "data", vectors = "data", units = "text", fragments = "text", documents = "metadata")
+    }
     for (t in names(checks)) {
-      if (!(t %in% doc$tables)) next
-      mx <- DBI::dbGetQuery(doc$con, sprintf("SELECT coalesce(max(length(%s)), 0) AS m FROM %s", checks[[t]], t))$m
+      if (!(t %in% doc$tables) || !(checks[[t]] %in% doc_columns(doc, t))) next
+      mx <- tryCatch(
+        DBI::dbGetQuery(doc$con, sprintf("SELECT coalesce(max(octet_length(%s)), 0) AS m FROM %s", checks[[t]], t))$m,
+        error = function(e) DBI::dbGetQuery(doc$con, sprintf("SELECT coalesce(max(length(CAST(%s AS BLOB))), 0) AS m FROM %s", checks[[t]], t))$m
+      )
       if (mx > max_blob_bytes) {
         spdf_close(doc)
-        spdf_abort("E001", sprintf("a blob in %s is %.0f bytes, above the limit of %.0f", t, mx, max_blob_bytes))
+        spdf_abort("E001", sprintf("a value in %s.%s is %.0f bytes, above the limit of %.0f", t, checks[[t]], mx, max_blob_bytes))
       }
     }
   }

@@ -41,6 +41,8 @@ end
 search_vector(doc, qvec, "embeddinggemma-2@768"; limit = 10)
 search_hybrid(doc, "ciego jarro", qvec, "embeddinggemma-2@768")   # RRF, k = 10
 parse_uri("spdf:sha256-3f2a…#p=29&f=21&char=118,301")
+locate(doc, "spdf:sha256-3f2a…#p=29")    # the units an anchor URI points at
+csl_item(doc)["id"]                       # "cervantessaavedra1605", the BibTeX key (SPEC §19)
 validate("file.spdf")       # Dict("valid" => true, "errors" => [], "warnings" => [], …)
 ```
 

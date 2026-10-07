@@ -170,18 +170,27 @@ final class Container
         ));
     }
 
+    /** Largest BLOB or TEXT values a reader may meet (SPEC §2.4, step 5). */
+    private const SIZE_CHECKS = [
+        'blobs' => 'data', 'vectors' => 'data', 'units' => 'text', 'fragments' => 'text', 'documents' => 'metadata',
+    ];
+    private const LEGACY_SIZE_CHECKS = [
+        'blobs' => 'datos', 'vectores' => 'valores', 'unidades' => 'texto', 'fragmentos' => 'texto', 'documentos' => 'metadatos',
+    ];
+
     private function checkBlobSizes(Options $options): void
     {
-        $checks = $this->legacy
-            ? ['blobs' => 'datos', 'vectores' => 'valores']
-            : ['blobs' => 'data', 'vectors' => 'data'];
-        foreach ($checks as $table => $column) {
-            if (!in_array($table, $this->tables, true)) {
+        foreach ($this->legacy ? self::LEGACY_SIZE_CHECKS : self::SIZE_CHECKS as $table => $column) {
+            if (!in_array($table, $this->tables, true) || !in_array($column, $this->columns($table), true)) {
                 continue;
             }
-            $max = (int) $this->pdo->query("SELECT coalesce(max(length({$column})), 0) FROM {$table}")->fetchColumn();
+            try {
+                $max = (int) $this->pdo->query("SELECT coalesce(max(octet_length({$column})), 0) FROM {$table}")->fetchColumn();
+            } catch (\PDOException) {
+                $max = (int) $this->pdo->query("SELECT coalesce(max(length(CAST({$column} AS BLOB))), 0) FROM {$table}")->fetchColumn();
+            }
             if ($max > $options->maxBlobBytes) {
-                throw new SpdfException('E001', "A blob in {$table} is {$max} bytes, above the limit of {$options->maxBlobBytes}.");
+                throw new SpdfException('E001', "A value in {$table}.{$column} is {$max} bytes, above the limit of {$options->maxBlobBytes}.");
             }
         }
     }

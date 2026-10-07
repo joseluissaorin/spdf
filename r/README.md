@@ -34,7 +34,8 @@ f <- fr[fr$id == hits$fragment_id[1], ]
 spdf_cite(spdf_metadata(doc), f$anchor[[1]], f$anchor_end[[1]], locale = "es")
 #> "(Cervantes Saavedra, 1605, fols. 1r-[1v])"
 
-cat(spdf_bibtex(doc))              # also spdf_csl() / spdf_csl_json()
+spdf_locate(doc, hits$anchor_uri[1])   # the units an anchor URI points at
+cat(spdf_bibtex(doc))              # @book{cervantessaavedra1605, ... (also spdf_csl())
 spdf_close(doc)
 ```
 

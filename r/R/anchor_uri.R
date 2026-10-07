@@ -215,3 +215,57 @@ spdf_parse_uri <- function(uri) {
   }
   list(docref = docref, locator = json_object(l))
 }
+
+#' Resolve an anchor URI
+#'
+#' The units an anchor URI points at (specification section 5.4): by physical page
+#' (and end page), else by printed folio, time, slide, verse, canonical reference or
+#' section path. A URI that designates another document gives no rows.
+#'
+#' @param doc A `spdf_document`.
+#' @param uri An anchor URI.
+#' @return A tibble of units (as [spdf_units()]).
+#' @examples
+#' doc <- spdf_open(system.file("extdata", "quijote.spdf", package = "spdf"))
+#' uri <- spdf_search(doc, "\"lugar de la Mancha\"")$anchor_uri[1]
+#' spdf_locate(doc, uri)[, c("ord", "printed")]
+#' spdf_close(doc)
+#' @export
+spdf_locate <- function(doc, uri) {
+  check_open(doc)
+  parsed <- spdf_parse_uri(uri)
+  ref <- parsed$docref
+  d <- doc_document(doc)
+  units <- strip_document(doc_units(doc))
+  cols <- setdiff(spdf_columns$units, "document")
+  none <- rows_to_tibble(list(), cols, c("anchor", "notes", "words"))
+  if (startsWith(ref, "sha256-")) {
+    if (substring(ref, 8) != tolower(d$source_sha256 %||% "")) return(none)
+  } else if (ref != as.character(d$id)) {
+    return(none)
+  }
+  l <- parsed$locator
+  hit <- vapply(units, function(u) {
+    a <- if (json_is_object(u$anchor)) u$anchor else list()
+    if (!is.null(l$p)) {
+      !is.null(a$physical) && l$p <= a$physical && a$physical <= (l$pe %||% l$p)
+    } else if (!is.null(l$f)) {
+      identical(u$printed, l$f) || identical(a$printed, l$f)
+    } else if (!is.null(l$t)) {
+      t <- l$t[[1]]
+      !is.null(a$t0) && !is.null(a$t1) && a$t0 <= t && t < a$t1
+    } else if (!is.null(l$sl)) {
+      isTRUE(a$n == l$sl)
+    } else if (!is.null(l$v)) {
+      !is.null(a$line_from) && a$line_from <= l$v[[1]] && l$v[[1]] <= (a$line_to %||% a$line_from)
+    } else if (!is.null(l$ref)) {
+      identical(a$scheme, l$ref$scheme) && identical(a$ref, l$ref$ref)
+    } else if (!is.null(l$s)) {
+      is.list(a$path) && length(a$path) >= length(l$s) && identical(unlist(a$path[seq_along(l$s)]), unlist(l$s))
+    } else {
+      FALSE
+    }
+  }, logical(1))
+  if (!any(hit)) return(none)
+  rows_to_tibble(units[hit], cols, c("anchor", "notes", "words"))
+}

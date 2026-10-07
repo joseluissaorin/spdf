@@ -54,8 +54,9 @@ doc.search_hybrid("ciego jarro", query, space: "embeddinggemma-2@768")  # RRF, k
 ```ruby
 Spdf::AnchorUri.parse("spdf:sha256-3f2a…#p=29&f=21&char=118,301")
 # {"docref" => "sha256-3f2a…", "locator" => {"p" => 29, "f" => "21", "char" => [118, 301]}}
-File.write("lazarillo.json", doc.csl_json)   # Zotero, Pandoc, citeproc
-File.write("lazarillo.bib", doc.bibtex)
+doc.locate("spdf:sha256-3f2a…#p=29")         # the units an anchor URI points at
+File.write("lazarillo.json", doc.csl_json)   # Zotero, Pandoc, citeproc (id = BibTeX key)
+File.write("lazarillo.bib", doc.bibtex)      # @book{la1554, ... (SPEC §19)
 ```
 
 ## Validate

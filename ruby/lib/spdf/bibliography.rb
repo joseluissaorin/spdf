@@ -1,81 +1,145 @@
 # frozen_string_literal: true
 
 module Spdf
-  # Bibliographic exports: CSL-JSON and BibTeX.
+  # Bibliographic exports (specification §19): CSL-JSON and BibTeX.
+  #
+  # CSL-JSON: the metadata item without its "spdf" member, "id" = BibTeX key.
+  # BibTeX key: first author's family name (or the first word of the title) folded to
+  # ASCII letters and lowercased, plus the year (or "nd"); collisions inside one export
+  # get a, b, c... Exports never invent data.
   module Bibliography
-    BIBTEX_TYPES = {
+    TYPES = {
       "book" => "book", "article-journal" => "article", "article-magazine" => "article",
-      "article-newspaper" => "article", "article" => "article", "chapter" => "incollection",
-      "paper-conference" => "inproceedings", "thesis" => "phdthesis", "report" => "techreport",
-      "manuscript" => "unpublished", "entry-encyclopedia" => "incollection", "entry-dictionary" => "incollection"
+      "article-newspaper" => "article", "chapter" => "incollection", "paper-conference" => "inproceedings",
+      "thesis" => "phdthesis", "report" => "techreport"
     }.freeze
-    FIELDS = {
-      "publisher" => "publisher", "publisher-place" => "address", "collection-title" => "series", "volume" => "volume",
-      "issue" => "number", "page" => "pages", "edition" => "edition", "DOI" => "doi", "ISBN" => "isbn", "URL" => "url",
-      "language" => "language", "abstract" => "abstract", "original-title" => "origtitle"
-    }.freeze
-    LATEX = { "\\" => "\\textbackslash{}", "{" => "\\{", "}" => "\\}", "&" => "\\&", "%" => "\\%", "$" => "\\$",
-              "#" => "\\#", "_" => "\\_", "~" => "\\textasciitilde{}", "^" => "\\textasciicircum{}" }.freeze
+    FIELDS = [%w[publisher publisher], %w[publisher-place address], %w[collection-title series], %w[volume volume],
+              %w[issue number], %w[page pages], %w[edition edition], %w[DOI doi], %w[ISBN isbn], %w[URL url],
+              %w[language language], %w[note note]].freeze
+    ESCAPES = { "\\" => "\\textbackslash{}", "{" => "\\{", "}" => "\\}" }.freeze
 
     module_function
 
-    # CSL-JSON item with "id"; the "spdf" extension object is dropped unless asked.
-    def csl_item(metadata, id, with_extension: false)
-      item = { "id" => id }.merge(metadata).merge("id" => id)
-      item.delete("spdf") unless with_extension
-      item
+    def base(metadata) = metadata.reject { |k, _| k == "spdf" }
+
+    # CSL item without "spdf", with "id" = BibTeX key.
+    def csl_item(metadata)
+      item = base(metadata)
+      item.merge("id" => key(item))
     end
 
-    def bib_name(p)
-      return nil unless p.is_a?(Hash)
-      return "{#{p["literal"]}}" if p["literal"]
-
-      family = "#{p["non-dropping-particle"]} #{p["family"]}".strip
-      given = "#{p["given"]} #{p["dropping-particle"]}".strip
-      return nil if family.empty? && given.empty?
-      return given if family.empty?
-
-      given.empty? ? family : "#{family}, #{given}"
+    def csl_items(metadatas)
+      items = metadatas.map { |m| base(m) }
+      items.zip(keys(items)).map { |it, k| it.merge("id" => k) }
     end
 
-    def ascii(s)
-      s.to_s.unicode_normalize(:nfkd).gsub(/\p{M}/, "")
-       .tr("ßæÆøØœŒłŁ", "sAAoOoOlL").gsub(/[^A-Za-z0-9]/, "")
+    def ascii_letters(s)
+      s.to_s.unicode_normalize(:nfkd).gsub(/\p{Mn}/, "").gsub(/[^A-Za-z]/, "").downcase
+    end
+
+    def year(item)
+      y = item.dig("issued", "date-parts", 0, 0) if item["issued"].is_a?(Hash) && item["issued"]["date-parts"].is_a?(Array) &&
+                                                   item["issued"]["date-parts"][0].is_a?(Array)
+      return nil if y.nil? || y == true || y == false
+      return y.to_i.to_s if y.is_a?(Integer) || (y.is_a?(Float) && y == y.floor)
+      return y.strip.to_i.to_s if y.is_a?(String) && y.match?(/\A\s*-?\d+\s*\z/)
+
+      nil
     end
 
     def key(item)
-      first = %w[author editor].map { |k| item[k].is_a?(Array) ? item[k].first : nil }.compact.first
-      who = first.is_a?(Hash) ? (first["family"] || first["literal"] || first["given"]).to_s : ""
-      year = item.dig("issued", "date-parts", 0, 0).to_s
-      word = Text.words(item["title"].to_s).find { |w| w.length > 3 }.to_s
-      k = ascii(who) + year + ascii(word)
-      k = ascii(item["id"]) if k.empty?
-      k.empty? ? "spdf" : k
+      base = ""
+      a = item["author"].is_a?(Array) ? item["author"][0] : nil
+      if a.is_a?(Hash)
+        who = [a["family"], a["literal"], a["given"]].find { |x| x && x != "" } || ""
+        base = ascii_letters(who)
+      end
+      if base.empty?
+        w = item["title"].to_s.split.first
+        base = w ? ascii_letters(w) : ""
+      end
+      (base.empty? ? "spdf" : base) + (year(item) || "nd")
     end
 
-    def escape(s) = s.to_s.gsub(/[\\{}&%$#_~^]/) { |c| LATEX[c] }
-
-    def bibtex(item)
-      type = BIBTEX_TYPES.fetch(item["type"].to_s, "misc")
-      fields = {}
-      { "author" => "author", "editor" => "editor", "translator" => "translator" }.each do |csl, bib|
-        names = Array(item[csl]).filter_map { |p| bib_name(p) }
-        fields[bib] = names.join(" and ") unless names.empty?
+    def suffix(n)
+      letters = +""
+      n += 1
+      while n.positive?
+        n, r = (n - 1).divmod(26)
+        letters.prepend((97 + r).chr)
       end
-      fields["title"] = item["title"].to_s if item["title"]
-      container = item["container-title"]
-      fields[type == "article" ? "journal" : "booktitle"] = container if container.is_a?(String) && !container.empty?
-      parts = item.dig("issued", "date-parts", 0) || []
-      fields["year"] = parts[0].to_s if parts[0]
-      fields["month"] = parts[1].to_s if parts[1]
-      FIELDS.each { |csl, bib| fields[bib] = item[csl].to_s if item[csl] && !item[csl].to_s.empty? && !item[csl].is_a?(Enumerable) }
-      fields["school"] = fields.delete("publisher") if type == "phdthesis" && fields["publisher"]
-      fields["institution"] = fields.delete("publisher") if type == "techreport" && fields["publisher"]
-      fields["pages"] = fields["pages"].gsub(/(?<=\d)\s*[-–]\s*(?=\d)/, "--") if fields["pages"]
-      lines = ["@#{type}{#{key(item)},"]
-      fields.each { |k, v| lines << "  #{k} = {#{%w[url doi].include?(k) ? v : escape(v)}}," }
-      lines << "}"
-      "#{lines.join("\n")}\n"
+      letters
+    end
+
+    def keys(items)
+      bases = items.map { |it| key(it) }
+      counts = bases.tally
+      seen = Hash.new(0)
+      bases.map do |b|
+        next b if counts[b] == 1
+
+        n = seen[b]
+        seen[b] += 1
+        b + suffix(n)
+      end
+    end
+
+    def escape(s) = s.to_s.gsub(/[\\{}]/) { |c| ESCAPES[c] }
+
+    def protect_title(t)
+      t.to_s.split(/(\s+)/).map { |tok| tok.match?(/\p{Lu}/) ? "{#{escape(tok)}}" : escape(tok) }.join
+    end
+
+    def names(people)
+      return nil unless people.is_a?(Array)
+
+      out = people.filter_map do |p|
+        next unless p.is_a?(Hash)
+        next "{#{escape(p["literal"])}}" if p["literal"] && p["literal"] != ""
+
+        family = p["family"].to_s
+        particle = p["non-dropping-particle"].to_s
+        family = "#{particle} #{family}" if !particle.empty? && !family.empty?
+        given = p["given"].to_s
+        if !family.empty? && !given.empty?
+          "#{escape(family)}, #{escape(given)}"
+        elsif !family.empty? || !given.empty?
+          "{#{escape(family.empty? ? given : family)}}"
+        end
+      end
+      out.empty? ? nil : out.join(" and ")
+    end
+
+    def scalar_text(v)
+      return(v ? "True" : "False") if v == true || v == false
+      return v.to_s if v.is_a?(Float) && v != v.floor
+
+      v.is_a?(Float) ? format("%.1f", v) : v.to_s
+    end
+
+    # One BibTeX entry of a CSL item.
+    def bibtex(item, key = nil)
+      entry = TYPES.fetch(item["type"].to_s, "misc")
+      fields = []
+      (a = names(item["author"])) && fields << ["author", a]
+      (e = names(item["editor"])) && fields << ["editor", e]
+      fields << ["title", protect_title(item["title"])] if item["title"] && item["title"] != ""
+      (y = year(item)) && fields << ["year", y]
+      ct = item["container-title"]
+      fields << [entry == "article" ? "journal" : "booktitle", protect_title(ct)] if ct && ct != ""
+      FIELDS.each do |csl, bib|
+        v = item[csl]
+        next if v.nil? || v == "" || v == []
+
+        fields << [bib, escape(v.is_a?(Hash) || v.is_a?(Array) ? JSON.generate(v) : scalar_text(v))]
+      end
+      "@#{entry}{#{key || key(item)},\n#{fields.map { |k, v| "  #{k} = {#{v}}" }.join(",\n")}\n}\n"
+    end
+
+    # BibTeX of several metadata records (keys disambiguated with a, b, c...).
+    def bibtex_all(metadatas)
+      items = metadatas.map { |m| base(m) }
+      items.zip(keys(items)).map { |it, k| bibtex(it, k) }.join("\n")
     end
   end
 end

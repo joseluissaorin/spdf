@@ -146,14 +146,22 @@ module Spdf
       raise Error.new("E002", "unknown application_id or user_version (#{@application_id}, #{uv})")
     end
 
-    def check_blob_sizes(options)
-      checks = @legacy ? { "blobs" => "datos", "vectores" => "valores" } : { "blobs" => "data", "vectors" => "data" }
-      checks.each do |table, column|
-        next unless table?(table)
+    # Largest BLOB or TEXT values a reader may meet (SPEC §2.4, step 5).
+    SIZE_CHECKS = { "blobs" => "data", "vectors" => "data", "units" => "text", "fragments" => "text", "documents" => "metadata" }.freeze
+    LEGACY_SIZE_CHECKS = { "blobs" => "datos", "vectores" => "valores", "unidades" => "texto", "fragmentos" => "texto",
+                           "documentos" => "metadatos" }.freeze
 
-        max = @db.get_first_value("SELECT coalesce(max(length(#{column})), 0) FROM #{table}").to_i
+    def check_blob_sizes(options)
+      (@legacy ? LEGACY_SIZE_CHECKS : SIZE_CHECKS).each do |table, column|
+        next unless table?(table) && columns(table).include?(column)
+
+        max = begin
+          @db.get_first_value("SELECT coalesce(max(octet_length(#{column})), 0) FROM #{table}").to_i
+        rescue SQLite3::Exception
+          @db.get_first_value("SELECT coalesce(max(length(CAST(#{column} AS BLOB))), 0) FROM #{table}").to_i
+        end
         if max > options.max_blob_bytes
-          raise Error.new("E001", "a blob in #{table} is #{max} bytes, above the limit of #{options.max_blob_bytes}")
+          raise Error.new("E001", "a value in #{table}.#{column} is #{max} bytes, above the limit of #{options.max_blob_bytes}")
         end
       end
     end

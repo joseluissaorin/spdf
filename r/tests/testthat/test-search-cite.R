@@ -42,7 +42,7 @@ test_that("writes a file that validates and reads back", {
   expect_equal(spdf_search(doc, "mundo")$fragment_id, "f1")
   expect_equal(spdf_search_vector(doc, c(0.6, 0.8), "toy@2:i8")$fragment_id, "f1")
   expect_equal(spdf_cite(spdf_metadata(doc), spdf_fragments(doc)$anchor[[1]]), "(Prueba, 2026, p. 45)")
-  expect_match(spdf_bibtex(doc), "^@book\\{2026Prueba,")
+  expect_match(spdf_bibtex(doc), "^@book\\{prueba2026,")
 })
 
 test_that("quantization matches the specification", {
