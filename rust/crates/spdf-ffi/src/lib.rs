@@ -513,6 +513,47 @@ pub unsafe extern "C" fn spdf_anchor_uri_parse(
     })
 }
 
+/// Writer-side encoding of `n` values in `dtype` (`f32`, `f16`, `i8`): f32
+/// and f16 round to nearest even and overflow is an error (`E030`); i8 =
+/// `clamp(round_half_away_from_zero(v × 127), −127, 127)`; an unknown dtype is
+/// `E032`. The bytes are freed with `spdf_bytes_free(data, len)`.
+#[no_mangle]
+pub unsafe extern "C" fn spdf_quantize(
+    values: *const f64,
+    n: usize,
+    dtype: *const c_char,
+    out_data: *mut *mut u8,
+    out_len: *mut usize,
+) -> c_int {
+    guard(|| {
+        if (values.is_null() && n > 0) || out_data.is_null() || out_len.is_null() {
+            return Err(arg("values, out_data or out_len is NULL"));
+        }
+        let dtype = unsafe { str_arg(dtype, "dtype") }?;
+        let d = spdf::Dtype::parse(dtype).ok_or_else(|| {
+            Fail(
+                SPDF_ERR_FORMAT,
+                Some("E032".into()),
+                format!("unknown dtype `{dtype}`"),
+            )
+        })?;
+        let vals: &[f64] = if n == 0 {
+            &[]
+        } else {
+            // SAFETY: the caller passes `n` readable doubles.
+            unsafe { std::slice::from_raw_parts(values, n) }
+        };
+        let bytes = spdf::vector::quantize(vals, d)?.into_boxed_slice();
+        let len = bytes.len();
+        // SAFETY: out pointers are writable.
+        unsafe {
+            *out_data = Box::into_raw(bytes) as *mut u8;
+            *out_len = len;
+        }
+        Ok(())
+    })
+}
+
 /// Units an anchor URI points at, as a JSON array (empty if the URI names
 /// another document).
 #[no_mangle]

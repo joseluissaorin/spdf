@@ -210,6 +210,18 @@ int spdf_anchor_uri_format_locator(const char *docref, const char *locator_json,
 int spdf_anchor_uri_parse(const char *uri, char **out_json);
 
 /*
+ Writer-side encoding of `n` values in `dtype` (`f32`, `f16`, `i8`): f32
+ and f16 round to nearest even and overflow is an error (`E030`); i8 =
+ `clamp(round_half_away_from_zero(v × 127), −127, 127)`; an unknown dtype is
+ `E032`. The bytes are freed with `spdf_bytes_free(data, len)`.
+ */
+int spdf_quantize(const double *values,
+                  size_t n,
+                  const char *dtype,
+                  uint8_t **out_data,
+                  size_t *out_len);
+
+/*
  Units an anchor URI points at, as a JSON array (empty if the URI names
  another document).
  */
