@@ -41,31 +41,34 @@ function label(a)
     return get(a, "source", nothing) == "inferred" ? "[" * string(p) * "]" : string(p)
 end
 
-"An end without a printed folio never takes part in a range (SPEC §18.1)."
-function page_locator(a, e, es, one, many)
+const SINGLE = Dict("page" => "p.", "leaf" => "fol.", "column" => "col.")
+const PLURAL = Dict("page" => "pp.", "leaf" => "fols.", "column" => "cols.")
+
+foliation_of(a) = (f = get(a, "type", nothing) == "page" ? get(a, "foliation", "page") : "page"; haskey(SINGLE, f) ? f : "page")
+
+"SPEC §18.1: an end without a printed folio never takes part in a range; labels come from the printed ends' foliation."
+function page_locator(a, e, es)
     ends = Any[a]
     e isa AbstractDict && get(e, "type", nothing) == get(a, "type", nothing) && push!(ends, e)
     withfolio = [x for x in ends if get(x, "printed", nothing) !== nothing]
     isempty(withfolio) && return es ? "s. p." : "n. pag."
     first_, last_ = withfolio[1], withfolio[end]
-    if length(withfolio) > 1 && last_["printed"] != first_["printed"]
-        return "$many $(label(first_))-$(label(last_))"
-    end
-    return "$one $(label(first_))"
+    f1, f2 = foliation_of(first_), foliation_of(last_)
+    (length(withfolio) == 1 || last_["printed"] == first_["printed"]) && return "$(SINGLE[f1]) $(label(first_))"
+    f1 == f2 && return "$(PLURAL[f1]) $(label(first_))-$(label(last_))"
+    return "$(SINGLE[f1]) $(label(first_))-$(SINGLE[f2]) $(label(last_))"
 end
 
 function cite_locator(a, e, es)
     t = get(a, "type", nothing)
     if t == "page"
-        fol = get(a, "foliation", "page")
-        one, many = fol == "leaf" ? ("fol.", "fols.") : fol == "column" ? ("col.", "cols.") : ("p.", "pp.")
-        return page_locator(a, e, es, one, many)
+        return page_locator(a, e, es)
     elseif t == "time"
         s = hms(a["t0"])
         e isa AbstractDict && get(e, "type", nothing) == "time" && (s *= "-" * hms(e["t1"]))
         return s
     elseif t in ("section", "web")
-        get(a, "printed", nothing) !== nothing && return page_locator(a, e, es, "p.", "pp.")
+        get(a, "printed", nothing) !== nothing && return page_locator(a, e, es)
         parts = String[]
         path = get(a, "path", nothing)
         path isa AbstractVector && !isempty(path) && push!(parts, "§ " * string(path[end]))

@@ -110,8 +110,17 @@ module Spdf
       a["source"] == "inferred" ? "[#{p}]" : p.to_s
     end
 
-    # An end without a printed folio never takes part in a range (SPEC §18.1).
-    def page_locator(a, e, es, one, many)
+    SINGLE = { "page" => "p.", "leaf" => "fol.", "column" => "col." }.freeze
+    PLURAL = { "page" => "pp.", "leaf" => "fols.", "column" => "cols." }.freeze
+
+    def foliation(a)
+      f = a["type"] == "page" ? a.fetch("foliation", "page") : "page"
+      SINGLE.key?(f) ? f : "page"
+    end
+
+    # SPEC §18.1: an end without a printed folio never takes part in a range, and every
+    # label comes from the foliation of the end actually printed.
+    def page_locator(a, e, es)
       ends = [a]
       ends << e if e && e["type"] == a["type"]
       with_folio = ends.reject { |x| x["printed"].nil? }
@@ -119,22 +128,24 @@ module Spdf
 
       first = with_folio.first
       last = with_folio.last
-      return "#{many} #{label(first)}-#{label(last)}" if with_folio.length > 1 && last["printed"] != first["printed"]
+      f1 = foliation(first)
+      f2 = foliation(last)
+      return "#{SINGLE[f1]} #{label(first)}" if with_folio.length == 1 || last["printed"] == first["printed"]
+      return "#{PLURAL[f1]} #{label(first)}-#{label(last)}" if f1 == f2
 
-      "#{one} #{label(first)}"
+      "#{SINGLE[f1]} #{label(first)}-#{SINGLE[f2]} #{label(last)}"
     end
 
     def locator(a, e, es)
       case a["type"]
       when "page"
-        one, many = { "leaf" => ["fol.", "fols."], "column" => ["col.", "cols."] }.fetch(a.fetch("foliation", "page"), ["p.", "pp."])
-        page_locator(a, e, es, one, many)
+        page_locator(a, e, es)
       when "time"
         s = hms(a["t0"])
         s += "-#{hms(e["t1"])}" if e && e["type"] == "time"
         s
       when "section", "web"
-        return page_locator(a, e, es, "p.", "pp.") unless a["printed"].nil?
+        return page_locator(a, e, es) unless a["printed"].nil?
 
         parts = []
         parts << "§ #{a["path"].last}" if a["path"].is_a?(Array) && !a["path"].empty?

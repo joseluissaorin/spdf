@@ -106,12 +106,7 @@ final class Cite
         $type = $a['type'] ?? null;
         switch ($type) {
             case 'page':
-                [$one, $many] = match ($a['foliation'] ?? 'page') {
-                    'leaf' => ['fol.', 'fols.'],
-                    'column' => ['col.', 'cols.'],
-                    default => ['p.', 'pp.'],
-                };
-                return self::pageLocator($a, $end, $es, $one, $many);
+                return self::pageLocator($a, $end, $es);
             case 'time':
                 $s = self::clock((float) ($a['t0'] ?? 0));
                 if ($end !== null && ($end['type'] ?? null) === 'time') {
@@ -121,7 +116,7 @@ final class Cite
             case 'section':
             case 'web':
                 if (($a['printed'] ?? null) !== null) {
-                    return self::pageLocator($a, $end, $es, 'p.', 'pp.');
+                    return self::pageLocator($a, $end, $es);
                 }
                 $parts = [];
                 if (isset($a['path']) && is_array($a['path']) && $a['path'] !== []) {
@@ -159,8 +154,20 @@ final class Cite
         return ($a['source'] ?? null) === 'inferred' ? "[{$p}]" : (string) $p;
     }
 
-    /** Page locator; an end without a printed folio never takes part in a range (SPEC §18.1). */
-    private static function pageLocator(array $a, ?array $end, bool $es, string $one, string $many): string
+    private const SINGLE = ['page' => 'p.', 'leaf' => 'fol.', 'column' => 'col.'];
+    private const PLURAL = ['page' => 'pp.', 'leaf' => 'fols.', 'column' => 'cols.'];
+
+    private static function foliation(array $a): string
+    {
+        $f = ($a['type'] ?? null) === 'page' ? ($a['foliation'] ?? 'page') : 'page';
+        return isset(self::SINGLE[$f]) ? $f : 'page';
+    }
+
+    /**
+     * Page locator (SPEC §18.1): an end without a printed folio never takes part in a
+     * range, and every label comes from the foliation of the end actually printed.
+     */
+    private static function pageLocator(array $a, ?array $end, bool $es): string
     {
         $ends = [$a];
         if ($end !== null && ($end['type'] ?? null) === ($a['type'] ?? null)) {
@@ -172,10 +179,15 @@ final class Cite
         }
         $first = $withFolio[0];
         $last = $withFolio[count($withFolio) - 1];
-        if (count($withFolio) > 1 && ($last['printed'] ?? null) !== ($first['printed'] ?? null)) {
-            return "{$many} " . self::label($first) . '-' . self::label($last);
+        $f1 = self::foliation($first);
+        $f2 = self::foliation($last);
+        if (count($withFolio) === 1 || ($last['printed'] ?? null) === ($first['printed'] ?? null)) {
+            return self::SINGLE[$f1] . ' ' . self::label($first);
         }
-        return "{$one} " . self::label($first);
+        if ($f1 === $f2) {
+            return self::PLURAL[$f1] . ' ' . self::label($first) . '-' . self::label($last);
+        }
+        return self::SINGLE[$f1] . ' ' . self::label($first) . '-' . self::SINGLE[$f2] . ' ' . self::label($last);
     }
 
     /**

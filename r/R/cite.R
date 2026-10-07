@@ -47,8 +47,17 @@ cite_label <- function(a) {
   if (identical(a$source, "inferred")) paste0("[", p, "]") else as.character(p)
 }
 
-# An end without a printed folio never takes part in a range (SPEC 18.1).
-cite_page <- function(a, e, es, one, many) {
+cite_single <- c(page = "p.", leaf = "fol.", column = "col.")
+cite_plural <- c(page = "pp.", leaf = "fols.", column = "cols.")
+
+cite_foliation <- function(a) {
+  f <- if (identical(a$type, "page")) a$foliation %||% "page" else "page"
+  if (f %in% names(cite_single)) f else "page"
+}
+
+# SPEC 18.1: an end without a printed folio never takes part in a range, and every label
+# comes from the foliation of the end actually printed.
+cite_page <- function(a, e, es) {
   ends <- list(a)
   if (!is.null(e) && identical(e$type, a$type)) ends[[2]] <- e
   with_folio <- Filter(function(x) !is.null(x$printed), ends)
@@ -57,18 +66,21 @@ cite_page <- function(a, e, es, one, many) {
   }
   first <- with_folio[[1]]
   last <- with_folio[[length(with_folio)]]
-  if (length(with_folio) > 1 && !identical(last$printed, first$printed)) {
-    return(paste0(many, " ", cite_label(first), "-", cite_label(last)))
+  f1 <- cite_foliation(first)
+  f2 <- cite_foliation(last)
+  if (length(with_folio) == 1 || identical(last$printed, first$printed)) {
+    return(paste0(cite_single[[f1]], " ", cite_label(first)))
   }
-  paste0(one, " ", cite_label(first))
+  if (f1 == f2) {
+    return(paste0(cite_plural[[f1]], " ", cite_label(first), "-", cite_label(last)))
+  }
+  paste0(cite_single[[f1]], " ", cite_label(first), "-", cite_single[[f2]], " ", cite_label(last))
 }
 
 cite_locator <- function(a, e, es) {
   t <- a$type %||% ""
   if (t == "page") {
-    fol <- a$foliation %||% "page"
-    lab <- switch(fol, leaf = c("fol.", "fols."), column = c("col.", "cols."), c("p.", "pp."))
-    return(cite_page(a, e, es, lab[1], lab[2]))
+    return(cite_page(a, e, es))
   }
   if (t == "time") {
     s <- cite_hms(a$t0)
@@ -77,7 +89,7 @@ cite_locator <- function(a, e, es) {
   }
   if (t %in% c("section", "web")) {
     if (!is.null(a$printed)) {
-      return(cite_page(a, e, es, "p.", "pp."))
+      return(cite_page(a, e, es))
     }
     parts <- character(0)
     if (is.list(a$path) && length(a$path) > 0) parts <- c(parts, paste0("\u00a7 ", a$path[[length(a$path)]]))
