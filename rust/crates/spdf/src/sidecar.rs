@@ -263,19 +263,20 @@ impl Library {
     }
 
     /// Adds an SPDF file (opened to read its identity; `file_sha256` computed).
-    pub fn add_file(&mut self, path: impl AsRef<Path>, url: Option<&str>) -> Result<&LibraryItem> {
+    pub fn add_file(&mut self, path: impl AsRef<Path>, url: Option<&str>) -> Result<LibraryItem> {
         let bytes = std::fs::read(path.as_ref())?;
         let doc = Spdf::from_bytes(&bytes, &Default::default())?;
         let d = doc.document()?;
-        self.items.push(LibraryItem {
+        let item = LibraryItem {
             sha256: d.source_sha256.to_ascii_lowercase(),
             title: d.title.clone(),
             authors: d.authors.clone(),
             year: d.year,
             url: url.map(str::to_string),
             file_sha256: Some(hex(&Sha256::digest(&bytes))),
-        });
-        Ok(self.items.last().expect("just pushed"))
+        };
+        self.items.push(item.clone());
+        Ok(item)
     }
 
     /// Reads a `.spdfl.json` file.

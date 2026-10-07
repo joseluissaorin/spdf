@@ -374,3 +374,16 @@ fn sidecars() {
         doc.document().expect("doc").source_sha256
     );
 }
+
+#[test]
+fn handles_can_move_between_threads() {
+    fn send<T: Send>() {}
+    send::<Spdf>();
+    send::<Writer>();
+    send::<spdf::ValidationReport>();
+    let doc = Spdf::open(conformance().join("files/minimo.spdf")).expect("open");
+    let n = std::thread::spawn(move || doc.units().expect("units").len())
+        .join()
+        .expect("thread");
+    assert_eq!(n, 2);
+}
