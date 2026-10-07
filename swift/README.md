@@ -24,7 +24,8 @@ exact anchor (printed page, folio, second of a recording, slide, verse).
 .product(name: "SPDF", package: "spdf")
 ```
 
-(See `PUBLICAR.md`: SwiftPM needs the manifest at the repository root.)
+The repository root carries a thin `Package.swift` pointing into `swift/`, so the URL
+above is all SwiftPM needs; versions follow the monorepo-wide tags (`0.1.0`, …).
 
 ## Reading and searching
 

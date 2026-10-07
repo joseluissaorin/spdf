@@ -5,11 +5,13 @@ on:
     branches: [main]
     paths:
       - "swift/**"
+      - "Package.swift"
       - "conformance/**"
       - ".github/workflows/swift.yml"
   pull_request:
     paths:
       - "swift/**"
+      - "Package.swift"
       - "conformance/**"
       - ".github/workflows/swift.yml"
   workflow_dispatch:
@@ -37,6 +39,9 @@ jobs:
           UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(x['udid'] for k,v in d.items() if 'iOS' in k for x in v if x['name'].startswith('iPhone')))")
           echo "Simulator: $UDID"
           xcodebuild test -scheme SPDF-Package -destination "id=$UDID" -only-testing:SPDFTests
+      - name: The root manifest (what SwiftPM users get) builds and tests too
+        working-directory: .
+        run: swift test
       - name: Upload conformance report
         if: always()
         uses: actions/upload-artifact@v4
