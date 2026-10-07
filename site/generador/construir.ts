@@ -133,14 +133,7 @@ function integracionesSubhojas(): void {
     const cuerpo = frontal(leer(readme)).cuerpo.replace(/^#\s+.+\n/, '');
     for (const l of LENGUAS) {
       const ruta = `${RUTAS.integraciones[l]}/${i.id}`;
-      const enlace = (href: string): string | null => {
-        if (/^(https?:|mailto:|#|\/)/.test(href)) return href;
-        const otra = /^\.\.\/([\w-]+)\/README\.md(#.*)?$/.exec(href);
-        if (otra) { const j = INTEGRACIONES.find((x) => x.carpeta === otra[1]); if (j) return `${RUTAS.integraciones[l]}/${j.id}${otra[2] ?? ''}`; }
-        if (/^\.\.\/\.\.\/js\/?$/.test(href)) return `${RUTAS.docs[l]}/js`;
-        if (/^\.\.\/\.\.\/python\/?$/.test(href)) return `${RUTAS.docs[l]}/python`;
-        return REPO_PUBLICO ? `${REPO}/tree/main/integrations/${i.carpeta}/${href.replace(/^\.\//, '')}` : null;
-      };
+      const enlace = enlaceRepo(`integrations/${i.carpeta}`, l);
       hoja({
         clave: `integracion-${i.id}`, seccion: 'integraciones', l, ruta, alterna: `${RUTAS.integraciones[OTRA[l]]}/${i.id}`,
         titulo: i.nombre[l], descripcion: i.resumen[l], md: `${l === 'es' ? '*El README de la integración está en inglés, como su código.*\n\n' : ''}${cuerpo}`,
@@ -180,7 +173,7 @@ license: CC-BY-4.0`;
 
 function rfcsBloque(l: Lengua): Bloque {
   const dir = resolve(RAIZ, 'spec/rfcs');
-  const rfcs = existe(dir) ? readdirSync(dir).filter((f) => /^\d{4}-.*\.md$/.test(f) && !f.endsWith('.es.md')).sort() : [];
+  const rfcs = existe(dir) ? readdirSync(dir).filter((f) => /^\d{4}-.*\.md$/.test(f) && !f.endsWith('.es.md') && !f.startsWith('0000')).sort() : [];
   const titulo = l === 'es' ? 'Las RFC' : 'The RFCs';
   if (!rfcs.length) {
     const t = l === 'es' ? 'Todavía no hay ninguna RFC publicada. La plantilla y la primera, la que fija la versión 5.0, están en preparación.' : 'No RFC has been published yet. The template and the first one, which fixes version 5.0, are being prepared.';
@@ -193,7 +186,8 @@ function rfcsBloque(l: Lengua): Bloque {
     return { f, n: f.slice(0, 4), titulo: h1.replace(/^RFC\s*\d+\s*[:·.-]\s*/i, '').replace(/[`*]/g, ''), estado: estado.replace(/[*|]/g, '').trim() };
   });
   const base = `${RUTAS.gobernanza[l]}/rfcs`;
-  const htmlL = `<h2 id="rfcs">${titulo}</h2><ul class="hojas">${items.map((r) => `<li><a href="${base}/${r.n}"><strong>RFC ${r.n}</strong><span>${esc(r.titulo)}</span>${r.estado ? `<span class="rotulo">${esc(r.estado)}</span>` : ''}</a></li>`).join('')}</ul>`;
+  const plantilla = existe(join(dir, '0000-template.md')) ? `<p><a href="${base}/0000">${l === 'es' ? 'La plantilla para escribir una RFC' : 'The template for writing an RFC'}</a></p>` : '';
+  const htmlL = `<h2 id="rfcs">${titulo}</h2><ul class="hojas">${items.map((r) => `<li><a href="${base}/${r.n}"><strong>RFC ${r.n}</strong><span>${esc(r.titulo)}</span>${r.estado ? `<span class="rotulo">${esc(r.estado)}</span>` : ''}</a></li>`).join('')}</ul>${plantilla}`;
   const md = `## ${titulo}\n\n${items.map((r) => `- [RFC ${r.n}: ${r.titulo}](${ORIGEN}${base}/${r.n}.md)${r.estado ? ` (${r.estado})` : ''}`).join('\n')}`;
   return { html: htmlL, md };
 }
@@ -358,13 +352,7 @@ function especificacion(l: Lengua): void {
     : `The normative specification of the SPDF ${VERSION} format: container, schema, anchors and their URI, CSL-JSON metadata, search, vectors, integrity, validation, citation and conformance.`;
   const rel = fuente.slice(RAIZ.length + 1);
   const fecha = fechaGit([rel]);
-  const enlace = (href: string): string | null => {
-    if (/^(https?:|mailto:|#)/.test(href)) return href;
-    if (/SPEC(\.es)?\.md/.test(href)) return `${RUTAS.spec[l]}${href.includes('#') ? href.slice(href.indexOf('#')) : ''}`;
-    const rfc = /rfcs\/(\d{4})/.exec(href);
-    if (rfc) return `${RUTAS.gobernanza[l]}/rfcs/${rfc[1]}`;
-    return REPO_PUBLICO ? `${REPO}/blob/main/spec/${href.replace(/^\.\//, '')}` : null;
-  };
+  const enlace = enlaceRepo('spec', l);
   hoja({
     clave: 'spec', seccion: 'spec', l, ruta: RUTAS.spec[l], alterna: RUTAS.spec[OTRA[l]], titulo, descripcion, md: cuerpo, fecha,
     vineta: compas, conH3: true, bcp14: true, aviso, enlace,
@@ -418,13 +406,7 @@ function docsDeLenguaje(e: Record<string, Estado>): void {
           ? `La implementación en ${im.nombre} se está escribiendo. Cuando su README llegue al repositorio, aparecerá aquí entero, con ejemplos. Mientras tanto, la [especificación](${RUTAS.spec.es}) y la [documentación común](${RUTAS.docs.es}) cuentan lo que hará.`
           : `The ${im.nombre} implementation is being written. When its README lands in the repository it will appear here in full, with examples. Meanwhile, the [specification](${RUTAS.spec.en}) and the [common documentation](${RUTAS.docs.en}) describe what it will do.`}`;
       }
-      const enlace = (href: string): string | null => {
-        if (/^(https?:|mailto:|#)/.test(href)) return href;
-        if (href.startsWith('/')) return href;
-        if (/SPEC(\.es)?\.md/.test(href)) return RUTAS.spec[l] + (href.includes('#') ? href.slice(href.indexOf('#')) : '');
-        if (/CONTRACT\.md/.test(href)) return RUTAS.spec[l];
-        return REPO_PUBLICO ? `${REPO}/blob/main/${im.carpeta}/${href.replace(/^\.\//, '')}` : null;
-      };
+      const enlace = enlaceRepo(im.carpeta, l);
       const ruta = `${RUTAS.docs[l]}/${im.id}`;
       // El estado del CI va dentro de la tabla: se sustituye tras renderizar.
       const ci: Bloque = { html: etiquetaEstado(s, l), md: etiquetaEstado(s, l, true) };
@@ -464,9 +446,61 @@ function primerParrafo(md: string): string {
   return t.length > 220 ? `${t.slice(0, 217).replace(/\s+\S*$/, '')}…` : t;
 }
 
+/** Los documentos de gobernanza que se publican, cada uno en /governance/<slug>. */
+function documentosGobernanza(): { rel: string; slug: string }[] {
+  const docs: { rel: string; slug: string }[] = [];
+  const dir = resolve(RAIZ, 'governance');
+  if (existe(dir)) {
+    for (const f of readdirSync(dir).sort()) if (f.endsWith('.md') && !f.endsWith('.es.md') && f !== 'README.md') docs.push({ rel: `governance/${f}`, slug: f.replace(/\.md$/, '').toLowerCase() });
+    const borr = join(dir, 'drafts');
+    if (existe(borr)) for (const f of readdirSync(borr).sort()) if (f.endsWith('.md') && !f.endsWith('.es.md')) docs.push({ rel: `governance/drafts/${f}`, slug: `drafts/${f.replace(/\.md$/, '').toLowerCase()}` });
+  }
+  for (const [f, slug] of [['CONTRIBUTING.md', 'contributing'], ['CODE_OF_CONDUCT.md', 'code-of-conduct'], ['SECURITY.md', 'security']] as const) {
+    if (existe(resolve(RAIZ, f))) docs.push({ rel: f, slug });
+  }
+  return docs;
+}
+
+/**
+ * Un enlace relativo de un Markdown del repositorio (escrito para leerse en
+ * GitHub) llevado a la hoja de la web que le corresponde. Lo que no tiene hoja
+ * enlaza a GitHub cuando el repositorio sea público y, mientras tanto, se
+ * queda como texto (null).
+ */
+function enlaceRepo(desde: string, l: Lengua) {
+  const gob = documentosGobernanza();
+  return (href: string): string | null => {
+    if (/^(https?:|mailto:|#)/.test(href)) return href;
+    if (href.startsWith('/')) return href;
+    const [ruta0, ancla0] = href.split('#');
+    const ancla = ancla0 ? `#${ancla0}` : '';
+    const partes: string[] = desde ? desde.split('/') : [];
+    for (const p of (ruta0 ?? '').split('/')) {
+      if (p === '..') partes.pop(); else if (p && p !== '.') partes.push(p);
+    }
+    const rel = partes.join('/');
+    if (/^spec\/SPEC\.es\.md$/.test(rel)) return `${RUTAS.spec.es}${ancla}`;
+    if (/^spec\/(SPEC|CONTRACT)\.md$/.test(rel)) return `${RUTAS.spec[l]}${ancla}`;
+    const rfc = /^spec\/rfcs\/(\d{4})-[^/]*\.md$/.exec(rel);
+    if (rfc) return `${RUTAS.gobernanza[l]}/rfcs/${rfc[1]}${ancla}`;
+    if (/^spec\/rfcs\/?$/.test(rel)) return `${RUTAS.gobernanza[l]}#rfcs`;
+    const esquema = /^spec\/json-schema\/([\w.-]+\.schema\.json)$/.exec(rel);
+    if (esquema) return `/schema/${VERSION}/${esquema[1]}`;
+    if (/^governance\/(README(\.es)?\.md)?$/.test(rel)) return `${RUTAS.gobernanza[l]}${ancla}`;
+    const g = gob.find((d) => d.rel === rel || d.rel === rel.replace(/\.es\.md$/, '.md'));
+    if (g) return `${RUTAS.gobernanza[l]}/${g.slug}${ancla}`;
+    const im = IMPLEMENTACIONES.find((i) => rel === i.carpeta || rel === `${i.carpeta}/README.md`);
+    if (im) return `${RUTAS.docs[l]}/${im.id}`;
+    const it = INTEGRACIONES.find((i) => rel === `integrations/${i.carpeta}` || rel === `integrations/${i.carpeta}/README.md`);
+    if (it) return `${RUTAS.integraciones[l]}/${it.id}`;
+    if (rel === 'integrations' || rel === 'integrations/README.md') return RUTAS.integraciones[l];
+    return REPO_PUBLICO ? `${REPO}/blob/main/${rel}${ancla}` : null;
+  };
+}
+
 function gobernanza(): void {
   const dir = resolve(RAIZ, 'governance');
-  const docs = existe(dir) ? readdirSync(dir).filter((f) => f.endsWith('.md') && !f.endsWith('.es.md')) : [];
+  const docs = documentosGobernanza();
   const rdir = resolve(RAIZ, 'spec/rfcs');
   const rfcs = existe(rdir) ? readdirSync(rdir).filter((f) => /^\d{4}-.*\.md$/.test(f) && !f.endsWith('.es.md')) : [];
   for (const l of LENGUAS) {
@@ -475,39 +509,29 @@ function gobernanza(): void {
     let md = c.cuerpo;
     let fecha = fechaGit(['site/contenido/en/gobernanza.md', 'site/contenido/es/gobernanza.md']);
     let aviso: string | undefined;
-    const enlace = (href: string): string | null => {
-      if (/^(https?:|mailto:|#|\/)/.test(href)) return href;
-      if (/SPEC(\.es)?\.md/.test(href)) return RUTAS.spec[l];
-      const rfc = /rfcs\/(\d{4})/.exec(href);
-      if (rfc) return `${RUTAS.gobernanza[l]}/rfcs/${rfc[1]}`;
-      const g = /^(?:\.\/)?([\w-]+?)(?:\.es)?\.md(#.*)?$/.exec(href);
-      if (g && existe(join(dir, `${g[1]}.md`))) return `${RUTAS.gobernanza[l]}/${g[1]!.toLowerCase()}${g[2] ?? ''}`;
-      return REPO_PUBLICO ? `${REPO}/blob/main/governance/${href}` : null;
-    };
     if (existe(leeme)) {
       md = frontal(leer(leeme)).cuerpo.replace(/^#\s+.+\n/, '');
       if (!md.includes('<!-- rfcs -->')) md += '\n\n<!-- rfcs -->\n';
       fecha = fechaGit(['governance']);
       if (l === 'es' && !leeme.endsWith('.es.md')) aviso = 'Este documento solo está en inglés por ahora.';
     }
-    const otros = docs.filter((f) => f !== 'README.md');
-    const extra = otros.length
-      ? `<h2>${l === 'es' ? 'Documentos' : 'Documents'}</h2><ol>${otros.map((f) => `<li><a href="${RUTAS.gobernanza[l]}/${f.replace(/\.md$/, '').toLowerCase()}">${esc(tituloDe(join(dir, f)))}</a></li>`).join('')}</ol>`
+    const extra = docs.length
+      ? `<h2>${l === 'es' ? 'Documentos' : 'Documents'}</h2><ol>${docs.map((d) => `<li><a href="${RUTAS.gobernanza[l]}/${d.slug}">${esc(tituloDe(resolve(RAIZ, d.rel)))}</a></li>`).join('')}</ol>`
       : '';
     hoja({
       clave: 'gobernanza', seccion: undefined, l, ruta: RUTAS.gobernanza[l], alterna: RUTAS.gobernanza[OTRA[l]], titulo: c.titulo,
-      descripcion: c.descripcion, md, fecha, vineta: sobre, bloques: { rfcs: rfcsBloque(l) }, enlace, extraIndice: extra, aviso, bcp14: true,
+      descripcion: c.descripcion, md, fecha, vineta: sobre, bloques: { rfcs: rfcsBloque(l) }, enlace: enlaceRepo('governance', l), extraIndice: extra, aviso, bcp14: true,
     });
-    for (const f of otros) {
-      const enEs = join(dir, f.replace(/\.md$/, '.es.md'));
-      const fichero = l === 'es' && existe(enEs) ? enEs : join(dir, f);
-      const slug = f.replace(/\.md$/, '').toLowerCase();
+    for (const d of docs) {
+      const enEs = resolve(RAIZ, d.rel.replace(/\.md$/, '.es.md'));
+      const fichero = l === 'es' && existe(enEs) ? enEs : resolve(RAIZ, d.rel);
       const cuerpo = frontal(leer(fichero)).cuerpo;
+      const desde = d.rel.includes('/') ? d.rel.slice(0, d.rel.lastIndexOf('/')) : '';
       hoja({
-        clave: `gobernanza-${slug}`, l, ruta: `${RUTAS.gobernanza[l]}/${slug}`, alterna: `${RUTAS.gobernanza[OTRA[l]]}/${slug}`, titulo: tituloDe(fichero),
-        descripcion: primerParrafo(cuerpo) || c.descripcion, md: cuerpo.replace(/^#\s+.+\n/, ''), fecha: fechaGit([`governance/${f}`]),
-        miga: [{ texto: c.corto, ruta: RUTAS.gobernanza[l] }], enlace, bcp14: true,
-        aviso: l === 'es' && fichero === join(dir, f) ? 'Este documento solo está en inglés por ahora.' : undefined,
+        clave: `gobernanza-${d.slug}`, l, ruta: `${RUTAS.gobernanza[l]}/${d.slug}`, alterna: `${RUTAS.gobernanza[OTRA[l]]}/${d.slug}`, titulo: tituloDe(fichero),
+        descripcion: primerParrafo(cuerpo) || c.descripcion, md: cuerpo.replace(/^#\s+.+\n/, ''), fecha: fechaGit([d.rel]),
+        miga: [{ texto: c.corto, ruta: RUTAS.gobernanza[l] }], enlace: enlaceRepo(desde, l), bcp14: true,
+        aviso: l === 'es' && !fichero.endsWith('.es.md') && lenguaDe(cuerpo) === 'en' ? 'Este documento solo está en inglés por ahora.' : undefined,
       });
     }
     for (const f of rfcs) {
@@ -517,12 +541,22 @@ function gobernanza(): void {
       const cuerpo = frontal(leer(fichero)).cuerpo;
       hoja({
         clave: `rfc-${n}`, l, ruta: `${RUTAS.gobernanza[l]}/rfcs/${n}`, alterna: `${RUTAS.gobernanza[OTRA[l]]}/rfcs/${n}`,
-        titulo: `RFC ${n}: ${tituloDe(fichero).replace(/^RFC\s*\d+\s*[:·.-]\s*/i, '')}`, descripcion: primerParrafo(cuerpo) || `RFC ${n}`,
+        titulo: n === '0000' ? (l === 'es' ? 'Plantilla de RFC' : 'RFC template') : `RFC ${n}: ${tituloDe(fichero).replace(/^RFC\s*\d+\s*[:·.-]\s*/i, '')}`,
+        descripcion: primerParrafo(cuerpo) || `RFC ${n}`,
         md: cuerpo.replace(/^#\s+.+\n/, ''), fecha: fechaGit([`spec/rfcs/${f}`]), miga: [{ texto: c.corto, ruta: RUTAS.gobernanza[l] }],
-        enlace, bcp14: true, aviso: l === 'es' && fichero === join(rdir, f) ? 'Esta RFC solo está en inglés.' : undefined,
+        enlace: enlaceRepo('spec/rfcs', l), bcp14: true, aviso: l === 'es' && fichero === join(rdir, f) ? 'Esta RFC solo está en inglés.' : undefined,
       });
     }
   }
+}
+
+/** Los JSON Schema de la especificación, en la dirección de su $id: /schema/5.0/<nombre>.schema.json. */
+function esquemas(): number {
+  const dir = resolve(RAIZ, 'spec/json-schema');
+  if (!existe(dir)) return 0;
+  const fs = readdirSync(dir).filter((f) => f.endsWith('.schema.json'));
+  for (const f of fs) escribir(`schema/${VERSION}/${f}`, leer(join(dir, f)));
+  return fs.length;
 }
 
 // ---------------------------------------------------------------------------
@@ -630,6 +664,11 @@ ${agente}
 /commons/*.json
   Content-Type: application/json; charset=utf-8
   Access-Control-Allow-Origin: *
+
+/schema/*
+  Content-Type: application/schema+json; charset=utf-8
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=3600
 
 /muestras/*.spdf
   Content-Type: application/vnd.spdf
@@ -772,6 +811,7 @@ async function principal(): Promise<void> {
   gobernanza();
   docsDeLenguaje(e);
   integracionesSubhojas();
+  const nEsquemas = esquemas();
 
   const cuerpo404 = `<div class="marco ancho"><article class="doc"><header class="cabeza con-vineta">${vineta(paginaArrancada, 'en')}<p class="rotulo">404 · n. pag.</p><h1>This page is not in the book</h1><p class="entradilla">A leaf is missing here: the address you followed does not exist, or it has moved.</p><p class="entradilla" lang="es">Aquí faltaba una hoja: la dirección que has seguido no existe o ha cambiado de sitio.</p></header><div class="cuerpo"><p><a href="/">SPDF</a> · <a href="/spec">Specification</a> · <a href="/es" lang="es">Inicio en castellano</a> · <a href="/llms.txt">llms.txt</a></p></div></article></div>`;
   escribir('404.html', html({ clave: '404', lengua: 'en', ruta: '/404', alterna: '/404', titulo: 'Not found', descripcion: 'This page does not exist.', fecha: HOY, cuerpo: cuerpo404, sinAlterna: true }));
@@ -792,7 +832,7 @@ async function principal(): Promise<void> {
   let bytes = 0;
   const contar = (d: string) => { for (const f of readdirSync(d)) { const p = join(d, f); const s = statSync(p); if (s.isDirectory()) contar(p); else bytes += s.size; } };
   contar(DIST);
-  console.log(`web: ${PUBLICADAS.length} hojas (y sus .md), ${(bytes / 1024 / 1024).toFixed(1)} MB en dist · validador ${validador ? 'sí' : 'no'} · lector ${hayLector ? 'sí' : 'provisional'} · commons ${commons.items.length}`);
+  console.log(`web: ${PUBLICADAS.length} hojas (y sus .md), ${(bytes / 1024 / 1024).toFixed(1)} MB en dist · validador ${validador ? 'sí' : 'no'} · lector ${hayLector ? 'sí' : 'provisional'} · commons ${commons.items.length} · esquemas ${nEsquemas}`);
 }
 
 await principal();
