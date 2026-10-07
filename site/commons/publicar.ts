@@ -26,6 +26,8 @@ const CUENTA = 'f22c7a728ddc8e41cefd2644f8fb7632';
 const cat = JSON.parse(readFileSync(catalogo, 'utf8')) as { name: string; description: string; items: ObraCommons[] };
 let bytes = 0;
 for (const o of cat.items) {
+  // Validar no basta: sin la comprobación de los folios a ojo, documentada, no se sube.
+  if (!o.verificacion?.en || !o.verificacion?.es || !o.verificado) throw new Error(`${o.fichero}: falta cómo se verificaron sus folios (verificacion, verificado)`);
   const f = join(carpeta, o.fichero);
   const datos = readFileSync(f);
   const sha = createHash('sha256').update(datos).digest('hex');

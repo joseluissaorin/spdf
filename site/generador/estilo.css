@@ -294,6 +294,7 @@ p, li { text-wrap: pretty; }
 
 /* La tabla de estado de las implementaciones */
 .cuerpo table.estado-impl small { display: block; color: var(--apagado); font-size: 0.82rem; }
+.cuerpo table.commons small.verificacion { margin-top: 0.35rem; max-width: 34rem; white-space: normal; }
 .cuerpo table.estado-impl td:first-child { white-space: normal; }
 .cuerpo table.estado-impl td:nth-child(2), .cuerpo table.estado-impl td:nth-child(3) { white-space: nowrap; }
 .cuerpo table.estado-impl .paquete { font-size: 0.74rem; color: var(--apagado); background: none; padding: 0; margin-left: 0.3rem; overflow-wrap: anywhere; }

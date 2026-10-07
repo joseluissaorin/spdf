@@ -8,9 +8,11 @@ description: Una colección pequeña y cuidada de obras de dominio público ya l
 
 <!-- commons -->
 
-## Cómo se hicieron
+## Cómo se hicieron y se comprobaron
 
-Todos los ficheros salieron de `spdf build`, el productor de referencia, solo con modelos locales. La tabla `provenance` de cada fichero registra qué modelo leyó cada página o cada segundo, con qué confianza y cuándo; abre cualquiera en el [validador](/es/validador) para verlo.
+Todos los ficheros salieron de `spdf build`, el productor de referencia. La tabla `provenance` de cada fichero registra qué modelo leyó cada página o cada segundo, con qué confianza y cuándo; abre cualquiera en el [validador](/es/validador) para verlo.
+
+**Validar un fichero no basta**: un folio puesto en la página equivocada pasa el validador. Por eso, antes de publicar aquí una obra, sus folios impresos (o, en una grabación, sus tiempos) se comprueban a ojo contra las imágenes de las páginas o la transcripción, en varias páginas del principio, del medio y del final, y la tabla de arriba dice, para cada obra, qué páginas se comprobaron y qué se encontró. Una obra que no pasa esa comprobación se reconstruye; no se publica.
 
 Las fuentes son obras de dominio público verificables (Proyecto Gutenberg, Internet Archive, LibriVox, Wikisource). Cada fichero nombra los bytes del original por su SHA-256, así que cualquiera puede comprobar que se leyó de la fuente que dice.
 

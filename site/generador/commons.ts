@@ -34,6 +34,10 @@ export interface ObraCommons {
   ejemplo?: { cita: string; uri: string };
   generator?: string;
   created?: string;
+  /** Cómo se comprobó a ojo que los folios (o los tiempos) son los buenos. Obligatorio para publicar. */
+  verificacion: Record<Lengua, string>;
+  /** Fecha (AAAA-MM-DD) de esa comprobación. */
+  verificado: string;
 }
 
 interface Catalogo { name: string; description: string; items: ObraCommons[] }
@@ -62,6 +66,12 @@ export const megas = (b: number) => (b >= 1024 * 1024 ? `${(b / 1024 / 1024).toF
 export function cargarCommons() {
   const cat = JSON.parse(readFileSync(resolve(SITIO, 'commons/catalogo.json'), 'utf8')) as Catalogo;
   const items = cat.items;
+  // Validar no basta: un folio mal puesto pasa el validador. Sin una comprobación a ojo, documentada, no se publica.
+  for (const o of items) {
+    if (!o.verificacion?.en || !o.verificacion?.es || !/^\d{4}-\d{2}-\d{2}$/.test(o.verificado ?? '')) {
+      throw new Error(`commons: ${o.fichero} no dice cómo se verificaron sus folios (verificacion.en, verificacion.es, verificado): no se publica nada.`);
+    }
+  }
   const url = (o: ObraCommons) => `${ORIGEN}/commons/files/${encodeURIComponent(o.fichero)}`;
   const manifiesto = {
     spdf_library: '1.0',
@@ -112,14 +122,17 @@ export function commonsBloque(l: Lengua, c: Commons): Bloque {
     const lengua = LENGUAS_NOMBRE[o.language]?.[l] ?? o.language;
     const tipo = TIPOS[o.kind]?.[l] ?? o.kind;
     const ej = o.ejemplo ? `<small><code>${esc(o.ejemplo.cita)}</code></small>` : '';
-    return `<tr><td><strong>${esc(o.title)}</strong><small>${esc(o.authors)}${o.year ? `, ${o.year}` : ''} · <a href="${esc(o.source.url)}" rel="noopener">${esc(o.source.name)}</a></small>${ej}</td><td>${lengua}</td><td>${tipo}</td><td class="a-right">${o.units}</td><td class="a-right">${megas(o.bytes)}</td><td><a href="${c.url(o)}" download>.spdf</a></td></tr>`;
+    const ver = `<small class="verificacion"><span class="rotulo">${l === 'es' ? 'Verificado el' : 'Verified on'} ${esc(o.verificado)}</span> ${esc(o.verificacion[l])}</small>`;
+    return `<tr><td><strong>${esc(o.title)}</strong><small>${esc(o.authors)}${o.year ? `, ${o.year}` : ''} · <a href="${esc(o.source.url)}" rel="noopener">${esc(o.source.name)}</a></small>${ej}${ver}</td><td>${lengua}</td><td>${tipo}</td><td class="a-right">${o.units}</td><td class="a-right">${megas(o.bytes)}</td><td><a href="${c.url(o)}" download>.spdf</a></td></tr>`;
   }).join('');
   const manifiesto = l === 'es' ? 'El manifiesto de la colección' : 'The collection manifest';
   const htmlT = `<div class="tabla" tabindex="0"><table class="estado-impl commons"><thead><tr>${cab.map((x, i) => `<th scope="col"${i === 3 || i === 4 ? ' class="a-right"' : ''}>${x}</th>`).join('')}</tr></thead><tbody>${filas}</tbody></table></div><p><a class="boton papel" href="/commons/commons.spdfl.json" download>${manifiesto} <code>commons.spdfl.json</code></a></p>`;
   const md = [
     `| ${cab.join(' | ')} |`, '| --- | --- | --- | ---: | ---: | --- |',
     ...c.items.map((o) => `| ${o.title} (${o.authors}${o.year ? `, ${o.year}` : ''}) | ${LENGUAS_NOMBRE[o.language]?.[l] ?? o.language} | ${TIPOS[o.kind]?.[l] ?? o.kind} | ${o.units} | ${megas(o.bytes)} | ${c.url(o)} |`),
-    '', `${manifiesto}: ${ORIGEN}/commons/commons.spdfl.json`,
+    '', `${manifiesto}: ${ORIGEN}/commons/commons.spdfl.json`, '',
+    `### ${l === 'es' ? 'Cómo se verificó cada obra' : 'How each work was verified'}`, '',
+    ...c.items.map((o) => `- **${o.title}** (${o.verificado}): ${o.verificacion[l]}`),
   ].join('\n');
   return { html: htmlT, md };
 }
