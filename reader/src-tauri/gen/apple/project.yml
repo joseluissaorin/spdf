@@ -1,6 +1,6 @@
 name: lector-spdf
 options:
-  bundleIdPrefix: com.joseluissaorin.spdfreader
+  bundleIdPrefix: com.joseluissaorin.lectorspdf
   deploymentTarget:
     iOS: 15.0
 fileGroups: [../../src]
@@ -11,7 +11,7 @@ settingGroups:
   app:
     base:
       PRODUCT_NAME: Lector SPDF
-      PRODUCT_BUNDLE_IDENTIFIER: com.joseluissaorin.spdfreader
+      PRODUCT_BUNDLE_IDENTIFIER: com.joseluissaorin.lectorspdf
 targetTemplates:
   app:
     type: application

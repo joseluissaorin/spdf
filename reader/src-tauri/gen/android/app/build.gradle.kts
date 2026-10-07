@@ -16,10 +16,10 @@ val tauriProperties = Properties().apply {
 
 android {
     compileSdk = 37
-    namespace = "com.joseluissaorin.spdfreader"
+    namespace = "com.joseluissaorin.lectorspdf"
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
-        applicationId = "com.joseluissaorin.spdfreader"
+        applicationId = "com.joseluissaorin.lectorspdf"
         minSdk = 26
         targetSdk = 37
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()

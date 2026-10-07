@@ -40,47 +40,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>UTExportedTypeDeclarations</key>
-	<array>
-		<dict>
-			<key>UTTypeIdentifier</key>
-			<string>com.joseluissaorin.spdf</string>
-			<key>UTTypeDescription</key>
-			<string>Documento SPDF (Semantic Processed Document Format)</string>
-			<key>UTTypeConformsTo</key>
-			<array>
-				<string>public.data</string>
-				<string>public.content</string>
-			</array>
-			<key>UTTypeTagSpecification</key>
-			<dict>
-				<key>public.filename-extension</key>
-				<array>
-					<string>spdf</string>
-				</array>
-				<key>public.mime-type</key>
-				<string>application/vnd.spdf</string>
-			</dict>
-		</dict>
-	</array>
-	<key>CFBundleDocumentTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeExtensions</key>
-			<array>
-				<string>spdf</string>
-			</array>
-			<key>LSItemContentTypes</key>
-			<array>
-				<string>com.joseluissaorin.spdf</string>
-			</array>
-			<key>CFBundleTypeName</key>
-			<string>Documento SPDF</string>
-			<key>CFBundleTypeRole</key>
-			<string>Viewer</string>
-			<key>LSHandlerRank</key>
-			<string>Owner</string>
-		</dict>
-	</array>
 </dict>
 </plist>

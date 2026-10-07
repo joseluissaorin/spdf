@@ -3,7 +3,7 @@
   "productName": "Lector SPDF",
   "mainBinaryName": "lector-spdf",
   "version": "0.1.0",
-  "identifier": "com.joseluissaorin.spdfreader",
+  "identifier": "com.joseluissaorin.lectorspdf",
   "build": {
     "frontendDist": "../dist-tauri",
     "devUrl": "http://localhost:5173",

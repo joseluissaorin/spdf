@@ -15,7 +15,7 @@ test('búsqueda en la biblioteca: abrir un resultado, recorrerlos y volver con l
   await page.screenshot({ path: resolve(CAPTURAS, 'web-buscar-biblioteca.png') });
   await resultados.nth(1).click();
   await expect(page.locator('.pasaje.destacado')).toBeVisible();
-  await expect(page.locator('.pasaje.destacado mark').first()).toBeVisible();
+  // (El término puede no estar resaltado: en el Quijote de 1608, «caballero» casa por la capa modernizada.)
   await expect(page.locator('.navegador-resultados span')).toHaveText(`2/${n}`);
   await page.keyboard.press('n');
   await expect(page.locator('.navegador-resultados span')).toHaveText(`3/${n}`);

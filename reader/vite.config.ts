@@ -7,7 +7,7 @@
  * por ruta. Mientras no existan, se usa un simulacro con su misma API
  * (src/nucleo/simulacros/), para que el lector se pueda construir y probar ya.
  */
-import { defineConfig } from 'vite';
+import { defineConfig, defaultClientConditions } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { existsSync } from 'node:fs';
@@ -21,13 +21,14 @@ import { resolve } from 'node:path';
  */
 export const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'wasm-unsafe-eval'",
+  // jsDelivr: los motores de inferencia (ONNX Runtime, MediaPipe GenAI), solo al usar un modelo local.
+  "script-src 'self' 'wasm-unsafe-eval' https://cdn.jsdelivr.net",
   "worker-src 'self' blob:",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' blob: data: https:",
   "media-src 'self' blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' blob: data: https://generativelanguage.googleapis.com https://huggingface.co https://*.huggingface.co https://*.hf.co",
+  "connect-src 'self' blob: data: https://generativelanguage.googleapis.com https://huggingface.co https://*.huggingface.co https://*.hf.co https://cdn.jsdelivr.net",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'none'",
@@ -64,11 +65,16 @@ export default defineConfig(({ mode }) => {
           workbox: {
             globPatterns: ['**/*.{js,css,html,woff2,svg,png,wasm,webmanifest,xml,json}'],
             maximumFileSizeToCacheInBytes: 12 * 1024 * 1024,
+            globIgnores: ['**/*.wasm.map', '**/ort-*.wasm'],
             navigateFallback: 'index.html',
           },
         }),
     ],
     resolve: {
+      // ONNX Runtime sin el WASM incrustado (27 MB, más que el límite de 25 MiB por fichero de
+      // Cloudflare): transformers.js lo pide a jsDelivr con la versión exacta, y solo cuando el
+      // usuario usa un modelo local en la web.
+      conditions: ['onnxruntime-web-use-extern-wasm', ...defaultClientConditions],
       alias: {
         'spdf-format/browser': hermana('spdf-format', ['../js/dist/entry/browser.js'], 'src/nucleo/simulacros/spdf-format.ts'),
         'spdf-infer-web': hermana('spdf-infer-web', ['../models/web/dist/index.js', '../models/web/dist/index.mjs'], 'src/nucleo/simulacros/spdf-infer-web.ts'),

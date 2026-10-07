@@ -174,8 +174,4 @@ jobs:
         with:
           name: reader-Android
           path: paquetes/*
-      - name: Release
-        if: startsWith(github.ref, 'refs/tags/reader-v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: paquetes/*
+      # La APK de la release se firma en local con la clave de subida (no vive en el repositorio).

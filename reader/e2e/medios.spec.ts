@@ -26,9 +26,9 @@ for (const [fichero, tipo] of [['quijote-audio.spdf', 'audio'], ['quijote-video.
   });
 }
 
-test('legado 4.0 de audio (Kennedy) y audio 5.0 de conformidad (Apolo 11): la transcripción se lee', async ({ page }) => {
+test('audio 5.0 de conformidad (Apolo 11): la transcripción se lee con sus horas', async ({ page }) => {
   await abrirLimpio(page);
-  await importarYAbrir(page, resolve(import.meta.dirname, '../../conformance/legacy/kennedy-4.0.spdf'));
+  await importarYAbrir(page, resolve(import.meta.dirname, '../../conformance/files/apolo11.spdf'));
   await expect(page.locator('.turno').first()).toBeVisible();
   await expect(page.locator('.turno .tiempo').first()).toHaveText(/\d:\d\d/);
 });

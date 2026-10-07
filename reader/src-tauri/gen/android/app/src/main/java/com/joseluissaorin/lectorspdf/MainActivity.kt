@@ -1,4 +1,4 @@
-package com.joseluissaorin.spdfreader
+package com.joseluissaorin.lectorspdf
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
