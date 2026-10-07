@@ -6,17 +6,19 @@
  * corre bajo demanda:
  *
  *   MODELOS_REALES=1 COMMONS=/ruta/gilman-yellow-wall-paper-1901.spdf npx playwright test e2e/modelos-reales.spec.ts
+ *   (BASE=https://spdf.joseluissaorin.com/reader/ la prueba contra la web publicada)
  */
 import { test as base, expect, chromium, type Page } from '@playwright/test';
 import { importarYAbrir, CAPTURAS } from './ayudas';
 import { resolve } from 'node:path';
 
+const pre = process.env.BASE ? 'publicada-' : '';
 const commons = process.env.COMMONS ?? '/tmp/commons/gilman-yellow-wall-paper-1901.spdf';
 // Perfil persistente: los modelos se quedan en su OPFS entre ejecuciones (no se bajan 2,4 GB cada vez).
 const test = base.extend<{ page: Page }>({
   page: async ({}, usar) => {
     const ctx = await chromium.launchPersistentContext(process.env.PERFIL ?? '/tmp/perfil-lector-modelos', {
-      headless: true, viewport: { width: 1440, height: 900 }, locale: 'es-ES', baseURL: 'http://localhost:4173/',
+      headless: true, viewport: { width: 1440, height: 900 }, locale: 'es-ES', baseURL: process.env.BASE ?? 'http://localhost:4173/',
       args: ['--mute-audio', '--enable-unsafe-webgpu', '--use-angle=metal'],
     });
     await usar(ctx.pages()[0] ?? (await ctx.newPage()));
@@ -67,7 +69,7 @@ test('web con WebGPU: EmbeddingGemma 2 (revectorizar y buscar por sentido) y Gem
   await expect(page.locator('.aviso-busqueda')).toHaveCount(0);
   await expect(page.locator('.resultado .sello.azul').first()).toHaveText('Semántica');
   console.log('primer resultado:', (await page.locator('.resultado .cita').first().textContent()), (await page.locator('.resultado .fragmento').first().textContent())?.slice(0, 120));
-  await page.screenshot({ path: resolve(CAPTURAS, 'web-modelos-busqueda-semantica.png') });
+  await page.screenshot({ path: resolve(CAPTURAS, `${pre}web-modelos-busqueda-semantica.png`) });
 
   fase('preguntar');
   // Preguntar con Gemma 4 (se baja con un clic desde el panel).
@@ -91,6 +93,6 @@ test('web con WebGPU: EmbeddingGemma 2 (revectorizar y buscar por sentido) y Gem
   const alerta = (await panel.locator('[role=alert]').count()) ? await panel.locator('[role=alert]').textContent() : null;
   if (alerta) console.log('alerta:', alerta);
   for (const a of await panel.locator('.afirmacion').all()) console.log('afirmación:', (await a.textContent())?.replace(/\s+/g, ' ').slice(0, 300));
-  await page.screenshot({ path: resolve(CAPTURAS, 'web-modelos-preguntar.png') });
+  await page.screenshot({ path: resolve(CAPTURAS, `${pre}web-modelos-preguntar.png`) });
   expect(alerta).toBeNull();
 });
