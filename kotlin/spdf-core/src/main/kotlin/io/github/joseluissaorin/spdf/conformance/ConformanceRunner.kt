@@ -190,6 +190,12 @@ public class ConformanceRunner @JvmOverloads constructor(
                     return Json.diff(got, expect)?.let { "got ${Json.compact(got)} ($it)" }
                 }
             }
+            "cite_passage" -> {
+                SpdfFile.open(File(dir, str(input["file"])), driver, OpenOptions.DEFAULT).use { f ->
+                    val got = f.citePassage(str(input["fragment"]), str(input["quote"]), str(input["locale"]))
+                    return Json.diff(got, expect)?.let { "got ${Json.compact(got)} ($it)" }
+                }
+            }
             "quantize" -> {
                 val got: Map<String, Any?> = try {
                     val bytes = Vectors.quantize(doubles(input["values"]), str(input["dtype"]))

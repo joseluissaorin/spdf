@@ -113,7 +113,10 @@ public sealed partial class SpdfFile
                 unitIds = [AsText(last["id"])];
             }
         }
-        var frags = fragments.Where(f => AnchorMatches(rule, locator, f["anchor"], null)).ToList();
+        // A fragment matches by its start anchor or by its end anchor.
+        var frags = fragments
+            .Where(f => AnchorMatches(rule, locator, f["anchor"], null) || (f["anchor_end"] is not null && AnchorMatches(rule, locator, f["anchor_end"], null)))
+            .ToList();
         if (unitIds.Count == 0 && frags.Count > 0)
         {
             var ord = new Dictionary<string, double>(StringComparer.Ordinal);
@@ -126,18 +129,27 @@ public sealed partial class SpdfFile
         }
         if (locator.Char is { Count: 2 } range)
         {
+            // `char` refers to the text of the first designated unit.
             long c = range[0], d = range[1];
-            frags = frags.Where(f =>
+            string? first = unitIds.Count > 0 ? unitIds[0] : null;
+            bool Overlaps(object? x)
             {
-                if (!unitIds.Contains(AsText(f["unit"]), StringComparer.Ordinal)
-                    || f["anchor"] is not Dictionary<string, object?> a
-                    || a.GetValueOrDefault("chars") is not List<object?> { Count: 2 } ch
+                if (x is not Dictionary<string, object?> a || a.GetValueOrDefault("chars") is not List<object?> { Count: 2 } ch
                     || ch[0] is not (long or double) || ch[1] is not (long or double))
                 {
                     return false;
                 }
                 double s = SpdfJson.ToDouble(ch[0]), e = SpdfJson.ToDouble(ch[1]);
                 return c < d ? s < d && c < e : s <= c && c < e;
+            }
+            frags = frags.Where(f =>
+            {
+                if (AsText(f["unit"]) == first && Overlaps(f["anchor"]))
+                {
+                    return true;
+                }
+                var endUnit = EndUnit(units, AsText(f["unit"]), f["anchor_end"]);
+                return endUnit is not null && AsText(endUnit["id"]) == first && Overlaps(f["anchor_end"]);
             }).ToList();
         }
         return new LocateResult
@@ -148,6 +160,33 @@ public sealed partial class SpdfFile
             Char = locator.Char,
             Xywh = locator.Xywh,
         };
+    }
+
+    /// <summary>
+    /// The unit where a fragment ends (§4.4): the first unit after its start unit, in reading
+    /// order, whose anchor equals the end anchor ignoring <c>chars</c> and <c>region</c>.
+    /// </summary>
+    internal static Dictionary<string, object?>? EndUnit(List<Dictionary<string, object?>> units, string startId, object? anchorEnd)
+    {
+        if (anchorEnd is not Dictionary<string, object?> end)
+        {
+            return null;
+        }
+        var target = Anchor.Identity(end);
+        bool after = false;
+        foreach (var u in units)
+        {
+            if (AsText(u["id"]) == startId)
+            {
+                after = true;
+                continue;
+            }
+            if (after && u["anchor"] is Dictionary<string, object?> a && SpdfJson.ValueEquals(Anchor.Identity(a), target))
+            {
+                return u;
+            }
+        }
+        return null;
     }
 
     private static bool AnchorMatches(string rule, Locator l, object? anchorValue, object? printed)

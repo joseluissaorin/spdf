@@ -23,7 +23,7 @@ import kotlin.system.exitProcess
  * spdf search FILE QUERY [-n N]
  * spdf vsearch FILE SPACE V1,V2,... [-n N] [--target fragment|unit|figure]
  * spdf hybrid FILE SPACE V1,V2,... QUERY [-n N]
- * spdf cite FILE FRAGMENT_ID [--locale es|en]
+ * spdf cite FILE FRAGMENT_ID [--locale es|en] [--quote TEXT]
  * spdf export FILE csl|bibtex|alto|tei|iiif
  * spdf uri parse URI
  * spdf locate FILE REFERENCE        (an spdf: URI, or FILE-URL#p=5&f=1r)
@@ -42,7 +42,7 @@ public object Main {
   spdf search FILE QUERY [-n N]
   spdf vsearch FILE SPACE V1,V2,... [-n N] [--target fragment|unit|figure]
   spdf hybrid FILE SPACE V1,V2,... QUERY [-n N]
-  spdf cite FILE FRAGMENT_ID [--locale es|en]
+  spdf cite FILE FRAGMENT_ID [--locale es|en] [--quote TEXT]
   spdf export FILE csl|bibtex|alto|tei|iiif
   spdf uri parse URI
   spdf locate FILE REFERENCE
@@ -65,6 +65,7 @@ public object Main {
         var locale = "es"
         var output: String? = null
         var target = "fragment"
+        var quote: String? = null
         var i = 1
         while (i < argv.size) {
             val a = argv[i]
@@ -74,6 +75,7 @@ public object Main {
                 "-locale", "--locale" -> { locale = value(); i++ }
                 "-o", "--output" -> { output = value(); i++ }
                 "--target" -> { target = value(); i++ }
+                "--quote" -> { quote = value(); i++ }
                 else -> pos += a
             }
             i++
@@ -109,7 +111,16 @@ public object Main {
                 }
                 "cite" -> {
                     need(2)
-                    open(pos[0]).use { out.println(it.citeFragment(pos[1], locale)) }
+                    open(pos[0]).use { f ->
+                        val q = quote
+                        if (q == null) {
+                            out.println(f.citeFragment(pos[1], locale))
+                        } else {
+                            val c = f.citePassage(pos[1], q, locale)
+                            out.println(c.text)
+                            out.println(c.uri)
+                        }
+                    }
                 }
                 "export" -> {
                     need(2)

@@ -110,6 +110,7 @@ public object Validator {
             else -> true // image
         }
         if (!ok) return "E040" to "$t anchor misses or mistypes a required member"
+        if (m.containsKey("matter") && m["matter"] !is String) return "E040" to "matter must be a string"
         if (m.containsKey("region")) {
             val r = asMap(m["region"])
             if (r == null || !listOf("x", "y", "w", "h").all { isNumber(r[it]) }) return "E040" to "bad region"
@@ -374,6 +375,28 @@ public object Validator {
                 } else if (meta.containsKey("signature")) {
                     if (!verifySignature(actual, meta["signature"], meta["signer"])) {
                         err("E082", "signature does not verify", "spdf_meta.signature")
+                    }
+                }
+            }
+            // fragments that cross matter, or from a page with a folio to one without (SPEC §4.4)
+            if (ok("units", "id", "ord", "anchor") && ok("fragments", "id", "unit", "anchor", "anchor_end")) {
+                guard {
+                    val us = conn.rows("SELECT id, anchor FROM units ORDER BY ord, id").map { r ->
+                        linkedMapOf<String, Any?>("id" to r[0].asText(), "anchor" to Json.parse(r[1].asText() ?: throw SpdfException(null, "NULL anchor")))
+                    }
+                    val byId = us.associateBy { it["id"] }
+                    for (r in conn.rows("SELECT id, unit, anchor_end FROM fragments WHERE anchor_end IS NOT NULL ORDER BY n")) {
+                        val u1 = byId[r[1].asText()] ?: continue
+                        val end = Json.parse(r[2].asText() ?: continue)
+                        val u2 = Locate.endUnit(us, u1["id"], end) ?: continue
+                        val a1 = asMap(u1["anchor"]) ?: continue
+                        val a2 = asMap(u2["anchor"]) ?: continue
+                        val folioChange = a1["type"] == "page" && a2["type"] == "page" && ((a1["printed"] == null) != (a2["printed"] == null))
+                        val m1 = Locate.matterOf(a1)
+                        val m2 = Locate.matterOf(a2)
+                        if (m1 != m2 || folioChange) {
+                            warn("W103", "fragment crosses from $m1 to $m2 matter, or between a page with a folio and one without", "fragments/${r[0].asText() ?: ""}")
+                        }
                     }
                 }
             }

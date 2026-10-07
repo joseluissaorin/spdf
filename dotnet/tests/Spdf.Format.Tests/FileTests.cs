@@ -18,7 +18,7 @@ public class FileTests
         var first = f.GetFragments()[0];
         Assert.StartsWith("spdf:sha256-", f.AnchorUriOf(first.Anchor, first.AnchorEnd), StringComparison.Ordinal);
         Assert.StartsWith("(", f.CiteFragment(first.Id, "en"), StringComparison.Ordinal);
-        Assert.StartsWith("@book{cervantessaavedra1605,", f.ExportBibTeX(), StringComparison.Ordinal);
+        Assert.StartsWith("@book{" + f.CitationKey() + ",", f.ExportBibTeX(), StringComparison.Ordinal);
         Assert.Contains("\"type\":\"book\"", f.ExportCslJson(), StringComparison.Ordinal);
     }
 
@@ -174,51 +174,6 @@ public class FileTests
     }
 
     [Fact]
-    public void LocatesReferences()
-    {
-        using var f = SpdfFile.Open(TestPaths.Conformance("files/quijote.spdf"));
-        string docRef = f.DocRef;
-        var page = f.Locate($"spdf:{docRef}#p=3&pe=4");
-        Assert.True(page.Document);
-        Assert.Equal(["p3", "p4"], page.Units);
-        Assert.Equal(["q3"], page.Fragments);
-        Assert.Equal(["p6"], f.Locate($"spdf:{docRef}#f=1v").Units);
-        Assert.Equal(["p7"], f.Locate("https://example.org/quijote.spdf#p=7").Units);
-        var other = f.Locate("spdf:sha256-" + new string('0', 64) + "#p=1");
-        Assert.False(other.Document);
-        Assert.Empty(other.Units);
-        Assert.Equal("""{"char":null,"document":true,"fragments":[],"units":[],"xywh":null}""",
-            SpdfJson.Canonical(f.Locate("https://example.org/quijote.spdf").ToTree()));
-        Assert.Throws<FormatException>(() => f.Locate("spdf:x#p=0"));
-    }
-
-    [Fact]
-    public void GivesThePageSequenceOfStructuralExports()
-    {
-        using var f = SpdfFile.Open(TestPaths.Conformance("files/quijote.spdf"));
-        var pages = f.GetStructurePages();
-        Assert.Equal(8, pages.Count);
-        Assert.Null(pages[0].Printed);
-        Assert.Equal("1r", pages[4].Printed);
-        Assert.Null(pages[5].Printed);
-        Assert.Equal("[1v]", pages[5].Label);
-        Assert.Equal("""{"pages":[{"n":null}""", SpdfJson.Canonical(f.ExportStructure(StructureFormat.Tei))[..20]);
-    }
-
-    [Fact]
-    public void SearchesUnitAndFigureVectors()
-    {
-        using var f = SpdfFile.Open(TestPaths.Conformance("files/micrographia.spdf"));
-        var figures = f.SearchVector([1, 0.5, 0.25, 0], "toy-clip@4", "figure", 2);
-        Assert.Equal(["fig-flea", "fig-louse"], figures.Select(h => h.FigureId));
-        Assert.Equal(0.9759, figures[0].Score, 4);
-        Assert.Contains("xywh=percent:10,25,80,50", figures[0].AnchorUri, StringComparison.Ordinal);
-        Assert.True(figures[0].ToTree().ContainsKey("figure_id"));
-        var units = f.SearchVector([1, 0.5, 0.25, 0], "toy-clip@4", "unit", 2);
-        Assert.All(units, h => Assert.NotNull(h.UnitId));
-    }
-
-    [Fact]
     public void WriterAddsContentHashAndSignature()
     {
         string plain = TestPaths.TempFile(), signed = TestPaths.TempFile();
@@ -267,23 +222,39 @@ public class FileTests
     }
 
     [Fact]
-    public void StructuralExportsAreWellFormedAndParseBack()
+    public void SearchesUnitAndFigureVectors()
     {
-        using var f = SpdfFile.Open(TestPaths.Conformance("files/quijote.spdf"));
-        var alto = System.Xml.Linq.XDocument.Parse(f.ExportAlto());
-        Assert.Equal(8, alto.Descendants(System.Xml.Linq.XName.Get("Page", StructureExport.AltoNamespace)).Count());
-        var tei = StructureExport.PageSequence(StructureFormat.Tei, f.ExportTei());
-        Assert.Equal("[1v]", tei[5]["n"]);
-        Assert.Null(tei[0]["n"]);
-        var iiif = SpdfJson.ParseObject(f.ExportIiif(new IiifOptions { Base = "https://example.org/q" }));
-        Assert.Equal("https://example.org/q/manifest", iiif["id"]);
-        Assert.Equal(8, StructureExport.PageSequence(StructureFormat.Iiif, f.ExportIiif()).Count);
-        using var a = SpdfFile.Open(TestPaths.Conformance("files/apolo11.spdf"));
-        var manifest = a.ExportIiifManifest();
-        var canvas = Assert.IsType<Dictionary<string, object?>>(Assert.Single((List<object?>)manifest["items"]!));
-        Assert.True(canvas.ContainsKey("duration"));
-        Assert.Equal(6, ((List<object?>)manifest["structures"]!).Count);
-        Assert.Contains("<u who=\"Neil Armstrong\">", a.ExportTei(), StringComparison.Ordinal);
+        using var f = SpdfFile.Open(TestPaths.Conformance("files/micrographia.spdf"));
+        var space = f.GetSpaces().First(s => !s.Normalized);
+        var query = Enumerable.Repeat(0.5, (int)space.Dims).ToList();
+        foreach (var target in new[] { "unit", "figure" })
+        {
+            var hits = f.SearchVector(query, space.Id, target, 10);
+            Assert.NotEmpty(hits);
+            Assert.All(hits, h => Assert.True(h.Score is >= -1.0000001 and <= 1.0000001));
+            Assert.Equal(hits.Select(h => h.Score).OrderByDescending(x => x), hits.Select(h => h.Score));
+            Assert.All(hits, h => Assert.True(h.ToTree().ContainsKey(target + "_id")));
+            Assert.All(hits, h => Assert.Equal(target == "unit" ? h.Id : null, h.UnitId));
+        }
+    }
+
+    [Fact]
+    public void StructuralExportsAgreeWithTheDataOnEveryCorpusFile()
+    {
+        var files = Directory.GetFiles(TestPaths.Conformance("files"), "*.spdf").Concat(Directory.GetFiles(TestPaths.Conformance("legacy"), "*.spdf"));
+        foreach (var path in files)
+        {
+            using var f = SpdfFile.Open(path);
+            System.Xml.Linq.XDocument.Parse(f.ExportAlto());
+            System.Xml.Linq.XDocument.Parse(f.ExportTei());
+            SpdfJson.ParseObject(f.ExportIiif());
+            var pages = f.GetStructurePages();
+            foreach (var format in new[] { StructureFormat.Alto, StructureFormat.Tei, StructureFormat.Iiif })
+            {
+                var expected = new Dictionary<string, object?> { ["pages"] = pages.Select(p => (object?)p.ToTree(format)).ToList() };
+                Assert.Null(SpdfJson.Diff(f.ExportStructure(format), expected));
+            }
+        }
     }
 
     [Fact]

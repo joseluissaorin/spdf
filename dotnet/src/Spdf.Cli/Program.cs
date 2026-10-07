@@ -16,7 +16,7 @@ internal static class Program
           spdf search FILE QUERY... [-n N]         lexical search
           spdf vsearch FILE SPACE V1,V2,... [-n N] [--target fragment|unit|figure]
           spdf hybrid FILE SPACE V1,V2,... QUERY... [-n N]
-          spdf cite FILE FRAGMENT_ID [--locale es|en]
+          spdf cite FILE FRAGMENT_ID [--locale es|en] [--quote TEXT]
           spdf export FILE csl|bibtex|alto|tei|iiif
           spdf uri parse URI
           spdf uri format DOCREF ANCHOR_JSON [END_ANCHOR_JSON]
@@ -41,6 +41,7 @@ internal static class Program
         string target = "fragment";
         string? output = null;
         string? keyFile = null;
+        string? quote = null;
         for (int i = 1; i < argv.Length; i++)
         {
             string a = argv[i];
@@ -68,6 +69,9 @@ internal static class Program
                 case "--key-file":
                     keyFile = Next();
                     break;
+                case "--quote":
+                    quote = Next();
+                    break;
                 default:
                     positional.Add(a);
                     break;
@@ -75,7 +79,7 @@ internal static class Program
         }
         try
         {
-            return Execute(cmd, positional, n, locale, target, output, keyFile);
+            return Execute(cmd, positional, n, locale, target, output, keyFile, quote);
         }
         catch (Exception e) when (e is SpdfException or IOException or FormatException or ArgumentException or KeyNotFoundException or UnauthorizedAccessException)
         {
@@ -110,7 +114,7 @@ internal static class Program
     private static List<double> Vector(string s) =>
         s.Split(',').Select(x => double.Parse(x.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture)).ToList();
 
-    private static int Execute(string cmd, List<string> pos, int n, string locale, string target, string? output, string? keyFile)
+    private static int Execute(string cmd, List<string> pos, int n, string locale, string target, string? output, string? keyFile, string? quote)
     {
         bool Need(int k) => pos.Count >= k;
         switch (cmd)
@@ -163,6 +167,11 @@ internal static class Program
             case "cite" when Need(2):
             {
                 using var f = SpdfFile.Open(pos[0]);
+                if (quote is not null)
+                {
+                    Out(f.CitePassage(pos[1], quote, locale).ToTree());
+                    return 0;
+                }
                 Console.WriteLine(f.CiteFragment(pos[1], locale));
                 return 0;
             }

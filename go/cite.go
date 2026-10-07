@@ -127,10 +127,27 @@ func bracketIfInferred(a Anchor, printed string) string {
 	return printed
 }
 
-// pageLocator renders a page-like locator (page anchors, or section/web
-// anchors carrying a printed folio). Ends without a printed folio never take
-// part in a range (SPEC §18): "p. 211", never "pp. s. p.-211".
-func pageLocator(a, end Anchor, es bool, single, plural string) string {
+var (
+	singleLabel = map[string]string{"page": "p.", "leaf": "fol.", "column": "col."}
+	pluralLabel = map[string]string{"page": "pp.", "leaf": "fols.", "column": "cols."}
+)
+
+// foliation of an end: page anchors carry it (default page); section and web
+// anchors count as pages.
+func foliation(a Anchor) string {
+	if a.Type() == "page" {
+		if f, ok := a.Str("foliation"); ok && singleLabel[f] != "" {
+			return f
+		}
+	}
+	return "page"
+}
+
+// pageLocator renders a page-like locator (SPEC §18.1): ends without a
+// printed folio never take part in a range ("p. 211", never "pp. s. p.-211"),
+// and every label comes from the foliation of the end(s) actually printed
+// ("fol. Ir", "p. xiv-fol. 1r").
+func pageLocator(a, end Anchor, es bool) string {
 	ends := []Anchor{a}
 	if end != nil && end.Type() == a.Type() {
 		ends = append(ends, end)
@@ -150,10 +167,14 @@ func pageLocator(a, end Anchor, es bool, single, plural string) string {
 	first, last := withFolio[0], withFolio[len(withFolio)-1]
 	fp, _ := first.Str("printed")
 	lp, _ := last.Str("printed")
-	if len(withFolio) > 1 && lp != fp {
-		return plural + " " + bracketIfInferred(first, fp) + "-" + bracketIfInferred(last, lp)
+	f1, f2 := foliation(first), foliation(last)
+	if len(withFolio) == 1 || lp == fp {
+		return singleLabel[f1] + " " + bracketIfInferred(first, fp)
 	}
-	return single + " " + bracketIfInferred(first, fp)
+	if f1 == f2 {
+		return pluralLabel[f1] + " " + bracketIfInferred(first, fp) + "-" + bracketIfInferred(last, lp)
+	}
+	return singleLabel[f1] + " " + bracketIfInferred(first, fp) + "-" + singleLabel[f2] + " " + bracketIfInferred(last, lp)
 }
 
 func clock(t float64) string {
@@ -171,14 +192,7 @@ func clock(t float64) string {
 func citeLocator(a, end Anchor, es bool) string {
 	switch a.Type() {
 	case "page":
-		fol, _ := a.Str("foliation")
-		switch fol {
-		case "leaf":
-			return pageLocator(a, end, es, "fol.", "fols.")
-		case "column":
-			return pageLocator(a, end, es, "col.", "cols.")
-		}
-		return pageLocator(a, end, es, "p.", "pp.")
+		return pageLocator(a, end, es)
 	case "time":
 		t0, ok := a.Num("t0")
 		if !ok {
@@ -192,7 +206,7 @@ func citeLocator(a, end Anchor, es bool) string {
 		return clock(t0)
 	case "section", "web":
 		if _, ok := a.Str("printed"); ok {
-			return pageLocator(a, end, es, "p.", "pp.")
+			return pageLocator(a, end, es)
 		}
 		var parts []string
 		if path, ok := a.Path(); ok && len(path) > 0 {

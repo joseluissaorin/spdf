@@ -126,9 +126,13 @@ public sealed class Anchor
     public override string ToString() => ToJson();
 
     /// <summary>A page anchor.</summary>
-    public static Anchor Page(long physical, string? printed, string? source = null, string? foliation = null, bool? roman = null)
+    public static Anchor Page(long physical, string? printed, string? source = null, string? foliation = null, bool? roman = null, string? matter = null)
     {
         var m = new Dictionary<string, object?>(StringComparer.Ordinal) { ["type"] = "page", ["physical"] = physical, ["printed"] = printed };
+        if (matter is not null)
+        {
+            m["matter"] = matter;
+        }
         if (source is not null)
         {
             m["source"] = source;
@@ -258,6 +262,10 @@ public sealed class Anchor
         {
             return new AnchorProblem("E040", $"{t} anchor misses or mistypes a required member");
         }
+        if (a.TryGetValue("matter", out var matter) && matter is not string)
+        {
+            return new AnchorProblem("E040", "matter must be a string");
+        }
         if (a.TryGetValue("region", out var region))
         {
             if (region is not Dictionary<string, object?> r || !new[] { "x", "y", "w", "h" }.All(k => r.TryGetValue(k, out var v) && IsNumber(v)))
@@ -284,6 +292,19 @@ public sealed class Anchor
         }
         return null;
     }
+
+    /// <summary>
+    /// The matter class of the anchor (§4.1): <c>body</c> (default), <c>front</c>, <c>back</c>,
+    /// <c>plate</c>, <c>cover</c>, <c>library</c>, <c>blank</c>.
+    /// </summary>
+    public string Matter => GetString("matter") ?? "body";
+
+    internal static string MatterOf(object? anchor) =>
+        anchor is Dictionary<string, object?> a && a.GetValueOrDefault("matter") is string m ? m : "body";
+
+    /// <summary>The anchor without <c>chars</c> and <c>region</c> (how §4.4 compares a unit anchor with an end anchor).</summary>
+    internal static Dictionary<string, object?> Identity(Dictionary<string, object?> a) =>
+        a.Where(kv => kv.Key is not ("chars" or "region")).ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.Ordinal);
 
     /// <summary>A JSON number with an integral value (<c>10</c> and <c>10.0</c> count).</summary>
     internal static bool IsInteger(object? v) => v is long || (v is double d && double.IsFinite(d) && Math.Floor(d) == d);

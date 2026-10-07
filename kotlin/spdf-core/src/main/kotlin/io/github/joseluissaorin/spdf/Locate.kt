@@ -23,8 +23,41 @@ public data class Location(
     }
 }
 
-/** The matching rules of SPEC §5.4, one locator key at a time. */
+/** A citation of a quoted passage (SPEC §18.2): the short citation and the anchor URI of the passage. */
+public data class PassageCitation(val text: String, val uri: String, val anchor: Anchor, val anchorEnd: Anchor?) : JsonConvertible {
+    override fun toJson(): Map<String, Any?> = linkedMapOf("text" to text, "uri" to uri)
+}
+
+/** The matching rules of SPEC §5.4, one locator key at a time, and the unit identity of §4.4. */
 internal object Locate {
+    private val IDENTITY_SKIP = setOf("chars", "region")
+
+    /** An anchor without `chars` and `region`: what identifies its unit. */
+    fun identity(a: Map<String, Any?>): Map<String, Any?> = a.filterKeys { it !in IDENTITY_SKIP }
+
+    /** `matter` of an anchor, `body` when absent (SPEC §4.1). */
+    fun matterOf(a: Any?): String = asMap(a)?.get("matter") as? String ?: "body"
+
+    /**
+     * The unit where a fragment ends (SPEC §4.4): the first unit after its start unit, in `ord`
+     * order, whose anchor equals [anchorEnd] ignoring `chars` and `region`. [units] are dump
+     * rows (`id`, `anchor`) in `ord` order.
+     */
+    fun endUnit(units: List<Map<String, Any?>>, startId: Any?, anchorEnd: Any?): Map<String, Any?>? {
+        val end = asMap(anchorEnd) ?: return null
+        val want = identity(end)
+        var after = false
+        for (u in units) {
+            if (u["id"] == startId) {
+                after = true
+                continue
+            }
+            val a = asMap(u["anchor"])
+            if (after && a != null && pyEquals(identity(a), want)) return u
+        }
+        return null
+    }
+
     private fun le(a: Any?, b: Any?): Boolean {
         val x = numberValue(a) ?: return false
         val y = numberValue(b) ?: return false

@@ -11,8 +11,8 @@ anchor (printed page, folio, second of a recording, slide, verse).
   Ed25519 verification, RFC 8785 serialization and the exact rounding rules are written in C#.
 - Conformance: passes the whole SPDF conformance suite (`../conformance`), every kind
   (`dump`, `legacy_dump`, `roundtrip`, `quantize`, `validate`, `search_lexical`,
-  `search_vector`, `search_hybrid`, `anchor_uri`, `cite`, `locate`, `export_csl`,
-  `export_bibtex`, `export_structure`). Nothing is skipped.
+  `search_vector`, `search_hybrid`, `anchor_uri`, `cite`, `cite_passage`, `locate`,
+  `export_csl`, `export_bibtex`, `export_structure`). Nothing is skipped.
 
 ```sh
 dotnet add package Spdf.Format
@@ -28,7 +28,7 @@ dotnet add package Spdf.Format
 | Validation | every code of the specification (E001–E090, W100–W110), FTS integrity on an in-memory copy, Ed25519 signatures |
 | Search | lexical (FTS5 BM25, CJK route with `trigram` or substring), vector over fragments, units or figures (`f32`, `f16`, `i8`; dot product or cosine), hybrid (reciprocal rank fusion, k = 10) |
 | Anchors | anchor ↔ URI (`spdf:sha256-…#p=29&f=21&char=118,301`), strict parser, canonical form; resolution of `spdf:` URIs and `.spdf` URLs to units and fragments (§5.4) |
-| Citation | short author-date citation in Spanish and English |
+| Citation | short author-date citation in Spanish and English; a quoted passage is cited by the unit it lies in, never by the start of its fragment (§18.2) |
 | Export | CSL-JSON (with the CSL `label`/`locator` of a citation) and BibTeX with the keys of §19.1 (`cervantessaavedra1605`, `lazarillo1554`, `anonnd`, collision suffixes `a`, `b`…); ALTO 4, minimal TEI and IIIF Presentation 3 (§19.4) |
 | Writer | builds valid SPDF 5.0 files (FTS kept in sync, `VACUUM`, no triggers, atomic replace), with `content_sha256` and an optional Ed25519 signature (§13) |
 
@@ -108,7 +108,18 @@ var metadata = new Dictionary<string, object?>
     ["issued"] = new Dictionary<string, object?> { ["date-parts"] = new List<object?> { new List<object?> { 1609L } } },
 };
 Console.WriteLine(Citation.Cite(anchor, null, metadata, "es"));   // (de Vega, 1609, p. [21])
+
+// A quotation from a fragment that crosses pages is cited by the page it lies on (§18.2);
+// page ranges skip ends without a printed folio ("p. 211", never "pp. s. p.-211").
+using var file = SpdfFile.Open("conformance/invalid/W103-fragment-crosses-matter.spdf");
+PassageCitation passage = file.CitePassage("m4", "which I have perceiv'd him to slip in and out", "en");
+Console.WriteLine($"{passage.Text} {passage.Uri}");
+// (Hooke, 1665, p. 211) spdf:sha256-ba9d…#p=321&f=211&char=36,81
 ```
+
+Anchors may carry `matter` (`body` by default, `front`, `back`, `plate`, `cover`, `library`,
+`blank`); the validator warns (W103) about fragments that cross between matter classes or
+between a page with a folio and one without.
 
 JSON values (metadata, anchors, word timings) are plain trees: `null`, `bool`, `long`,
 `double`, `string`, `List<object?>` and `Dictionary<string, object?>`. `SpdfJson` parses
@@ -168,6 +179,7 @@ dotnet run --project src/Spdf.Cli -- dump file.spdf
 dotnet run --project src/Spdf.Cli -- search file.spdf "lugar de la Mancha" -n 5
 dotnet run --project src/Spdf.Cli -- vsearch file.spdf toy-embedding@8 0.5,0.25,0.5,0.25,0,0.25,0.25,0.5
 dotnet run --project src/Spdf.Cli -- cite file.spdf q4 --locale en
+dotnet run --project src/Spdf.Cli -- cite file.spdf FRAGMENT_ID --quote "exact words"   # passage citation + URI
 dotnet run --project src/Spdf.Cli -- export file.spdf bibtex        # also csl, alto, tei, iiif
 dotnet run --project src/Spdf.Cli -- sample demo.spdf --key-file seed.hex   # small signed demo file
 dotnet run --project src/Spdf.Cli -- uri parse 'spdf:sha256-…#p=29&f=21'

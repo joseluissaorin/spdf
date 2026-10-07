@@ -496,6 +496,33 @@ public static class SpdfJson
         return Canonical(a) == Canonical(b) ? null : $"{where}: {Short(a)} != {Short(b)}";
     }
 
+    /// <summary>
+    /// Exact equality of two value trees as the reference compares them: numbers by value
+    /// (<c>1</c> equals <c>1.0</c>, no rounding), strings ordinally, objects by key set.
+    /// </summary>
+    internal static bool ValueEquals(object? a, object? b)
+    {
+        if (a is long or double && b is long or double)
+        {
+            return a is long la && b is long lb ? la == lb : ToDouble(a) == ToDouble(b);
+        }
+        switch (a)
+        {
+            case null:
+                return b is null;
+            case string s:
+                return b is string t && string.Equals(s, t, StringComparison.Ordinal);
+            case bool x:
+                return b is bool y && x == y;
+            case List<object?> l:
+                return b is List<object?> m && l.Count == m.Count && l.Zip(m).All(p => ValueEquals(p.First, p.Second));
+            case Dictionary<string, object?> o:
+                return b is Dictionary<string, object?> q && o.Count == q.Count
+                    && o.All(kv => q.TryGetValue(kv.Key, out var v) && ValueEquals(kv.Value, v));
+        }
+        return false;
+    }
+
     private static string Short(object? v)
     {
         string s = Canonical(v);

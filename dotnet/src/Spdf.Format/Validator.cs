@@ -410,6 +410,12 @@ public static class SpdfValidator
                 }
             }
 
+            // Fragments that cross between matter classes, or between a page with a folio and one without (W103).
+            if (Ok("units", "id", "ord", "anchor") && Ok("fragments", "id", "unit", "anchor", "anchor_end"))
+            {
+                CheckCrossings(con);
+            }
+
             // Profile warnings.
             if (_profile.Contains("semantic") && vectorCount == 0)
             {
@@ -422,6 +428,44 @@ public static class SpdfValidator
                 if (!hasTime)
                 {
                     Warn("W101", "profile media without time anchors");
+                }
+            }
+        }
+
+        private void CheckCrossings(SqliteConnection con)
+        {
+            var units = new List<Dictionary<string, object?>>();
+            foreach (var r in SqliteUtil.Rows(con, "SELECT id, anchor FROM units ORDER BY ord, id"))
+            {
+                if (r[1] is not string json || !SpdfJson.TryParse(json, out var anchor))
+                {
+                    return; // the anchors are already reported as E040
+                }
+                units.Add(new Dictionary<string, object?>(StringComparer.Ordinal) { ["id"] = SpdfFile.AsText(r[0]), ["anchor"] = anchor });
+            }
+            var byId = new Dictionary<string, Dictionary<string, object?>>(StringComparer.Ordinal);
+            foreach (var u in units)
+            {
+                byId.TryAdd((string)u["id"]!, u);
+            }
+            foreach (var r in SqliteUtil.Rows(con, "SELECT id, unit, anchor_end FROM fragments WHERE anchor_end IS NOT NULL ORDER BY n"))
+            {
+                if (r[2] is not string json || !SpdfJson.TryParse(json, out var end))
+                {
+                    return;
+                }
+                if (!byId.TryGetValue(SpdfFile.AsText(r[1]), out var u1) || SpdfFile.EndUnit(units, SpdfFile.AsText(r[1]), end) is not { } u2)
+                {
+                    continue;
+                }
+                var a1 = u1["anchor"] as Dictionary<string, object?>;
+                var a2 = u2["anchor"] as Dictionary<string, object?>;
+                bool bothPages = a1?.GetValueOrDefault("type") as string == "page" && a2?.GetValueOrDefault("type") as string == "page";
+                bool folioChange = bothPages && (a1!.GetValueOrDefault("printed") is null) != (a2!.GetValueOrDefault("printed") is null);
+                string m1 = Anchor.MatterOf(a1), m2 = Anchor.MatterOf(a2);
+                if (m1 != m2 || folioChange)
+                {
+                    Warn("W103", $"fragment crosses from {m1} to {m2} matter, or between a page with a folio and one without", "fragments/" + SpdfFile.AsText(r[0]));
                 }
             }
         }

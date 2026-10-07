@@ -130,25 +130,47 @@ public static class Citation
         return es ? "s. f." : "n.d.";
     }
 
-    private static string Bracketed(Anchor a, string printed) => a.GetString("source") == "inferred" ? "[" + printed + "]" : printed;
+    private static readonly Dictionary<string, string> Single = new() { ["page"] = "p.", ["leaf"] = "fol.", ["column"] = "col." };
+    private static readonly Dictionary<string, string> Plural = new() { ["page"] = "pp.", ["leaf"] = "fols.", ["column"] = "cols." };
 
-    private static string PageLocator(Anchor a, Anchor? end, bool es, string single, string plural)
+    /// <summary>Foliation of an end: page anchors carry it (default page); section and web count as pages.</summary>
+    private static string Foliation(Anchor a) =>
+        a.Type == "page" && a.GetString("foliation") is string f && Single.ContainsKey(f) ? f : "page";
+
+    /// <summary>
+    /// Page-like locator (§18.1): ends without a printed folio never take part in a range
+    /// ("p. 211", never "pp. s. p.-211"), and every label comes from the foliation of the
+    /// end(s) actually printed ("fol. Ir", "p. xiv-fol. 1r").
+    /// </summary>
+    private static string PageLocator(Anchor a, Anchor? end, bool es)
     {
-        string? printed = a.GetString("printed");
-        if (printed is null)
+        var ends = new List<Anchor> { a };
+        if (end is not null && end.Type == a.Type)
+        {
+            ends.Add(end);
+        }
+        var withFolio = ends.Where(x => x["printed"] is not null).ToList();
+        if (withFolio.Count == 0)
         {
             return es ? "s. p." : "n. pag.";
         }
-        string first = Bracketed(a, printed);
-        if (end is not null && end.Type == a.Type)
+        Anchor first = withFolio[0], last = withFolio[^1];
+        string f1 = Foliation(first), f2 = Foliation(last);
+        if (ReferenceEquals(last, first) || SpdfJson.ValueEquals(last["printed"], first["printed"]))
         {
-            string? endPrinted = end.GetString("printed");
-            if (endPrinted is not null && endPrinted != printed)
-            {
-                return plural + " " + first + "-" + Bracketed(end, endPrinted);
-            }
+            return Single[f1] + " " + Folio(first);
         }
-        return single + " " + first;
+        if (f1 == f2)
+        {
+            return Plural[f1] + " " + Folio(first) + "-" + Folio(last);
+        }
+        return Single[f1] + " " + Folio(first) + "-" + Single[f2] + " " + Folio(last);
+    }
+
+    private static string Folio(Anchor a)
+    {
+        string printed = a["printed"] as string ?? SpdfJson.Canonical(a["printed"]);
+        return a.GetString("source") == "inferred" ? "[" + printed + "]" : printed;
     }
 
     internal static string Clock(double t)
@@ -165,12 +187,7 @@ public static class Citation
         switch (a.Type)
         {
             case "page":
-                return a.GetString("foliation") switch
-                {
-                    "leaf" => PageLocator(a, end, es, "fol.", "fols."),
-                    "column" => PageLocator(a, end, es, "col.", "cols."),
-                    _ => PageLocator(a, end, es, "p.", "pp."),
-                };
+                return PageLocator(a, end, es);
             case "time":
             {
                 double? t0 = a.GetNumber("t0");
@@ -187,9 +204,9 @@ public static class Citation
             case "section":
             case "web":
             {
-                if (a.GetString("printed") is not null)
+                if (a["printed"] is not null)
                 {
-                    return PageLocator(a, end, es, "p.", "pp.");
+                    return PageLocator(a, end, es);
                 }
                 var parts = new List<string>();
                 if (a.Path is { Count: > 0 } path)

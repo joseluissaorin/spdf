@@ -733,6 +733,61 @@ public class SpdfFile private constructor(private val c: Container) : AutoClosea
      */
     public fun structurePages(format: String): List<Map<String, Any?>> = Structure.pageSequence(this, format)
 
+    // ------------------------------------------------------------------ citation of a passage
+
+    /**
+     * Cites a quotation from a fragment by the unit or units it actually lies in, never by the
+     * start anchor of the fragment (SPEC §18.2). The quote is matched on NFC text: inside the
+     * start unit, inside the end unit, or across both. Throws if the quote is not in the fragment.
+     */
+    @JvmOverloads
+    public fun citePassage(fragmentId: String, quote: String, locale: String = "es"): PassageCitation {
+        val units = unitRows().map { asMap(Json.canon(it))!! }
+        val byId = units.associateBy { it["id"] }
+        val f = fragmentRows("WHERE id = ?", fragmentId).firstOrNull()?.let { asMap(Json.canon(it))!! }
+            ?: throw SpdfException(null, "no fragment $fragmentId")
+        val q = codePoints(nfc(quote))
+        val u1 = byId[f["unit"]] ?: throw SpdfException(null, "fragment $fragmentId has no unit")
+        val t1 = codePoints(u1["text"] as? String ?: "")
+        fun range(anchor: Any?, len: Int): Pair<Int, Int> {
+            val ch = asList(asMap(anchor)?.get("chars"))?.takeIf { truthy(it) && it.size == 2 }
+            val a = ch?.let { integralValue(it[0])?.toInt() } ?: 0
+            val b = ch?.let { integralValue(it[1])?.toInt() } ?: len
+            return a.coerceIn(0, len) to b.coerceIn(0, len)
+        }
+        fun find(hay: IntArray, from: Int, to: Int): Int {
+            if (q.size > to - from) return -1
+            for (i in from..to - q.size) if ((q.indices).all { hay[i + it] == q[it] }) return i
+            return -1
+        }
+        fun strip(a: Any?): Map<String, Any?> = Locate.identity(asMap(a) ?: emptyMap())
+        val (s1, e1) = range(f["anchor"], t1.size)
+        val u2 = Locate.endUnit(units, u1["id"], f["anchor_end"])
+        val anchor: Map<String, Any?>
+        var end: Map<String, Any?>? = null
+        val i1 = find(t1, s1, e1)
+        if (i1 >= 0) {
+            anchor = strip(u1["anchor"]) + ("chars" to listOf(i1.toLong(), (i1 + q.size).toLong()))
+        } else {
+            val t2 = codePoints(u2?.get("text") as? String ?: "")
+            val (s2, e2) = range(f["anchor_end"], t2.size)
+            val i2 = if (u2 != null) find(t2, s2, e2) else -1
+            if (i2 >= 0) {
+                anchor = strip(u2!!["anchor"]) + ("chars" to listOf(i2.toLong(), (i2 + q.size).toLong()))
+            } else if (u2 != null && (f["text"] as? String ?: "").contains(fromCodePoints(q))) {
+                anchor = strip(u1["anchor"])
+                end = strip(u2["anchor"])
+            } else {
+                throw SpdfException(null, "the quote is not in fragment $fragmentId")
+            }
+        }
+        val a = Anchor(anchor)
+        val e = end?.let { Anchor(it) }
+        val doc = documentRow()
+        val docref = "sha256-" + (doc["source_sha256"] as? String ?: "")
+        return PassageCitation(Citation.cite(a, e, metadata(), locale), AnchorUri.format(docref, a, e), a, e)
+    }
+
     // ------------------------------------------------------------------ resolution
 
     /**
@@ -768,18 +823,27 @@ public class SpdfFile private constructor(private val c: Container) : AutoClosea
             val last = timed.lastOrNull()?.let { asMap(it["anchor"]) }
             if (last != null && isNumber(last["t1"]) && numberValue(last["t1"]) == l.t!![0]) found = listOf(timed.last()["id"] as? String ?: "")
         }
-        var frags = fragments.filter { Locate.matches(rule, l, it["anchor"], null) }
+        // Fragments match by their start or by their end anchor (SPEC §5.4).
+        var frags = fragments.filter { f -> listOf(f["anchor"], f["anchor_end"]).any { it != null && Locate.matches(rule, l, it, null) } }
         if (found.isEmpty() && frags.isNotEmpty()) {
             val order = units.associate { (it["id"] as? String ?: "") to (integralValue(it["ord"]) ?: 0L) }
             found = frags.map { it["unit"] as? String ?: "" }.distinct().sortedWith(compareBy<String>({ order[it] ?: 0L }, { it }))
         }
         l.char?.takeIf { it.size == 2 }?.let { (c, d) ->
+            // `char` refers to the text of the first unit: keep a fragment whose start (or end)
+            // lies in that unit with overlapping chars.
+            val first = found.firstOrNull()
+            fun overlaps(x: Any?): Boolean {
+                val ch = asList(asMap(x)?.get("chars"))
+                if (ch == null || ch.size != 2) return false
+                val a = numberValue(ch[0]) ?: return false
+                val b = numberValue(ch[1]) ?: return false
+                return if (c < d) a < d && c < b else a <= c && c < b
+            }
             frags = frags.filter { f ->
-                val ch = asList(asMap(f["anchor"])?.get("chars"))
-                if (f["unit"] !in found || ch == null || ch.size != 2) return@filter false
-                val a = numberValue(ch[0]) ?: return@filter false
-                val b = numberValue(ch[1]) ?: return@filter false
-                if (c < d) a < d && c < b else a <= c && c < b
+                if (first != null && f["unit"] == first && overlaps(f["anchor"])) return@filter true
+                val eu = Locate.endUnit(units, f["unit"], f["anchor_end"])
+                first != null && eu != null && eu["id"] == first && overlaps(f["anchor_end"])
             }
         }
         return Location(true, found, frags.map { it["id"] as? String ?: "" }, l.char, l.xywh)

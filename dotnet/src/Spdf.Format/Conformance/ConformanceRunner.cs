@@ -229,6 +229,12 @@ public static class ConformanceRunner
                 var got = f.ExportStructure(format);
                 return SpdfJson.Diff(got, expect) is { } diff ? $"got {SpdfJson.Compact(got)} ({diff})" : null;
             }
+            case "cite_passage":
+            {
+                using var f = SpdfFile.Open(In(dir, Str(input, "file")));
+                var got = f.CitePassage(Str(input, "fragment"), Str(input, "quote"), Str(input, "locale")).ToTree();
+                return Str(expect, "text") == (string?)got["text"] && Str(expect, "uri") == (string?)got["uri"] ? null : "got " + SpdfJson.Compact(got);
+            }
             case "cite":
             {
                 var md = input.GetValueOrDefault("metadata") as Dictionary<string, object?> ?? [];

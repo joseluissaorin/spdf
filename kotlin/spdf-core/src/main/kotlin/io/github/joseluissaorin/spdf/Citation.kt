@@ -81,13 +81,31 @@ public object Citation {
         return if (a["source"] == "inferred") "[$s]" else s
     }
 
-    private fun pageLocator(a: Map<String, Any?>, e: Map<String, Any?>?, es: Boolean, single: String, plural: String): String {
-        val first = label(a) ?: return if (es) "s. p." else "n. pag."
-        if (e != null && pyEquals(e["type"], a["type"])) {
-            val second = label(e)
-            if (second != null && !pyEquals(e["printed"], a["printed"])) return "$plural $first-$second"
-        }
-        return "$single $first"
+    private val SINGLE = mapOf("page" to "p.", "leaf" to "fol.", "column" to "col.")
+    private val PLURAL = mapOf("page" to "pp.", "leaf" to "fols.", "column" to "cols.")
+
+    /** Foliation of an end: page anchors carry it (default page); section and web count as pages. */
+    private fun foliation(a: Map<String, Any?>): String {
+        val f = a["foliation"]
+        return if (a["type"] == "page" && f is String && SINGLE.containsKey(f)) f else "page"
+    }
+
+    /**
+     * SPEC §18.1: ends without a printed folio never take part in a range (`p. 211`, never
+     * `pp. s. p.-211`), and every label comes from the foliation of the end(s) actually
+     * printed (`fol. Ir`, `p. xiv-fol. 1r`).
+     */
+    private fun pageLocator(a: Map<String, Any?>, e: Map<String, Any?>?, es: Boolean): String {
+        val ends = if (e != null && pyEquals(e["type"], a["type"])) listOf(a, e) else listOf(a)
+        val withFolio = ends.filter { it["printed"] != null }
+        if (withFolio.isEmpty()) return if (es) "s. p." else "n. pag."
+        val first = withFolio.first()
+        val last = withFolio.last()
+        val f1 = foliation(first)
+        val f2 = foliation(last)
+        if (last === first || pyEquals(last["printed"], first["printed"])) return "${SINGLE[f1]} ${label(first)}"
+        if (f1 == f2) return "${PLURAL[f1]} ${label(first)}-${label(last)}"
+        return "${SINGLE[f1]} ${label(first)}-${SINGLE[f2]} ${label(last)}"
     }
 
     internal fun hms(t: Double): String {
@@ -104,18 +122,14 @@ public object Citation {
         val a = anchor.members
         val e = end?.members?.takeIf { it.isNotEmpty() }
         return when (anchor.type) {
-            "page" -> when (a["foliation"]) {
-                "leaf" -> pageLocator(a, e, es, "fol.", "fols.")
-                "column" -> pageLocator(a, e, es, "col.", "cols.")
-                else -> pageLocator(a, e, es, "p.", "pp.")
-            }
+            "page" -> pageLocator(a, e, es)
             "time" -> {
                 var s = hms(numberValue(a["t0"]) ?: return null)
                 if (e != null && e["type"] == "time") s += "-" + hms(numberValue(e["t1"]) ?: return s)
                 s
             }
             "section", "web" -> {
-                if (a["printed"] != null) return pageLocator(a, e, es, "p.", "pp.")
+                if (a["printed"] != null) return pageLocator(a, e, es)
                 val parts = ArrayList<String>()
                 val path = asList(a["path"])
                 if (path != null && path.isNotEmpty()) parts += "§ " + pyStr(path.last())

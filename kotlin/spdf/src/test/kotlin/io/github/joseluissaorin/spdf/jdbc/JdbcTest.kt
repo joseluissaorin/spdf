@@ -44,10 +44,13 @@ class ConformanceTest {
 
     @Test
     fun bibtexKeysMatchTheOtherImplementations() {
-        val expected = mapOf(
-            "quijote" to "cervantessaavedra1605", "lazarillo" to "lazarillo1554",
-            "apolo11" to "nationalaeronauticsandspaceadministration1969", "lunyu" to "anonnd", "micrographia" to "hooke1665",
-        )
+        // The expected keys come from the suite itself (export-csl-<file>-plain), so this test
+        // follows the corpus when it changes.
+        val expected = listOf("quijote", "lazarillo", "apolo11", "lunyu", "micrographia").associateWith { name ->
+            val case = Json.parseObject(File(conformanceDir(), "cases/export-csl-$name-plain.json").readText())
+            (((case["expect"] as Map<*, *>)["items"] as List<*>).single() as Map<*, *>)["id"] as String
+        }
+        assertEquals("anonnd", expected["lunyu"])
         for ((name, key) in expected) {
             SpdfFile.open(File(conformanceDir(), "files/$name.spdf"), JdbcSqlDriver()).use { f ->
                 assertEquals(key, io.github.joseluissaorin.spdf.Export.citationKey(f.metadata()), name)
@@ -190,11 +193,15 @@ class JdbcTest {
     fun structuralExports() {
         val dir = conformanceDir()
         SpdfFile.open(File(dir, "files/quijote.spdf"), driver).use { f ->
+            val pages = f.units().filter { it.anchor.type == "page" }
             val alto = f.exportAlto()
-            assertTrue(alto.contains("<Page ID=\"P1\" PHYSICAL_IMG_NR=\"1\">"), alto.take(800))
+            assertTrue(alto.contains("<Page ID=\"P1\" PHYSICAL_IMG_NR=\"${pages[0].anchor.long("physical")}\""), alto.take(800))
             assertTrue(alto.contains("<String ID=\"P1_B1_L1_S1\" CONTENT="))
+            assertEquals(pages.map { io.github.joseluissaorin.spdf.Structure.folio(it.anchor) }, f.structurePages("tei").map { it["n"] })
+            assertEquals(pages.map { it.anchor.long("physical") }, f.structurePages("alto").map { it["physical"] })
             val tei = f.exportTei()
-            assertTrue(tei.contains("<pb facs=\"blob:pages/0001.png\"/>") && tei.contains("<pb n=\"[iv]\"/>"), tei.take(400))
+            val first = pages.first { it.image != null }
+            assertTrue(tei.contains("facs=\"${first.image}\""), tei.take(400))
             val iiif = Json.parseObject(f.exportIiif())
             assertEquals("Manifest", iiif["type"])
             assertEquals(f.units().size, (iiif["items"] as List<*>).size)

@@ -79,17 +79,30 @@ public enum Citation {
         return a.string("source") == "inferred" ? "[\(p)]" : p
     }
 
-    /// Ends without a printed folio never take part in a range (SPEC §18):
-    /// "p. 211", never "pp. s. p.-211".
-    private static func pageLocator(_ a: Anchor, end: Anchor?, es: Bool, single: String, plural: String) -> String {
+    static let single = ["page": "p.", "leaf": "fol.", "column": "col."]
+    static let plural = ["page": "pp.", "leaf": "fols.", "column": "cols."]
+
+    /// Foliation of an end: page anchors carry it (default page); section and
+    /// web anchors count as pages.
+    static func foliation(_ a: Anchor) -> String {
+        if a.type == "page", let f = a.string("foliation"), single[f] != nil { return f }
+        return "page"
+    }
+
+    /// SPEC §18.1: ends without a printed folio never take part in a range
+    /// ("p. 211", never "pp. s. p.-211"), and every label comes from the
+    /// foliation of the end(s) actually printed ("fol. Ir", "p. xiv-fol. 1r").
+    private static func pageLocator(_ a: Anchor, end: Anchor?, es: Bool) -> String {
         var ends = [a]
         if let end, end.type == a.type { ends.append(end) }
         let withFolio = ends.filter { $0.string("printed") != nil }
         guard let first = withFolio.first, let last = withFolio.last else { return es ? "s. p." : "n. pag." }
-        if withFolio.count > 1 && last.string("printed") != first.string("printed") {
-            return "\(plural) \(label(first)!)-\(label(last)!)"
+        let (f1, f2) = (foliation(first), foliation(last))
+        if withFolio.count == 1 || last.string("printed") == first.string("printed") {
+            return "\(single[f1]!) \(label(first)!)"
         }
-        return "\(single) \(label(first)!)"
+        if f1 == f2 { return "\(plural[f1]!) \(label(first)!)-\(label(last)!)" }
+        return "\(single[f1]!) \(label(first)!)-\(single[f2]!) \(label(last)!)"
     }
 
     static func clock(_ t: Double) -> String {
@@ -101,18 +114,14 @@ public enum Citation {
     static func locator(_ a: Anchor, end: Anchor?, es: Bool) -> String? {
         switch a.type {
         case "page":
-            switch a.string("foliation") {
-            case "leaf": return pageLocator(a, end: end, es: es, single: "fol.", plural: "fols.")
-            case "column": return pageLocator(a, end: end, es: es, single: "col.", plural: "cols.")
-            default: return pageLocator(a, end: end, es: es, single: "p.", plural: "pp.")
-            }
+            return pageLocator(a, end: end, es: es)
         case "time":
             guard let t0 = a.number("t0") else { return nil }
             var s = clock(t0)
             if let end, end.type == "time", let t1 = end.number("t1") { s += "-" + clock(t1) }
             return s
         case "section", "web":
-            if a.string("printed") != nil { return pageLocator(a, end: end, es: es, single: "p.", plural: "pp.") }
+            if a.string("printed") != nil { return pageLocator(a, end: end, es: es) }
             var parts: [String] = []
             if let path = a.path, let last = path.last { parts.append("§ " + last) }
             if let para = a["paragraph"], !para.isNull { parts.append((es ? "párr. " : "para. ") + para.canonicalJSON) }

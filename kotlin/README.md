@@ -10,11 +10,11 @@ repository (it does not wrap the Rust ABI).
   (Android), both on top of `io.github.joseluissaorin:spdf-core`.
 - Java 17 or newer on the JVM; Android minSdk 23. Built with Kotlin 2.4 at language level 2.2,
   so apps on Kotlin 2.1 or newer can consume it.
-- Conformance: passes the whole SPDF conformance suite (`../conformance`, 309 cases in
-  suite 0.4.0) with **both** SQLite adapters, on the JVM and on Android emulators (API 31
-  and 36), every kind (`dump`, `legacy_dump`, `roundtrip`, `validate`, `search_lexical`,
-  `search_vector`, `search_hybrid`, `anchor_uri`, `cite`, `quantize`, `locate`,
-  `export_csl`, `export_bibtex`, `export_structure`). Nothing is skipped: this is a full
+- Conformance: passes the whole SPDF conformance suite (`../conformance`, 341 cases in
+  suite 0.4.1) with **both** SQLite adapters, on the JVM and on Android emulators, every
+  kind (`dump`, `legacy_dump`, `roundtrip`, `validate`, `search_lexical`, `search_vector`,
+  `search_hybrid`, `anchor_uri`, `cite`, `cite_passage`, `quantize`, `locate`, `export_csl`,
+  `export_bibtex`, `export_structure`). Nothing is skipped: this is a full
   reader and writer.
 
 ## Modules
@@ -53,11 +53,11 @@ dependencies {
 | Safe opening | read-only (`SQLITE_OPEN_READONLY`), `query_only`, `trusted_schema = OFF`, `mmap_size = 0`, `cell_size_check`, no extensions; files with triggers, views or foreign virtual tables refused (E020); unknown required extensions refused (E060); maximum value size (512 MiB) and maximum gunzipped size (4 GiB); WAL files are read through a copy with the header patched |
 | Versions | SPDF 5.0, and the legacy 4.0 / 4.1 files of Scholaris (Spanish schema, gzip-wrapped) through the 5.0 view, metadata mapped to CSL-JSON |
 | Dump | canonical JSON (RFC 8785 / JCS) of the whole file, `content_sha256` |
-| Validation | every code of SPEC §22 (E001–E090, W100–W110) in the reference order; FTS `integrity-check` on a private copy; Ed25519 signatures (platform provider, with a pure fallback for older Android) |
+| Validation | every code of SPEC §22 (E001–E090, W100–W110, including W103 for fragments that cross matter) in the reference order; FTS `integrity-check` on a private copy; Ed25519 signatures (platform provider, with a pure fallback for older Android) |
 | Search | lexical (FTS5 BM25, CJK route with `trigram` or substring), vector (`f32`, `f16`, `i8`; dot product or cosine), hybrid (reciprocal rank fusion, k = 10) |
 | Anchors | anchor ↔ URI (`spdf:sha256-…#p=29&f=21&char=118,301`), strict parser, canonical form |
 | Resolution | `locate(reference)`: an anchor URI, or the URL of a `.spdf` with the anchor as fragment (`https://…/quijote.spdf#p=5&f=1r`), resolved to units, fragments, `char` and `xywh` (SPEC §5.4) |
-| Citation | short author-date citation in Spanish and English |
+| Citation | short author-date citation in Spanish and English; citation of a quoted passage by the unit or units it lies in (`citePassage`, SPEC §18.2); page ranges skip ends without a folio |
 | Export | CSL-JSON (with the CSL `label`/`locator` of a cited passage) and BibTeX, one or several documents, with the key and field rules of SPEC §19 (same keys as every other implementation: `cervantessaavedra1605`, `lazarillo1554`, `anonnd`); ALTO 4, a minimal TEI and a IIIF Presentation 3 manifest (SPEC §19.4), with no invented coordinates or dimensions |
 | Writer | builds valid SPDF 5.0 files (FTS kept in sync, `VACUUM`, no triggers, atomic replace); f16/i8 quantization as the spec says; writes `content_sha256` by default and, given an Ed25519 key, `signer` and `signature` (SPEC §8) |
 | Typed reading | `document()`, `units()`, `fragments()`, `sections()`, `figures()`, `spaces()`, `provenance()`, `blob(key)` |
@@ -86,6 +86,8 @@ SpdfFile.open("quijote.spdf").use { f ->          // also legacy .spdf (gzip) fi
     val tei: String = f.exportTei()
     val manifest: String = f.exportIiif(base = "https://example.org/quijote")
     val citeproc = f.exportCslJson(Anchor.page(5, "1r", foliation = "leaf"))   // with "label": "folio", "locator": "1r"
+    val passage = f.citePassage("q4", "lugar de la Mancha", locale = "es")   // cites the unit the quote lies in
+    println("${passage.text} ${passage.uri}")
 }
 
 // Several documents in one bibliography (keys disambiguated with a, b, c…)
@@ -196,7 +198,7 @@ explicitly:
 ANDROID_SERIAL=emulator-5584 ./gradlew -Pspdf.androidDevice=true :spdf-android-device:connectedAndroidTest
 ```
 
-Results so far: 309/309 on Android 12 (API 31) and Android 16 (API 36) arm64 emulators. CI
+Results so far: the whole suite on Android 12 (API 31) and Android 16 (API 36) arm64 emulators. CI
 runs it on x86_64 emulators (API 31 and 35) in a separate job.
 
 ## Safety notes
@@ -227,6 +229,7 @@ $B search file.spdf "lugar de la Mancha" -n 5
 $B vsearch file.spdf toy-embedding@8 0,0.5,0.25,0.75,0.25,0,0.25,0 -n 3
 $B hybrid file.spdf toy-embedding@8 0,0.5,0.25,0.75,0.25,0,0.25,0 selection -n 3
 $B cite file.spdf q4 --locale en
+$B cite file.spdf m4 --quote 'tube N N' --locale en
 $B export file.spdf bibtex          # also csl, alto, tei, iiif
 $B locate file.spdf 'spdf:sha256-…#f=1v'
 $B uri parse 'spdf:sha256-…#p=29&f=21'
