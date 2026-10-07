@@ -113,6 +113,13 @@ pub struct CatalogEntry {
     pub judge_calibration: Option<JudgeCalibration>,
     #[serde(default)]
     pub notes: Option<String>,
+    /// false: the files are not on the server yet (build them locally, then `import_local`).
+    #[serde(default = "yes")]
+    pub published: bool,
+}
+
+fn yes() -> bool {
+    true
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -317,9 +324,36 @@ impl ModelManager {
         }
     }
 
+    /// Registers files built locally (e.g. by models/valen/export_onnx.py) for an entry: each one
+    /// is copied from `src_dir` and must match the manifest's size and SHA-256.
+    pub fn import_local(&self, id: &str, src_dir: &Path) -> Result<PathBuf> {
+        let e = self.entry(id).ok_or_else(|| Error::NotFound(id.into()))?.clone();
+        let dir = self.dir(id);
+        fs::create_dir_all(&dir)?;
+        for f in &e.files {
+            let src = src_dir.join(&f.path);
+            let actual = sha256_file(&src)?;
+            if actual != f.sha256 {
+                return Err(Error::Checksum { file: f.path.clone(), expected: f.sha256.clone(), actual });
+            }
+            let dest = dir.join(&f.path);
+            if let Some(parent) = dest.parent() {
+                fs::create_dir_all(parent)?;
+            }
+            fs::copy(&src, &dest)?;
+            fs::write(Self::stamp(&dest), &f.sha256)?;
+        }
+        Ok(dir)
+    }
+
     /// Downloads every file of an entry, resuming partial files and verifying SHA-256.
     pub fn download(&self, id: &str, mut progress: impl FnMut(Progress)) -> Result<PathBuf> {
         let e = self.entry(id).ok_or_else(|| Error::NotFound(id.into()))?.clone();
+        if !e.published {
+            return Err(Error::Unsupported(format!(
+                "{id} is not published yet: build it locally (see the entry notes) and register it with import_local"
+            )));
+        }
         let dir = self.dir(id);
         fs::create_dir_all(&dir)?;
         let overall_total: u64 = e.files.iter().map(|f| f.bytes).sum();

@@ -178,6 +178,16 @@ fn main() {
         }
         println!("cargo:rustc-link-lib=dylib=c++");
     } else if android {
+        let ndk = env::var("ANDROID_NDK_HOME").or_else(|_| env::var("ANDROID_NDK_ROOT")).or_else(|_| env::var("NDK_HOME")).unwrap();
+        let triple = match target.split('-').next().unwrap() {
+            "aarch64" => "aarch64-linux-android",
+            "armv7" => "arm-linux-androideabi",
+            "x86_64" => "x86_64-linux-android",
+            _ => "i686-linux-android",
+        };
+        if let Some(host) = std::fs::read_dir(PathBuf::from(&ndk).join("toolchains/llvm/prebuilt")).ok().and_then(|mut d| d.next()).and_then(|e| e.ok()) {
+            println!("cargo:rustc-link-search=native={}", host.path().join("sysroot/usr/lib").join(triple).display());
+        }
         println!("cargo:rustc-link-lib=static=c++_static");
         println!("cargo:rustc-link-lib=static=c++abi");
         println!("cargo:rustc-link-lib=dylib=log");
@@ -225,6 +235,14 @@ fn main() {
     if ios || android {
         // bindgen parses with the host clang; point it at the target triple
         b = b.clang_arg(format!("--target={}", target.replace("aarch64-apple-ios-sim", "arm64-apple-ios-simulator")));
+    }
+    if android {
+        // ...and at the NDK sysroot, or it picks up the host's libc headers
+        let ndk = env::var("ANDROID_NDK_HOME").or_else(|_| env::var("ANDROID_NDK_ROOT")).or_else(|_| env::var("NDK_HOME")).unwrap();
+        let prebuilt = PathBuf::from(&ndk).join("toolchains/llvm/prebuilt");
+        let host = std::fs::read_dir(&prebuilt).ok().and_then(|mut d| d.next()).and_then(|e| e.ok()).map(|e| e.path())
+            .expect("NDK toolchains/llvm/prebuilt/<host> not found");
+        b = b.clang_arg(format!("--sysroot={}", host.join("sysroot").display()));
     }
     let bindings = b.generate().expect("bindgen llama.cpp");
     let out = PathBuf::from(env::var("OUT_DIR").unwrap());

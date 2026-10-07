@@ -112,10 +112,13 @@ ENTRIES = [
     # ---- Gemma 4, native ----
     dict(id="gemma-4-e2b-it-gguf-q4_k_m", name="Gemma 4 E2B instruct · GGUF Q4_K_M", family="gemma-4-e2b", kinds=["generate", "judge"],
          engine="llama.cpp", format="gguf", repo="unsloth/gemma-4-E2B-it-GGUF", files=[("model", "gemma-4-E2B-it-Q4_K_M.gguf")],
-         modalities=["text"], platforms=NATIVE, min_memory_mb=4000),
+         modalities=["text"], platforms=NATIVE, min_memory_mb=4000,
+         # temperatures fitted on the SPDF judge bench (models/bench/judges): the letter logits are overconfident
+         judge_calibration={"choice": {"temperature": 3.669, "prior_correction": False}, "noul": {"temperature": 3.888, "prior_correction": False}}),
     dict(id="gemma-4-e4b-it-gguf-q4_k_m", name="Gemma 4 E4B instruct · GGUF Q4_K_M", family="gemma-4-e4b", kinds=["generate", "judge"],
          engine="llama.cpp", format="gguf", repo="unsloth/gemma-4-E4B-it-GGUF", files=[("model", "gemma-4-E4B-it-Q4_K_M.gguf")],
-         modalities=["text"], platforms=["macos", "windows", "linux", "ios", "android"], min_memory_mb=6500),
+         modalities=["text"], platforms=["macos", "windows", "linux", "ios", "android"], min_memory_mb=6500,
+         judge_calibration={"choice": {"temperature": 4.12, "prior_correction": False}, "noul": {"temperature": 3.669, "prior_correction": False}}),
     # ---- Gemma 4, web and other formats ----
     dict(id="gemma-4-e2b-it-web", name="Gemma 4 E2B instruct · LiteRT web (.task, MediaPipe GenAI)", family="gemma-4-e2b",
          kinds=["generate"], engine="mediapipe", format="task", repo="litert-community/gemma-4-E2B-it-litert-lm",
@@ -139,6 +142,52 @@ ENTRIES = [
          platforms=["macos", "windows", "linux"], min_memory_mb=6000,
          notes="models/valen/server.py; trust_remote_code (código del repo, fijado por revisión)."),
 ]
+
+
+VALEN_REPO = "spdf-format/valen-0.8b-onnx"  # not published yet: needs José Luis's Hugging Face account
+VALEN_DIR = Path(__import__("os").environ.get("SPDF_MODELS_CACHE", Path.home() / ".cache" / "spdf-models")) / "valen-onnx"
+VALEN_ENTRIES = [
+    dict(id="valen-0.8b-onnx-int8", name="Valen 0.8B · ONNX int8 (onnxruntime nativo)", family="valen-0.8b", kinds=["judge"],
+         engine="onnxruntime", format="onnx", dtype="int8",
+         files=[("onnx", "valen_backbone_int8.onnx"), ("onnx_data", "valen_backbone_int8.onnx.data"), ("head", "valen_head.onnx"),
+                ("tokenizer", "tokenizer.json"), ("tokenizer_config", "tokenizer_config.json"), ("config", "config.json")],
+         modalities=["text"], platforms=["macos", "windows", "linux"], min_memory_mb=2500),
+    dict(id="valen-0.8b-onnx-static1024-q4", name="Valen 0.8B · ONNX q4 estático (1024 tokens, WebGPU)", family="valen-0.8b",
+         kinds=["judge"], engine="onnxruntime-web", format="onnx", dtype="static1024_q4",
+         files=[("onnx", "valen_backbone_static1024_q4.onnx"), ("onnx_data", "valen_backbone_static1024_q4.onnx.data"),
+                ("head", "valen_head.onnx"), ("tokenizer", "tokenizer.json"), ("tokenizer_config", "tokenizer_config.json"),
+                ("config", "config.json")],
+         modalities=["text"], platforms=["web"], min_memory_mb=3000),
+]
+
+
+def local_entries() -> list[dict]:
+    """Valen ONNX exports (models/valen/export_onnx.py, export_static.py), hashed from the local cache."""
+    out = []
+    for e in VALEN_ENTRIES:
+        fes = []
+        for role, path in e["files"]:
+            f = VALEN_DIR / path
+            if not f.exists():
+                break
+            h = hashlib.sha256()
+            with f.open("rb") as fh:
+                for b in iter(lambda: fh.read(1 << 20), b""):
+                    h.update(b)
+            fes.append({"role": role, "path": path, "url": f"{HF}/{VALEN_REPO}/resolve/main/{path}", "bytes": f.stat().st_size,
+                        "sha256": h.hexdigest()})
+        else:
+            lic, lic_url = APACHE
+            out.append({"id": e["id"], "name": e["name"], "family": e["family"], "kind": "judge", "kinds": e["kinds"],
+                        "engine": e["engine"], "format": e["format"], "license": lic, "license_url": lic_url,
+                        "source": f"{HF}/{VALEN_REPO}", "revision": "main", "bytes": sum(f["bytes"] for f in fes), "files": fes,
+                        "modalities": e["modalities"], "platforms": e["platforms"], "min_memory_mb": e["min_memory_mb"],
+                        "space_version": None, "judge_calibration": {"choice": {"temperature": 1.0, "prior_correction": False},
+                                                                     "noul": {"temperature": 1.0, "prior_correction": False}},
+                        "notes": "Exportación propia de Valen-Team/Valen-0.8B (rev. 4c858f2e) sobre el grafo de onnx-community/Qwen3.5-0.8B-ONNX; "
+                                 "sin publicar todavía: constrúyela con models/valen y regístrala con ModelManager::import_local.",
+                        "published": False, "dtype": e["dtype"]})
+    return out
 
 
 def get(url: str):
@@ -206,6 +255,7 @@ def build() -> dict:
         out.append(entry)
         print(f"  {e['id']:40s} {entry['bytes'] / 1e6:9.1f} MB  {len(fes)} files", file=sys.stderr)
     cache_p.write_text(json.dumps({"\t".join(k): list(v) for k, v in cache.items()}, indent=0))
+    out += local_entries()
     return out
 
 

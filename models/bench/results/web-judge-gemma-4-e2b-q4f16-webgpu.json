@@ -1,5 +1,5 @@
 {
  "engine": "gemma-4-e2b-q4f16-webgpu",
- "pairs": 4,
- "peak_mb": 11271.9
+ "pairs": 205,
+ "peak_mb": 10731.5
 }

@@ -1,5 +1,5 @@
 {
- "engine": "tjs-chrome-q8-webgpu-spdfresize",
+ "engine": "tjs-chrome-fp16-wasm",
  "machine": {
   "chip": "Apple M4 Max",
   "memory_gb": 36,
@@ -9,50 +9,50 @@
  "latency": {
   "text_short": {
    "n": 79,
-   "median_ms": 14.25,
-   "p90_ms": 15.32,
-   "mean_ms": 14.42
+   "median_ms": 60.48,
+   "p90_ms": 92.22,
+   "mean_ms": 64.6
   },
   "text_medium": {
    "n": 114,
-   "median_ms": 21.24,
-   "p90_ms": 25.37,
-   "mean_ms": 21.2
+   "median_ms": 227.74,
+   "p90_ms": 357.51,
+   "mean_ms": 247.01
   },
   "text_long": {
    "n": 97,
-   "median_ms": 44.23,
-   "p90_ms": 62.9,
-   "mean_ms": 47.61
+   "median_ms": 699.44,
+   "p90_ms": 1113.92,
+   "mean_ms": 769.48
   },
   "text_query": {
    "n": 40,
-   "median_ms": 13.38,
-   "p90_ms": 13.88,
-   "mean_ms": 13.33
+   "median_ms": 35.02,
+   "p90_ms": 42.88,
+   "mean_ms": 35.41
   },
   "image": {
    "n": 54,
-   "median_ms": 386.18,
-   "p90_ms": 412.98,
-   "mean_ms": 389.53
+   "median_ms": 6734.43,
+   "p90_ms": 6793.48,
+   "mean_ms": 6726.36
   },
   "audio_10s": {
    "n": 24,
-   "median_ms": 79.16,
-   "p90_ms": 85.39,
-   "mean_ms": 80.72
+   "median_ms": 1257.62,
+   "p90_ms": 1264.25,
+   "mean_ms": 1257.5
   }
  },
  "memory": {
   "after_load_mb": null,
-  "peak_mb": 4205.3
+  "peak_mb": 6106.0
  },
  "meta": {
   "runtime": "chrome-headless",
   "chrome": "Google Chrome 154.0.8037.98",
-  "device": "webgpu",
-  "dtype": "q8",
+  "device": "wasm",
+  "dtype": "fp16",
   "adapter": {
    "vendor": "apple",
    "architecture": "metal-3",
@@ -60,43 +60,43 @@
   },
   "transformers": "4.3.1",
   "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
-  "load_s": 2.17,
+  "load_s": 2.8,
   "latency_model_only": {
    "text_short": {
     "n": 79,
-    "median_ms": 14.03,
-    "p90_ms": 15.02,
-    "mean_ms": 14.18
+    "median_ms": 60.28,
+    "p90_ms": 91.88,
+    "mean_ms": 64.35
    },
    "text_medium": {
     "n": 114,
-    "median_ms": 20.71,
-    "p90_ms": 24.44,
-    "mean_ms": 20.52
+    "median_ms": 227.05,
+    "p90_ms": 356.61,
+    "mean_ms": 246.31
    },
    "text_long": {
     "n": 97,
-    "median_ms": 42.45,
-    "p90_ms": 60.72,
-    "mean_ms": 45.98
+    "median_ms": 697.64,
+    "p90_ms": 1111.87,
+    "mean_ms": 767.8
    },
    "text_query": {
     "n": 40,
-    "median_ms": 13.24,
-    "p90_ms": 13.71,
-    "mean_ms": 13.18
+    "median_ms": 34.85,
+    "p90_ms": 42.48,
+    "mean_ms": 35.03
    },
    "image": {
     "n": 54,
-    "median_ms": 349.8,
-    "p90_ms": 356.02,
-    "mean_ms": 350.88
+    "median_ms": 6700.6,
+    "p90_ms": 6764.55,
+    "mean_ms": 6695.84
    },
    "audio_10s": {
     "n": 24,
-    "median_ms": 71.38,
-    "p90_ms": 71.61,
-    "mean_ms": 71.56
+    "median_ms": 1247.98,
+    "p90_ms": 1255.96,
+    "mean_ms": 1248.77
    }
   },
   "note": "latency includes transformers.js preprocessing (latency_model_only excludes it)"
