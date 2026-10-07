@@ -78,6 +78,11 @@ async function loadSqlite(): Promise<NodeSqlite> {
   }
 }
 
+/** `limits: {length}` (Node ≥ 25 honours it; older versions ignore the option). */
+function limits(o: EngineOpenOptions): { limits?: { length: number } } {
+  return o.readOnly && o.maxValueBytes ? { limits: { length: Math.min(o.maxValueBytes, 1_000_000_000) } } : {};
+}
+
 function harden(db: DatabaseSync): void {
   const d = db as DatabaseSync & { enableDefensive?: (on: boolean) => void; enableLoadExtension?: (on: boolean) => void };
   if (typeof d.enableDefensive === 'function') d.enableDefensive(true);
@@ -95,7 +100,7 @@ export function nodeEngine(options: NodeEngineOptions = {}): SqlEngine {
 
   const openFile = async (path: string, ro: EngineOpenOptions, cleanup?: () => Promise<void>): Promise<SqlConnection> => {
     const { DatabaseSync } = await sqlite();
-    const db = new DatabaseSync(path, { readOnly: ro.readOnly, allowExtension: false } as never);
+    const db = new DatabaseSync(path, { readOnly: ro.readOnly, allowExtension: false, ...limits(ro) } as never);
     if (ro.readOnly) harden(db);
     return new NodeConnection(db, cleanup, path);
   };
@@ -114,7 +119,7 @@ export function nodeEngine(options: NodeEngineOptions = {}): SqlEngine {
 
     async openBytes(bytes, opts) {
       const { DatabaseSync } = await sqlite();
-      const db = new DatabaseSync(':memory:', { allowExtension: false } as never);
+      const db = new DatabaseSync(':memory:', { allowExtension: false, ...limits(opts) } as never);
       const d = db as DatabaseSync & { deserialize?: (b: Uint8Array) => void };
       if (typeof d.deserialize === 'function') {
         d.deserialize(bytes);

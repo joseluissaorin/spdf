@@ -34,6 +34,11 @@ export interface EngineOpenOptions {
    * The core then sets `PRAGMA query_only = 1` and `PRAGMA trusted_schema = OFF`.
    */
   readOnly: boolean;
+  /**
+   * Largest TEXT or BLOB value SQLite may return (`SQLITE_LIMIT_LENGTH`), for read-only
+   * opens of untrusted files. Adapters apply it where the binding allows it.
+   */
+  maxValueBytes?: number;
 }
 
 /**

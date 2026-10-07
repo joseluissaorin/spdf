@@ -191,8 +191,15 @@ class WasmConnection implements SqlConnection {
   }
 }
 
-function harden(sqlite3: Sqlite3, db: OoDb): void {
+function harden(sqlite3: Sqlite3, db: OoDb, maxValueBytes?: number): void {
   const capi = sqlite3.capi;
+  if (maxValueBytes) {
+    try {
+      capi.sqlite3_limit(db.pointer, capi.SQLITE_LIMIT_LENGTH, Math.min(maxValueBytes, 0x7fffffff));
+    } catch {
+      /* builds without sqlite3_limit */
+    }
+  }
   try {
     capi.sqlite3_db_config(db.pointer, capi.SQLITE_DBCONFIG_DEFENSIVE, 1, 0);
   } catch {
@@ -434,7 +441,7 @@ export function wasmEngine(options: WasmEngineOptions = {}): WasmEngine {
         const name = tempName();
         p.importDb(name, b);
         const db = new p.OpfsSAHPoolDb({ filename: name, flags: opts.readOnly ? 'r' : 'w' });
-        if (opts.readOnly) harden(sqlite3, db);
+        if (opts.readOnly) harden(sqlite3, db, opts.maxValueBytes);
         return new WasmConnection(sqlite3, db, () => {
           p.unlink(name);
         });
@@ -448,7 +455,7 @@ export function wasmEngine(options: WasmEngineOptions = {}): WasmEngine {
         db.close();
         throw new Error(`sqlite3_deserialize failed (code ${rc}).`);
       }
-      if (opts.readOnly) harden(sqlite3, db);
+      if (opts.readOnly) harden(sqlite3, db, opts.maxValueBytes);
       return new WasmConnection(sqlite3, db);
     },
 
@@ -465,7 +472,7 @@ export function wasmEngine(options: WasmEngineOptions = {}): WasmEngine {
         state.sources.delete(name);
         throw e;
       }
-      harden(sqlite3, db);
+      harden(sqlite3, db, opts.maxValueBytes);
       return new WasmConnection(sqlite3, db, () => {
         state.sources.delete(name);
         source.close?.();

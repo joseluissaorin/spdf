@@ -67,7 +67,7 @@ export {
   type AnchorProblem,
 } from './anchors.js';
 export { cite, locator, namesPart, yearPart, formatTime, shortTitle } from './cite.js';
-export { toCslJson, toBibtex, citationKey, bibEscape, type CslExportOptions } from './bib.js';
+export { toCslJson, toCslJsonArray, toBibtex, cslToBibtex, cslLocator, cslCitationItem, citationKey, bibEscape, type CslExportOptions } from './bib.js';
 export { SpdfWriter, convertLegacy, authorsColumn } from './writer.js';
 export type { WriterOptions, DocumentInput, UnitInput, SectionInput, FragmentInput, FigureInput, SpaceInput, VectorInput, ProvenanceInput, FinishOptions } from './writer.js';
 export {

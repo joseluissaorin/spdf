@@ -38,7 +38,7 @@ export const DEFAULT_MAX_DECOMPRESSED_BYTES = 4 * 1024 * 1024 * 1024;
 export interface OpenOptions {
   /** SQLite engine; default: the platform one registered by the entry point. */
   engine?: SqlEngine;
-  /** Largest blob read (default 512 MiB). */
+  /** Largest single TEXT or BLOB value read (default 512 MiB; `SQLITE_LIMIT_LENGTH` where the binding allows it). */
   maxBlobBytes?: number;
   /** Largest gzip output accepted (default 4 GiB). */
   maxDecompressedBytes?: number;
@@ -70,6 +70,7 @@ async function gunzipWith(engine: SqlEngine, bytes: Uint8Array, limit: number): 
 export async function openRaw(input: SpdfInput | { source: RandomAccessSource; head?: Uint8Array }, options: OpenOptions = {}): Promise<RawOpen> {
   const engine = await resolveEngine(options.engine);
   const limit = options.maxDecompressedBytes ?? DEFAULT_MAX_DECOMPRESSED_BYTES;
+  const ro = { readOnly: true, maxValueBytes: options.maxBlobBytes ?? DEFAULT_MAX_BLOB_BYTES };
   let conn: SqlConnection;
   let gzipped = false;
   let size: number | null = null;
@@ -83,13 +84,13 @@ export async function openRaw(input: SpdfInput | { source: RandomAccessSource; h
       const bytes = await gunzipWith(engine, all, limit);
       if (!isSqlite(bytes)) throw new SpdfError('E001', 'gzip content is not a SQLite database');
       size = bytes.byteLength;
-      conn = await engine.openBytes(bytes, { readOnly: true });
+      conn = await engine.openBytes(bytes, ro);
     } else {
       if (!isSqlite(head)) throw new SpdfError('E001', 'not a SQLite database');
       if (!engine.openSource) throw new Error(`The ${engine.name} engine cannot read random-access sources.`);
       size = source.size;
       lazy = source;
-      conn = await engine.openSource(source, { readOnly: true });
+      conn = await engine.openSource(source, ro);
     }
   } else if (typeof input === 'string') {
     if (!engine.readFileHead || !engine.readFile) throw new Error(`The ${engine.name} engine cannot open file paths; pass the bytes.`);
@@ -99,10 +100,10 @@ export async function openRaw(input: SpdfInput | { source: RandomAccessSource; h
       const bytes = await gunzipWith(engine, await engine.readFile(input), limit);
       if (!isSqlite(bytes)) throw new SpdfError('E001', 'gzip content is not a SQLite database');
       size = bytes.byteLength;
-      conn = await engine.openBytes(bytes, { readOnly: true });
+      conn = await engine.openBytes(bytes, ro);
     } else {
       if (!isSqlite(head)) throw new SpdfError('E001', 'not a SQLite database');
-      conn = engine.openPath ? await engine.openPath(input, { readOnly: true }) : await engine.openBytes(await engine.readFile(input), { readOnly: true });
+      conn = engine.openPath ? await engine.openPath(input, ro) : await engine.openBytes(await engine.readFile(input), ro);
     }
   } else {
     let bytes = typeof Blob !== 'undefined' && input instanceof Blob ? new Uint8Array(await input.arrayBuffer()) : toBytes(input as Uint8Array | ArrayBuffer | ArrayBufferView);
@@ -112,10 +113,10 @@ export async function openRaw(input: SpdfInput | { source: RandomAccessSource; h
     }
     if (!isSqlite(bytes)) throw new SpdfError('E001', gzipped ? 'gzip content is not a SQLite database' : 'not a SQLite database');
     size = bytes.byteLength;
-    conn = await engine.openBytes(bytes, { readOnly: true });
+    conn = await engine.openBytes(bytes, ro);
   }
   try {
-    await conn.exec('PRAGMA query_only = 1; PRAGMA trusted_schema = OFF;');
+    await conn.exec('PRAGMA query_only = 1; PRAGMA trusted_schema = OFF; PRAGMA mmap_size = 0; PRAGMA cell_size_check = ON;');
     const info = await inspect(conn);
     return lazy ? { conn, info, engine, gzipped, size, source: lazy } : { conn, info, engine, gzipped, size };
   } catch (e) {

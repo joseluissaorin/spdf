@@ -16,6 +16,10 @@ import {
   round6,
   toBibtex,
   toCslJson,
+  toCslJsonArray,
+  cslCitationItem,
+  cslLocator,
+  citationKey,
   type Anchor,
   type CslItem,
 } from '../src/entry/node.js';
@@ -201,7 +205,7 @@ describe('legacy mapping', () => {
   });
 });
 
-describe('bibliography', () => {
+describe('bibliography (SPEC §19)', () => {
   const m: CslItem = {
     type: 'book',
     title: 'El ingenioso hidalgo don Quijote de la Mancha',
@@ -212,16 +216,30 @@ describe('bibliography', () => {
     page: '1-312',
     spdf: { subtitle: 'x' },
   };
-  it('CSL-JSON drops the spdf extension and adds an id', () => {
+  it('CSL-JSON drops the spdf extension; id is the BibTeX key', () => {
     const c = toCslJson(m);
-    expect(c.id).toBe('cervantessaavedra1605ingenioso');
+    expect(c.id).toBe('cervantessaavedra1605');
     expect(c.spdf).toBeUndefined();
-    expect(toCslJson(m, { includeSpdf: true }).spdf).toEqual({ subtitle: 'x' });
+    expect(toCslJsonArray([m, m]).map((x) => x.id)).toEqual(['cervantessaavedra1605a', 'cervantessaavedra1605b']);
+    expect(cslCitationItem(m, { type: 'page', physical: 9, printed: '21', source: 'inferred' }, { type: 'page', physical: 10, printed: '22' })).toMatchObject({ label: 'page', locator: '[21]-22' });
+    expect(cslLocator({ type: 'time', t0: 4160, t1: 4170 })).toEqual(['timestamp', '1:09:20']);
   });
   it('BibTeX', () => {
     expect(toBibtex(m)).toBe(
-      '@book{cervantessaavedra1605ingenioso,\n  author = {Cervantes Saavedra, Miguel de},\n  title = {El ingenioso hidalgo don Quijote de la Mancha},\n  year = {1605},\n  pages = {1--312},\n  publisher = {Juan de la Cuesta},\n  address = {Madrid}\n}\n',
+      '@book{cervantessaavedra1605,\n  author = {Cervantes Saavedra, Miguel de},\n  title = {{El} ingenioso hidalgo don {Quijote} de la {Mancha}},\n  year = {1605},\n  publisher = {Juan de la Cuesta},\n  address = {Madrid},\n  pages = {1-312}\n}\n',
     );
-    expect(toBibtex({ type: 'article-journal', title: '50% & more_{x}', 'container-title': 'J' })).toContain('title = {50\\% \\& more\\_\\{x\\}}');
+    expect(toBibtex({ type: 'article-journal', title: 'a {b} c\\d', 'container-title': 'Revista', author: [{ literal: 'UNESCO' }] })).toBe(
+      '@article{unescond,\n  author = {{UNESCO}},\n  title = {a \\{b\\} c\\textbackslash{}d},\n  journal = {{Revista}}\n}\n',
+    );
+    expect(citationKey({ type: 'book', title: 'Lazarillo de Tormes', issued: { 'date-parts': [[1554]] } })).toBe('lazarillo1554');
+  });
+});
+
+describe('package', () => {
+  it('VERSION matches package.json', async () => {
+    const { readFileSync } = await import('node:fs');
+    const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string };
+    const { VERSION } = await import('../src/version.js');
+    expect(VERSION).toBe(pkg.version);
   });
 });

@@ -3,6 +3,7 @@ name: js
 on:
   push:
     branches: [main]
+    tags: ["js-v*"]
     paths: ["js/**", "conformance/**", ".github/workflows/js.yml"]
   pull_request:
     paths: ["js/**", "conformance/**", ".github/workflows/js.yml"]
@@ -92,3 +93,33 @@ jobs:
             js/test/browser/out/results.json
             js/test/browser/out/conformance-browser.json
           if-no-files-found: warn
+
+  publish:
+    # Only for tags js-v<version>; see js/PUBLICAR.md. Nothing is published otherwise.
+    if: startsWith(github.ref, 'refs/tags/js-v')
+    needs: [node, bun, browser]
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        working-directory: js
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "26"
+          registry-url: "https://registry.npmjs.org"
+      - name: npm with trusted publishing (11.5.1 or newer)
+        run: npm install -g npm@latest
+      - name: Tag matches package.json
+        run: test "js-v$(node -p "require('./package.json').version")" = "${GITHUB_REF_NAME}"
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npx vitest run
+      - run: node dist/cli/main.js conformance ../conformance > /dev/null
+      - name: Publish (OIDC, with provenance)
+        run: npm publish --access public
