@@ -283,8 +283,11 @@ def _tokenizer(con, table: str) -> str | None:
     row = con.execute("SELECT sql FROM sqlite_master WHERE name = ?", (table,)).fetchone()
     if not row or not row[0]:
         return None
-    m = re.search(r"tokenize\s*=\s*'([^']*)'", row[0])
-    return m.group(1) if m else "unicode61"
+    m = re.search(r"""tokenize\s*=\s*(?:'((?:[^']|'')*)'|"((?:[^"]|"")*)"|([A-Za-z0-9_]+))""", row[0], re.I)
+    if not m:
+        return "unicode61"  # the FTS5 default
+    raw = m.group(1).replace("''", "'") if m.group(1) is not None else m.group(2).replace('""', '"') if m.group(2) is not None else m.group(3)
+    return " ".join(raw.split())
 
 
 def sort_provenance(rows: list[dict]) -> list[dict]:

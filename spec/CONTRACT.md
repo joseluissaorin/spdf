@@ -302,7 +302,9 @@ hashing is **RFC 8785 (JCS)**; conformance compares parsed JSON (numbers as f64)
               // sorted by the UTF-8 bytes of each entry's JCS serialization (writer-independent)
  "extensions":[{"name","version","required"}]}                                // ORDER BY name
 ```
-All ORDER BY use SQLite's BINARY collation (= code point order). Booleans stored as
+All ORDER BY use SQLite's BINARY collation (= code point order). `fts.tokenizer` is the
+`tokenize` option of `fragments_fts` as declared, unquoted, whitespace collapsed
+(`unicode61` if absent). Booleans stored as
 INTEGER (`normalized`, `required`) stay integers. `legacy` is absent in 5.0 dumps.
 
 ## 6. Reference search (what conformance tests; products MAY rank better)

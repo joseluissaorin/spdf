@@ -349,7 +349,7 @@ section ends with the document); `summary` is OPTIONAL text in the document lang
 - `n`: a positive integer, unique, stable: it is the rowid the FTS5 index uses (an
   implicit rowid may change on `VACUUM`).
 - `unit`: id of the unit where the fragment starts. `ord`: reading order within the
-  document (positive, increasing with the position of the fragment in the text).
+  document (increasing with the position of the fragment in the text).
 - `text`: the literal passage, NFC, exactly as in the source (never modernized).
 - `context`: one line that situates the fragment in the work ("Chapter III: the struggle
   for existence"), used by search; empty string if none.
@@ -863,7 +863,10 @@ Rules:
 3. Order: `units` by `ord`; `fragments` by `n`; `sections`, `figures` and `spaces` by `id`;
    `blobs` by `key`; `extensions` by `name` (code point order, which is SQLite's `BINARY`
    collation over UTF-8); `provenance` by the UTF-8 bytes of the JCS serialization of each
-   entry. `fts.trigram` is true if and only if `fragments_fts_trigram` exists.
+   entry. `fts.trigram` is true if and only if `fragments_fts_trigram` exists;
+   `fts.tokenizer` is the value of the `tokenize` option of `fragments_fts` as declared,
+   without its quotes and with runs of whitespace collapsed to one space
+   (`unicode61 remove_diacritics 2`; `unicode61`, the FTS5 default, if absent).
 4. `vectors` has one member per distinct `vectors.space`: `count` is the number of rows and
    `sha256` the hex SHA-256 of their `data` blobs concatenated in order of `target`, then
    `id`.

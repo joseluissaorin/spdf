@@ -6,11 +6,15 @@ on:
     paths:
       - "conformance/**"
       - "spec/schema/**"
+      - "spec/json-schema/**"
+      - "spec/examples/**"
       - ".github/workflows/conformance.yml"
   pull_request:
     paths:
       - "conformance/**"
       - "spec/schema/**"
+      - "spec/json-schema/**"
+      - "spec/examples/**"
       - ".github/workflows/conformance.yml"
   workflow_dispatch:
 
