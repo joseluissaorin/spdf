@@ -1,0 +1,32 @@
+{
+  "expect": {
+    "text": "(Ramos, 2024, § Introducción, para. 2)"
+  },
+  "id": "cite-web-en",
+  "input": {
+    "anchor": {
+      "accessed": "2026-10-07",
+      "paragraph": 2,
+      "path": ["Introducción"],
+      "type": "web",
+      "url": "https://example.org/guia"
+    },
+    "anchor_end": null,
+    "locale": "en",
+    "metadata": {
+      "author": [
+        {
+          "family": "Ramos"
+        }
+      ],
+      "issued": {
+        "date-parts": [
+          [2024, 5]
+        ]
+      },
+      "title": "Guía",
+      "type": "webpage"
+    }
+  },
+  "kind": "cite"
+}

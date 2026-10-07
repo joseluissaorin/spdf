@@ -1,0 +1,11 @@
+{
+  "expect": {
+    "content_sha256": "8c6ee07b5c0ae341b693273c042ef739cbed36f5d1176380a58f51b30145f0b7",
+    "dump": "expected/apolo11.dump.json"
+  },
+  "id": "dump-apolo11",
+  "input": {
+    "file": "files/apolo11.spdf"
+  },
+  "kind": "dump"
+}

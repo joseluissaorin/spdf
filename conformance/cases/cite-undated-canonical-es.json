@@ -1,0 +1,32 @@
+{
+  "expect": {
+    "text": "(孔子, s. f., 1.1)"
+  },
+  "id": "cite-undated-canonical-es",
+  "input": {
+    "anchor": {
+      "ref": "1.1",
+      "scheme": "analects",
+      "type": "canonical"
+    },
+    "anchor_end": null,
+    "locale": "es",
+    "metadata": {
+      "author": [
+        {
+          "literal": "孔子"
+        }
+      ],
+      "spdf": {
+        "undated": {
+          "basis": "Warring States",
+          "from": -479,
+          "to": -221
+        }
+      },
+      "title": "論語",
+      "type": "book"
+    }
+  },
+  "kind": "cite"
+}

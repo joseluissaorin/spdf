@@ -1,0 +1,21 @@
+{
+  "expect": {
+    "match": "\"ſepultura\"",
+    "results": [
+      {
+        "anchor_uri": "spdf:sha256-c2f0966e90fc3c5dcda91143a8271f4636bab035b060ae577724283514c00e4a#p=2&f=3&char=0,153",
+        "fragment_id": "l2",
+        "score": 1.418637,
+        "via": ["lexical"]
+      }
+    ],
+    "route": "fts"
+  },
+  "id": "search-lexical-lazarillo-07",
+  "input": {
+    "file": "files/lazarillo.spdf",
+    "limit": 10,
+    "query": "ſepultura"
+  },
+  "kind": "search_lexical"
+}

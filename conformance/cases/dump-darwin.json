@@ -1,0 +1,11 @@
+{
+  "expect": {
+    "content_sha256": "4b58270ae9b5aa61a2aa4d07073b135793e18dd7c0014921158c02a528d01aef",
+    "dump": "expected/darwin.dump.json"
+  },
+  "id": "dump-darwin",
+  "input": {
+    "file": "files/darwin.spdf"
+  },
+  "kind": "dump"
+}

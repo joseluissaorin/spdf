@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": ["E090"],
+    "valid": false,
+    "version": "5.0",
+    "warnings": []
+  },
+  "id": "validate-E090-ord-gap",
+  "input": {
+    "file": "invalid/E090-ord-gap.spdf"
+  },
+  "kind": "validate"
+}

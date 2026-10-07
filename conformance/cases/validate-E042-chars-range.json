@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": ["E042"],
+    "valid": false,
+    "version": "5.0",
+    "warnings": []
+  },
+  "id": "validate-E042-chars-range",
+  "input": {
+    "file": "invalid/E042-chars-range.spdf"
+  },
+  "kind": "validate"
+}

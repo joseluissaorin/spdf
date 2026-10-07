@@ -1,0 +1,11 @@
+{
+  "expect": {
+    "content_sha256": "043052ed9f3d46170fb7d32c2f812009f64830254d3a751c5779c83d309a3817",
+    "dump": "expected/lazarillo.dump.json"
+  },
+  "id": "dump-lazarillo",
+  "input": {
+    "file": "files/lazarillo.spdf"
+  },
+  "kind": "dump"
+}

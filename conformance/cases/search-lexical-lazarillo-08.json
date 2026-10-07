@@ -1,0 +1,21 @@
+{
+  "expect": {
+    "match": "\"Thome Gonçales\"",
+    "results": [
+      {
+        "anchor_uri": "spdf:sha256-c2f0966e90fc3c5dcda91143a8271f4636bab035b060ae577724283514c00e4a#p=3&f=4&char=0,150",
+        "fragment_id": "l3",
+        "score": 1.003957,
+        "via": ["lexical"]
+      }
+    ],
+    "route": "fts"
+  },
+  "id": "search-lexical-lazarillo-08",
+  "input": {
+    "file": "files/lazarillo.spdf",
+    "limit": 10,
+    "query": "\"Thome Gonçales\""
+  },
+  "kind": "search_lexical"
+}

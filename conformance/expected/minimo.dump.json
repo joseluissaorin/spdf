@@ -1,0 +1,158 @@
+{
+  "blobs": [
+    {
+      "bytes": 273,
+      "key": "original.txt",
+      "mime": "text/plain; charset=utf-8",
+      "sha256": "95ee321f7ae3a0e2d961614603703297425cf1e969b749599971e34fe69b7ba2"
+    }
+  ],
+  "document": {
+    "authors": "Bécquer",
+    "bytes": 273,
+    "created": "2026-10-07T00:00:00Z",
+    "duration": null,
+    "id": "minimo",
+    "kind": "document",
+    "language": "es",
+    "metadata": {
+      "author": [
+        {
+          "family": "Bécquer",
+          "given": "Gustavo Adolfo"
+        }
+      ],
+      "issued": {
+        "date-parts": [
+          [1871]
+        ]
+      },
+      "language": "es",
+      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+      "title": "Rimas",
+      "type": "book"
+    },
+    "mime": "text/plain; charset=utf-8",
+    "rights": {
+      "access": "open",
+      "holder": null,
+      "license": "https://creativecommons.org/publicdomain/mark/1.0/",
+      "note": "Public-domain work. Synthetic layout built for the SPDF conformance suite."
+    },
+    "source_ref": "blob:original.txt",
+    "source_sha256": "95ee321f7ae3a0e2d961614603703297425cf1e969b749599971e34fe69b7ba2",
+    "title": "Rimas",
+    "unit_count": 2,
+    "updated": "2026-10-07T00:00:00Z",
+    "year": 1871
+  },
+  "extensions": [],
+  "figures": [],
+  "fragments": [
+    {
+      "anchor": {
+        "chars": [0, 125],
+        "line_from": 1,
+        "line_to": 4,
+        "type": "verse"
+      },
+      "anchor_end": null,
+      "context": "Rima XXI, completa.",
+      "id": "f1",
+      "n": 1,
+      "ord": 1,
+      "search_text": "",
+      "section": ["XXI"],
+      "text": "¿Qué es poesía?, dices mientras clavas\nen mi pupila tu pupila azul.\n¿Qué es poesía? ¿Y tú me lo preguntas?\nPoesía... eres tú.",
+      "unit": "u1"
+    },
+    {
+      "anchor": {
+        "chars": [0, 121],
+        "line_from": 1,
+        "line_to": 4,
+        "type": "verse"
+      },
+      "anchor_end": null,
+      "context": "Rima LIII, primera estrofa.",
+      "id": "f2",
+      "n": 2,
+      "ord": 2,
+      "search_text": "",
+      "section": ["LIII"],
+      "text": "Volverán las oscuras golondrinas\nen tu balcón sus nidos a colgar,\ny otra vez con el ala a sus cristales\njugando llamarán.",
+      "unit": "u2"
+    }
+  ],
+  "fts": {
+    "tokenizer": "unicode61 remove_diacritics 2",
+    "trigram": false
+  },
+  "meta": {
+    "created": "2026-10-07T00:00:00Z",
+    "document_id": "minimo",
+    "generator": "spdf-conformance/1.0",
+    "profile": "core",
+    "spdf_version": "5.0"
+  },
+  "provenance": [
+    {
+      "at": "2026-10-07T00:00:00Z",
+      "detail": {
+        "units": 2
+      },
+      "model": null,
+      "ms": 1,
+      "provider": "plain-text",
+      "stage": "reading"
+    }
+  ],
+  "sections": [],
+  "spaces": [],
+  "spdf_version": "5.0",
+  "units": [
+    {
+      "anchor": {
+        "paragraph": 1,
+        "path": ["XXI"],
+        "type": "section"
+      },
+      "confidence": 1,
+      "footer": null,
+      "header": null,
+      "id": "u1",
+      "image": null,
+      "notes": null,
+      "ord": 1,
+      "printed": null,
+      "reader": "plain-text",
+      "t0": null,
+      "t1": null,
+      "text": "¿Qué es poesía?, dices mientras clavas\nen mi pupila tu pupila azul.\n¿Qué es poesía? ¿Y tú me lo preguntas?\nPoesía... eres tú.",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "paragraph": 1,
+        "path": ["LIII"],
+        "type": "section"
+      },
+      "confidence": 1,
+      "footer": null,
+      "header": null,
+      "id": "u2",
+      "image": null,
+      "notes": null,
+      "ord": 2,
+      "printed": null,
+      "reader": "plain-text",
+      "t0": null,
+      "t1": null,
+      "text": "Volverán las oscuras golondrinas\nen tu balcón sus nidos a colgar,\ny otra vez con el ala a sus cristales\njugando llamarán.",
+      "thumbnail": null,
+      "words": null
+    }
+  ],
+  "vectors": {}
+}

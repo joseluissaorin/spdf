@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": ["E020"],
+    "valid": false,
+    "version": "5.0",
+    "warnings": []
+  },
+  "id": "validate-E020-view",
+  "input": {
+    "file": "invalid/E020-view.spdf"
+  },
+  "kind": "validate"
+}

@@ -1,0 +1,33 @@
+{
+  "expect": {
+    "match": "\"magnificent\"",
+    "results": [
+      {
+        "anchor_uri": "spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=4176,4186&char=0,32",
+        "fragment_id": "a4-6",
+        "score": 0.000001,
+        "via": ["lexical"]
+      },
+      {
+        "anchor_uri": "spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=4183.5,4186&char=0,40",
+        "fragment_id": "a6",
+        "score": 0.000001,
+        "via": ["lexical"]
+      },
+      {
+        "anchor_uri": "spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=4178.5,4183&char=0,69",
+        "fragment_id": "a5",
+        "score": 0.000001,
+        "via": ["lexical"]
+      }
+    ],
+    "route": "fts"
+  },
+  "id": "search-lexical-apolo11-03",
+  "input": {
+    "file": "files/apolo11.spdf",
+    "limit": 10,
+    "query": "magnificent"
+  },
+  "kind": "search_lexical"
+}

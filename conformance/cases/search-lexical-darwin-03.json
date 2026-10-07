@@ -1,0 +1,21 @@
+{
+  "expect": {
+    "match": "\"Malthus\"",
+    "results": [
+      {
+        "anchor_uri": "spdf:sha256-e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3#p=2&f=5&char=0,84",
+        "fragment_id": "d2",
+        "score": 1.709784,
+        "via": ["lexical"]
+      }
+    ],
+    "route": "fts"
+  },
+  "id": "search-lexical-darwin-03",
+  "input": {
+    "file": "files/darwin.spdf",
+    "limit": 10,
+    "query": "Malthus"
+  },
+  "kind": "search_lexical"
+}

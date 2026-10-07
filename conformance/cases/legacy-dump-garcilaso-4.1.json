@@ -1,0 +1,11 @@
+{
+  "expect": {
+    "content_sha256": "edaf212aa0c473318c481ac05db31773a8162aca34d68e22459b450ed3f99ff5",
+    "dump": "expected/garcilaso-4.1.dump.json"
+  },
+  "id": "legacy-dump-garcilaso-4.1",
+  "input": {
+    "file": "legacy/garcilaso-4.1.spdf"
+  },
+  "kind": "legacy_dump"
+}

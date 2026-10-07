@@ -1,0 +1,27 @@
+{
+  "expect": {
+    "match": "\"vuestra\" OR \"merced\"",
+    "results": [
+      {
+        "anchor_uri": "spdf:sha256-c2f0966e90fc3c5dcda91143a8271f4636bab035b060ae577724283514c00e4a#p=5&f=6&char=0,152",
+        "fragment_id": "l5",
+        "score": 0.633465,
+        "via": ["lexical"]
+      },
+      {
+        "anchor_uri": "spdf:sha256-c2f0966e90fc3c5dcda91143a8271f4636bab035b060ae577724283514c00e4a#p=3&f=4&char=0,150",
+        "fragment_id": "l3",
+        "score": 0.614964,
+        "via": ["lexical"]
+      }
+    ],
+    "route": "fts"
+  },
+  "id": "search-lexical-lazarillo-03",
+  "input": {
+    "file": "files/lazarillo.spdf",
+    "limit": 10,
+    "query": "vuestra merced"
+  },
+  "kind": "search_lexical"
+}

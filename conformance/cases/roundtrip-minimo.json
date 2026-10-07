@@ -1,0 +1,10 @@
+{
+  "expect": {
+    "dump": "expected/minimo.dump.json"
+  },
+  "id": "roundtrip-minimo",
+  "input": {
+    "source": "sources/minimo.json"
+  },
+  "kind": "roundtrip"
+}

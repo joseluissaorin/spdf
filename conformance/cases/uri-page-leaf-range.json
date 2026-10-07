@@ -1,0 +1,34 @@
+{
+  "expect": {
+    "locator": {
+      "f": "1r",
+      "fe": "1v",
+      "p": 5,
+      "pe": 6
+    },
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#p=5&pe=6&f=1r&fe=1v"
+  },
+  "id": "uri-page-leaf-range",
+  "input": {
+    "anchor": {
+      "confidence": 0.97,
+      "foliation": "leaf",
+      "physical": 5,
+      "printed": "1r",
+      "roman": false,
+      "source": "read",
+      "type": "page"
+    },
+    "anchor_end": {
+      "confidence": 0.97,
+      "foliation": "leaf",
+      "physical": 6,
+      "printed": "1v",
+      "roman": false,
+      "source": "inferred",
+      "type": "page"
+    },
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+  },
+  "kind": "anchor_uri"
+}

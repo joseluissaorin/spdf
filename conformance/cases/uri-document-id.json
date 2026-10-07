@@ -1,0 +1,18 @@
+{
+  "expect": {
+    "locator": {
+      "sl": 1
+    },
+    "uri": "spdf:mi%20documento#sl=1"
+  },
+  "id": "uri-document-id",
+  "input": {
+    "anchor": {
+      "n": 1,
+      "type": "slide"
+    },
+    "anchor_end": null,
+    "docref": "mi documento"
+  },
+  "kind": "anchor_uri"
+}

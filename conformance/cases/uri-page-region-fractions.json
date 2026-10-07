@@ -1,0 +1,30 @@
+{
+  "expect": {
+    "locator": {
+      "f": "210",
+      "p": 1,
+      "xywh": [0.125, 0.3, 0.75, 0.333333]
+    },
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#p=1&f=210&xywh=percent:12.5,30,75,33.3333"
+  },
+  "id": "uri-page-region-fractions",
+  "input": {
+    "anchor": {
+      "confidence": 0.97,
+      "physical": 1,
+      "printed": "210",
+      "region": {
+        "h": 0.333333,
+        "w": 0.75,
+        "x": 0.125,
+        "y": 0.3
+      },
+      "roman": false,
+      "source": "read",
+      "type": "page"
+    },
+    "anchor_end": null,
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+  },
+  "kind": "anchor_uri"
+}

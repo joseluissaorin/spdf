@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": ["E002"],
+    "valid": false,
+    "version": null,
+    "warnings": []
+  },
+  "id": "validate-E002-major-version",
+  "input": {
+    "file": "invalid/E002-major-version.spdf"
+  },
+  "kind": "validate"
+}

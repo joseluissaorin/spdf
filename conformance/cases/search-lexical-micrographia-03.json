@@ -1,0 +1,27 @@
+{
+  "expect": {
+    "match": "\"description\" OR \"intruding\"",
+    "results": [
+      {
+        "anchor_uri": "spdf:sha256-4501ef3a079e09d5556746bba9fc26e261aa6cbc5d47b056382d400ec1523bfd#p=1&f=210&char=26,142",
+        "fragment_id": "m1",
+        "score": 0.000001,
+        "via": ["lexical"]
+      },
+      {
+        "anchor_uri": "spdf:sha256-4501ef3a079e09d5556746bba9fc26e261aa6cbc5d47b056382d400ec1523bfd#p=2&f=211&char=26,198",
+        "fragment_id": "m2",
+        "score": 0.000001,
+        "via": ["lexical"]
+      }
+    ],
+    "route": "fts"
+  },
+  "id": "search-lexical-micrographia-03",
+  "input": {
+    "file": "files/micrographia.spdf",
+    "limit": 10,
+    "query": "description intruding"
+  },
+  "kind": "search_lexical"
+}

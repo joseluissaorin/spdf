@@ -1,0 +1,30 @@
+{
+  "expect": {
+    "text": "(Platón, 375 a. C., 514a)"
+  },
+  "id": "cite-negative-year-es",
+  "input": {
+    "anchor": {
+      "ref": "514a",
+      "scheme": "stephanus",
+      "type": "canonical"
+    },
+    "anchor_end": null,
+    "locale": "es",
+    "metadata": {
+      "author": [
+        {
+          "family": "Platón"
+        }
+      ],
+      "issued": {
+        "date-parts": [
+          [-375]
+        ]
+      },
+      "title": "República",
+      "type": "book"
+    }
+  },
+  "kind": "cite"
+}

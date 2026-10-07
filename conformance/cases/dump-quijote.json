@@ -1,0 +1,11 @@
+{
+  "expect": {
+    "content_sha256": "9da8b6392c7a1393bba04785578bda48b31fe4c8cfa28f697f843e66a5b090b8",
+    "dump": "expected/quijote.dump.json"
+  },
+  "id": "dump-quijote",
+  "input": {
+    "file": "files/quijote.spdf"
+  },
+  "kind": "dump"
+}

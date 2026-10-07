@@ -1,0 +1,27 @@
+{
+  "expect": {
+    "match": null,
+    "results": [
+      {
+        "anchor_uri": "spdf:sha256-c5fbea8e0b34b1011a7002b2d8a69fcec184055902fbcbc4b0c08b1813c70e4f#ref=analects:1.1&char=0,41",
+        "fragment_id": "lunyu-1.1",
+        "score": 1,
+        "via": ["lexical"]
+      },
+      {
+        "anchor_uri": "spdf:sha256-c5fbea8e0b34b1011a7002b2d8a69fcec184055902fbcbc4b0c08b1813c70e4f#ref=analects:1.2&char=42,103",
+        "fragment_id": "lunyu-1.2",
+        "score": 1,
+        "via": ["lexical"]
+      }
+    ],
+    "route": "substring"
+  },
+  "id": "search-lexical-lunyu-02",
+  "input": {
+    "file": "files/lunyu.spdf",
+    "limit": 10,
+    "query": "君子"
+  },
+  "kind": "search_lexical"
+}

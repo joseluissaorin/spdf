@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": ["E011"],
+    "valid": false,
+    "version": "5.0",
+    "warnings": []
+  },
+  "id": "validate-E011-missing-column",
+  "input": {
+    "file": "invalid/E011-missing-column.spdf"
+  },
+  "kind": "validate"
+}

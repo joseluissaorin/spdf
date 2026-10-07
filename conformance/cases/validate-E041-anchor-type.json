@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": ["E041"],
+    "valid": false,
+    "version": "5.0",
+    "warnings": []
+  },
+  "id": "validate-E041-anchor-type",
+  "input": {
+    "file": "invalid/E041-anchor-type.spdf"
+  },
+  "kind": "validate"
+}

@@ -1,0 +1,10 @@
+{
+  "expect": {
+    "dump": "expected/lazarillo.dump.json"
+  },
+  "id": "roundtrip-lazarillo",
+  "input": {
+    "source": "sources/lazarillo.json"
+  },
+  "kind": "roundtrip"
+}

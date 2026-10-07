@@ -1,0 +1,21 @@
+{
+  "expect": {
+    "locator": {
+      "rows": [4, 9],
+      "sh": "Data 2026"
+    },
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#sh=Data%202026&rows=4-9"
+  },
+  "id": "uri-sheet",
+  "input": {
+    "anchor": {
+      "row_from": 4,
+      "row_to": 9,
+      "sheet": "Data 2026",
+      "type": "sheet"
+    },
+    "anchor_end": null,
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+  },
+  "kind": "anchor_uri"
+}

@@ -1,0 +1,15 @@
+{
+  "expect": {
+    "canonical": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#p=3&char=1,5",
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "locator": {
+      "char": [1, 5],
+      "p": 3
+    }
+  },
+  "id": "uri-parse-unordered",
+  "input": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#char=1,5&p=3"
+  },
+  "kind": "anchor_uri"
+}

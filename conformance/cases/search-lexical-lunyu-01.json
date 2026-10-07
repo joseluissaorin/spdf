@@ -1,0 +1,21 @@
+{
+  "expect": {
+    "match": "\"學而時習之\"",
+    "results": [
+      {
+        "anchor_uri": "spdf:sha256-c5fbea8e0b34b1011a7002b2d8a69fcec184055902fbcbc4b0c08b1813c70e4f#ref=analects:1.1&char=0,41",
+        "fragment_id": "lunyu-1.1",
+        "score": 1.163312,
+        "via": ["lexical"]
+      }
+    ],
+    "route": "trigram"
+  },
+  "id": "search-lexical-lunyu-01",
+  "input": {
+    "file": "files/lunyu.spdf",
+    "limit": 10,
+    "query": "學而時習之"
+  },
+  "kind": "search_lexical"
+}

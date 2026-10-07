@@ -1,0 +1,24 @@
+{
+  "expect": {
+    "locator": {
+      "char": [0, 47],
+      "ref": {
+        "ref": "1.1",
+        "scheme": "analects"
+      }
+    },
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#ref=analects:1.1&char=0,47"
+  },
+  "id": "uri-canonical-chars",
+  "input": {
+    "anchor": {
+      "chars": [0, 47],
+      "ref": "1.1",
+      "scheme": "analects",
+      "type": "canonical"
+    },
+    "anchor_end": null,
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+  },
+  "kind": "anchor_uri"
+}

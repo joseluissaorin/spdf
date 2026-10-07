@@ -1,0 +1,28 @@
+{
+  "expect": {
+    "text": "(Micrographia, 1665, p. 210)"
+  },
+  "id": "cite-no-author-title-colon-es",
+  "input": {
+    "anchor": {
+      "confidence": 0.95,
+      "physical": 10,
+      "printed": "210",
+      "roman": false,
+      "source": "read",
+      "type": "page"
+    },
+    "anchor_end": null,
+    "locale": "es",
+    "metadata": {
+      "issued": {
+        "date-parts": [
+          [1665]
+        ]
+      },
+      "title": "Micrographia: or some physiological descriptions of minute bodies",
+      "type": "book"
+    }
+  },
+  "kind": "cite"
+}

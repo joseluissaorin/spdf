@@ -1,0 +1,10 @@
+{
+  "expect": {
+    "dump": "expected/micrographia.dump.json"
+  },
+  "id": "roundtrip-micrographia",
+  "input": {
+    "source": "sources/micrographia.json"
+  },
+  "kind": "roundtrip"
+}

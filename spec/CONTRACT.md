@@ -1,4 +1,4 @@
-# SPDF 5.0 implementation contract (draft 1, 2026-10-07)
+# SPDF 5.0 implementation contract (draft 1.1, 2026-10-07)
 
 This is the working contract every implementation in this repository codes against
 while the normative specification (`SPEC.md`) is being written. `SPEC.md` absorbs
@@ -7,6 +7,10 @@ change here. Key words MUST, SHOULD, MAY as in RFC 2119.
 
 ## Change log (read this first)
 
+- **2026-10-07, draft 1.1 (spec agent).** `provenance` in the dump is sorted by the UTF-8
+  bytes of each entry's JCS form (ordering by the stored `detail` text depended on how each
+  writer serialized it). Conformance layout, `manifest.json` and the CI artifact convention
+  added to §11. First conformance batch published (`conformance/CHANGELOG.md`, 220 cases).
 - **2026-10-07, draft 1 (spec agent).** Fixes every ambiguity reported by the rust, js,
   python and langs-a agents. Changes against draft 0, all binding from now on:
   1. **Canonical JSON = RFC 8785 (JCS)** after rounding: keys sorted by UTF-16 code units,
@@ -288,7 +292,7 @@ hashing is **RFC 8785 (JCS)**; conformance compares parsed JSON (numbers as f64)
             concatenated in ORDER BY target, id>"}},
  "blobs":[{"key","mime","bytes","sha256"}],   // ORDER BY key; sha256 COMPUTED from data
  "provenance":[{"stage","provider","model","detail","ms","at"}],
-              // ORDER BY at, stage, provider, model, detail, ms (SQLite order, NULLs first)
+              // sorted by the UTF-8 bytes of each entry's JCS serialization (writer-independent)
  "extensions":[{"name","version","required"}]}                                // ORDER BY name
 ```
 All ORDER BY use SQLite's BINARY collation (= code point order). Booleans stored as
@@ -422,16 +426,19 @@ signature over the ASCII bytes `spdf-content-sha256:` + that hex; `signer` =
 - Bibliography export: CSL-JSON (always), BibTeX (MUST), full CSL styles MAY via citeproc.
 
 ## 11. Conformance protocol
-Layout under `conformance/`: `sources/*.json` (full dumps: dump + vector values + blob
-bytes), `files/*.spdf` (5.0, generated), `legacy/*.spdf` (4.x, gzip), `invalid/*.spdf`,
-`expected/*.dump.json`, `cases/*.json` (one case per file), `tools/generar.py`,
-`tools/verificar.py`. Case: `{"id","kind","input":{…},"expect":{…}}`, kinds `dump`,
+Layout under `conformance/`: `sources/*.json` (full dumps: dump + vector values in
+`vectors.<space>.items` + blob bytes in `blobs[].data_base64`), `legacy-sources/*.json`,
+`files/*.spdf` (5.0, generated), `legacy/*.spdf` (4.x, gzip), `invalid/*.spdf`,
+`expected/*.dump.json`, `cases/*.json` (one case per file), `manifest.json`,
+`tools/generar.py`, `tools/verificar.py`, `tools/spdfref.py` (reference oracle). Case: `{"id","kind","input":{…},"expect":{…}}`, kinds `dump`,
 `validate`, `search_lexical`, `search_vector`, `search_hybrid`, `anchor_uri`, `cite`,
 `legacy_dump`, `roundtrip`. Paths are relative to `conformance/`. Exact input/expect
 shapes per kind: `conformance/README.md`. Every implementation ships a runner that prints
 `{"impl","version","passed":[…],"failed":[{"id","reason"}],"skipped":[…]}`; CI fails on
 any failure. Implementations MAY declare a profile subset (e.g. reader-only skips
-`roundtrip`).
+`roundtrip`). **CI convention**: each implementation's workflow uploads an artifact
+`conformance-<folder>` containing its `conformance.json`; the suite's workflow uploads
+`conformance-suite` (manifest with case count and `cases_sha256`, reference report).
 
 ## 12. Validation
 Order (stop marks a fatal error): gzip? (5.0 inside → E003, reported in `warnings`; legacy → continue) ·

@@ -1,0 +1,25 @@
+{
+  "expect": {
+    "locator": {
+      "char": [118, 301],
+      "f": "21",
+      "p": 29
+    },
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#p=29&f=21&char=118,301"
+  },
+  "id": "uri-page-chars",
+  "input": {
+    "anchor": {
+      "chars": [118, 301],
+      "confidence": 0.97,
+      "physical": 29,
+      "printed": "21",
+      "roman": false,
+      "source": "read",
+      "type": "page"
+    },
+    "anchor_end": null,
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+  },
+  "kind": "anchor_uri"
+}

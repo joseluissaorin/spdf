@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": ["E082"],
+    "valid": false,
+    "version": "5.0",
+    "warnings": []
+  },
+  "id": "validate-E082-signature",
+  "input": {
+    "file": "invalid/E082-signature.spdf"
+  },
+  "kind": "validate"
+}

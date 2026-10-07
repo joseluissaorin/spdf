@@ -1,0 +1,392 @@
+{
+  "blobs": [],
+  "document": {
+    "authors": "Darwin",
+    "bytes": 2097152,
+    "created": "2026-10-07T00:00:00Z",
+    "duration": null,
+    "id": "origin-of-species-1859",
+    "kind": "pdf",
+    "language": "en",
+    "metadata": {
+      "author": [
+        {
+          "family": "Darwin",
+          "given": "Charles"
+        }
+      ],
+      "issued": {
+        "date-parts": [
+          [1859]
+        ]
+      },
+      "language": "en",
+      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+      "publisher": "John Murray",
+      "publisher-place": "London",
+      "title": "On the Origin of Species by Means of Natural Selection",
+      "title-short": "On the Origin of Species",
+      "type": "book"
+    },
+    "mime": "application/pdf",
+    "rights": {
+      "access": "open",
+      "holder": null,
+      "license": "https://creativecommons.org/publicdomain/mark/1.0/",
+      "note": "Public-domain work. Synthetic layout built for the SPDF conformance suite."
+    },
+    "source_ref": null,
+    "source_sha256": "e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3",
+    "title": "On the Origin of Species by Means of Natural Selection",
+    "unit_count": 5,
+    "updated": "2026-10-07T00:00:00Z",
+    "year": 1859
+  },
+  "extensions": [],
+  "figures": [],
+  "fragments": [
+    {
+      "anchor": {
+        "chars": [0, 229],
+        "confidence": 0.99,
+        "foliation": "page",
+        "physical": 1,
+        "printed": "1",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "anchor_end": null,
+      "context": "On the Origin of Species, Introduction.",
+      "id": "d1",
+      "n": 1,
+      "ord": 1,
+      "search_text": "",
+      "section": ["Introduction"],
+      "text": "When on board H.M.S. 'Beagle,' as naturalist, I was much struck with certain facts in the distribution of the inhabitants of South America, and in the geological relations of the present to the past inhabitants of that continent.",
+      "unit": "p1"
+    },
+    {
+      "anchor": {
+        "chars": [0, 84],
+        "confidence": 0.99,
+        "foliation": "page",
+        "physical": 2,
+        "printed": "5",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "anchor_end": null,
+      "context": "On the Origin of Species, Introduction.",
+      "id": "d2",
+      "n": 2,
+      "ord": 2,
+      "search_text": "",
+      "section": ["Introduction"],
+      "text": "This is the doctrine of Malthus, applied to the whole animal and vegetable kingdoms.",
+      "unit": "p2"
+    },
+    {
+      "anchor": {
+        "chars": [0, 349],
+        "confidence": 0.99,
+        "foliation": "page",
+        "physical": 3,
+        "printed": "61",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "anchor_end": null,
+      "context": "On the Origin of Species, Chapter III. Struggle for Existence.",
+      "id": "d3",
+      "n": 3,
+      "ord": 3,
+      "search_text": "",
+      "section": ["Chapter III. Struggle for Existence"],
+      "text": "Owing to this struggle for life, any variation, however slight and from whatever cause proceeding, if it be in any degree profitable to an individual of any species, in its infinitely complex relations to other organic beings and to external nature, will tend to the preservation of that individual, and will generally be inherited by its offspring.",
+      "unit": "p3"
+    },
+    {
+      "anchor": {
+        "chars": [351, 530],
+        "confidence": 0.99,
+        "foliation": "page",
+        "physical": 3,
+        "printed": "61",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "anchor_end": null,
+      "context": "On the Origin of Species, Chapter III. Struggle for Existence.",
+      "id": "d4",
+      "n": 4,
+      "ord": 4,
+      "search_text": "",
+      "section": ["Chapter III. Struggle for Existence"],
+      "text": "I have called this principle, by which each slight variation, if useful, is preserved, by the term of Natural Selection, in order to mark its relation to man's power of selection.",
+      "unit": "p3"
+    },
+    {
+      "anchor": {
+        "chars": [0, 202],
+        "confidence": 0.99,
+        "foliation": "page",
+        "physical": 4,
+        "printed": "84",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "anchor_end": null,
+      "context": "On the Origin of Species, Chapter IV. Natural Selection.",
+      "id": "d5",
+      "n": 5,
+      "ord": 5,
+      "search_text": "",
+      "section": ["Chapter IV. Natural Selection"],
+      "text": "It may be said that natural selection is daily and hourly scrutinising, throughout the world, every variation, even the slightest; rejecting that which is bad, preserving and adding up all that is good.",
+      "unit": "p4"
+    },
+    {
+      "anchor": {
+        "chars": [0, 324],
+        "confidence": 0.99,
+        "foliation": "page",
+        "physical": 5,
+        "printed": "490",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "anchor_end": null,
+      "context": "On the Origin of Species, Chapter XIV. Recapitulation and Conclusion.",
+      "id": "d6",
+      "n": 6,
+      "ord": 6,
+      "search_text": "",
+      "section": ["Chapter XIV. Recapitulation and Conclusion"],
+      "text": "There is grandeur in this view of life, with its several powers, having been originally breathed into a few forms or into one; and that, whilst this planet has gone cycling on according to the fixed law of gravity, from so simple a beginning endless forms most beautiful and most wonderful have been, and are being, evolved.",
+      "unit": "p5"
+    }
+  ],
+  "fts": {
+    "tokenizer": "unicode61 remove_diacritics 2",
+    "trigram": false
+  },
+  "meta": {
+    "created": "2026-10-07T00:00:00Z",
+    "document_id": "origin-of-species-1859",
+    "generator": "spdf-conformance/1.0",
+    "profile": "core semantic",
+    "spdf_version": "5.0"
+  },
+  "provenance": [
+    {
+      "at": "2026-10-07T00:00:00Z",
+      "detail": {
+        "dims": 8,
+        "spaces": 3
+      },
+      "model": "toy-embedding",
+      "ms": 1,
+      "provider": "spdf-conformance",
+      "stage": "embedding"
+    }
+  ],
+  "sections": [],
+  "spaces": [
+    {
+      "created": "2026-10-07T00:00:00Z",
+      "dims": 8,
+      "dtype": "f32",
+      "id": "toy-embedding@8",
+      "modalities": ["text"],
+      "model": "toy-embedding",
+      "normalized": 1,
+      "provider": "spdf-conformance",
+      "task_prefixes": {
+        "document": "passage: ",
+        "query": "query: "
+      },
+      "truncated_from": null,
+      "version": "1"
+    },
+    {
+      "created": "2026-10-07T00:00:00Z",
+      "dims": 8,
+      "dtype": "f16",
+      "id": "toy-embedding@8:f16",
+      "modalities": ["text"],
+      "model": "toy-embedding",
+      "normalized": 1,
+      "provider": "spdf-conformance",
+      "task_prefixes": {
+        "document": "passage: ",
+        "query": "query: "
+      },
+      "truncated_from": null,
+      "version": "1"
+    },
+    {
+      "created": "2026-10-07T00:00:00Z",
+      "dims": 8,
+      "dtype": "i8",
+      "id": "toy-embedding@8:i8",
+      "modalities": ["text"],
+      "model": "toy-embedding",
+      "normalized": 1,
+      "provider": "spdf-conformance",
+      "task_prefixes": {
+        "document": "passage: ",
+        "query": "query: "
+      },
+      "truncated_from": null,
+      "version": "1"
+    }
+  ],
+  "spdf_version": "5.0",
+  "units": [
+    {
+      "anchor": {
+        "confidence": 0.99,
+        "foliation": "page",
+        "physical": 1,
+        "printed": "1",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "confidence": 1,
+      "footer": null,
+      "header": null,
+      "id": "p1",
+      "image": null,
+      "notes": null,
+      "ord": 1,
+      "printed": "1",
+      "reader": "pdf-text-layer",
+      "t0": null,
+      "t1": null,
+      "text": "When on board H.M.S. 'Beagle,' as naturalist, I was much struck with certain facts in the distribution of the inhabitants of South America, and in the geological relations of the present to the past inhabitants of that continent.",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 0.99,
+        "foliation": "page",
+        "physical": 2,
+        "printed": "5",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "confidence": 1,
+      "footer": null,
+      "header": null,
+      "id": "p2",
+      "image": null,
+      "notes": null,
+      "ord": 2,
+      "printed": "5",
+      "reader": "pdf-text-layer",
+      "t0": null,
+      "t1": null,
+      "text": "This is the doctrine of Malthus, applied to the whole animal and vegetable kingdoms.",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 0.99,
+        "foliation": "page",
+        "physical": 3,
+        "printed": "61",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "confidence": 1,
+      "footer": null,
+      "header": null,
+      "id": "p3",
+      "image": null,
+      "notes": null,
+      "ord": 3,
+      "printed": "61",
+      "reader": "pdf-text-layer",
+      "t0": null,
+      "t1": null,
+      "text": "Owing to this struggle for life, any variation, however slight and from whatever cause proceeding, if it be in any degree profitable to an individual of any species, in its infinitely complex relations to other organic beings and to external nature, will tend to the preservation of that individual, and will generally be inherited by its offspring.\n\nI have called this principle, by which each slight variation, if useful, is preserved, by the term of Natural Selection, in order to mark its relation to man's power of selection.",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 0.99,
+        "foliation": "page",
+        "physical": 4,
+        "printed": "84",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "confidence": 1,
+      "footer": null,
+      "header": null,
+      "id": "p4",
+      "image": null,
+      "notes": null,
+      "ord": 4,
+      "printed": "84",
+      "reader": "pdf-text-layer",
+      "t0": null,
+      "t1": null,
+      "text": "It may be said that natural selection is daily and hourly scrutinising, throughout the world, every variation, even the slightest; rejecting that which is bad, preserving and adding up all that is good.",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 0.99,
+        "foliation": "page",
+        "physical": 5,
+        "printed": "490",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "confidence": 1,
+      "footer": null,
+      "header": null,
+      "id": "p5",
+      "image": null,
+      "notes": null,
+      "ord": 5,
+      "printed": "490",
+      "reader": "pdf-text-layer",
+      "t0": null,
+      "t1": null,
+      "text": "There is grandeur in this view of life, with its several powers, having been originally breathed into a few forms or into one; and that, whilst this planet has gone cycling on according to the fixed law of gravity, from so simple a beginning endless forms most beautiful and most wonderful have been, and are being, evolved.",
+      "thumbnail": null,
+      "words": null
+    }
+  ],
+  "vectors": {
+    "toy-embedding@8": {
+      "count": 6,
+      "sha256": "8349e68ef6a75388be30334b8ce3310fe3d83fc95370bdda5cd483adbc0a4a5b"
+    },
+    "toy-embedding@8:f16": {
+      "count": 6,
+      "sha256": "6736394b3d1d72286461ed9aadecc8b3f3692d7129f3e32bd02b45ccda484fb1"
+    },
+    "toy-embedding@8:i8": {
+      "count": 6,
+      "sha256": "d06565600e26645a6d40e6e5bccab5f09dbc54af8328a0023031b2405065d9e9"
+    }
+  }
+}

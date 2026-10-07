@@ -1,0 +1,482 @@
+{
+  "blobs": [
+    {
+      "bytes": 74,
+      "key": "pages/0001.png",
+      "mime": "image/png",
+      "sha256": "eb07ae6f520286838d2d7114ac22634687f9c855314006181c6eb8fbc941e3a2"
+    }
+  ],
+  "document": {
+    "authors": "Cervantes Saavedra",
+    "bytes": 482113,
+    "created": "2026-10-07T00:00:00Z",
+    "duration": null,
+    "id": "quijote-1605",
+    "kind": "scanned_pdf",
+    "language": "es",
+    "metadata": {
+      "author": [
+        {
+          "family": "Cervantes Saavedra",
+          "given": "Miguel de"
+        }
+      ],
+      "issued": {
+        "date-parts": [
+          [1605]
+        ]
+      },
+      "language": "es",
+      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+      "publisher": "Juan de la Cuesta",
+      "publisher-place": "Madrid",
+      "spdf": {
+        "provenance": {
+          "issued": {
+            "confidence": 0.95,
+            "source": "colophon"
+          },
+          "title": {
+            "confidence": 0.99,
+            "source": "title-page"
+          }
+        }
+      },
+      "title": "El ingenioso hidalgo don Quijote de la Mancha",
+      "title-short": "Don Quijote",
+      "type": "book"
+    },
+    "mime": "application/pdf",
+    "rights": {
+      "access": "open",
+      "holder": null,
+      "license": "https://creativecommons.org/publicdomain/mark/1.0/",
+      "note": "Public-domain work. Synthetic layout built for the SPDF conformance suite."
+    },
+    "source_ref": null,
+    "source_sha256": "fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "unit_count": 8,
+    "updated": "2026-10-07T00:00:00Z",
+    "year": 1605
+  },
+  "extensions": [],
+  "figures": [],
+  "fragments": [
+    {
+      "anchor": {
+        "chars": [0, 89],
+        "confidence": 1,
+        "foliation": "page",
+        "physical": 1,
+        "printed": null,
+        "roman": false,
+        "source": "none",
+        "type": "page"
+      },
+      "anchor_end": null,
+      "context": "Portada de la primera parte.",
+      "id": "q1",
+      "n": 1,
+      "ord": 1,
+      "search_text": "",
+      "section": [],
+      "text": "EL INGENIOSO HIDALGO DON QUIJOTE DE LA MANCHA\n\nCompuesto por Miguel de Cervantes Saavedra",
+      "unit": "p1"
+    },
+    {
+      "anchor": {
+        "chars": [9, 192],
+        "confidence": 0.97,
+        "foliation": "page",
+        "physical": 2,
+        "printed": "ii",
+        "roman": true,
+        "source": "read",
+        "type": "page"
+      },
+      "anchor_end": null,
+      "context": "Prólogo: Cervantes se dirige al lector desocupado.",
+      "id": "q2",
+      "n": 2,
+      "ord": 2,
+      "search_text": "",
+      "section": ["Prólogo"],
+      "text": "Desocupado lector: sin juramento me podrás creer que quisiera que este libro, como hijo del entendimiento, fuera el más hermoso, el más gallardo y más discreto que pudiera imaginarse.",
+      "unit": "p2"
+    },
+    {
+      "anchor": {
+        "chars": [0, 101],
+        "confidence": 0.96,
+        "foliation": "page",
+        "physical": 3,
+        "printed": "iii",
+        "roman": true,
+        "source": "read",
+        "type": "page"
+      },
+      "anchor_end": {
+        "confidence": 0.9,
+        "foliation": "page",
+        "physical": 4,
+        "printed": "iv",
+        "roman": true,
+        "source": "inferred",
+        "type": "page"
+      },
+      "context": "Prólogo: el libro como hijo del entendimiento.",
+      "id": "q3",
+      "n": 3,
+      "ord": 3,
+      "search_text": "",
+      "section": ["Prólogo"],
+      "text": "Pero no he podido yo contravenir al orden de naturaleza, que en ella cada cosa engendra su semejante.\nY así, ¿qué podrá engendrar el estéril y mal cultivado ingenio mío, sino la historia de un hijo seco, avellanado, antojadizo y lleno de pensamientos varios y nunca imaginados de otro alguno?",
+      "unit": "p3"
+    },
+    {
+      "anchor": {
+        "chars": [101, 278],
+        "confidence": 0.98,
+        "foliation": "leaf",
+        "physical": 5,
+        "printed": "1r",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "anchor_end": {
+        "confidence": 0.92,
+        "foliation": "leaf",
+        "physical": 6,
+        "printed": "1v",
+        "roman": false,
+        "source": "inferred",
+        "type": "page"
+      },
+      "context": "Capítulo I: el lugar de la Mancha y la hacienda del hidalgo.",
+      "id": "q4",
+      "n": 4,
+      "ord": 4,
+      "search_text": "",
+      "section": ["Primera parte", "Capítulo primero"],
+      "text": "En un lugar de la Mancha, de cuyo nombre no quiero acordarme, no ha mucho tiempo que vivía un hidalgo de los de lanza en astillero, adarga antigua, rocín flaco y galgo corredor.\nUna olla de algo más vaca que carnero, salpicón las más noches, duelos y quebrantos los sábados, lantejas los viernes, algún palomino de añadidura los domingos, consumían las tres partes de su hacienda.",
+      "unit": "p5"
+    },
+    {
+      "anchor": {
+        "chars": [0, 153],
+        "confidence": 0.98,
+        "foliation": "leaf",
+        "physical": 7,
+        "printed": "2r",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "anchor_end": null,
+      "context": "Capítulo I: edad y retrato del hidalgo.",
+      "id": "q5",
+      "n": 5,
+      "ord": 5,
+      "search_text": "",
+      "section": ["Primera parte", "Capítulo primero"],
+      "text": "Frisaba la edad de nuestro hidalgo con los cincuenta años; era de complexión recia, seco de carnes, enjuto de rostro, gran madrugador y amigo de la caza.",
+      "unit": "p7"
+    },
+    {
+      "anchor": {
+        "chars": [0, 261],
+        "confidence": 0.92,
+        "foliation": "leaf",
+        "physical": 8,
+        "printed": "2v",
+        "roman": false,
+        "source": "inferred",
+        "type": "page"
+      },
+      "anchor_end": null,
+      "context": "Capítulo I: la afición a los libros de caballerías.",
+      "id": "q6",
+      "n": 6,
+      "ord": 6,
+      "search_text": "",
+      "section": ["Primera parte", "Capítulo primero"],
+      "text": "Es, pues, de saber que este sobredicho hidalgo, los ratos que estaba ocioso, que eran los más del año, se daba a leer libros de caballerías con tanta afición y gusto, que olvidó casi de todo punto el ejercicio de la caza, y aun la administración de su hacienda.",
+      "unit": "p8"
+    }
+  ],
+  "fts": {
+    "tokenizer": "unicode61 remove_diacritics 2",
+    "trigram": false
+  },
+  "meta": {
+    "content_sha256": "9da8b6392c7a1393bba04785578bda48b31fe4c8cfa28f697f843e66a5b090b8",
+    "created": "2026-10-07T00:00:00Z",
+    "document_id": "quijote-1605",
+    "generator": "spdf-conformance/1.0",
+    "profile": "core",
+    "signature": "yQeuwaGN29JsR1W30vxK4aVMHDDG8wCM1iZ+tX7x8hIcLr3jGpisfME8ZPrrK1v8BEQ6Xmqc/ZjtFHJx8+OcDQ==",
+    "signer": "ed25519:zTT6Bhc+ydufqk04cT9bPz9jDlHiRgXyOJ/VBgKzpv4=",
+    "spdf_version": "5.0"
+  },
+  "provenance": [
+    {
+      "at": "2026-10-07T00:00:00Z",
+      "detail": {
+        "inferred": 3,
+        "none": 1,
+        "read": 4
+      },
+      "model": null,
+      "ms": 12,
+      "provider": "spdf-producer",
+      "stage": "folios"
+    },
+    {
+      "at": "2026-10-07T00:00:00Z",
+      "detail": {
+        "pages": 8
+      },
+      "model": "gemma-4-e4b",
+      "ms": 5210,
+      "provider": "local",
+      "stage": "reading"
+    }
+  ],
+  "sections": [
+    {
+      "id": "s1",
+      "level": 1,
+      "parent": null,
+      "summary": null,
+      "title": "Prólogo",
+      "unit_from": "p2",
+      "unit_to": "p4"
+    },
+    {
+      "id": "s2",
+      "level": 1,
+      "parent": null,
+      "summary": null,
+      "title": "Primera parte",
+      "unit_from": "p5",
+      "unit_to": "p8"
+    },
+    {
+      "id": "s2.1",
+      "level": 2,
+      "parent": "s2",
+      "summary": "Condición y ejercicio del hidalgo.",
+      "title": "Capítulo primero",
+      "unit_from": "p5",
+      "unit_to": "p8"
+    }
+  ],
+  "spaces": [],
+  "spdf_version": "5.0",
+  "units": [
+    {
+      "anchor": {
+        "confidence": 1,
+        "foliation": "page",
+        "physical": 1,
+        "printed": null,
+        "roman": false,
+        "source": "none",
+        "type": "page"
+      },
+      "confidence": 0.95,
+      "footer": null,
+      "header": null,
+      "id": "p1",
+      "image": "blob:pages/0001.png",
+      "notes": null,
+      "ord": 1,
+      "printed": null,
+      "reader": "gemma-4-e4b",
+      "t0": null,
+      "t1": null,
+      "text": "EL INGENIOSO HIDALGO DON QUIJOTE DE LA MANCHA\n\nCompuesto por Miguel de Cervantes Saavedra",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 0.97,
+        "foliation": "page",
+        "physical": 2,
+        "printed": "ii",
+        "roman": true,
+        "source": "read",
+        "type": "page"
+      },
+      "confidence": 0.95,
+      "footer": null,
+      "header": null,
+      "id": "p2",
+      "image": null,
+      "notes": null,
+      "ord": 2,
+      "printed": "ii",
+      "reader": "gemma-4-e4b",
+      "t0": null,
+      "t1": null,
+      "text": "Prólogo\n\nDesocupado lector: sin juramento me podrás creer que quisiera que este libro, como hijo del entendimiento, fuera el más hermoso, el más gallardo y más discreto que pudiera imaginarse.",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 0.96,
+        "foliation": "page",
+        "physical": 3,
+        "printed": "iii",
+        "roman": true,
+        "source": "read",
+        "type": "page"
+      },
+      "confidence": 0.95,
+      "footer": null,
+      "header": null,
+      "id": "p3",
+      "image": null,
+      "notes": null,
+      "ord": 3,
+      "printed": "iii",
+      "reader": "gemma-4-e4b",
+      "t0": null,
+      "t1": null,
+      "text": "Pero no he podido yo contravenir al orden de naturaleza, que en ella cada cosa engendra su semejante.",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 0.9,
+        "foliation": "page",
+        "physical": 4,
+        "printed": "iv",
+        "roman": true,
+        "source": "inferred",
+        "type": "page"
+      },
+      "confidence": 0.95,
+      "footer": null,
+      "header": null,
+      "id": "p4",
+      "image": null,
+      "notes": null,
+      "ord": 4,
+      "printed": "iv",
+      "reader": "gemma-4-e4b",
+      "t0": null,
+      "t1": null,
+      "text": "Y así, ¿qué podrá engendrar el estéril y mal cultivado ingenio mío, sino la historia de un hijo seco, avellanado, antojadizo y lleno de pensamientos varios y nunca imaginados de otro alguno?",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 0.98,
+        "foliation": "leaf",
+        "physical": 5,
+        "printed": "1r",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "confidence": 0.95,
+      "footer": null,
+      "header": null,
+      "id": "p5",
+      "image": null,
+      "notes": null,
+      "ord": 5,
+      "printed": "1r",
+      "reader": "gemma-4-e4b",
+      "t0": null,
+      "t1": null,
+      "text": "Capítulo primero. Que trata de la condición y ejercicio del famoso hidalgo don Quijote de la Mancha\n\nEn un lugar de la Mancha, de cuyo nombre no quiero acordarme, no ha mucho tiempo que vivía un hidalgo de los de lanza en astillero, adarga antigua, rocín flaco y galgo corredor.",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 0.92,
+        "foliation": "leaf",
+        "physical": 6,
+        "printed": "1v",
+        "roman": false,
+        "source": "inferred",
+        "type": "page"
+      },
+      "confidence": 0.95,
+      "footer": null,
+      "header": null,
+      "id": "p6",
+      "image": null,
+      "notes": null,
+      "ord": 6,
+      "printed": "1v",
+      "reader": "gemma-4-e4b",
+      "t0": null,
+      "t1": null,
+      "text": "Una olla de algo más vaca que carnero, salpicón las más noches, duelos y quebrantos los sábados, lantejas los viernes, algún palomino de añadidura los domingos, consumían las tres partes de su hacienda.",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 0.98,
+        "foliation": "leaf",
+        "physical": 7,
+        "printed": "2r",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "confidence": 0.95,
+      "footer": null,
+      "header": null,
+      "id": "p7",
+      "image": null,
+      "notes": null,
+      "ord": 7,
+      "printed": "2r",
+      "reader": "gemma-4-e4b",
+      "t0": null,
+      "t1": null,
+      "text": "Frisaba la edad de nuestro hidalgo con los cincuenta años; era de complexión recia, seco de carnes, enjuto de rostro, gran madrugador y amigo de la caza.",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 0.92,
+        "foliation": "leaf",
+        "physical": 8,
+        "printed": "2v",
+        "roman": false,
+        "source": "inferred",
+        "type": "page"
+      },
+      "confidence": 0.95,
+      "footer": null,
+      "header": null,
+      "id": "p8",
+      "image": null,
+      "notes": null,
+      "ord": 8,
+      "printed": "2v",
+      "reader": "gemma-4-e4b",
+      "t0": null,
+      "t1": null,
+      "text": "Es, pues, de saber que este sobredicho hidalgo, los ratos que estaba ocioso, que eran los más del año, se daba a leer libros de caballerías con tanta afición y gusto, que olvidó casi de todo punto el ejercicio de la caza, y aun la administración de su hacienda.",
+      "thumbnail": null,
+      "words": null
+    }
+  ],
+  "vectors": {}
+}

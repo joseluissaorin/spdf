@@ -1,0 +1,20 @@
+{
+  "expect": {
+    "locator": {
+      "para": 2,
+      "s": ["Parte I/II", "Capítulo 3"]
+    },
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#s=Parte%20I%2FII/Cap%C3%ADtulo%203&para=2"
+  },
+  "id": "uri-section-slash-and-accents",
+  "input": {
+    "anchor": {
+      "paragraph": 2,
+      "path": ["Parte I/II", "Capítulo 3"],
+      "type": "section"
+    },
+    "anchor_end": null,
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+  },
+  "kind": "anchor_uri"
+}

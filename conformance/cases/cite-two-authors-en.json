@@ -1,0 +1,38 @@
+{
+  "expect": {
+    "text": "(Deleuze and Guattari, 1980, p. 9)"
+  },
+  "id": "cite-two-authors-en",
+  "input": {
+    "anchor": {
+      "confidence": 0.95,
+      "physical": 10,
+      "printed": "9",
+      "roman": false,
+      "source": "read",
+      "type": "page"
+    },
+    "anchor_end": null,
+    "locale": "en",
+    "metadata": {
+      "author": [
+        {
+          "family": "Deleuze",
+          "given": "Gilles"
+        },
+        {
+          "family": "Guattari",
+          "given": "Félix"
+        }
+      ],
+      "issued": {
+        "date-parts": [
+          [1980]
+        ]
+      },
+      "title": "Mille plateaux",
+      "type": "book"
+    }
+  },
+  "kind": "cite"
+}

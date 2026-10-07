@@ -1,0 +1,167 @@
+{
+ "lexical": {
+  "quijote": [
+   "hidalgo",
+   "lanza astillero",
+   "\"de cuyo nombre no quiero acordarme\"",
+   "rocin",
+   "Hidalgo hidalgo HIDALGO",
+   "«libros de caballerías» hacienda",
+   "Prólogo",
+   "xyzzy",
+   "¿?¡!",
+   "“hijo seco” «entendimiento»"
+  ],
+  "lazarillo": [
+   "González",
+   "Gonçales",
+   "vuestra merced",
+   "baxos",
+   "bajos",
+   "olvido",
+   "ſepultura",
+   "\"Thome Gonçales\""
+  ],
+  "apolo11": [
+   "Eagle landed",
+   "\"one giant leap\"",
+   "magnificent",
+   "Armstrong",
+   "Tranquility"
+  ],
+  "micrographia": [
+   "flea",
+   "creature",
+   "description intruding"
+  ],
+  "darwin": [
+   "natural selection",
+   "\"struggle for life\"",
+   "Malthus",
+   "variation",
+   "evolved gravity"
+  ],
+  "lunyu": [
+   "學而時習之",
+   "君子",
+   "學而",
+   "有朋 不亦樂乎",
+   "「學而不思」",
+   "子曰",
+   "仁",
+   "“學而時”"
+  ]
+ },
+ "lexical_limit": 10,
+ "vector": [
+  {
+   "file": "darwin",
+   "space": "toy-embedding@8",
+   "query_vector": [
+    0.5,
+    0.25,
+    0.5,
+    0.25,
+    0,
+    0.25,
+    0.25,
+    0.5
+   ],
+   "limit": 6
+  },
+  {
+   "file": "darwin",
+   "space": "toy-embedding@8:f16",
+   "query_vector": [
+    0.5,
+    0.25,
+    0.5,
+    0.25,
+    0,
+    0.25,
+    0.25,
+    0.5
+   ],
+   "limit": 6
+  },
+  {
+   "file": "darwin",
+   "space": "toy-embedding@8:i8",
+   "query_vector": [
+    0.5,
+    0.25,
+    0.5,
+    0.25,
+    0,
+    0.25,
+    0.25,
+    0.5
+   ],
+   "limit": 6
+  },
+  {
+   "file": "darwin",
+   "space": "toy-embedding@8",
+   "query_vector": [
+    0,
+    0.5,
+    0.25,
+    0.75,
+    0.25,
+    0,
+    0.25,
+    0
+   ],
+   "limit": 3
+  },
+  {
+   "file": "darwin",
+   "space": "toy-embedding@8:i8",
+   "query_vector": [
+    0,
+    0.5,
+    0.25,
+    0.75,
+    0.25,
+    0,
+    0.25,
+    0
+   ],
+   "limit": 3
+  }
+ ],
+ "hybrid": [
+  {
+   "file": "darwin",
+   "query": "natural selection variation",
+   "space": "toy-embedding@8",
+   "query_vector": [
+    0.5,
+    0.25,
+    0.5,
+    0.25,
+    0,
+    0.25,
+    0.25,
+    0.5
+   ],
+   "limit": 6
+  },
+  {
+   "file": "darwin",
+   "query": "Malthus",
+   "space": "toy-embedding@8:i8",
+   "query_vector": [
+    0,
+    0.5,
+    0.25,
+    0.75,
+    0.25,
+    0,
+    0.25,
+    0
+   ],
+   "limit": 4
+  }
+ ]
+}

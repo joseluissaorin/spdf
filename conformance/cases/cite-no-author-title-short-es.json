@@ -1,0 +1,29 @@
+{
+  "expect": {
+    "text": "(Lazarillo de Tormes, 1554, p. 4)"
+  },
+  "id": "cite-no-author-title-short-es",
+  "input": {
+    "anchor": {
+      "confidence": 0.95,
+      "physical": 10,
+      "printed": "4",
+      "roman": false,
+      "source": "read",
+      "type": "page"
+    },
+    "anchor_end": null,
+    "locale": "es",
+    "metadata": {
+      "issued": {
+        "date-parts": [
+          [1554]
+        ]
+      },
+      "title": "La vida de Lazarillo de Tormes y de sus fortunas y adversidades",
+      "title-short": "Lazarillo de Tormes",
+      "type": "book"
+    }
+  },
+  "kind": "cite"
+}

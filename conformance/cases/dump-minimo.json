@@ -1,0 +1,11 @@
+{
+  "expect": {
+    "content_sha256": "f346ea4724b86b9fea806a5f89313bb84feda528f193d1c843bbe9b2e4866705",
+    "dump": "expected/minimo.dump.json"
+  },
+  "id": "dump-minimo",
+  "input": {
+    "file": "files/minimo.spdf"
+  },
+  "kind": "dump"
+}

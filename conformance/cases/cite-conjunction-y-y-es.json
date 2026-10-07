@@ -1,0 +1,36 @@
+{
+  "expect": {
+    "text": "(Gómez y Yáñez, 2001, p. 3)"
+  },
+  "id": "cite-conjunction-y-y-es",
+  "input": {
+    "anchor": {
+      "confidence": 0.95,
+      "physical": 10,
+      "printed": "3",
+      "roman": false,
+      "source": "read",
+      "type": "page"
+    },
+    "anchor_end": null,
+    "locale": "es",
+    "metadata": {
+      "author": [
+        {
+          "family": "Gómez"
+        },
+        {
+          "family": "Yáñez"
+        }
+      ],
+      "issued": {
+        "date-parts": [
+          [2001]
+        ]
+      },
+      "title": "Prueba",
+      "type": "article-journal"
+    }
+  },
+  "kind": "cite"
+}

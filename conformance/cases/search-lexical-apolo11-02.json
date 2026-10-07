@@ -1,0 +1,21 @@
+{
+  "expect": {
+    "match": "\"one giant leap\"",
+    "results": [
+      {
+        "anchor_uri": "spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=4160,4175.5&char=0,78",
+        "fragment_id": "a3",
+        "score": 1.303691,
+        "via": ["lexical"]
+      }
+    ],
+    "route": "fts"
+  },
+  "id": "search-lexical-apolo11-02",
+  "input": {
+    "file": "files/apolo11.spdf",
+    "limit": 10,
+    "query": "\"one giant leap\""
+  },
+  "kind": "search_lexical"
+}

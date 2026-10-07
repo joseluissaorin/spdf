@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": ["E080"],
+    "valid": false,
+    "version": "5.0",
+    "warnings": []
+  },
+  "id": "validate-E080-blob-sha256",
+  "input": {
+    "file": "invalid/E080-blob-sha256.spdf"
+  },
+  "kind": "validate"
+}

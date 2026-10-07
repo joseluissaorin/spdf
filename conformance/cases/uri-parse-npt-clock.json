@@ -1,0 +1,14 @@
+{
+  "expect": {
+    "canonical": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#t=4160,4175.5",
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "locator": {
+      "t": [4160, 4175.5]
+    }
+  },
+  "id": "uri-parse-npt-clock",
+  "input": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#t=npt:1:09:20,1:09:35.5"
+  },
+  "kind": "anchor_uri"
+}

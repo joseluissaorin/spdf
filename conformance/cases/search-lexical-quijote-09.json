@@ -1,0 +1,14 @@
+{
+  "expect": {
+    "match": null,
+    "results": [],
+    "route": "fts"
+  },
+  "id": "search-lexical-quijote-09",
+  "input": {
+    "file": "files/quijote.spdf",
+    "limit": 10,
+    "query": "¿?¡!"
+  },
+  "kind": "search_lexical"
+}

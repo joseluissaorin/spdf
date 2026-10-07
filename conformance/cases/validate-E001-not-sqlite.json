@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": ["E001"],
+    "valid": false,
+    "version": null,
+    "warnings": []
+  },
+  "id": "validate-E001-not-sqlite",
+  "input": {
+    "file": "invalid/E001-not-sqlite.spdf"
+  },
+  "kind": "validate"
+}

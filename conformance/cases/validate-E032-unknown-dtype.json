@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": ["E032"],
+    "valid": false,
+    "version": "5.0",
+    "warnings": []
+  },
+  "id": "validate-E032-unknown-dtype",
+  "input": {
+    "file": "invalid/E032-unknown-dtype.spdf"
+  },
+  "kind": "validate"
+}

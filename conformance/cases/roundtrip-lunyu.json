@@ -1,0 +1,10 @@
+{
+  "expect": {
+    "dump": "expected/lunyu.dump.json"
+  },
+  "id": "roundtrip-lunyu",
+  "input": {
+    "source": "sources/lunyu.json"
+  },
+  "kind": "roundtrip"
+}

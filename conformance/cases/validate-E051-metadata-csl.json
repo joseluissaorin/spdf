@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": ["E051"],
+    "valid": false,
+    "version": "5.0",
+    "warnings": []
+  },
+  "id": "validate-E051-metadata-csl",
+  "input": {
+    "file": "invalid/E051-metadata-csl.spdf"
+  },
+  "kind": "validate"
+}

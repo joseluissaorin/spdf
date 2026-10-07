@@ -1,0 +1,15 @@
+{
+  "expect": {
+    "canonical": "spdf:quijote-1605#p=5&f=1r",
+    "docref": "quijote-1605",
+    "locator": {
+      "f": "1r",
+      "p": 5
+    }
+  },
+  "id": "uri-parse-document-id",
+  "input": {
+    "uri": "spdf:quijote-1605#p=5&f=1r"
+  },
+  "kind": "anchor_uri"
+}

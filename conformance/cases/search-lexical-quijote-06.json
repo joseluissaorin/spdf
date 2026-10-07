@@ -1,0 +1,21 @@
+{
+  "expect": {
+    "match": "\"libros de caballerías\"",
+    "results": [
+      {
+        "anchor_uri": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=8&f=2v&char=0,261",
+        "fragment_id": "q6",
+        "score": 1.462817,
+        "via": ["lexical"]
+      }
+    ],
+    "route": "fts"
+  },
+  "id": "search-lexical-quijote-06",
+  "input": {
+    "file": "files/quijote.spdf",
+    "limit": 10,
+    "query": "«libros de caballerías» hacienda"
+  },
+  "kind": "search_lexical"
+}

@@ -1,0 +1,244 @@
+{
+  "blobs": [
+    {
+      "bytes": 73,
+      "data_base64": "iVBORw0KGgoAAAANSUhEUgAAAAQAAAADCAIAAAA7ljmRAAAAEElEQVR42mOwMdGBIwacHACPfwdRhrU1ogAAAABJRU5ErkJggg==",
+      "key": "figures/flea.png",
+      "mime": "image/png",
+      "sha256": "e1e3f5a05c82b5bedbc2ba4ba821faa02cba927c6165af0c60b0287240468aae"
+    },
+    {
+      "bytes": 74,
+      "data_base64": "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAHCAIAAABPxRC5AAAAEUlEQVR42mP48OIaMmKgMR8AiVpdy9L7ndcAAAAASUVORK5CYII=",
+      "key": "pages/0001.png",
+      "mime": "image/png",
+      "sha256": "f3b90163840f55b2df0362cec73845fe60df5a60115727e44d7145ff7926f998"
+    },
+    {
+      "bytes": 74,
+      "data_base64": "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAHCAIAAABPxRC5AAAAEUlEQVR42mN49+wKMmKgMR8AW2pc+RLGl/sAAAAASUVORK5CYII=",
+      "key": "pages/0002.png",
+      "mime": "image/png",
+      "sha256": "367dc35fe74787fa82b07f1dedbeec72384278edf8783e941447324a08d0f943"
+    },
+    {
+      "bytes": 73,
+      "data_base64": "iVBORw0KGgoAAAANSUhEUgAAAAIAAAADCAIAAAA2iEnWAAAAEElEQVR42mP48OIaEDGgUACpgxAV4KFlEwAAAABJRU5ErkJggg==",
+      "key": "thumbs/0001.png",
+      "mime": "image/png",
+      "sha256": "cb55181ba0027e827bb8cd096a1b2d18286a71d1bb237f5910f6048672d1c830"
+    }
+  ],
+  "document": {
+    "authors": "Hooke",
+    "bytes": 1048576,
+    "created": "2026-10-07T00:00:00Z",
+    "duration": null,
+    "id": "micrographia-1665",
+    "kind": "scanned_pdf",
+    "language": "en",
+    "metadata": {
+      "author": [
+        {
+          "family": "Hooke",
+          "given": "Robert"
+        }
+      ],
+      "issued": {
+        "date-parts": [
+          [1665]
+        ]
+      },
+      "language": "en",
+      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+      "publisher": "Jo. Martyn and Ja. Allestry",
+      "publisher-place": "London",
+      "title": "Micrographia: or some physiological descriptions of minute bodies made by magnifying glasses",
+      "title-short": "Micrographia",
+      "type": "book"
+    },
+    "mime": "application/pdf",
+    "rights": {
+      "access": "open",
+      "holder": null,
+      "license": "https://creativecommons.org/publicdomain/mark/1.0/",
+      "note": "Public-domain work. Synthetic layout built for the SPDF conformance suite."
+    },
+    "source_ref": null,
+    "source_sha256": "4501ef3a079e09d5556746bba9fc26e261aa6cbc5d47b056382d400ec1523bfd",
+    "title": "Micrographia: or some physiological descriptions of minute bodies made by magnifying glasses",
+    "unit_count": 2,
+    "updated": "2026-10-07T00:00:00Z",
+    "year": 1665
+  },
+  "extensions": [],
+  "figures": [
+    {
+      "anchor": {
+        "confidence": 0.95,
+        "foliation": "page",
+        "physical": 1,
+        "printed": "210",
+        "region": {
+          "h": 0.5,
+          "w": 0.8,
+          "x": 0.1,
+          "y": 0.25
+        },
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "caption": "A flea, as seen through the microscope.",
+      "description": "Engraving of a flea in profile, its legs extended and its body covered in jointed plates.",
+      "id": "fig-flea",
+      "image": "blob:figures/flea.png",
+      "unit": "p1"
+    },
+    {
+      "anchor": {
+        "confidence": 0.95,
+        "foliation": "page",
+        "physical": 2,
+        "printed": "211",
+        "region": {
+          "h": 0.333333,
+          "w": 0.75,
+          "x": 0.125,
+          "y": 0.3
+        },
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "caption": "A louse, holding a human hair.",
+      "description": "Engraving of a louse seen from above, clinging to a single hair.",
+      "id": "fig-louse",
+      "image": "blob:pages/0002.png",
+      "unit": "p2"
+    }
+  ],
+  "fragments": [
+    {
+      "anchor": {
+        "chars": [26, 142],
+        "confidence": 0.95,
+        "foliation": "page",
+        "physical": 1,
+        "printed": "210",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "anchor_end": null,
+      "context": "Hooke introduces the flea.",
+      "id": "m1",
+      "n": 1,
+      "ord": 1,
+      "search_text": "",
+      "section": ["Observ. LIII. Of a Flea"],
+      "text": "The strength and beauty of this small creature, had it no other relation at all to man, would deserve a description.",
+      "unit": "p1"
+    },
+    {
+      "anchor": {
+        "chars": [26, 198],
+        "confidence": 0.95,
+        "foliation": "page",
+        "physical": 2,
+        "printed": "211",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "anchor_end": null,
+      "context": "Hooke introduces the louse.",
+      "id": "m2",
+      "n": 2,
+      "ord": 2,
+      "search_text": "",
+      "section": ["Observ. LIV. Of a Louse"],
+      "text": "This is a Creature so officious, that 'twill be known to every one at one time or other, so busie, and so impudent, that it will be intruding it self in every ones company.",
+      "unit": "p2"
+    }
+  ],
+  "fts": {
+    "tokenizer": "unicode61 remove_diacritics 2",
+    "trigram": false
+  },
+  "meta": {
+    "created": "2026-10-07T00:00:00Z",
+    "document_id": "micrographia-1665",
+    "generator": "spdf-conformance/1.0",
+    "profile": "core",
+    "spdf_version": "5.0"
+  },
+  "provenance": [
+    {
+      "at": "2026-10-07T00:00:00Z",
+      "detail": {
+        "figures": 2
+      },
+      "model": "gemma-4-e4b",
+      "ms": 2400,
+      "provider": "local",
+      "stage": "figures"
+    }
+  ],
+  "sections": [],
+  "spaces": [],
+  "spdf_version": "5.0",
+  "units": [
+    {
+      "anchor": {
+        "confidence": 0.95,
+        "foliation": "page",
+        "physical": 1,
+        "printed": "210",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "confidence": 1,
+      "footer": null,
+      "header": null,
+      "id": "p1",
+      "image": "blob:pages/0001.png",
+      "notes": null,
+      "ord": 1,
+      "printed": "210",
+      "reader": "pdf-text-layer",
+      "t0": null,
+      "t1": null,
+      "text": "Observ. LIII. Of a Flea.\n\nThe strength and beauty of this small creature, had it no other relation at all to man, would deserve a description.",
+      "thumbnail": "blob:thumbs/0001.png",
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 0.95,
+        "foliation": "page",
+        "physical": 2,
+        "printed": "211",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "confidence": 1,
+      "footer": null,
+      "header": null,
+      "id": "p2",
+      "image": "blob:pages/0002.png",
+      "notes": null,
+      "ord": 2,
+      "printed": "211",
+      "reader": "pdf-text-layer",
+      "t0": null,
+      "t1": null,
+      "text": "Observ. LIV. Of a Louse.\n\nThis is a Creature so officious, that 'twill be known to every one at one time or other, so busie, and so impudent, that it will be intruding it self in every ones company.",
+      "thumbnail": null,
+      "words": null
+    }
+  ],
+  "vectors": {}
+}

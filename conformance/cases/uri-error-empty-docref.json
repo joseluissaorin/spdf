@@ -1,0 +1,10 @@
+{
+  "expect": {
+    "error": true
+  },
+  "id": "uri-error-empty-docref",
+  "input": {
+    "uri": "spdf:#p=1"
+  },
+  "kind": "anchor_uri"
+}

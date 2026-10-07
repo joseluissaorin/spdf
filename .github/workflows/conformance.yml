@@ -1,0 +1,46 @@
+name: conformance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "conformance/**"
+      - "spec/schema/**"
+      - ".github/workflows/conformance.yml"
+  pull_request:
+    paths:
+      - "conformance/**"
+      - "spec/schema/**"
+      - ".github/workflows/conformance.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  suite:
+    name: Suite coherence and determinism
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: SQLite and FTS5 available
+        run: python -c "import sqlite3; c = sqlite3.connect(':memory:'); c.execute(\"create virtual table t using fts5(x, tokenize='trigram')\"); print('SQLite', sqlite3.sqlite_version)"
+      - name: Ed25519 self-test (RFC 8032)
+        run: python conformance/tools/ed25519.py
+      - name: Verify the suite
+        run: python conformance/tools/verificar.py --report conformance.json
+      - name: Upload the suite manifest and the reference report
+        if: matrix.os == 'ubuntu-latest' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conformance-suite
+          path: |
+            conformance/manifest.json
+            conformance.json

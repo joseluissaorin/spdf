@@ -1,0 +1,33 @@
+{
+  "expect": {
+    "match": "\"variation\"",
+    "results": [
+      {
+        "anchor_uri": "spdf:sha256-e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3#p=4&f=84&char=0,202",
+        "fragment_id": "d5",
+        "score": 0.000001,
+        "via": ["lexical"]
+      },
+      {
+        "anchor_uri": "spdf:sha256-e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3#p=3&f=61&char=351,530",
+        "fragment_id": "d4",
+        "score": 0.000001,
+        "via": ["lexical"]
+      },
+      {
+        "anchor_uri": "spdf:sha256-e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3#p=3&f=61&char=0,349",
+        "fragment_id": "d3",
+        "score": 0.000001,
+        "via": ["lexical"]
+      }
+    ],
+    "route": "fts"
+  },
+  "id": "search-lexical-darwin-04",
+  "input": {
+    "file": "files/darwin.spdf",
+    "limit": 10,
+    "query": "variation"
+  },
+  "kind": "search_lexical"
+}

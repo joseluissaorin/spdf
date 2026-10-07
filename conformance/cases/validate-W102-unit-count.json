@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": [],
+    "valid": true,
+    "version": "5.0",
+    "warnings": ["W102"]
+  },
+  "id": "validate-W102-unit-count",
+  "input": {
+    "file": "invalid/W102-unit-count.spdf"
+  },
+  "kind": "validate"
+}

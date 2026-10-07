@@ -1,0 +1,30 @@
+{
+  "expect": {
+    "text": "(Vega, 1632, v. 1234)"
+  },
+  "id": "cite-verse-en",
+  "input": {
+    "anchor": {
+      "line_from": 1234,
+      "type": "verse"
+    },
+    "anchor_end": null,
+    "locale": "en",
+    "metadata": {
+      "author": [
+        {
+          "family": "Vega",
+          "given": "Lope de"
+        }
+      ],
+      "issued": {
+        "date-parts": [
+          [1632]
+        ]
+      },
+      "title": "La Dorotea",
+      "type": "book"
+    }
+  },
+  "kind": "cite"
+}

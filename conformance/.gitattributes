@@ -1,0 +1,5 @@
+# Generated outputs are compared byte for byte: never convert line endings.
+*.json text eol=lf
+*.md text eol=lf
+*.py text eol=lf
+*.spdf binary

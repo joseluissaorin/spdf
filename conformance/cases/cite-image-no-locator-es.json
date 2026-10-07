@@ -1,0 +1,35 @@
+{
+  "expect": {
+    "text": "(Hooke, 1665)"
+  },
+  "id": "cite-image-no-locator-es",
+  "input": {
+    "anchor": {
+      "region": {
+        "h": 0.1,
+        "w": 0.3,
+        "x": 0.1,
+        "y": 0.2
+      },
+      "type": "image"
+    },
+    "anchor_end": null,
+    "locale": "es",
+    "metadata": {
+      "author": [
+        {
+          "family": "Hooke",
+          "given": "Robert"
+        }
+      ],
+      "issued": {
+        "date-parts": [
+          [1665]
+        ]
+      },
+      "title": "Micrographia",
+      "type": "book"
+    }
+  },
+  "kind": "cite"
+}

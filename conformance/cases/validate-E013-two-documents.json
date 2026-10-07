@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": ["E013"],
+    "valid": false,
+    "version": "5.0",
+    "warnings": []
+  },
+  "id": "validate-E013-two-documents",
+  "input": {
+    "file": "invalid/E013-two-documents.spdf"
+  },
+  "kind": "validate"
+}

@@ -1,0 +1,21 @@
+{
+  "expect": {
+    "match": "\"struggle for life\"",
+    "results": [
+      {
+        "anchor_uri": "spdf:sha256-e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3#p=3&f=61&char=0,349",
+        "fragment_id": "d3",
+        "score": 1.110173,
+        "via": ["lexical"]
+      }
+    ],
+    "route": "fts"
+  },
+  "id": "search-lexical-darwin-02",
+  "input": {
+    "file": "files/darwin.spdf",
+    "limit": 10,
+    "query": "\"struggle for life\""
+  },
+  "kind": "search_lexical"
+}

@@ -1,0 +1,10 @@
+{
+  "expect": {
+    "dump": "expected/darwin.dump.json"
+  },
+  "id": "roundtrip-darwin",
+  "input": {
+    "source": "sources/darwin.json"
+  },
+  "kind": "roundtrip"
+}

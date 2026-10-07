@@ -1,0 +1,29 @@
+{
+  "expect": {
+    "text": "(Ortuño, 2026, diap. 3)"
+  },
+  "id": "cite-slide-es",
+  "input": {
+    "anchor": {
+      "n": 3,
+      "type": "slide"
+    },
+    "anchor_end": null,
+    "locale": "es",
+    "metadata": {
+      "author": [
+        {
+          "family": "Ortuño"
+        }
+      ],
+      "issued": {
+        "date-parts": [
+          [2026]
+        ]
+      },
+      "title": "Charla",
+      "type": "speech"
+    }
+  },
+  "kind": "cite"
+}

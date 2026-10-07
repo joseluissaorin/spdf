@@ -1,0 +1,11 @@
+{
+  "expect": {
+    "content_sha256": "516da22125a8908b7ec54752da651194b827f0dabece9432eca1f27430cc3efd",
+    "dump": "expected/lunyu.dump.json"
+  },
+  "id": "dump-lunyu",
+  "input": {
+    "file": "files/lunyu.spdf"
+  },
+  "kind": "dump"
+}

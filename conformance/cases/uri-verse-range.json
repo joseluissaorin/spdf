@@ -1,0 +1,19 @@
+{
+  "expect": {
+    "locator": {
+      "v": [1234, 1240]
+    },
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#v=1234-1240"
+  },
+  "id": "uri-verse-range",
+  "input": {
+    "anchor": {
+      "line_from": 1234,
+      "line_to": 1240,
+      "type": "verse"
+    },
+    "anchor_end": null,
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+  },
+  "kind": "anchor_uri"
+}

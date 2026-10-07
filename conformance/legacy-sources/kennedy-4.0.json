@@ -1,0 +1,153 @@
+{
+  "tablas": {
+    "documentos": [
+      {
+        "actualizado": "2026-03-14T18:20:00.000Z",
+        "anio": 1962,
+        "autores": "Kennedy",
+        "bibliotecas": [],
+        "bytes": 26214400,
+        "creado": "2026-03-14T18:00:00.000Z",
+        "duracion": 1083,
+        "estado": "listo",
+        "huella": "546afd0cb0d04766d16bd990bd444c6497ef6d68c1bfa43a0bf7f35d3aaaf42b",
+        "id": "kennedy-rice",
+        "idioma": "en",
+        "metadatos": {
+          "anio": 1962,
+          "autores": [
+            {
+              "apellidos": "Kennedy",
+              "nombre": "John F."
+            }
+          ],
+          "fecha": "1962-09-12",
+          "idioma": "en",
+          "lugar": "Houston",
+          "procedencia": {
+            "fecha": {
+              "confianza": 1,
+              "fuente": "usuario"
+            }
+          },
+          "sinFecha": null,
+          "tipoCSL": "speech",
+          "titulo": "Address at Rice University on the Nation's Space Effort"
+        },
+        "mime": "audio/mpeg",
+        "original": "",
+        "tipo": "audio",
+        "titulo": "Address at Rice University on the Nation's Space Effort",
+        "unidades": 2
+      }
+    ],
+    "fragmentos": [
+      {
+        "ancla": {
+          "hablante": "John F. Kennedy",
+          "t0": 0,
+          "t1": 9.5,
+          "tipo": "tiempo"
+        },
+        "ancla_fin": null,
+        "contexto": "Discurso en la Universidad Rice, Houston.",
+        "documento": "kennedy-rice",
+        "id": "k-f0",
+        "n": 1,
+        "orden": 0,
+        "seccion": [],
+        "texto": "**John F. Kennedy:** We choose to go to the moon.",
+        "unidad": "k-u0"
+      },
+      {
+        "ancla": {
+          "hablante": "John F. Kennedy",
+          "t0": 9.5,
+          "t1": 41,
+          "tipo": "tiempo"
+        },
+        "ancla_fin": null,
+        "contexto": "Discurso en la Universidad Rice, Houston.",
+        "documento": "kennedy-rice",
+        "id": "k-f1",
+        "n": 2,
+        "orden": 1,
+        "seccion": [],
+        "texto": "**John F. Kennedy:** We choose to go to the moon in this decade and do the other things, not because they are easy, but because they are hard, because that goal will serve to organize and measure the best of our energies and skills, because that challenge is one that we are willing to accept, one we are unwilling to postpone, and one which we intend to win, and the others, too.",
+        "unidad": "k-u1"
+      }
+    ],
+    "procedencia": [
+      {
+        "cuando": "2026-03-14T18:10:00.000Z",
+        "detalle": null,
+        "documento": "kennedy-rice",
+        "fase": "lectura",
+        "ms": 60000,
+        "proveedor": "whisper-large-v3-turbo"
+      }
+    ],
+    "spdf": [
+      {
+        "clave": "spdf_version",
+        "valor": "4.0"
+      },
+      {
+        "clave": "creado",
+        "valor": "2026-03-14T18:00:00.000Z"
+      },
+      {
+        "clave": "generador",
+        "valor": "scholaris-nube 1.4.2"
+      }
+    ],
+    "unidades": [
+      {
+        "ancla": {
+          "hablante": "John F. Kennedy",
+          "t0": 0,
+          "t1": 9.5,
+          "tipo": "tiempo"
+        },
+        "cabecera": null,
+        "confianza": 0.95,
+        "documento": "kennedy-rice",
+        "id": "k-u0",
+        "imagen": null,
+        "impresa": null,
+        "lector": "whisper-large-v3-turbo",
+        "miniatura": null,
+        "notas": null,
+        "orden": 0,
+        "pie": null,
+        "t0": 0,
+        "t1": 9.5,
+        "texto": "**John F. Kennedy:** We choose to go to the moon."
+      },
+      {
+        "ancla": {
+          "hablante": "John F. Kennedy",
+          "t0": 9.5,
+          "t1": 41,
+          "tipo": "tiempo"
+        },
+        "cabecera": null,
+        "confianza": 0.95,
+        "documento": "kennedy-rice",
+        "id": "k-u1",
+        "imagen": null,
+        "impresa": null,
+        "lector": "whisper-large-v3-turbo",
+        "miniatura": null,
+        "notas": null,
+        "orden": 1,
+        "pie": null,
+        "t0": 9.5,
+        "t1": 41,
+        "texto": "**John F. Kennedy:** We choose to go to the moon in this decade and do the other things, not because they are easy, but because they are hard, because that goal will serve to organize and measure the best of our energies and skills, because that challenge is one that we are willing to accept, one we are unwilling to postpone, and one which we intend to win, and the others, too."
+      }
+    ]
+  },
+  "user_version": null,
+  "version": "4.0"
+}

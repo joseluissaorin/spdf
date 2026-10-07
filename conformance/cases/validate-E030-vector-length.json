@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": ["E030"],
+    "valid": false,
+    "version": "5.0",
+    "warnings": []
+  },
+  "id": "validate-E030-vector-length",
+  "input": {
+    "file": "invalid/E030-vector-length.spdf"
+  },
+  "kind": "validate"
+}

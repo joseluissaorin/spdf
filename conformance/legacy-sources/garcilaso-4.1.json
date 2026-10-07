@@ -1,0 +1,332 @@
+{
+  "tablas": {
+    "blobs": [
+      {
+        "clave": "original.pdf",
+        "datos": "JVBERi0xLjQKJSBTUERGIGNvbmZvcm1hbmNlIHBsYWNlaG9sZGVyLCBub3QgYSByZWFsIHNjYW4KJSVFT0YK",
+        "mime": "application/pdf"
+      },
+      {
+        "clave": "paginas/0001.png",
+        "datos": "iVBORw0KGgoAAAANSUhEUgAAAAMAAAAECAIAAADETxJQAAAAEUlEQVR42mN4ducEBDHgZQEAYw4eefCBGhoAAAAASUVORK5CYII=",
+        "mime": "image/png"
+      }
+    ],
+    "documentos": [
+      {
+        "actualizado": "2026-05-02T10:05:00.000Z",
+        "anio": 1580,
+        "autores": "Garcilaso de la Vega",
+        "bibliotecas": ["lirica"],
+        "bytes": 63,
+        "creado": "2026-05-02T10:00:00.000Z",
+        "duracion": null,
+        "estado": "listo",
+        "huella": "9f47b3f777324459aa6ee013085c85bf06b02aff716220c5766c0311dc20f5a6",
+        "id": "garcilaso",
+        "idioma": "es",
+        "metadatos": {
+          "anio": 1580,
+          "anioOriginal": 1543,
+          "autores": [
+            {
+              "apellidos": "Garcilaso de la Vega",
+              "nombre": "",
+              "orcid": null
+            }
+          ],
+          "coleccion": "Prueba de conformidad SPDF",
+          "editores": [
+            {
+              "apellidos": "Herrera",
+              "nombre": "Fernando de"
+            }
+          ],
+          "editorial": "Alonso de la Barrera",
+          "idioma": "es",
+          "lugar": "Sevilla",
+          "procedencia": {
+            "anio": {
+              "confianza": 0.9,
+              "fuente": "colofon"
+            },
+            "titulo": {
+              "confianza": 0.97,
+              "fuente": "lectura"
+            }
+          },
+          "subtitulo": "con anotaciones de Fernando de Herrera",
+          "titulo": "Obras de Garcilaso de la Vega"
+        },
+        "mime": "application/pdf",
+        "original": "original.pdf",
+        "tipo": "pdf_escaneado",
+        "titulo": "Obras de Garcilaso de la Vega",
+        "unidades": 3
+      }
+    ],
+    "espacios": [
+      {
+        "creado": "2026-05-02T10:04:00.000Z",
+        "dims": 4,
+        "id": "qwen3-vl-embedding-2b@4",
+        "modalidades": ["texto", "imagen"],
+        "modelo": "qwen3-vl-embedding-2b",
+        "normalizado": 1,
+        "proveedor": "inferbox",
+        "version": null
+      }
+    ],
+    "figuras": [
+      {
+        "ancla": {
+          "region": {
+            "h": 0.4,
+            "w": 0.6,
+            "x": 0.2,
+            "y": 0.1
+          },
+          "tipo": "imagen"
+        },
+        "descripcion": null,
+        "documento": "garcilaso",
+        "id": "g-fig1",
+        "imagen": "",
+        "pie": "Portada",
+        "unidad": "g-u1"
+      }
+    ],
+    "fragmentos": [
+      {
+        "ancla": {
+          "confianza": 1,
+          "fisica": 1,
+          "impresa": null,
+          "origen": "ninguno",
+          "romana": false,
+          "tipo": "pagina"
+        },
+        "ancla_fin": null,
+        "contexto": "Garcilaso, portada.",
+        "documento": "garcilaso",
+        "id": "g-f1",
+        "n": 1,
+        "orden": 0,
+        "seccion": [],
+        "texto": "OBRAS DE GARCILASSO DE LA VEGA CON ANOTACIONES DE FERNANDO DE HERRERA.",
+        "texto_busqueda": "Obras de Garcilaso de la Vega con anotaciones de Fernando de Herrera.",
+        "unidad": "g-u1"
+      },
+      {
+        "ancla": {
+          "confianza": 0.94,
+          "fisica": 2,
+          "impresa": "ix",
+          "origen": "leido",
+          "romana": true,
+          "tipo": "pagina"
+        },
+        "ancla_fin": null,
+        "contexto": "Garcilaso, Égloga primera.",
+        "documento": "garcilaso",
+        "id": "g-f2",
+        "n": 2,
+        "orden": 1,
+        "seccion": ["Égloga primera"],
+        "texto": "El dulce lamentar de dos paſtores,\nSalicio juntamente y Nemoroſo,\nhe de cantar, ſus quexas imitando;",
+        "texto_busqueda": "El dulce lamentar de dos pastores,\nSalicio juntamente y Nemoroso,\nhe de cantar, sus quejas imitando;",
+        "unidad": "g-u2"
+      },
+      {
+        "ancla": {
+          "confianza": 0.8,
+          "fisica": 3,
+          "impresa": "x",
+          "origen": "deducido",
+          "romana": true,
+          "tipo": "pagina"
+        },
+        "ancla_fin": null,
+        "contexto": "Garcilaso, Soneto XXIII.",
+        "documento": "garcilaso",
+        "id": "g-f3",
+        "n": 3,
+        "orden": 2,
+        "seccion": ["Soneto XXIII"],
+        "texto": "En tanto que de roſa y açucena\nſe mueſtra la color en vueſtro geſto,\ny que vueſtro mirar ardiente, honeſto,\ncon clara luz la tempeſtad ſerena;",
+        "texto_busqueda": "En tanto que de rosa y azucena\nse muestra la color en vuestro gesto,\ny que vuestro mirar ardiente, honesto,\ncon clara luz la tempestad serena;",
+        "unidad": "g-u3"
+      }
+    ],
+    "procedencia": [
+      {
+        "cuando": "2026-05-02T10:02:00.000Z",
+        "detalle": {
+          "paginas": 3
+        },
+        "documento": "garcilaso",
+        "fase": "lectura",
+        "ms": 4200,
+        "proveedor": "gemini-3-flash"
+      },
+      {
+        "cuando": "2026-05-02T10:03:00.000Z",
+        "detalle": {
+          "deducido": 1,
+          "fuente": "etiquetas",
+          "leido": 1,
+          "ninguno": 1
+        },
+        "documento": "garcilaso",
+        "fase": "folios",
+        "ms": 30,
+        "proveedor": "etiquetas-pdf"
+      }
+    ],
+    "secciones": [
+      {
+        "documento": "garcilaso",
+        "id": "g-s1",
+        "nivel": 1,
+        "padre": null,
+        "resumen": null,
+        "titulo": "Égloga primera",
+        "unidad_desde": "g-u2",
+        "unidad_hasta": "g-u2"
+      },
+      {
+        "documento": "garcilaso",
+        "id": "g-s2",
+        "nivel": 1,
+        "padre": null,
+        "resumen": "Carpe diem.",
+        "titulo": "Soneto XXIII",
+        "unidad_desde": "g-u3",
+        "unidad_hasta": null
+      }
+    ],
+    "spdf": [
+      {
+        "clave": "spdf_version",
+        "valor": "4.1"
+      },
+      {
+        "clave": "creado",
+        "valor": "2026-05-02T10:00:00.000Z"
+      },
+      {
+        "clave": "generador",
+        "valor": "scholaris-nube 2.0.0"
+      }
+    ],
+    "unidades": [
+      {
+        "ancla": {
+          "confianza": 1,
+          "fisica": 1,
+          "impresa": null,
+          "origen": "ninguno",
+          "romana": false,
+          "tipo": "pagina"
+        },
+        "cabecera": null,
+        "confianza": 0.9,
+        "documento": "garcilaso",
+        "id": "g-u1",
+        "imagen": "paginas/0001.png",
+        "impresa": null,
+        "lector": "gemini-3-flash",
+        "miniatura": null,
+        "notas": null,
+        "orden": 0,
+        "palabras": null,
+        "pie": null,
+        "t0": null,
+        "t1": null,
+        "texto": "OBRAS DE GARCILASSO DE LA VEGA CON ANOTACIONES DE FERNANDO DE HERRERA."
+      },
+      {
+        "ancla": {
+          "confianza": 0.94,
+          "fisica": 2,
+          "impresa": "ix",
+          "origen": "leido",
+          "romana": true,
+          "tipo": "pagina"
+        },
+        "cabecera": null,
+        "confianza": 0.9,
+        "documento": "garcilaso",
+        "id": "g-u2",
+        "imagen": "u/42/d/garcilaso/paginas/0002.png",
+        "impresa": "ix",
+        "lector": "gemini-3-flash",
+        "miniatura": null,
+        "notas": null,
+        "orden": 1,
+        "palabras": null,
+        "pie": null,
+        "t0": null,
+        "t1": null,
+        "texto": "El dulce lamentar de dos paſtores,\nSalicio juntamente y Nemoroſo,\nhe de cantar, ſus quexas imitando;"
+      },
+      {
+        "ancla": {
+          "confianza": 0.8,
+          "fisica": 3,
+          "impresa": "x",
+          "origen": "deducido",
+          "romana": true,
+          "tipo": "pagina"
+        },
+        "cabecera": null,
+        "confianza": 0.9,
+        "documento": "garcilaso",
+        "id": "g-u3",
+        "imagen": "u/42/d/garcilaso/paginas/0003.png",
+        "impresa": "x",
+        "lector": "gemini-3-flash",
+        "miniatura": null,
+        "notas": null,
+        "orden": 2,
+        "palabras": null,
+        "pie": null,
+        "t0": null,
+        "t1": null,
+        "texto": "En tanto que de roſa y açucena\nſe mueſtra la color en vueſtro geſto,\ny que vueſtro mirar ardiente, honeſto,\ncon clara luz la tempeſtad ſerena;"
+      }
+    ],
+    "vectores": [
+      {
+        "documento": "garcilaso",
+        "espacio": "qwen3-vl-embedding-2b@4",
+        "id": "g-f1",
+        "objetivo": "fragmento",
+        "valores": [1, 0, 0, 0]
+      },
+      {
+        "documento": "garcilaso",
+        "espacio": "qwen3-vl-embedding-2b@4",
+        "id": "g-f2",
+        "objetivo": "fragmento",
+        "valores": [0, 0.5, 0.5, 0]
+      },
+      {
+        "documento": "garcilaso",
+        "espacio": "qwen3-vl-embedding-2b@4",
+        "id": "g-f3",
+        "objetivo": "fragmento",
+        "valores": [0, 0, 0.5, 0.5]
+      },
+      {
+        "documento": "garcilaso",
+        "espacio": "qwen3-vl-embedding-2b@4",
+        "id": "g-u1",
+        "objetivo": "unidad",
+        "valores": [0.5, 0.5, 0.5, 0.5]
+      }
+    ]
+  },
+  "user_version": 410,
+  "version": "4.1"
+}

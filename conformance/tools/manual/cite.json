@@ -1,0 +1,2824 @@
+[
+ {
+  "id": "cite-page-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "145",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, p. 145)"
+  }
+ },
+ {
+  "id": "cite-page-en",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "145",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, p. 145)"
+  }
+ },
+ {
+  "id": "cite-page-roman-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "xiv",
+    "roman": true,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, p. xiv)"
+  }
+ },
+ {
+  "id": "cite-page-roman-en",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "xiv",
+    "roman": true,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, p. xiv)"
+  }
+ },
+ {
+  "id": "cite-page-inferred-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "21",
+    "roman": false,
+    "source": "inferred",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, p. [21])"
+  }
+ },
+ {
+  "id": "cite-page-inferred-en",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "21",
+    "roman": false,
+    "source": "inferred",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, p. [21])"
+  }
+ },
+ {
+  "id": "cite-page-unnumbered-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": null,
+    "roman": false,
+    "source": "none",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, s. p.)"
+  }
+ },
+ {
+  "id": "cite-page-unnumbered-en",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": null,
+    "roman": false,
+    "source": "none",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, n. pag.)"
+  }
+ },
+ {
+  "id": "cite-page-range-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "145",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": {
+    "type": "page",
+    "physical": 11,
+    "printed": "146",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, pp. 145-146)"
+  }
+ },
+ {
+  "id": "cite-page-range-en",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "145",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": {
+    "type": "page",
+    "physical": 11,
+    "printed": "146",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, pp. 145-146)"
+  }
+ },
+ {
+  "id": "cite-page-range-inferred-end-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "20",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": {
+    "type": "page",
+    "physical": 11,
+    "printed": "21",
+    "roman": false,
+    "source": "inferred",
+    "confidence": 0.95
+   },
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, pp. 20-[21])"
+  }
+ },
+ {
+  "id": "cite-page-range-inferred-end-en",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "20",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": {
+    "type": "page",
+    "physical": 11,
+    "printed": "21",
+    "roman": false,
+    "source": "inferred",
+    "confidence": 0.95
+   },
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, pp. 20-[21])"
+  }
+ },
+ {
+  "id": "cite-page-range-same-folio-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "145",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": {
+    "type": "page",
+    "physical": 11,
+    "printed": "145",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, p. 145)"
+  }
+ },
+ {
+  "id": "cite-page-range-same-folio-en",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "145",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": {
+    "type": "page",
+    "physical": 11,
+    "printed": "145",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, p. 145)"
+  }
+ },
+ {
+  "id": "cite-leaf-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "1r",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95,
+    "foliation": "leaf"
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, fol. 1r)"
+  }
+ },
+ {
+  "id": "cite-leaf-en",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "1r",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95,
+    "foliation": "leaf"
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, fol. 1r)"
+  }
+ },
+ {
+  "id": "cite-leaf-range-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "1r",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95,
+    "foliation": "leaf"
+   },
+   "anchor_end": {
+    "type": "page",
+    "physical": 11,
+    "printed": "1v",
+    "roman": false,
+    "source": "inferred",
+    "confidence": 0.95,
+    "foliation": "leaf"
+   },
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, fols. 1r-[1v])"
+  }
+ },
+ {
+  "id": "cite-leaf-range-en",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "1r",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95,
+    "foliation": "leaf"
+   },
+   "anchor_end": {
+    "type": "page",
+    "physical": 11,
+    "printed": "1v",
+    "roman": false,
+    "source": "inferred",
+    "confidence": 0.95,
+    "foliation": "leaf"
+   },
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, fols. 1r-[1v])"
+  }
+ },
+ {
+  "id": "cite-leaf-inferred-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "2v",
+    "roman": false,
+    "source": "inferred",
+    "confidence": 0.95,
+    "foliation": "leaf"
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, fol. [2v])"
+  }
+ },
+ {
+  "id": "cite-leaf-inferred-en",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "2v",
+    "roman": false,
+    "source": "inferred",
+    "confidence": 0.95,
+    "foliation": "leaf"
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, fol. [2v])"
+  }
+ },
+ {
+  "id": "cite-column-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "45",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95,
+    "foliation": "column"
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, col. 45)"
+  }
+ },
+ {
+  "id": "cite-column-en",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "45",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95,
+    "foliation": "column"
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, col. 45)"
+  }
+ },
+ {
+  "id": "cite-column-range-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "45",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95,
+    "foliation": "column"
+   },
+   "anchor_end": {
+    "type": "page",
+    "physical": 11,
+    "printed": "46",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95,
+    "foliation": "column"
+   },
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, cols. 45-46)"
+  }
+ },
+ {
+  "id": "cite-column-range-en",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "45",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95,
+    "foliation": "column"
+   },
+   "anchor_end": {
+    "type": "page",
+    "physical": 11,
+    "printed": "46",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95,
+    "foliation": "column"
+   },
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, cols. 45-46)"
+  }
+ },
+ {
+  "id": "cite-two-authors-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "9",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "Mille plateaux",
+    "author": [
+     {
+      "family": "Deleuze",
+      "given": "Gilles"
+     },
+     {
+      "family": "Guattari",
+      "given": "Félix"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1980
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Deleuze y Guattari, 1980, p. 9)"
+  }
+ },
+ {
+  "id": "cite-two-authors-en",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "9",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "Mille plateaux",
+    "author": [
+     {
+      "family": "Deleuze",
+      "given": "Gilles"
+     },
+     {
+      "family": "Guattari",
+      "given": "Félix"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1980
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Deleuze and Guattari, 1980, p. 9)"
+  }
+ },
+ {
+  "id": "cite-conjunction-e-i-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "3",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "article-journal",
+    "title": "Prueba",
+    "author": [
+     {
+      "family": "Gómez"
+     },
+     {
+      "family": "Iglesias"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       2001
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Gómez e Iglesias, 2001, p. 3)"
+  }
+ },
+ {
+  "id": "cite-conjunction-e-i-en",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "3",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "article-journal",
+    "title": "Prueba",
+    "author": [
+     {
+      "family": "Gómez"
+     },
+     {
+      "family": "Iglesias"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       2001
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Gómez and Iglesias, 2001, p. 3)"
+  }
+ },
+ {
+  "id": "cite-conjunction-e-hi-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "3",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "article-journal",
+    "title": "Prueba",
+    "author": [
+     {
+      "family": "Gómez"
+     },
+     {
+      "family": "Hidalgo"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       2001
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Gómez e Hidalgo, 2001, p. 3)"
+  }
+ },
+ {
+  "id": "cite-conjunction-e-accent-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "3",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "article-journal",
+    "title": "Prueba",
+    "author": [
+     {
+      "family": "Gómez"
+     },
+     {
+      "family": "Íñiguez"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       2001
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Gómez e Íñiguez, 2001, p. 3)"
+  }
+ },
+ {
+  "id": "cite-conjunction-y-hie-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "3",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "article-journal",
+    "title": "Prueba",
+    "author": [
+     {
+      "family": "Gómez"
+     },
+     {
+      "family": "Hierro"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       2001
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Gómez y Hierro, 2001, p. 3)"
+  }
+ },
+ {
+  "id": "cite-conjunction-y-io-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "3",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "article-journal",
+    "title": "Prueba",
+    "author": [
+     {
+      "family": "Gómez"
+     },
+     {
+      "family": "Ionesco"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       2001
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Gómez y Ionesco, 2001, p. 3)"
+  }
+ },
+ {
+  "id": "cite-conjunction-y-y-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "3",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "article-journal",
+    "title": "Prueba",
+    "author": [
+     {
+      "family": "Gómez"
+     },
+     {
+      "family": "Yáñez"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       2001
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Gómez y Yáñez, 2001, p. 3)"
+  }
+ },
+ {
+  "id": "cite-three-authors-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "3",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "Atlas",
+    "author": [
+     {
+      "family": "Moretti"
+     },
+     {
+      "family": "Jockers"
+     },
+     {
+      "family": "Underwood"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       2005
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Moretti et al., 2005, p. 3)"
+  }
+ },
+ {
+  "id": "cite-three-authors-en",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "3",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "Atlas",
+    "author": [
+     {
+      "family": "Moretti"
+     },
+     {
+      "family": "Jockers"
+     },
+     {
+      "family": "Underwood"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       2005
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Moretti et al., 2005, p. 3)"
+  }
+ },
+ {
+  "id": "cite-no-author-title-short-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "4",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "La vida de Lazarillo de Tormes y de sus fortunas y adversidades",
+    "title-short": "Lazarillo de Tormes",
+    "issued": {
+     "date-parts": [
+      [
+       1554
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Lazarillo de Tormes, 1554, p. 4)"
+  }
+ },
+ {
+  "id": "cite-no-author-title-short-en",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "4",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "La vida de Lazarillo de Tormes y de sus fortunas y adversidades",
+    "title-short": "Lazarillo de Tormes",
+    "issued": {
+     "date-parts": [
+      [
+       1554
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Lazarillo de Tormes, 1554, p. 4)"
+  }
+ },
+ {
+  "id": "cite-no-author-title-colon-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "210",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "Micrographia: or some physiological descriptions of minute bodies",
+    "issued": {
+     "date-parts": [
+      [
+       1665
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Micrographia, 1665, p. 210)"
+  }
+ },
+ {
+  "id": "cite-no-author-title-colon-en",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "210",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "Micrographia: or some physiological descriptions of minute bodies",
+    "issued": {
+     "date-parts": [
+      [
+       1665
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Micrographia, 1665, p. 210)"
+  }
+ },
+ {
+  "id": "cite-undated-canonical-es",
+  "input": {
+   "anchor": {
+    "type": "canonical",
+    "scheme": "analects",
+    "ref": "1.1"
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "論語",
+    "author": [
+     {
+      "literal": "孔子"
+     }
+    ],
+    "spdf": {
+     "undated": {
+      "from": -479,
+      "to": -221,
+      "basis": "Warring States"
+     }
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(孔子, s. f., 1.1)"
+  }
+ },
+ {
+  "id": "cite-undated-canonical-en",
+  "input": {
+   "anchor": {
+    "type": "canonical",
+    "scheme": "analects",
+    "ref": "1.1"
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "論語",
+    "author": [
+     {
+      "literal": "孔子"
+     }
+    ],
+    "spdf": {
+     "undated": {
+      "from": -479,
+      "to": -221,
+      "basis": "Warring States"
+     }
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(孔子, n.d., 1.1)"
+  }
+ },
+ {
+  "id": "cite-negative-year-es",
+  "input": {
+   "anchor": {
+    "type": "canonical",
+    "scheme": "stephanus",
+    "ref": "514a"
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "República",
+    "author": [
+     {
+      "family": "Platón"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       -375
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Platón, 375 a. C., 514a)"
+  }
+ },
+ {
+  "id": "cite-negative-year-en",
+  "input": {
+   "anchor": {
+    "type": "canonical",
+    "scheme": "stephanus",
+    "ref": "514a"
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "República",
+    "author": [
+     {
+      "family": "Platón"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       -375
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Platón, 375 BC, 514a)"
+  }
+ },
+ {
+  "id": "cite-time-hours-es",
+  "input": {
+   "anchor": {
+    "type": "time",
+    "t0": 4160.0,
+    "t1": 4175.5
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "broadcast",
+    "title": "Apollo 11 air-to-ground voice transmissions (excerpts)",
+    "author": [
+     {
+      "literal": "National Aeronautics and Space Administration"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1969,
+       7,
+       20
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(National Aeronautics and Space Administration, 1969, 1:09:20)"
+  }
+ },
+ {
+  "id": "cite-time-hours-en",
+  "input": {
+   "anchor": {
+    "type": "time",
+    "t0": 4160.0,
+    "t1": 4175.5
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "broadcast",
+    "title": "Apollo 11 air-to-ground voice transmissions (excerpts)",
+    "author": [
+     {
+      "literal": "National Aeronautics and Space Administration"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1969,
+       7,
+       20
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(National Aeronautics and Space Administration, 1969, 1:09:20)"
+  }
+ },
+ {
+  "id": "cite-time-minutes-es",
+  "input": {
+   "anchor": {
+    "type": "time",
+    "t0": 42.9,
+    "t1": 50.0
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "broadcast",
+    "title": "Apollo 11 air-to-ground voice transmissions (excerpts)",
+    "author": [
+     {
+      "literal": "National Aeronautics and Space Administration"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1969,
+       7,
+       20
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(National Aeronautics and Space Administration, 1969, 0:42)"
+  }
+ },
+ {
+  "id": "cite-time-minutes-en",
+  "input": {
+   "anchor": {
+    "type": "time",
+    "t0": 42.9,
+    "t1": 50.0
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "broadcast",
+    "title": "Apollo 11 air-to-ground voice transmissions (excerpts)",
+    "author": [
+     {
+      "literal": "National Aeronautics and Space Administration"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1969,
+       7,
+       20
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(National Aeronautics and Space Administration, 1969, 0:42)"
+  }
+ },
+ {
+  "id": "cite-time-zero-en",
+  "input": {
+   "anchor": {
+    "type": "time",
+    "t0": 0.0,
+    "t1": 3.0
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "broadcast",
+    "title": "Apollo 11 air-to-ground voice transmissions (excerpts)",
+    "author": [
+     {
+      "literal": "National Aeronautics and Space Administration"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1969,
+       7,
+       20
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(National Aeronautics and Space Administration, 1969, 0:00)"
+  }
+ },
+ {
+  "id": "cite-time-one-hour-en",
+  "input": {
+   "anchor": {
+    "type": "time",
+    "t0": 3600.0,
+    "t1": 3610.0
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "broadcast",
+    "title": "Apollo 11 air-to-ground voice transmissions (excerpts)",
+    "author": [
+     {
+      "literal": "National Aeronautics and Space Administration"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1969,
+       7,
+       20
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(National Aeronautics and Space Administration, 1969, 1:00:00)"
+  }
+ },
+ {
+  "id": "cite-time-floor-en",
+  "input": {
+   "anchor": {
+    "type": "time",
+    "t0": 599.99,
+    "t1": 600.5
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "broadcast",
+    "title": "Apollo 11 air-to-ground voice transmissions (excerpts)",
+    "author": [
+     {
+      "literal": "National Aeronautics and Space Administration"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1969,
+       7,
+       20
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(National Aeronautics and Space Administration, 1969, 9:59)"
+  }
+ },
+ {
+  "id": "cite-time-range-es",
+  "input": {
+   "anchor": {
+    "type": "time",
+    "t0": 12.0,
+    "t1": 15.5
+   },
+   "anchor_end": {
+    "type": "time",
+    "t0": 16.0,
+    "t1": 24.5
+   },
+   "metadata": {
+    "type": "broadcast",
+    "title": "Apollo 11 air-to-ground voice transmissions (excerpts)",
+    "author": [
+     {
+      "literal": "National Aeronautics and Space Administration"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1969,
+       7,
+       20
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(National Aeronautics and Space Administration, 1969, 0:12-0:24)"
+  }
+ },
+ {
+  "id": "cite-time-range-en",
+  "input": {
+   "anchor": {
+    "type": "time",
+    "t0": 12.0,
+    "t1": 15.5
+   },
+   "anchor_end": {
+    "type": "time",
+    "t0": 16.0,
+    "t1": 24.5
+   },
+   "metadata": {
+    "type": "broadcast",
+    "title": "Apollo 11 air-to-ground voice transmissions (excerpts)",
+    "author": [
+     {
+      "literal": "National Aeronautics and Space Administration"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1969,
+       7,
+       20
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(National Aeronautics and Space Administration, 1969, 0:12-0:24)"
+  }
+ },
+ {
+  "id": "cite-non-dropping-particle-es",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "2",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "letter",
+    "title": "Letter to Theo",
+    "author": [
+     {
+      "family": "Gogh",
+      "given": "Vincent",
+      "non-dropping-particle": "van"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1888
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(van Gogh, 1888, p. 2)"
+  }
+ },
+ {
+  "id": "cite-non-dropping-particle-en",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": "2",
+    "roman": false,
+    "source": "read",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "letter",
+    "title": "Letter to Theo",
+    "author": [
+     {
+      "family": "Gogh",
+      "given": "Vincent",
+      "non-dropping-particle": "van"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1888
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(van Gogh, 1888, p. 2)"
+  }
+ },
+ {
+  "id": "cite-section-printed-es",
+  "input": {
+   "anchor": {
+    "type": "section",
+    "path": [
+     "Capítulo 3",
+     "3.2 El panóptico"
+    ],
+    "paragraph": 4,
+    "printed": "145"
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "Surveiller et punir",
+    "author": [
+     {
+      "family": "Foucault",
+      "given": "Michel"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1975
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Foucault, 1975, p. 145)"
+  }
+ },
+ {
+  "id": "cite-section-printed-en",
+  "input": {
+   "anchor": {
+    "type": "section",
+    "path": [
+     "Capítulo 3",
+     "3.2 El panóptico"
+    ],
+    "paragraph": 4,
+    "printed": "145"
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "Surveiller et punir",
+    "author": [
+     {
+      "family": "Foucault",
+      "given": "Michel"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1975
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Foucault, 1975, p. 145)"
+  }
+ },
+ {
+  "id": "cite-section-paragraph-es",
+  "input": {
+   "anchor": {
+    "type": "section",
+    "path": [
+     "Capítulo 3",
+     "3.2 El panóptico"
+    ],
+    "paragraph": 4
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "Surveiller et punir",
+    "author": [
+     {
+      "family": "Foucault",
+      "given": "Michel"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1975
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Foucault, 1975, § 3.2 El panóptico, párr. 4)"
+  }
+ },
+ {
+  "id": "cite-section-paragraph-en",
+  "input": {
+   "anchor": {
+    "type": "section",
+    "path": [
+     "Capítulo 3",
+     "3.2 El panóptico"
+    ],
+    "paragraph": 4
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "Surveiller et punir",
+    "author": [
+     {
+      "family": "Foucault",
+      "given": "Michel"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1975
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Foucault, 1975, § 3.2 El panóptico, para. 4)"
+  }
+ },
+ {
+  "id": "cite-section-no-paragraph-es",
+  "input": {
+   "anchor": {
+    "type": "section",
+    "path": [
+     "Capítulo 3"
+    ]
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "Surveiller et punir",
+    "author": [
+     {
+      "family": "Foucault",
+      "given": "Michel"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1975
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Foucault, 1975, § Capítulo 3)"
+  }
+ },
+ {
+  "id": "cite-section-no-paragraph-en",
+  "input": {
+   "anchor": {
+    "type": "section",
+    "path": [
+     "Capítulo 3"
+    ]
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "Surveiller et punir",
+    "author": [
+     {
+      "family": "Foucault",
+      "given": "Michel"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1975
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Foucault, 1975, § Capítulo 3)"
+  }
+ },
+ {
+  "id": "cite-section-empty-path-es",
+  "input": {
+   "anchor": {
+    "type": "section",
+    "path": [],
+    "paragraph": 2
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "Surveiller et punir",
+    "author": [
+     {
+      "family": "Foucault",
+      "given": "Michel"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1975
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Foucault, 1975, párr. 2)"
+  }
+ },
+ {
+  "id": "cite-section-empty-path-en",
+  "input": {
+   "anchor": {
+    "type": "section",
+    "path": [],
+    "paragraph": 2
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "Surveiller et punir",
+    "author": [
+     {
+      "family": "Foucault",
+      "given": "Michel"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1975
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Foucault, 1975, para. 2)"
+  }
+ },
+ {
+  "id": "cite-web-es",
+  "input": {
+   "anchor": {
+    "type": "web",
+    "url": "https://example.org/guia",
+    "path": [
+     "Introducción"
+    ],
+    "paragraph": 2,
+    "accessed": "2026-10-07"
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "webpage",
+    "title": "Guía",
+    "author": [
+     {
+      "family": "Ramos"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       2024,
+       5
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Ramos, 2024, § Introducción, párr. 2)"
+  }
+ },
+ {
+  "id": "cite-web-en",
+  "input": {
+   "anchor": {
+    "type": "web",
+    "url": "https://example.org/guia",
+    "path": [
+     "Introducción"
+    ],
+    "paragraph": 2,
+    "accessed": "2026-10-07"
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "webpage",
+    "title": "Guía",
+    "author": [
+     {
+      "family": "Ramos"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       2024,
+       5
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Ramos, 2024, § Introducción, para. 2)"
+  }
+ },
+ {
+  "id": "cite-slide-es",
+  "input": {
+   "anchor": {
+    "type": "slide",
+    "n": 3
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "speech",
+    "title": "Charla",
+    "author": [
+     {
+      "family": "Ortuño"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       2026
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Ortuño, 2026, diap. 3)"
+  }
+ },
+ {
+  "id": "cite-slide-en",
+  "input": {
+   "anchor": {
+    "type": "slide",
+    "n": 3
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "speech",
+    "title": "Charla",
+    "author": [
+     {
+      "family": "Ortuño"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       2026
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Ortuño, 2026, slide 3)"
+  }
+ },
+ {
+  "id": "cite-sheet-rows-es",
+  "input": {
+   "anchor": {
+    "type": "sheet",
+    "sheet": "Datos",
+    "row_from": 4,
+    "row_to": 9
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "dataset",
+    "title": "Encuesta",
+    "author": [
+     {
+      "family": "Saorín"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       2026
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Saorín, 2026, Datos, filas 4-9)"
+  }
+ },
+ {
+  "id": "cite-sheet-rows-en",
+  "input": {
+   "anchor": {
+    "type": "sheet",
+    "sheet": "Datos",
+    "row_from": 4,
+    "row_to": 9
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "dataset",
+    "title": "Encuesta",
+    "author": [
+     {
+      "family": "Saorín"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       2026
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Saorín, 2026, Datos, rows 4-9)"
+  }
+ },
+ {
+  "id": "cite-sheet-row-es",
+  "input": {
+   "anchor": {
+    "type": "sheet",
+    "sheet": "Datos",
+    "row_from": 4,
+    "row_to": 4
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "dataset",
+    "title": "Encuesta",
+    "author": [
+     {
+      "family": "Saorín"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       2026
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Saorín, 2026, Datos, fila 4)"
+  }
+ },
+ {
+  "id": "cite-sheet-row-en",
+  "input": {
+   "anchor": {
+    "type": "sheet",
+    "sheet": "Datos",
+    "row_from": 4,
+    "row_to": 4
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "dataset",
+    "title": "Encuesta",
+    "author": [
+     {
+      "family": "Saorín"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       2026
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Saorín, 2026, Datos, row 4)"
+  }
+ },
+ {
+  "id": "cite-verse-es",
+  "input": {
+   "anchor": {
+    "type": "verse",
+    "line_from": 1234
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "La Dorotea",
+    "author": [
+     {
+      "family": "Vega",
+      "given": "Lope de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1632
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Vega, 1632, v. 1234)"
+  }
+ },
+ {
+  "id": "cite-verse-en",
+  "input": {
+   "anchor": {
+    "type": "verse",
+    "line_from": 1234
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "La Dorotea",
+    "author": [
+     {
+      "family": "Vega",
+      "given": "Lope de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1632
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Vega, 1632, v. 1234)"
+  }
+ },
+ {
+  "id": "cite-verses-es",
+  "input": {
+   "anchor": {
+    "type": "verse",
+    "line_from": 1234,
+    "line_to": 1240
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "La Dorotea",
+    "author": [
+     {
+      "family": "Vega",
+      "given": "Lope de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1632
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Vega, 1632, vv. 1234-1240)"
+  }
+ },
+ {
+  "id": "cite-verses-en",
+  "input": {
+   "anchor": {
+    "type": "verse",
+    "line_from": 1234,
+    "line_to": 1240
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "La Dorotea",
+    "author": [
+     {
+      "family": "Vega",
+      "given": "Lope de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1632
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Vega, 1632, vv. 1234-1240)"
+  }
+ },
+ {
+  "id": "cite-image-no-locator-es",
+  "input": {
+   "anchor": {
+    "type": "image",
+    "region": {
+     "x": 0.1,
+     "y": 0.2,
+     "w": 0.3,
+     "h": 0.1
+    }
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "Micrographia",
+    "author": [
+     {
+      "family": "Hooke",
+      "given": "Robert"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1665
+      ]
+     ]
+    }
+   },
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Hooke, 1665)"
+  }
+ },
+ {
+  "id": "cite-image-no-locator-en",
+  "input": {
+   "anchor": {
+    "type": "image",
+    "region": {
+     "x": 0.1,
+     "y": 0.2,
+     "w": 0.3,
+     "h": 0.1
+    }
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "Micrographia",
+    "author": [
+     {
+      "family": "Hooke",
+      "given": "Robert"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1665
+      ]
+     ]
+    }
+   },
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Hooke, 1665)"
+  }
+ },
+ {
+  "id": "cite-locale-es-ES",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": null,
+    "roman": false,
+    "source": "none",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "es-ES"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, s. p.)"
+  }
+ },
+ {
+  "id": "cite-locale-en-GB",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": null,
+    "roman": false,
+    "source": "none",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "en-GB"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, n. pag.)"
+  }
+ },
+ {
+  "id": "cite-locale-fr",
+  "input": {
+   "anchor": {
+    "type": "page",
+    "physical": 10,
+    "printed": null,
+    "roman": false,
+    "source": "none",
+    "confidence": 0.95
+   },
+   "anchor_end": null,
+   "metadata": {
+    "type": "book",
+    "title": "El ingenioso hidalgo don Quijote de la Mancha",
+    "title-short": "Don Quijote",
+    "author": [
+     {
+      "family": "Cervantes Saavedra",
+      "given": "Miguel de"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       1605
+      ]
+     ]
+    }
+   },
+   "locale": "fr"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1605, n. pag.)"
+  }
+ }
+]

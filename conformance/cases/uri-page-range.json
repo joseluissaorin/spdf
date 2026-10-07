@@ -1,0 +1,32 @@
+{
+  "expect": {
+    "locator": {
+      "f": "21",
+      "fe": "22",
+      "p": 29,
+      "pe": 30
+    },
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#p=29&pe=30&f=21&fe=22"
+  },
+  "id": "uri-page-range",
+  "input": {
+    "anchor": {
+      "confidence": 0.97,
+      "physical": 29,
+      "printed": "21",
+      "roman": false,
+      "source": "read",
+      "type": "page"
+    },
+    "anchor_end": {
+      "confidence": 0.97,
+      "physical": 30,
+      "printed": "22",
+      "roman": false,
+      "source": "read",
+      "type": "page"
+    },
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+  },
+  "kind": "anchor_uri"
+}

@@ -1,0 +1,153 @@
+{
+  "blobs": [],
+  "document": {
+    "authors": "Kennedy",
+    "bytes": 26214400,
+    "created": "2026-03-14T18:00:00.000Z",
+    "duration": 1083,
+    "id": "kennedy-rice",
+    "kind": "audio",
+    "language": "en",
+    "metadata": {
+      "author": [
+        {
+          "family": "Kennedy",
+          "given": "John F."
+        }
+      ],
+      "issued": {
+        "date-parts": [
+          [1962, 9, 12]
+        ]
+      },
+      "language": "en",
+      "publisher-place": "Houston",
+      "spdf": {
+        "provenance": {
+          "issued": {
+            "confidence": 1,
+            "source": "user"
+          }
+        }
+      },
+      "title": "Address at Rice University on the Nation's Space Effort",
+      "type": "speech"
+    },
+    "mime": "audio/mpeg",
+    "rights": null,
+    "source_ref": null,
+    "source_sha256": "546afd0cb0d04766d16bd990bd444c6497ef6d68c1bfa43a0bf7f35d3aaaf42b",
+    "title": "Address at Rice University on the Nation's Space Effort",
+    "unit_count": 2,
+    "updated": "2026-03-14T18:20:00.000Z",
+    "year": 1962
+  },
+  "extensions": [],
+  "figures": [],
+  "fragments": [
+    {
+      "anchor": {
+        "speaker": "John F. Kennedy",
+        "t0": 0,
+        "t1": 9.5,
+        "type": "time"
+      },
+      "anchor_end": null,
+      "context": "Discurso en la Universidad Rice, Houston.",
+      "id": "k-f0",
+      "n": 1,
+      "ord": 0,
+      "search_text": null,
+      "section": [],
+      "text": "**John F. Kennedy:** We choose to go to the moon.",
+      "unit": "k-u0"
+    },
+    {
+      "anchor": {
+        "speaker": "John F. Kennedy",
+        "t0": 9.5,
+        "t1": 41,
+        "type": "time"
+      },
+      "anchor_end": null,
+      "context": "Discurso en la Universidad Rice, Houston.",
+      "id": "k-f1",
+      "n": 2,
+      "ord": 1,
+      "search_text": null,
+      "section": [],
+      "text": "**John F. Kennedy:** We choose to go to the moon in this decade and do the other things, not because they are easy, but because they are hard, because that goal will serve to organize and measure the best of our energies and skills, because that challenge is one that we are willing to accept, one we are unwilling to postpone, and one which we intend to win, and the others, too.",
+      "unit": "k-u1"
+    }
+  ],
+  "fts": {
+    "tokenizer": "unicode61 remove_diacritics 2",
+    "trigram": false
+  },
+  "legacy": true,
+  "meta": {
+    "created": "2026-03-14T18:00:00.000Z",
+    "generator": "scholaris-nube 1.4.2",
+    "spdf_version": "4.0"
+  },
+  "provenance": [
+    {
+      "at": "2026-03-14T18:10:00.000Z",
+      "detail": null,
+      "model": null,
+      "ms": 60000,
+      "provider": "whisper-large-v3-turbo",
+      "stage": "lectura"
+    }
+  ],
+  "sections": [],
+  "spaces": [],
+  "spdf_version": "4.0",
+  "units": [
+    {
+      "anchor": {
+        "speaker": "John F. Kennedy",
+        "t0": 0,
+        "t1": 9.5,
+        "type": "time"
+      },
+      "confidence": 0.95,
+      "footer": null,
+      "header": null,
+      "id": "k-u0",
+      "image": null,
+      "notes": null,
+      "ord": 1,
+      "printed": null,
+      "reader": "whisper-large-v3-turbo",
+      "t0": 0,
+      "t1": 9.5,
+      "text": "**John F. Kennedy:** We choose to go to the moon.",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "speaker": "John F. Kennedy",
+        "t0": 9.5,
+        "t1": 41,
+        "type": "time"
+      },
+      "confidence": 0.95,
+      "footer": null,
+      "header": null,
+      "id": "k-u1",
+      "image": null,
+      "notes": null,
+      "ord": 2,
+      "printed": null,
+      "reader": "whisper-large-v3-turbo",
+      "t0": 9.5,
+      "t1": 41,
+      "text": "**John F. Kennedy:** We choose to go to the moon in this decade and do the other things, not because they are easy, but because they are hard, because that goal will serve to organize and measure the best of our energies and skills, because that challenge is one that we are willing to accept, one we are unwilling to postpone, and one which we intend to win, and the others, too.",
+      "thumbnail": null,
+      "words": null
+    }
+  ],
+  "vectors": {}
+}

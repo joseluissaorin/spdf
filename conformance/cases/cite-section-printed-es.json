@@ -1,0 +1,32 @@
+{
+  "expect": {
+    "text": "(Foucault, 1975, p. 145)"
+  },
+  "id": "cite-section-printed-es",
+  "input": {
+    "anchor": {
+      "paragraph": 4,
+      "path": ["Capítulo 3", "3.2 El panóptico"],
+      "printed": "145",
+      "type": "section"
+    },
+    "anchor_end": null,
+    "locale": "es",
+    "metadata": {
+      "author": [
+        {
+          "family": "Foucault",
+          "given": "Michel"
+        }
+      ],
+      "issued": {
+        "date-parts": [
+          [1975]
+        ]
+      },
+      "title": "Surveiller et punir",
+      "type": "book"
+    }
+  },
+  "kind": "cite"
+}

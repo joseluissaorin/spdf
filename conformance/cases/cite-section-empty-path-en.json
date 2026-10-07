@@ -1,0 +1,31 @@
+{
+  "expect": {
+    "text": "(Foucault, 1975, para. 2)"
+  },
+  "id": "cite-section-empty-path-en",
+  "input": {
+    "anchor": {
+      "paragraph": 2,
+      "path": [],
+      "type": "section"
+    },
+    "anchor_end": null,
+    "locale": "en",
+    "metadata": {
+      "author": [
+        {
+          "family": "Foucault",
+          "given": "Michel"
+        }
+      ],
+      "issued": {
+        "date-parts": [
+          [1975]
+        ]
+      },
+      "title": "Surveiller et punir",
+      "type": "book"
+    }
+  },
+  "kind": "cite"
+}

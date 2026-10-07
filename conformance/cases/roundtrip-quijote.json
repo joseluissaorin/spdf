@@ -1,0 +1,10 @@
+{
+  "expect": {
+    "dump": "expected/quijote.dump.json"
+  },
+  "id": "roundtrip-quijote",
+  "input": {
+    "source": "sources/quijote.json"
+  },
+  "kind": "roundtrip"
+}

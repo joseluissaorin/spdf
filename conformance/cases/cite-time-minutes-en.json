@@ -1,0 +1,30 @@
+{
+  "expect": {
+    "text": "(National Aeronautics and Space Administration, 1969, 0:42)"
+  },
+  "id": "cite-time-minutes-en",
+  "input": {
+    "anchor": {
+      "t0": 42.9,
+      "t1": 50,
+      "type": "time"
+    },
+    "anchor_end": null,
+    "locale": "en",
+    "metadata": {
+      "author": [
+        {
+          "literal": "National Aeronautics and Space Administration"
+        }
+      ],
+      "issued": {
+        "date-parts": [
+          [1969, 7, 20]
+        ]
+      },
+      "title": "Apollo 11 air-to-ground voice transmissions (excerpts)",
+      "type": "broadcast"
+    }
+  },
+  "kind": "cite"
+}

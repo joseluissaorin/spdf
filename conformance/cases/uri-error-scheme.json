@@ -1,0 +1,10 @@
+{
+  "expect": {
+    "error": true
+  },
+  "id": "uri-error-scheme",
+  "input": {
+    "uri": "http://example.org/#p=1"
+  },
+  "kind": "anchor_uri"
+}

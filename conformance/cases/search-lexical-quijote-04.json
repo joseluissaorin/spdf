@@ -1,0 +1,21 @@
+{
+  "expect": {
+    "match": "\"rocin\"",
+    "results": [
+      {
+        "anchor_uri": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=5&pe=6&f=1r&fe=1v&char=101,278",
+        "fragment_id": "q4",
+        "score": 1.022345,
+        "via": ["lexical"]
+      }
+    ],
+    "route": "fts"
+  },
+  "id": "search-lexical-quijote-04",
+  "input": {
+    "file": "files/quijote.spdf",
+    "limit": 10,
+    "query": "rocin"
+  },
+  "kind": "search_lexical"
+}

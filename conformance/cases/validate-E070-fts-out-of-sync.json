@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": ["E070"],
+    "valid": false,
+    "version": "5.0",
+    "warnings": []
+  },
+  "id": "validate-E070-fts-out-of-sync",
+  "input": {
+    "file": "invalid/E070-fts-out-of-sync.spdf"
+  },
+  "kind": "validate"
+}

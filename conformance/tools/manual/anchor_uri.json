@@ -1,0 +1,778 @@
+{
+ "format": [
+  {
+   "id": "uri-page-chars",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "page",
+     "physical": 29,
+     "printed": "21",
+     "roman": false,
+     "source": "read",
+     "confidence": 0.97,
+     "chars": [
+      118,
+      301
+     ]
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#p=29&f=21&char=118,301",
+    "locator": {
+     "p": 29,
+     "f": "21",
+     "char": [
+      118,
+      301
+     ]
+    }
+   }
+  },
+  {
+   "id": "uri-page-unnumbered",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "page",
+     "physical": 1,
+     "printed": null,
+     "roman": false,
+     "source": "none",
+     "confidence": 1
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#p=1",
+    "locator": {
+     "p": 1
+    }
+   }
+  },
+  {
+   "id": "uri-page-roman",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "page",
+     "physical": 14,
+     "printed": "xiv",
+     "roman": true,
+     "source": "read",
+     "confidence": 0.97
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#p=14&f=xiv",
+    "locator": {
+     "p": 14,
+     "f": "xiv"
+    }
+   }
+  },
+  {
+   "id": "uri-page-range",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "page",
+     "physical": 29,
+     "printed": "21",
+     "roman": false,
+     "source": "read",
+     "confidence": 0.97
+    },
+    "anchor_end": {
+     "type": "page",
+     "physical": 30,
+     "printed": "22",
+     "roman": false,
+     "source": "read",
+     "confidence": 0.97
+    }
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#p=29&pe=30&f=21&fe=22",
+    "locator": {
+     "p": 29,
+     "pe": 30,
+     "f": "21",
+     "fe": "22"
+    }
+   }
+  },
+  {
+   "id": "uri-page-range-same-folio",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "page",
+     "physical": 29,
+     "printed": "21",
+     "roman": false,
+     "source": "read",
+     "confidence": 0.97
+    },
+    "anchor_end": {
+     "type": "page",
+     "physical": 30,
+     "printed": "21",
+     "roman": false,
+     "source": "read",
+     "confidence": 0.97
+    }
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#p=29&pe=30&f=21",
+    "locator": {
+     "p": 29,
+     "pe": 30,
+     "f": "21"
+    }
+   }
+  },
+  {
+   "id": "uri-page-leaf-range",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "page",
+     "physical": 5,
+     "printed": "1r",
+     "roman": false,
+     "source": "read",
+     "confidence": 0.97,
+     "foliation": "leaf"
+    },
+    "anchor_end": {
+     "type": "page",
+     "physical": 6,
+     "printed": "1v",
+     "roman": false,
+     "source": "inferred",
+     "confidence": 0.97,
+     "foliation": "leaf"
+    }
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#p=5&pe=6&f=1r&fe=1v",
+    "locator": {
+     "p": 5,
+     "pe": 6,
+     "f": "1r",
+     "fe": "1v"
+    }
+   }
+  },
+  {
+   "id": "uri-page-folio-encoding",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "page",
+     "physical": 7,
+     "printed": "A-3 bis",
+     "roman": false,
+     "source": "read",
+     "confidence": 0.97
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#p=7&f=A-3%20bis",
+    "locator": {
+     "p": 7,
+     "f": "A-3 bis"
+    }
+   }
+  },
+  {
+   "id": "uri-time",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "time",
+     "t0": 4160.0,
+     "t1": 4175.5,
+     "speaker": "Neil Armstrong"
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#t=4160,4175.5",
+    "locator": {
+     "t": [
+      4160,
+      4175.5
+     ]
+    }
+   }
+  },
+  {
+   "id": "uri-time-decimals",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "time",
+     "t0": 0.125,
+     "t1": 2.000001
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#t=0.125,2.000001",
+    "locator": {
+     "t": [
+      0.125,
+      2.000001
+     ]
+    }
+   }
+  },
+  {
+   "id": "uri-time-range",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "time",
+     "t0": 12.0,
+     "t1": 15.5
+    },
+    "anchor_end": {
+     "type": "time",
+     "t0": 16.0,
+     "t1": 24.5
+    }
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#t=12,24.5",
+    "locator": {
+     "t": [
+      12,
+      24.5
+     ]
+    }
+   }
+  },
+  {
+   "id": "uri-section",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "section",
+     "path": [
+      "Chapter 3",
+      "3.2 The panopticon"
+     ],
+     "paragraph": 4,
+     "printed": "145"
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#f=145&s=Chapter%203/3.2%20The%20panopticon&para=4",
+    "locator": {
+     "f": "145",
+     "s": [
+      "Chapter 3",
+      "3.2 The panopticon"
+     ],
+     "para": 4
+    }
+   }
+  },
+  {
+   "id": "uri-section-slash-and-accents",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "section",
+     "path": [
+      "Parte I/II",
+      "Capítulo 3"
+     ],
+     "paragraph": 2
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#s=Parte%20I%2FII/Cap%C3%ADtulo%203&para=2",
+    "locator": {
+     "s": [
+      "Parte I/II",
+      "Capítulo 3"
+     ],
+     "para": 2
+    }
+   }
+  },
+  {
+   "id": "uri-slide",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "slide",
+     "n": 3
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#sl=3",
+    "locator": {
+     "sl": 3
+    }
+   }
+  },
+  {
+   "id": "uri-sheet",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "sheet",
+     "sheet": "Data 2026",
+     "row_from": 4,
+     "row_to": 9
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#sh=Data%202026&rows=4-9",
+    "locator": {
+     "sh": "Data 2026",
+     "rows": [
+      4,
+      9
+     ]
+    }
+   }
+  },
+  {
+   "id": "uri-web",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "web",
+     "url": "https://example.org/a",
+     "path": [
+      "Intro"
+     ],
+     "paragraph": 2,
+     "accessed": "2026-10-07"
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#s=Intro&para=2",
+    "locator": {
+     "s": [
+      "Intro"
+     ],
+     "para": 2
+    }
+   }
+  },
+  {
+   "id": "uri-image-region",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "image",
+     "region": {
+      "x": 0.1,
+      "y": 0.2,
+      "w": 0.3,
+      "h": 0.1
+     }
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#xywh=percent:10,20,30,10",
+    "locator": {
+     "xywh": [
+      0.1,
+      0.2,
+      0.3,
+      0.1
+     ]
+    }
+   }
+  },
+  {
+   "id": "uri-page-region-fractions",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "page",
+     "physical": 1,
+     "printed": "210",
+     "roman": false,
+     "source": "read",
+     "confidence": 0.97,
+     "region": {
+      "x": 0.125,
+      "y": 0.3,
+      "w": 0.75,
+      "h": 0.333333
+     }
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#p=1&f=210&xywh=percent:12.5,30,75,33.3333",
+    "locator": {
+     "p": 1,
+     "f": "210",
+     "xywh": [
+      0.125,
+      0.3,
+      0.75,
+      0.333333
+     ]
+    }
+   }
+  },
+  {
+   "id": "uri-verse-range",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "verse",
+     "line_from": 1234,
+     "line_to": 1240
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#v=1234-1240",
+    "locator": {
+     "v": [
+      1234,
+      1240
+     ]
+    }
+   }
+  },
+  {
+   "id": "uri-verse-single",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "verse",
+     "line_from": 7
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#v=7",
+    "locator": {
+     "v": [
+      7
+     ]
+    }
+   }
+  },
+  {
+   "id": "uri-verse-same-line",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "verse",
+     "line_from": 7,
+     "line_to": 7,
+     "printed": "VII"
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#f=VII&v=7",
+    "locator": {
+     "f": "VII",
+     "v": [
+      7
+     ]
+    }
+   }
+  },
+  {
+   "id": "uri-canonical-stephanus",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "canonical",
+     "scheme": "stephanus",
+     "ref": "514a"
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#ref=stephanus:514a",
+    "locator": {
+     "ref": {
+      "scheme": "stephanus",
+      "ref": "514a"
+     }
+    }
+   }
+  },
+  {
+   "id": "uri-canonical-cts",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "canonical",
+     "scheme": "cts",
+     "ref": "urn:cts:greekLit:tlg0059.tlg030:514a"
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#ref=cts:urn%3Acts%3AgreekLit%3Atlg0059.tlg030%3A514a",
+    "locator": {
+     "ref": {
+      "scheme": "cts",
+      "ref": "urn:cts:greekLit:tlg0059.tlg030:514a"
+     }
+    }
+   }
+  },
+  {
+   "id": "uri-canonical-chars",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "canonical",
+     "scheme": "analects",
+     "ref": "1.1",
+     "chars": [
+      0,
+      47
+     ]
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#ref=analects:1.1&char=0,47",
+    "locator": {
+     "ref": {
+      "scheme": "analects",
+      "ref": "1.1"
+     },
+     "char": [
+      0,
+      47
+     ]
+    }
+   }
+  },
+  {
+   "id": "uri-document-id",
+   "input": {
+    "docref": "mi documento",
+    "anchor": {
+     "type": "slide",
+     "n": 1
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:mi%20documento#sl=1",
+    "locator": {
+     "sl": 1
+    }
+   }
+  },
+  {
+   "id": "uri-no-params",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "image"
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "locator": {}
+   }
+  }
+ ],
+ "parse": [
+  {
+   "id": "uri-parse-npt-clock",
+   "input": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#t=npt:1:09:20,1:09:35.5"
+   },
+   "expect": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "locator": {
+     "t": [
+      4160,
+      4175.5
+     ]
+    },
+    "canonical": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#t=4160,4175.5"
+   }
+  },
+  {
+   "id": "uri-parse-unordered",
+   "input": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#char=1,5&p=3"
+   },
+   "expect": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "locator": {
+     "p": 3,
+     "char": [
+      1,
+      5
+     ]
+    },
+    "canonical": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#p=3&char=1,5"
+   }
+  },
+  {
+   "id": "uri-parse-unknown-param",
+   "input": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#p=3&zoom=2"
+   },
+   "expect": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "locator": {
+     "p": 3
+    },
+    "canonical": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#p=3"
+   }
+  },
+  {
+   "id": "uri-parse-lowercase-hex",
+   "input": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#s=Cap%c3%adtulo"
+   },
+   "expect": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "locator": {
+     "s": [
+      "Capítulo"
+     ]
+    },
+    "canonical": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#s=Cap%C3%ADtulo"
+   }
+  },
+  {
+   "id": "uri-parse-raw-unicode",
+   "input": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#s=Capítulo 3"
+   },
+   "expect": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "locator": {
+     "s": [
+      "Capítulo 3"
+     ]
+    },
+    "canonical": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#s=Cap%C3%ADtulo%203"
+   }
+  },
+  {
+   "id": "uri-parse-document-id",
+   "input": {
+    "uri": "spdf:quijote-1605#p=5&f=1r"
+   },
+   "expect": {
+    "docref": "quijote-1605",
+    "locator": {
+     "p": 5,
+     "f": "1r"
+    },
+    "canonical": "spdf:quijote-1605#p=5&f=1r"
+   }
+  }
+ ],
+ "errors": [
+  {
+   "id": "uri-error-scheme",
+   "input": {
+    "uri": "http://example.org/#p=1"
+   },
+   "expect": {
+    "error": true
+   }
+  },
+  {
+   "id": "uri-error-not-integer",
+   "input": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#p=abc"
+   },
+   "expect": {
+    "error": true
+   }
+  },
+  {
+   "id": "uri-error-page-zero",
+   "input": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#p=0"
+   },
+   "expect": {
+    "error": true
+   }
+  },
+  {
+   "id": "uri-error-pixels",
+   "input": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#xywh=10,20,30,40"
+   },
+   "expect": {
+    "error": true
+   }
+  },
+  {
+   "id": "uri-error-char-reversed",
+   "input": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#char=10,5"
+   },
+   "expect": {
+    "error": true
+   }
+  },
+  {
+   "id": "uri-error-bad-utf8",
+   "input": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#f=%E2%28"
+   },
+   "expect": {
+    "error": true
+   }
+  },
+  {
+   "id": "uri-error-duplicate",
+   "input": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#p=1&p=2"
+   },
+   "expect": {
+    "error": true
+   }
+  },
+  {
+   "id": "uri-error-empty-docref",
+   "input": {
+    "uri": "spdf:#p=1"
+   },
+   "expect": {
+    "error": true
+   }
+  },
+  {
+   "id": "uri-error-time-reversed",
+   "input": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#t=5,3"
+   },
+   "expect": {
+    "error": true
+   }
+  }
+ ]
+}

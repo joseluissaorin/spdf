@@ -1,0 +1,31 @@
+{
+  "expect": {
+    "text": "(Saorín, 2026, Datos, rows 4-9)"
+  },
+  "id": "cite-sheet-rows-en",
+  "input": {
+    "anchor": {
+      "row_from": 4,
+      "row_to": 9,
+      "sheet": "Datos",
+      "type": "sheet"
+    },
+    "anchor_end": null,
+    "locale": "en",
+    "metadata": {
+      "author": [
+        {
+          "family": "Saorín"
+        }
+      ],
+      "issued": {
+        "date-parts": [
+          [2026]
+        ]
+      },
+      "title": "Encuesta",
+      "type": "dataset"
+    }
+  },
+  "kind": "cite"
+}

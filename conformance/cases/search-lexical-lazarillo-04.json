@@ -1,0 +1,21 @@
+{
+  "expect": {
+    "match": "\"baxos\"",
+    "results": [
+      {
+        "anchor_uri": "spdf:sha256-c2f0966e90fc3c5dcda91143a8271f4636bab035b060ae577724283514c00e4a#p=5&f=6&char=0,152",
+        "fragment_id": "l5",
+        "score": 1.034161,
+        "via": ["lexical"]
+      }
+    ],
+    "route": "fts"
+  },
+  "id": "search-lexical-lazarillo-04",
+  "input": {
+    "file": "files/lazarillo.spdf",
+    "limit": 10,
+    "query": "baxos"
+  },
+  "kind": "search_lexical"
+}

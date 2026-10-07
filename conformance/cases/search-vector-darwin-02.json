@@ -1,0 +1,45 @@
+{
+  "expect": {
+    "results": [
+      {
+        "anchor_uri": "spdf:sha256-e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3#p=4&f=84&char=0,202",
+        "fragment_id": "d5",
+        "score": 0.9375
+      },
+      {
+        "anchor_uri": "spdf:sha256-e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3#p=3&f=61&char=351,530",
+        "fragment_id": "d4",
+        "score": 0.875
+      },
+      {
+        "anchor_uri": "spdf:sha256-e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3#p=3&f=61&char=0,349",
+        "fragment_id": "d3",
+        "score": 0.75
+      },
+      {
+        "anchor_uri": "spdf:sha256-e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3#p=5&f=490&char=0,324",
+        "fragment_id": "d6",
+        "score": 0.6875
+      },
+      {
+        "anchor_uri": "spdf:sha256-e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3#p=2&f=5&char=0,84",
+        "fragment_id": "d2",
+        "score": 0.625
+      },
+      {
+        "anchor_uri": "spdf:sha256-e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3#p=1&f=1&char=0,229",
+        "fragment_id": "d1",
+        "score": 0
+      }
+    ]
+  },
+  "id": "search-vector-darwin-02",
+  "input": {
+    "file": "files/darwin.spdf",
+    "limit": 6,
+    "query_vector": [0.5, 0.25, 0.5, 0.25, 0, 0.25, 0.25, 0.5],
+    "space": "toy-embedding@8:f16",
+    "target": "fragment"
+  },
+  "kind": "search_vector"
+}

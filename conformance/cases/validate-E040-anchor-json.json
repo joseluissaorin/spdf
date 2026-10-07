@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": ["E040"],
+    "valid": false,
+    "version": "5.0",
+    "warnings": []
+  },
+  "id": "validate-E040-anchor-json",
+  "input": {
+    "file": "invalid/E040-anchor-json.spdf"
+  },
+  "kind": "validate"
+}

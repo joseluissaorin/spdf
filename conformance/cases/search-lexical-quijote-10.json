@@ -1,0 +1,21 @@
+{
+  "expect": {
+    "match": "\"hijo seco\" AND \"entendimiento\"",
+    "results": [
+      {
+        "anchor_uri": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=3&pe=4&f=iii&fe=iv&char=0,101",
+        "fragment_id": "q3",
+        "score": 1.560137,
+        "via": ["lexical"]
+      }
+    ],
+    "route": "fts"
+  },
+  "id": "search-lexical-quijote-10",
+  "input": {
+    "file": "files/quijote.spdf",
+    "limit": 10,
+    "query": "“hijo seco” «entendimiento»"
+  },
+  "kind": "search_lexical"
+}

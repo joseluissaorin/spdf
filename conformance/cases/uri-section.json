@@ -1,0 +1,22 @@
+{
+  "expect": {
+    "locator": {
+      "f": "145",
+      "para": 4,
+      "s": ["Chapter 3", "3.2 The panopticon"]
+    },
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#f=145&s=Chapter%203/3.2%20The%20panopticon&para=4"
+  },
+  "id": "uri-section",
+  "input": {
+    "anchor": {
+      "paragraph": 4,
+      "path": ["Chapter 3", "3.2 The panopticon"],
+      "printed": "145",
+      "type": "section"
+    },
+    "anchor_end": null,
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+  },
+  "kind": "anchor_uri"
+}

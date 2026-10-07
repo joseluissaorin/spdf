@@ -1,0 +1,14 @@
+{
+  "expect": {
+    "canonical": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#s=Cap%C3%ADtulo",
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "locator": {
+      "s": ["Capítulo"]
+    }
+  },
+  "id": "uri-parse-lowercase-hex",
+  "input": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#s=Cap%c3%adtulo"
+  },
+  "kind": "anchor_uri"
+}

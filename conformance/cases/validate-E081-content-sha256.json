@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": ["E081"],
+    "valid": false,
+    "version": "5.0",
+    "warnings": []
+  },
+  "id": "validate-E081-content-sha256",
+  "input": {
+    "file": "invalid/E081-content-sha256.spdf"
+  },
+  "kind": "validate"
+}

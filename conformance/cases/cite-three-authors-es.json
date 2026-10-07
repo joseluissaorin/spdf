@@ -1,0 +1,39 @@
+{
+  "expect": {
+    "text": "(Moretti et al., 2005, p. 3)"
+  },
+  "id": "cite-three-authors-es",
+  "input": {
+    "anchor": {
+      "confidence": 0.95,
+      "physical": 10,
+      "printed": "3",
+      "roman": false,
+      "source": "read",
+      "type": "page"
+    },
+    "anchor_end": null,
+    "locale": "es",
+    "metadata": {
+      "author": [
+        {
+          "family": "Moretti"
+        },
+        {
+          "family": "Jockers"
+        },
+        {
+          "family": "Underwood"
+        }
+      ],
+      "issued": {
+        "date-parts": [
+          [2005]
+        ]
+      },
+      "title": "Atlas",
+      "type": "book"
+    }
+  },
+  "kind": "cite"
+}

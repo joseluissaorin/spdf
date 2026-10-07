@@ -1,0 +1,35 @@
+{
+  "expect": {
+    "text": "(van Gogh, 1888, p. 2)"
+  },
+  "id": "cite-non-dropping-particle-es",
+  "input": {
+    "anchor": {
+      "confidence": 0.95,
+      "physical": 10,
+      "printed": "2",
+      "roman": false,
+      "source": "read",
+      "type": "page"
+    },
+    "anchor_end": null,
+    "locale": "es",
+    "metadata": {
+      "author": [
+        {
+          "family": "Gogh",
+          "given": "Vincent",
+          "non-dropping-particle": "van"
+        }
+      ],
+      "issued": {
+        "date-parts": [
+          [1888]
+        ]
+      },
+      "title": "Letter to Theo",
+      "type": "letter"
+    }
+  },
+  "kind": "cite"
+}

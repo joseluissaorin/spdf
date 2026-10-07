@@ -1,0 +1,10 @@
+{
+  "expect": {
+    "dump": "expected/apolo11.dump.json"
+  },
+  "id": "roundtrip-apolo11",
+  "input": {
+    "source": "sources/apolo11.json"
+  },
+  "kind": "roundtrip"
+}

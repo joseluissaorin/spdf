@@ -1,0 +1,14 @@
+{
+  "expect": {
+    "match": "\"xyzzy\"",
+    "results": [],
+    "route": "fts"
+  },
+  "id": "search-lexical-quijote-08",
+  "input": {
+    "file": "files/quijote.spdf",
+    "limit": 10,
+    "query": "xyzzy"
+  },
+  "kind": "search_lexical"
+}

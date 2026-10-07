@@ -1,0 +1,305 @@
+{
+  "blobs": [
+    {
+      "bytes": 63,
+      "key": "original.pdf",
+      "mime": "application/pdf",
+      "sha256": "9f47b3f777324459aa6ee013085c85bf06b02aff716220c5766c0311dc20f5a6"
+    },
+    {
+      "bytes": 74,
+      "key": "paginas/0001.png",
+      "mime": "image/png",
+      "sha256": "de62661c2546f11a95a9ce9505aeac1e6b246168619896fcb085a4bd544aa05e"
+    }
+  ],
+  "document": {
+    "authors": "Garcilaso de la Vega",
+    "bytes": 63,
+    "created": "2026-05-02T10:00:00.000Z",
+    "duration": null,
+    "id": "garcilaso",
+    "kind": "scanned_pdf",
+    "language": "es",
+    "metadata": {
+      "author": [
+        {
+          "family": "Garcilaso de la Vega"
+        }
+      ],
+      "collection-title": "Prueba de conformidad SPDF",
+      "editor": [
+        {
+          "family": "Herrera",
+          "given": "Fernando de"
+        }
+      ],
+      "issued": {
+        "date-parts": [
+          [1580]
+        ]
+      },
+      "language": "es",
+      "original-date": {
+        "date-parts": [
+          [1543]
+        ]
+      },
+      "publisher": "Alonso de la Barrera",
+      "publisher-place": "Sevilla",
+      "spdf": {
+        "provenance": {
+          "issued": {
+            "confidence": 0.9,
+            "source": "colophon"
+          },
+          "title": {
+            "confidence": 0.97,
+            "source": "reading"
+          }
+        },
+        "subtitle": "con anotaciones de Fernando de Herrera"
+      },
+      "title": "Obras de Garcilaso de la Vega: con anotaciones de Fernando de Herrera",
+      "title-short": "Obras de Garcilaso de la Vega",
+      "type": "book"
+    },
+    "mime": "application/pdf",
+    "rights": null,
+    "source_ref": "blob:original.pdf",
+    "source_sha256": "9f47b3f777324459aa6ee013085c85bf06b02aff716220c5766c0311dc20f5a6",
+    "title": "Obras de Garcilaso de la Vega",
+    "unit_count": 3,
+    "updated": "2026-05-02T10:05:00.000Z",
+    "year": 1580
+  },
+  "extensions": [],
+  "figures": [
+    {
+      "anchor": {
+        "region": {
+          "h": 0.4,
+          "w": 0.6,
+          "x": 0.2,
+          "y": 0.1
+        },
+        "type": "image"
+      },
+      "caption": "Portada",
+      "description": null,
+      "id": "g-fig1",
+      "image": "",
+      "unit": "g-u1"
+    }
+  ],
+  "fragments": [
+    {
+      "anchor": {
+        "confidence": 1,
+        "physical": 1,
+        "printed": null,
+        "roman": false,
+        "source": "none",
+        "type": "page"
+      },
+      "anchor_end": null,
+      "context": "Garcilaso, portada.",
+      "id": "g-f1",
+      "n": 1,
+      "ord": 0,
+      "search_text": "Obras de Garcilaso de la Vega con anotaciones de Fernando de Herrera.",
+      "section": [],
+      "text": "OBRAS DE GARCILASSO DE LA VEGA CON ANOTACIONES DE FERNANDO DE HERRERA.",
+      "unit": "g-u1"
+    },
+    {
+      "anchor": {
+        "confidence": 0.94,
+        "physical": 2,
+        "printed": "ix",
+        "roman": true,
+        "source": "read",
+        "type": "page"
+      },
+      "anchor_end": null,
+      "context": "Garcilaso, Égloga primera.",
+      "id": "g-f2",
+      "n": 2,
+      "ord": 1,
+      "search_text": "El dulce lamentar de dos pastores,\nSalicio juntamente y Nemoroso,\nhe de cantar, sus quejas imitando;",
+      "section": ["Égloga primera"],
+      "text": "El dulce lamentar de dos paſtores,\nSalicio juntamente y Nemoroſo,\nhe de cantar, ſus quexas imitando;",
+      "unit": "g-u2"
+    },
+    {
+      "anchor": {
+        "confidence": 0.8,
+        "physical": 3,
+        "printed": "x",
+        "roman": true,
+        "source": "inferred",
+        "type": "page"
+      },
+      "anchor_end": null,
+      "context": "Garcilaso, Soneto XXIII.",
+      "id": "g-f3",
+      "n": 3,
+      "ord": 2,
+      "search_text": "En tanto que de rosa y azucena\nse muestra la color en vuestro gesto,\ny que vuestro mirar ardiente, honesto,\ncon clara luz la tempestad serena;",
+      "section": ["Soneto XXIII"],
+      "text": "En tanto que de roſa y açucena\nſe mueſtra la color en vueſtro geſto,\ny que vueſtro mirar ardiente, honeſto,\ncon clara luz la tempeſtad ſerena;",
+      "unit": "g-u3"
+    }
+  ],
+  "fts": {
+    "tokenizer": "unicode61 remove_diacritics 2",
+    "trigram": false
+  },
+  "legacy": true,
+  "meta": {
+    "created": "2026-05-02T10:00:00.000Z",
+    "generator": "scholaris-nube 2.0.0",
+    "spdf_version": "4.1"
+  },
+  "provenance": [
+    {
+      "at": "2026-05-02T10:02:00.000Z",
+      "detail": {
+        "paginas": 3
+      },
+      "model": null,
+      "ms": 4200,
+      "provider": "gemini-3-flash",
+      "stage": "lectura"
+    },
+    {
+      "at": "2026-05-02T10:03:00.000Z",
+      "detail": {
+        "deducido": 1,
+        "fuente": "etiquetas",
+        "leido": 1,
+        "ninguno": 1
+      },
+      "model": null,
+      "ms": 30,
+      "provider": "etiquetas-pdf",
+      "stage": "folios"
+    }
+  ],
+  "sections": [
+    {
+      "id": "g-s1",
+      "level": 1,
+      "parent": null,
+      "summary": null,
+      "title": "Égloga primera",
+      "unit_from": "g-u2",
+      "unit_to": "g-u2"
+    },
+    {
+      "id": "g-s2",
+      "level": 1,
+      "parent": null,
+      "summary": "Carpe diem.",
+      "title": "Soneto XXIII",
+      "unit_from": "g-u3",
+      "unit_to": null
+    }
+  ],
+  "spaces": [
+    {
+      "created": "2026-05-02T10:04:00.000Z",
+      "dims": 4,
+      "dtype": "f32",
+      "id": "qwen3-vl-embedding-2b@4",
+      "modalities": ["text", "image"],
+      "model": "qwen3-vl-embedding-2b",
+      "normalized": 1,
+      "provider": "inferbox",
+      "task_prefixes": null,
+      "truncated_from": null,
+      "version": null
+    }
+  ],
+  "spdf_version": "4.1",
+  "units": [
+    {
+      "anchor": {
+        "confidence": 1,
+        "physical": 1,
+        "printed": null,
+        "roman": false,
+        "source": "none",
+        "type": "page"
+      },
+      "confidence": 0.9,
+      "footer": null,
+      "header": null,
+      "id": "g-u1",
+      "image": "blob:paginas/0001.png",
+      "notes": null,
+      "ord": 1,
+      "printed": null,
+      "reader": "gemini-3-flash",
+      "t0": null,
+      "t1": null,
+      "text": "OBRAS DE GARCILASSO DE LA VEGA CON ANOTACIONES DE FERNANDO DE HERRERA.",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 0.94,
+        "physical": 2,
+        "printed": "ix",
+        "roman": true,
+        "source": "read",
+        "type": "page"
+      },
+      "confidence": 0.9,
+      "footer": null,
+      "header": null,
+      "id": "g-u2",
+      "image": "u/42/d/garcilaso/paginas/0002.png",
+      "notes": null,
+      "ord": 2,
+      "printed": "ix",
+      "reader": "gemini-3-flash",
+      "t0": null,
+      "t1": null,
+      "text": "El dulce lamentar de dos paſtores,\nSalicio juntamente y Nemoroſo,\nhe de cantar, ſus quexas imitando;",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 0.8,
+        "physical": 3,
+        "printed": "x",
+        "roman": true,
+        "source": "inferred",
+        "type": "page"
+      },
+      "confidence": 0.9,
+      "footer": null,
+      "header": null,
+      "id": "g-u3",
+      "image": "u/42/d/garcilaso/paginas/0003.png",
+      "notes": null,
+      "ord": 3,
+      "printed": "x",
+      "reader": "gemini-3-flash",
+      "t0": null,
+      "t1": null,
+      "text": "En tanto que de roſa y açucena\nſe mueſtra la color en vueſtro geſto,\ny que vueſtro mirar ardiente, honeſto,\ncon clara luz la tempeſtad ſerena;",
+      "thumbnail": null,
+      "words": null
+    }
+  ],
+  "vectors": {
+    "qwen3-vl-embedding-2b@4": {
+      "count": 4,
+      "sha256": "3c43afe862d1f71d395265e928d403eb02027b2aa452f5bbbdb5214a4520024a"
+    }
+  }
+}

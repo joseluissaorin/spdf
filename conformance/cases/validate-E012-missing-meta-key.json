@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": ["E012"],
+    "valid": false,
+    "version": "5.0",
+    "warnings": []
+  },
+  "id": "validate-E012-missing-meta-key",
+  "input": {
+    "file": "invalid/E012-missing-meta-key.spdf"
+  },
+  "kind": "validate"
+}

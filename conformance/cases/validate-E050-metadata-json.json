@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": ["E050"],
+    "valid": false,
+    "version": "5.0",
+    "warnings": []
+  },
+  "id": "validate-E050-metadata-json",
+  "input": {
+    "file": "invalid/E050-metadata-json.spdf"
+  },
+  "kind": "validate"
+}

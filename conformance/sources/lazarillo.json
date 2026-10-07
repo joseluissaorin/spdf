@@ -1,0 +1,332 @@
+{
+  "blobs": [],
+  "document": {
+    "authors": null,
+    "bytes": 210334,
+    "created": "2026-10-07T00:00:00Z",
+    "duration": null,
+    "id": "lazarillo-1554",
+    "kind": "scanned_pdf",
+    "language": "es",
+    "metadata": {
+      "issued": {
+        "date-parts": [
+          [1554]
+        ]
+      },
+      "language": "es",
+      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+      "publisher": "Juan de Junta",
+      "publisher-place": "Burgos",
+      "title": "La vida de Lazarillo de Tormes y de sus fortunas y adversidades",
+      "title-short": "Lazarillo de Tormes",
+      "type": "book"
+    },
+    "mime": "application/pdf",
+    "rights": {
+      "access": "open",
+      "holder": null,
+      "license": "https://creativecommons.org/publicdomain/mark/1.0/",
+      "note": "Public-domain work. Synthetic layout built for the SPDF conformance suite."
+    },
+    "source_ref": null,
+    "source_sha256": "c2f0966e90fc3c5dcda91143a8271f4636bab035b060ae577724283514c00e4a",
+    "title": "La vida de Lazarillo de Tormes y de sus fortunas y adversidades",
+    "unit_count": 5,
+    "updated": "2026-10-07T00:00:00Z",
+    "year": 1554
+  },
+  "extensions": [],
+  "figures": [],
+  "fragments": [
+    {
+      "anchor": {
+        "chars": [0, 65],
+        "confidence": 1,
+        "foliation": "page",
+        "physical": 1,
+        "printed": null,
+        "roman": false,
+        "source": "none",
+        "type": "page"
+      },
+      "anchor_end": null,
+      "context": "Lazarillo de Tormes, portada.",
+      "id": "l1",
+      "n": 1,
+      "ord": 1,
+      "search_text": "La vida de Lazarillo de Tormes y de sus fortunas y adversidades.",
+      "section": [],
+      "text": "LA VIDA DE LAZARILLO DE TORMES, Y DE SVS FORTVNAS Y ADVERSIDADES.",
+      "unit": "p1"
+    },
+    {
+      "anchor": {
+        "chars": [0, 153],
+        "confidence": 0.9,
+        "foliation": "page",
+        "physical": 2,
+        "printed": "3",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "anchor_end": null,
+      "context": "Lazarillo de Tormes, prólogo.",
+      "id": "l2",
+      "n": 2,
+      "ord": 2,
+      "search_text": "Yo por bien tengo que cosas tan señaladas, y por ventura nunca oídas ni vistas, vengan a noticia de muchos, y no se entierren en la sepultura del olvido.",
+      "section": ["Prólogo"],
+      "text": "Yo por bien tengo que coſas tan ſeñaladas, y por ventura nunca oydas ni viſtas, vengan a noticia de muchos, y no ſe entierren en la ſepultura del oluido.",
+      "unit": "p2"
+    },
+    {
+      "anchor": {
+        "chars": [0, 150],
+        "confidence": 0.9,
+        "foliation": "page",
+        "physical": 3,
+        "printed": "4",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "anchor_end": null,
+      "context": "Lazarillo de Tormes, tratado primero.",
+      "id": "l3",
+      "n": 3,
+      "ord": 3,
+      "search_text": "Pues sepa vuestra merced ante todas cosas que a mí llaman Lázaro de Tormes, hijo de Tomé González y de Antona Pérez, naturales de Tejares, aldea de Salamanca.",
+      "section": ["Tratado primero"],
+      "text": "Pues ſepa V. M. ante todas coſas que a mi llaman Lazaro de Tormes, hijo de Thome Gonçales y de Antona Perez, naturales de Tejares, aldea de Salamanca.",
+      "unit": "p3"
+    },
+    {
+      "anchor": {
+        "chars": [0, 100],
+        "confidence": 0.9,
+        "foliation": "page",
+        "physical": 4,
+        "printed": "5",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "anchor_end": null,
+      "context": "Lazarillo de Tormes, tratado primero.",
+      "id": "l4",
+      "n": 4,
+      "ord": 4,
+      "search_text": "Mi nacimiento fue dentro del río Tormes, por la cual causa tomé el sobrenombre, y fue desta manera.",
+      "section": ["Tratado primero"],
+      "text": "Mi naſcimiento fue dentro del rio Tormes, por la qual cauſa tome el ſobrenombre, y fue deſta manera.",
+      "unit": "p4"
+    },
+    {
+      "anchor": {
+        "chars": [0, 152],
+        "confidence": 0.9,
+        "foliation": "page",
+        "physical": 5,
+        "printed": "6",
+        "roman": false,
+        "source": "inferred",
+        "type": "page"
+      },
+      "anchor_end": null,
+      "context": "Lazarillo de Tormes, tratado primero.",
+      "id": "l5",
+      "n": 5,
+      "ord": 5,
+      "search_text": "Huelgo de contar a vuestra merced estas niñerías, para mostrar cuánta virtud sea saber los hombres subir siendo bajos, y dejarse bajar siendo altos cuánto vicio.",
+      "section": ["Tratado primero"],
+      "text": "Huelgo de contar a V. M. eſtas niñerias, para moſtrar quanta virtud ſea ſaber los hombres ſubir ſiendo baxos, y dexarſe baxar ſiendo altos quanto vicio.",
+      "unit": "p5"
+    }
+  ],
+  "fts": {
+    "tokenizer": "unicode61 remove_diacritics 2",
+    "trigram": false
+  },
+  "meta": {
+    "created": "2026-10-07T00:00:00Z",
+    "document_id": "lazarillo-1554",
+    "generator": "spdf-conformance/1.0",
+    "profile": "core",
+    "spdf_version": "5.0"
+  },
+  "provenance": [
+    {
+      "at": "2026-10-07T00:00:00Z",
+      "detail": {
+        "layer": "search_text",
+        "period": "early-modern"
+      },
+      "model": null,
+      "ms": 40,
+      "provider": "spdf-producer",
+      "stage": "normalization"
+    },
+    {
+      "at": "2026-10-07T00:00:00Z",
+      "detail": {
+        "pages": 5
+      },
+      "model": "gemma-4-e4b",
+      "ms": 3100,
+      "provider": "local",
+      "stage": "reading"
+    }
+  ],
+  "sections": [
+    {
+      "id": "prologo",
+      "level": 1,
+      "parent": null,
+      "summary": null,
+      "title": "Prólogo",
+      "unit_from": "p2",
+      "unit_to": "p2"
+    },
+    {
+      "id": "tratado-1",
+      "level": 1,
+      "parent": null,
+      "summary": "Cuenta Lázaro su vida y cuyo hijo fue.",
+      "title": "Tratado primero",
+      "unit_from": "p3",
+      "unit_to": "p5"
+    }
+  ],
+  "spaces": [],
+  "spdf_version": "5.0",
+  "units": [
+    {
+      "anchor": {
+        "confidence": 1,
+        "foliation": "page",
+        "physical": 1,
+        "printed": null,
+        "roman": false,
+        "source": "none",
+        "type": "page"
+      },
+      "confidence": 0.91,
+      "footer": null,
+      "header": null,
+      "id": "p1",
+      "image": null,
+      "notes": null,
+      "ord": 1,
+      "printed": null,
+      "reader": "gemma-4-e4b",
+      "t0": null,
+      "t1": null,
+      "text": "LA VIDA DE LAZARILLO DE TORMES, Y DE SVS FORTVNAS Y ADVERSIDADES.",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 0.9,
+        "foliation": "page",
+        "physical": 2,
+        "printed": "3",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "confidence": 0.91,
+      "footer": null,
+      "header": null,
+      "id": "p2",
+      "image": null,
+      "notes": null,
+      "ord": 2,
+      "printed": "3",
+      "reader": "gemma-4-e4b",
+      "t0": null,
+      "t1": null,
+      "text": "Yo por bien tengo que coſas tan ſeñaladas, y por ventura nunca oydas ni viſtas, vengan a noticia de muchos, y no ſe entierren en la ſepultura del oluido.",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 0.9,
+        "foliation": "page",
+        "physical": 3,
+        "printed": "4",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "confidence": 0.91,
+      "footer": null,
+      "header": null,
+      "id": "p3",
+      "image": null,
+      "notes": null,
+      "ord": 3,
+      "printed": "4",
+      "reader": "gemma-4-e4b",
+      "t0": null,
+      "t1": null,
+      "text": "Pues ſepa V. M. ante todas coſas que a mi llaman Lazaro de Tormes, hijo de Thome Gonçales y de Antona Perez, naturales de Tejares, aldea de Salamanca.",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 0.9,
+        "foliation": "page",
+        "physical": 4,
+        "printed": "5",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "confidence": 0.91,
+      "footer": null,
+      "header": null,
+      "id": "p4",
+      "image": null,
+      "notes": null,
+      "ord": 4,
+      "printed": "5",
+      "reader": "gemma-4-e4b",
+      "t0": null,
+      "t1": null,
+      "text": "Mi naſcimiento fue dentro del rio Tormes, por la qual cauſa tome el ſobrenombre, y fue deſta manera.",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 0.9,
+        "foliation": "page",
+        "physical": 5,
+        "printed": "6",
+        "roman": false,
+        "source": "inferred",
+        "type": "page"
+      },
+      "confidence": 0.91,
+      "footer": null,
+      "header": null,
+      "id": "p5",
+      "image": null,
+      "notes": null,
+      "ord": 5,
+      "printed": "6",
+      "reader": "gemma-4-e4b",
+      "t0": null,
+      "t1": null,
+      "text": "Huelgo de contar a V. M. eſtas niñerias, para moſtrar quanta virtud ſea ſaber los hombres ſubir ſiendo baxos, y dexarſe baxar ſiendo altos quanto vicio.",
+      "thumbnail": null,
+      "words": null
+    }
+  ],
+  "vectors": {}
+}

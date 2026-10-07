@@ -1,0 +1,36 @@
+{
+  "expect": {
+    "text": "(Gómez and Iglesias, 2001, p. 3)"
+  },
+  "id": "cite-conjunction-e-i-en",
+  "input": {
+    "anchor": {
+      "confidence": 0.95,
+      "physical": 10,
+      "printed": "3",
+      "roman": false,
+      "source": "read",
+      "type": "page"
+    },
+    "anchor_end": null,
+    "locale": "en",
+    "metadata": {
+      "author": [
+        {
+          "family": "Gómez"
+        },
+        {
+          "family": "Iglesias"
+        }
+      ],
+      "issued": {
+        "date-parts": [
+          [2001]
+        ]
+      },
+      "title": "Prueba",
+      "type": "article-journal"
+    }
+  },
+  "kind": "cite"
+}

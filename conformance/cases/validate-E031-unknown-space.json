@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": ["E031"],
+    "valid": false,
+    "version": "5.0",
+    "warnings": []
+  },
+  "id": "validate-E031-unknown-space",
+  "input": {
+    "file": "invalid/E031-unknown-space.spdf"
+  },
+  "kind": "validate"
+}

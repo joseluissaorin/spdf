@@ -1,0 +1,36 @@
+{
+  "expect": {
+    "text": "(Cervantes Saavedra, 1605, fol. [2v])"
+  },
+  "id": "cite-leaf-inferred-es",
+  "input": {
+    "anchor": {
+      "confidence": 0.95,
+      "foliation": "leaf",
+      "physical": 10,
+      "printed": "2v",
+      "roman": false,
+      "source": "inferred",
+      "type": "page"
+    },
+    "anchor_end": null,
+    "locale": "es",
+    "metadata": {
+      "author": [
+        {
+          "family": "Cervantes Saavedra",
+          "given": "Miguel de"
+        }
+      ],
+      "issued": {
+        "date-parts": [
+          [1605]
+        ]
+      },
+      "title": "El ingenioso hidalgo don Quijote de la Mancha",
+      "title-short": "Don Quijote",
+      "type": "book"
+    }
+  },
+  "kind": "cite"
+}

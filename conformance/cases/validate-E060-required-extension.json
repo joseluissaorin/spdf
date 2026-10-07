@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": ["E060"],
+    "valid": false,
+    "version": "5.0",
+    "warnings": []
+  },
+  "id": "validate-E060-required-extension",
+  "input": {
+    "file": "invalid/E060-required-extension.spdf"
+  },
+  "kind": "validate"
+}

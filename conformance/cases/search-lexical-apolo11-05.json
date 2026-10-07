@@ -1,0 +1,27 @@
+{
+  "expect": {
+    "match": "\"Tranquility\"",
+    "results": [
+      {
+        "anchor_uri": "spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=12,15.5&char=0,73",
+        "fragment_id": "a1",
+        "score": 0.642055,
+        "via": ["lexical"]
+      },
+      {
+        "anchor_uri": "spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=16,24.5&char=0,151",
+        "fragment_id": "a2",
+        "score": 0.458987,
+        "via": ["lexical"]
+      }
+    ],
+    "route": "fts"
+  },
+  "id": "search-lexical-apolo11-05",
+  "input": {
+    "file": "files/apolo11.spdf",
+    "limit": 10,
+    "query": "Tranquility"
+  },
+  "kind": "search_lexical"
+}

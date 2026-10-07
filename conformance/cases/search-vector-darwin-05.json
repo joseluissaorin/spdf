@@ -1,0 +1,30 @@
+{
+  "expect": {
+    "results": [
+      {
+        "anchor_uri": "spdf:sha256-e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3#p=2&f=5&char=0,84",
+        "fragment_id": "d2",
+        "score": 0.875984
+      },
+      {
+        "anchor_uri": "spdf:sha256-e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3#p=3&f=61&char=0,349",
+        "fragment_id": "d3",
+        "score": 0.688976
+      },
+      {
+        "anchor_uri": "spdf:sha256-e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3#p=4&f=84&char=0,202",
+        "fragment_id": "d5",
+        "score": 0.629921
+      }
+    ]
+  },
+  "id": "search-vector-darwin-05",
+  "input": {
+    "file": "files/darwin.spdf",
+    "limit": 3,
+    "query_vector": [0, 0.5, 0.25, 0.75, 0.25, 0, 0.25, 0],
+    "space": "toy-embedding@8:i8",
+    "target": "fragment"
+  },
+  "kind": "search_vector"
+}

@@ -1,0 +1,11 @@
+{
+  "expect": {
+    "content_sha256": "cb14faa96b49b6b4c59d3a8c5fdab93ba6a67d9df00ba9fbb96677595507cfa2",
+    "dump": "expected/micrographia.dump.json"
+  },
+  "id": "dump-micrographia",
+  "input": {
+    "file": "files/micrographia.spdf"
+  },
+  "kind": "dump"
+}

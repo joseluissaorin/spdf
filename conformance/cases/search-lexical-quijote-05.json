@@ -1,0 +1,39 @@
+{
+  "expect": {
+    "match": "\"Hidalgo\"",
+    "results": [
+      {
+        "anchor_uri": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=1&char=0,89",
+        "fragment_id": "q1",
+        "score": 0.000001,
+        "via": ["lexical"]
+      },
+      {
+        "anchor_uri": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=7&f=2r&char=0,153",
+        "fragment_id": "q5",
+        "score": 0.000001,
+        "via": ["lexical"]
+      },
+      {
+        "anchor_uri": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=5&pe=6&f=1r&fe=1v&char=101,278",
+        "fragment_id": "q4",
+        "score": 0.000001,
+        "via": ["lexical"]
+      },
+      {
+        "anchor_uri": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=8&f=2v&char=0,261",
+        "fragment_id": "q6",
+        "score": 0.000001,
+        "via": ["lexical"]
+      }
+    ],
+    "route": "fts"
+  },
+  "id": "search-lexical-quijote-05",
+  "input": {
+    "file": "files/quijote.spdf",
+    "limit": 10,
+    "query": "Hidalgo hidalgo HIDALGO"
+  },
+  "kind": "search_lexical"
+}

@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": ["E001"],
+    "valid": false,
+    "version": null,
+    "warnings": []
+  },
+  "id": "validate-E001-gzip-of-text",
+  "input": {
+    "file": "invalid/E001-gzip-of-text.spdf"
+  },
+  "kind": "validate"
+}

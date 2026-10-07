@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": [],
+    "valid": true,
+    "version": "5.0",
+    "warnings": ["W100"]
+  },
+  "id": "validate-W100-semantic-without-vectors",
+  "input": {
+    "file": "invalid/W100-semantic-without-vectors.spdf"
+  },
+  "kind": "validate"
+}
