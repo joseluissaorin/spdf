@@ -28,6 +28,22 @@ int main(int argc, char **argv) {
   printf("search: %.120s...\n", out);
   spdf_string_free(out);
 
+  CHECK(spdf_locate(doc, "https://example.org/quijote.spdf#p=7", &out));
+  if (!strstr(out, "\"document\":true")) { fprintf(stderr, "locate: %s\n", out); return 1; }
+  printf("locate: %s\n", out);
+  spdf_string_free(out);
+
+  SpdfDoc *docs[2] = { doc, doc };
+  CHECK(spdf_export_bibtex_multi((const SpdfDoc *const *)docs, 2, &out));
+  if (!strstr(out, "cervantessaavedra1605a") || !strstr(out, "cervantessaavedra1605b")) {
+    fprintf(stderr, "bibtex: %s\n", out); return 1;
+  }
+  spdf_string_free(out);
+
+  CHECK(spdf_export_structure(doc, "tei", &out));
+  printf("tei pages: %s\n", out);
+  spdf_string_free(out);
+
   CHECK(spdf_doc_cite(doc, "{\"type\":\"page\",\"physical\":1,\"printed\":\"1r\",\"foliation\":\"leaf\"}", NULL, "es", &out));
   printf("cite: %s\n", out);
   spdf_string_free(out);

@@ -322,15 +322,19 @@ fn anchors_and_citations_from_search_hits() {
         assert_eq!(u.to_string(), h.anchor_uri);
         // The URI resolves to the unit where the fragment starts.
         let frag = doc.fragment(&h.fragment_id).expect("frag").expect("exists");
-        let units = doc.locate(&h.anchor_uri).expect("locate");
+        let at = doc.locate(&h.anchor_uri).expect("locate");
+        assert!(at.document);
         assert!(
-            units.iter().any(|x| x.id == frag.unit),
+            at.units.contains(&frag.unit),
             "{} -> {:?}",
             h.anchor_uri,
-            units
+            at
         );
+        let units = doc.locate_units(&h.anchor_uri).expect("locate");
+        assert!(units.iter().any(|u| u.id == frag.unit));
     }
-    assert!(doc.locate("spdf:sha256-00#p=1").expect("locate").is_empty());
+    let other = doc.locate("spdf:sha256-00#p=1").expect("locate");
+    assert!(!other.document && other.units.is_empty());
 }
 
 #[test]
@@ -347,7 +351,7 @@ fn sidecars() {
     assert_eq!(a["motivation"], "commenting");
     let uri = spdf::sidecar::annotation_uri(&a).expect("uri");
     assert!(doc
-        .locate(&uri)
+        .locate_units(&uri)
         .expect("locate")
         .iter()
         .any(|u| u.id == f.unit));

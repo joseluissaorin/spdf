@@ -17,6 +17,7 @@
 //! ```
 
 use serde_json::{Map, Value};
+use unicode_general_category::{get_general_category, GeneralCategory};
 use unicode_normalization::char::canonical_combining_class;
 use unicode_normalization::UnicodeNormalization;
 
@@ -61,10 +62,14 @@ fn ascii_letters(s: &str) -> String {
 fn year_of(item: &Value) -> Option<String> {
     let y = item.get("issued")?.get("date-parts")?.get(0)?.get(0)?;
     match y {
-        Value::Number(n) => {
-            let f = n.as_f64()?;
-            (f.fract() == 0.0).then(|| (f as i64).to_string())
-        }
+        Value::Number(n) => n
+            .as_i64()
+            .or_else(|| {
+                n.as_f64()
+                    .filter(|f| f.is_finite())
+                    .map(|f| f.trunc() as i64)
+            })
+            .map(|y| y.to_string()),
         Value::String(s) => {
             let t = s.trim();
             let digits = t.strip_prefix('-').unwrap_or(t);
@@ -96,7 +101,10 @@ fn truthy_str(v: Option<&Value>) -> Option<String> {
     }
 }
 
-/// The base BibTeX key of a CSL item: `cervantessaavedra1605`, `lazarillo1554`, `hookend`.
+/// The base export key of a CSL item (SPEC §19.1): first author's family,
+/// literal or given name folded to ASCII letters; else the first word of
+/// `title-short` or `title`; else `anon`; then the year or `nd`:
+/// `cervantessaavedra1605`, `lazarillo1554`, `anonnd`.
 pub fn bibtex_key(item: &Value) -> String {
     let mut base = String::new();
     if let Some(a) = item
@@ -111,7 +119,9 @@ pub fn bibtex_key(item: &Value) -> String {
         base = ascii_letters(&name);
     }
     if base.is_empty() {
-        let title = truthy_str(item.get("title")).unwrap_or_default();
+        let title = truthy_str(item.get("title-short"))
+            .or_else(|| truthy_str(item.get("title")))
+            .unwrap_or_default();
         base = title
             .split_whitespace()
             .next()
@@ -119,7 +129,7 @@ pub fn bibtex_key(item: &Value) -> String {
             .unwrap_or_default();
     }
     if base.is_empty() {
-        base = "spdf".into();
+        base = "anon".into();
     }
     base + &year_of(item).unwrap_or_else(|| "nd".into())
 }
@@ -144,7 +154,10 @@ fn protect_title(title: &str) -> String {
             return;
         }
         let e = escape(token);
-        if token.chars().any(char::is_uppercase) {
+        if token
+            .chars()
+            .any(|c| get_general_category(c) == GeneralCategory::UppercaseLetter)
+        {
             out.push('{');
             out.push_str(&e);
             out.push('}');
@@ -302,6 +315,24 @@ pub fn csl_json_many(docs: &[Document]) -> Value {
         }
     }
     Value::Array(items)
+}
+
+/// The CSL-JSON export of several documents (SPEC §19.2). With an anchor and
+/// exactly one document, the item also carries the CSL `label` and
+/// `locator` of the passage.
+pub fn export_csl(docs: &[Document], anchor: Option<&Value>, end: Option<&Value>) -> Value {
+    let mut v = csl_json_many(docs);
+    if let (Some(a), Some(arr)) = (anchor, v.as_array_mut()) {
+        if arr.len() == 1 {
+            if let (Some((label, locator)), Value::Object(m)) =
+                (csl_locator_value(a, end), &mut arr[0])
+            {
+                m.insert("label".into(), Value::from(label));
+                m.insert("locator".into(), Value::from(locator));
+            }
+        }
+    }
+    v
 }
 
 /// BibTeX entry of a document.

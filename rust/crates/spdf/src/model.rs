@@ -414,11 +414,18 @@ pub struct Blob {
     pub data: Vec<u8>,
 }
 
-/// One search result (contract §6).
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+/// One search result (SPEC §8).
+///
+/// In JSON the id is written under the name of its target: `fragment_id`
+/// for fragments (lexical, hybrid and fragment vector search), `unit_id` or
+/// `figure_id` for vector search over units or figures.
+#[derive(Clone, Debug, PartialEq)]
 pub struct SearchHit {
-    /// Id of the hit (a fragment, or a unit/figure for vector search on those targets).
+    /// Id of the hit. For unit and figure targets this is the unit or figure
+    /// id (the field keeps its historical name; see [`SearchHit::id`]).
     pub fragment_id: String,
+    /// What the id refers to.
+    pub target: Target,
     /// Score (higher is better).
     pub score: f64,
     /// Which lists produced it: `lexical`, `vector`.
@@ -427,4 +434,85 @@ pub struct SearchHit {
     pub anchor: Value,
     /// `spdf:` URI of the hit.
     pub anchor_uri: String,
+}
+
+impl SearchHit {
+    /// Id of the fragment, unit or figure (see [`SearchHit::target`]).
+    pub fn id(&self) -> &str {
+        &self.fragment_id
+    }
+}
+
+impl Serialize for SearchHit {
+    fn serialize<S: Serializer>(&self, s: S) -> std::result::Result<S::Ok, S::Error> {
+        use serde::ser::SerializeMap;
+        let mut m = s.serialize_map(Some(5))?;
+        let key = match self.target {
+            Target::Fragment => "fragment_id",
+            Target::Unit => "unit_id",
+            Target::Figure => "figure_id",
+        };
+        m.serialize_entry(key, &self.fragment_id)?;
+        m.serialize_entry("score", &self.score)?;
+        m.serialize_entry("via", &self.via)?;
+        m.serialize_entry("anchor", &self.anchor)?;
+        m.serialize_entry("anchor_uri", &self.anchor_uri)?;
+        m.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for SearchHit {
+    fn deserialize<D: Deserializer<'de>>(d: D) -> std::result::Result<Self, D::Error> {
+        let v = Value::deserialize(d)?;
+        let (target, id) = [
+            (Target::Fragment, "fragment_id"),
+            (Target::Unit, "unit_id"),
+            (Target::Figure, "figure_id"),
+        ]
+        .iter()
+        .find_map(|(t, k)| {
+            v.get(*k)
+                .and_then(Value::as_str)
+                .map(|id| (*t, id.to_string()))
+        })
+        .ok_or_else(|| {
+            serde::de::Error::custom("search hit without fragment_id, unit_id or figure_id")
+        })?;
+        Ok(SearchHit {
+            fragment_id: id,
+            target,
+            score: v.get("score").and_then(Value::as_f64).unwrap_or(0.0),
+            via: v
+                .get("via")
+                .and_then(Value::as_array)
+                .map(|a| {
+                    a.iter()
+                        .filter_map(|x| x.as_str().map(str::to_string))
+                        .collect()
+                })
+                .unwrap_or_default(),
+            anchor: v.get("anchor").cloned().unwrap_or(Value::Null),
+            anchor_uri: v
+                .get("anchor_uri")
+                .and_then(Value::as_str)
+                .unwrap_or("")
+                .to_string(),
+        })
+    }
+}
+
+/// Result of [`crate::Spdf::locate`] (SPEC §5.4).
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct Location {
+    /// The reference designates this document.
+    pub document: bool,
+    /// Ids of the matching units, in `ord` order.
+    pub units: Vec<String>,
+    /// Ids of the matching fragments, in `n` order.
+    pub fragments: Vec<String>,
+    /// `char` range of the locator, if any.
+    #[serde(rename = "char")]
+    pub chars: Option<[u64; 2]>,
+    /// `xywh` region of the locator (fractions), if any.
+    pub xywh: Option<[f64; 4]>,
 }

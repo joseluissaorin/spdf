@@ -192,11 +192,21 @@ fn compare_results(ours: &[SearchHit], expect: &Value, with_via: bool) -> CaseRe
         .get("results")
         .and_then(Value::as_array)
         .ok_or("expect.results missing")?;
-    let ids: Vec<&str> = ours.iter().map(|h| h.fragment_id.as_str()).collect();
-    let exp_ids: Vec<&str> = exp
+    let ours_v: Vec<Value> = ours
         .iter()
-        .filter_map(|r| r["fragment_id"].as_str())
+        .map(|h| serde_json::to_value(h).unwrap_or(Value::Null))
         .collect();
+    let id_of = |r: &Value| -> Option<String> {
+        ["fragment_id", "unit_id", "figure_id"]
+            .iter()
+            .find_map(|k| {
+                r.get(*k)
+                    .and_then(Value::as_str)
+                    .map(|v| format!("{k}={v}"))
+            })
+    };
+    let ids: Vec<String> = ours_v.iter().filter_map(id_of).collect();
+    let exp_ids: Vec<String> = exp.iter().filter_map(id_of).collect();
     if ids != exp_ids {
         return Err(format!("ids {ids:?}, expected {exp_ids:?}"));
     }
@@ -400,6 +410,88 @@ fn run_quantize(case: &Value) -> CaseResult {
     }
 }
 
+fn run_locate(dir: &Path, case: &Value) -> CaseResult {
+    let input = &case["input"];
+    let doc = open(dir, s(input, "file")?)?;
+    let got = match doc.locate(s(input, "reference")?) {
+        Ok(l) => serde_json::to_value(l).map_err(|e| e.to_string())?,
+        Err(e) => return Err(format!("locate: {e}")),
+    };
+    match first_difference(&got, &case["expect"], "locate") {
+        None => Ok(()),
+        Some(d) => Err(d),
+    }
+}
+
+fn documents(
+    dir: &Path,
+    input: &Value,
+) -> std::result::Result<Vec<crate::model::Document>, String> {
+    input
+        .get("files")
+        .and_then(Value::as_array)
+        .ok_or("missing files")?
+        .iter()
+        .map(|f| {
+            let rel = f.as_str().ok_or("file is not a string")?;
+            open(dir, rel)?
+                .document()
+                .map_err(|e| format!("{rel}: {e}"))
+        })
+        .collect()
+}
+
+fn run_export_csl(dir: &Path, case: &Value) -> CaseResult {
+    let input = &case["input"];
+    let docs = documents(dir, input)?;
+    let anchor = input.get("anchor").filter(|v| !v.is_null());
+    let end = input.get("anchor_end").filter(|v| !v.is_null());
+    let got = crate::export::export_csl(&docs, anchor, end);
+    match first_difference(&got, &case["expect"]["items"], "items") {
+        None => Ok(()),
+        Some(d) => Err(d),
+    }
+}
+
+fn bib_lines(text: &str) -> Vec<String> {
+    text.replace("\r\n", "\n")
+        .split('\n')
+        .map(|l| l.trim().to_string())
+        .filter(|l| !l.is_empty())
+        .collect()
+}
+
+fn run_export_bibtex(dir: &Path, case: &Value) -> CaseResult {
+    let docs = documents(dir, &case["input"])?;
+    let got = bib_lines(&crate::export::bibtex_many(&docs));
+    let want = bib_lines(s(&case["expect"], "text")?);
+    if got == want {
+        return Ok(());
+    }
+    let i = got
+        .iter()
+        .zip(&want)
+        .position(|(a, b)| a != b)
+        .unwrap_or(got.len().min(want.len()));
+    Err(format!(
+        "line {}: got {:?}, expected {:?}",
+        i + 1,
+        got.get(i),
+        want.get(i)
+    ))
+}
+
+fn run_export_structure(dir: &Path, case: &Value) -> CaseResult {
+    let input = &case["input"];
+    let doc = open(dir, s(input, "file")?)?;
+    let got =
+        crate::interop::page_structure(&doc, s(input, "format")?).map_err(|e| e.to_string())?;
+    match first_difference(&got, &case["expect"], "structure") {
+        None => Ok(()),
+        Some(d) => Err(d),
+    }
+}
+
 /// Runs one case (parsed JSON) against the conformance directory `dir`.
 pub fn run_case(dir: &Path, case: &Value) -> CaseResult {
     let kind = s(case, "kind")?;
@@ -413,6 +505,10 @@ pub fn run_case(dir: &Path, case: &Value) -> CaseResult {
         "anchor_uri" => run_anchor_uri(case),
         "cite" => run_cite(case),
         "quantize" => run_quantize(case),
+        "locate" => run_locate(dir, case),
+        "export_csl" => run_export_csl(dir, case),
+        "export_bibtex" => run_export_bibtex(dir, case),
+        "export_structure" => run_export_structure(dir, case),
         other => Err(format!("unknown case kind `{other}`")),
     }));
     r.unwrap_or_else(|_| Err("panicked".into()))

@@ -2,7 +2,7 @@
 
 Decisiones que tomé donde el contrato o la especificación no bajaban al detalle, y
 observaciones sobre la batería. Todas están implementadas y la referencia en Rust pasa
-los 229 casos de la conformidad 0.3.0.
+los 309 casos de la conformidad 0.4.0.
 
 ## Decisiones propias (no las prueba la batería)
 
@@ -41,20 +41,21 @@ los 229 casos de la conformidad 0.3.0.
 9. **Caché de vectores.** La primera búsqueda vectorial de un espacio carga sus vectores
    en memoria (hasta `OpenOptions::vector_cache_bytes`, 256 MiB por omisión); las
    siguientes no leen SQLite. No cambia ningún resultado.
-10. **Resultados de búsqueda vectorial sobre `unit` o `figure`.** El elemento lleva el id
-    de la unidad o figura en `fragment_id` (el contrato solo define el de fragmentos).
-    Si la especificación quiere otro nombre de campo (`id` + `target`), es un cambio
-    pequeño.
-11. **Exportación** (SPEC §19). Igual que la implementación en Python: CSL-JSON sin el
-    objeto `spdf` y con `id` = clave BibTeX; clave = apellido del primer autor (o primera
-    palabra del título) en letras ASCII + año (o `nd`), con `a`, `b`, `c` si chocan;
-    escape solo de `\`, `{` y `}`; las palabras con mayúsculas del título van entre
-    llaves; `csl_citation_item` añade `locator` y `label` (`page`, `folio`, `column`,
-    `timestamp`, `paragraph`, `section`, `verse`, `line`). La batería aún no tiene casos
-    de exportación: sugiero añadirlos para fijar estas decisiones entre lenguajes.
-12. **Resolución de URI** (`Spdf::locate`, SPEC §5.4): por `p` (hasta `pe`), si no por
-    `f`, `t` (t0 dentro de [t0, t1) de la unidad), `sl`, `v`, `ref`, prefijo de `s` y
-    `sh`, como en Python. Lista vacía si el `docref` es de otro documento.
+10. **Resultados de búsqueda vectorial sobre `unit` o `figure`** (conformidad 0.4.0). En
+    JSON el id va como `unit_id` o `figure_id`. En Rust, `SearchHit` conserva el campo
+    `fragment_id` (con el id de la unidad o figura en esos casos) y gana `target` y el
+    método `id()`, para no romper a quien ya lo usa (el lector Tauri).
+11. **Exportación** (SPEC §19, conformidad 0.4.0). Clave: apellido, `literal` o nombre
+    del primer autor en letras ASCII; si no queda nada, primera palabra de `title-short`
+    o de `title`; si tampoco, `anon`; más el año o `nd`, con `a`, `b`, `c` si chocan.
+    `export::export_csl` (varios documentos, `label`/`locator` con un ancla),
+    `export::bibtex_many`, y ALTO, TEI e IIIF en `interop` (`to_alto`, `to_tei`,
+    `to_iiif`, `page_structure`); la batería solo compara la secuencia de páginas.
+12. **Resolución de URI** (SPEC §5.4, conformidad 0.4.0). `Spdf::locate(referencia)`
+    devuelve ahora `Location {document, units, fragments, char, xywh}` (ids), con el
+    orden de reglas `p f t sl v ref s sh` y acepta URL de `.spdf` con fragmento.
+    **Cambio de API**: antes devolvía `Vec<Unit>`; para eso está ahora
+    `Spdf::locate_units`. El lector Tauri no usaba `locate`.
 13. **Apertura**: además de lo obligatorio, `PRAGMA mmap_size = 0` y
     `PRAGMA cell_size_check = ON`, como recomienda §2.4.
 14. **Compatibilidad hacia delante** (SPEC §23): en un 5.x más reciente (W105), E041 y

@@ -1189,75 +1189,153 @@ impl Spdf {
         )
     }
 
-    /// Units an anchor URI points at (SPEC §5.4): by physical page (`p`, up
-    /// to `pe`), else printed folio (`f`), time (`t`), slide, verse, canonical
-    /// reference or section path. Returns an empty list when the URI names
-    /// another document.
+    /// Resolves an anchor URI, or the URL of an SPDF resource with a fragment
+    /// identifier, against this file (SPEC §5.4): matching units (in `ord`
+    /// order), fragments (in `n` order, narrowed by `char`), and the `char`
+    /// and `xywh` of the locator. A reference to another document gives
+    /// `document: false` and empty lists.
     ///
     /// ```no_run
     /// let doc = spdf::Spdf::open("quijote.spdf")?;
-    /// let units = doc.locate("spdf:sha256-…#p=29&f=21&char=118,301")?;
+    /// let at = doc.locate("https://example.org/quijote.spdf#p=7")?;
+    /// for id in &at.units { println!("{id}"); }
     /// # Ok::<(), spdf::Error>(())
     /// ```
-    pub fn locate(&self, uri: &str) -> Result<Vec<Unit>> {
-        let u = crate::anchor::AnchorUri::parse(uri)?;
-        let d = self.document()?;
-        let same = match u.docref.strip_prefix("sha256-") {
-            Some(h) => h.eq_ignore_ascii_case(&d.source_sha256),
-            None => u.docref == d.id,
+    pub fn locate(&self, reference: &str) -> Result<Location> {
+        use crate::anchor::{AnchorUri, Locator};
+        let doc = self.document_row()?.unwrap_or_default();
+        let doc_id = doc.get("id").and_then(Value::as_str).unwrap_or("");
+        let sha = doc
+            .get("source_sha256")
+            .and_then(Value::as_str)
+            .unwrap_or("");
+        let l: Locator = if reference.starts_with("spdf:") {
+            let u = AnchorUri::parse(reference)?;
+            if u.docref != format!("sha256-{sha}") && u.docref != doc_id {
+                return Ok(Location::default());
+            }
+            u.locator
+        } else {
+            match reference.split_once('#') {
+                Some((_, frag)) if !frag.is_empty() => Locator::parse_fragment(frag)?,
+                _ => Locator::default(),
+            }
         };
-        if !same {
-            return Ok(Vec::new());
+        let mut out = Location {
+            document: true,
+            units: Vec::new(),
+            fragments: Vec::new(),
+            chars: l.chars,
+            xywh: l.region,
+        };
+        const RULES: [&str; 8] = ["p", "f", "t", "sl", "v", "ref", "s", "sh"];
+        let has = |r: &str| match r {
+            "p" => l.physical.is_some(),
+            "f" => l.printed.is_some(),
+            "t" => l.time.as_ref().map(|t| !t.is_empty()).unwrap_or(false),
+            "sl" => l.slide.is_some(),
+            "v" => l.verse.as_ref().map(|v| !v.is_empty()).unwrap_or(false),
+            "ref" => l.reference.is_some(),
+            "s" => l.section.is_some(),
+            _ => l.sheet.is_some(),
+        };
+        let Some(rule) = RULES.iter().copied().find(|r| has(r)) else {
+            return Ok(out);
+        };
+        let unit_cols: Vec<&str> = schema::UNITS.columns.iter().map(|c| c.0).collect();
+        let units = self.rows(&schema::UNITS, &unit_cols, None, "ord, id")?;
+        let frag_cols: Vec<&str> = schema::FRAGMENTS.columns.iter().map(|c| c.0).collect();
+        let frags = self.rows(&schema::FRAGMENTS, &frag_cols, None, "n")?;
+        let s =
+            |m: &Map<String, Value>, k: &str| m.get(k).and_then(Value::as_str).map(str::to_string);
+        let mut unit_ids: Vec<String> = units
+            .iter()
+            .filter(|u| {
+                let a = u.get("anchor").unwrap_or(&Value::Null);
+                let printed = if rule == "f" { u.get("printed") } else { None };
+                locate_matches(rule, &l, a, printed)
+            })
+            .filter_map(|u| s(u, "id"))
+            .collect();
+        if rule == "t" && unit_ids.is_empty() {
+            // The end of the recording belongs to the last timed unit.
+            let x = l.time.as_ref().and_then(|t| t.first()).copied();
+            let last = units.iter().rev().find(|u| {
+                u.get("anchor")
+                    .and_then(|a| a.get("type"))
+                    .and_then(Value::as_str)
+                    == Some("time")
+            });
+            if let (Some(x), Some(u)) = (x, last) {
+                if u.get("anchor")
+                    .and_then(|a| a.get("t1"))
+                    .and_then(Value::as_f64)
+                    == Some(x)
+                {
+                    unit_ids.extend(s(u, "id"));
+                }
+            }
         }
-        let l = &u.locator;
-        let num = |a: &Value, k: &str| a.get(k).and_then(Value::as_f64);
-        let text = |a: &Value, k: &str| match a.get(k) {
-            Some(Value::String(s)) => Some(s.clone()),
-            Some(Value::Number(n)) => Some(n.to_string()),
-            _ => None,
-        };
-        let hit = |unit: &Unit| -> bool {
-            let a = &unit.anchor;
-            if let Some(p) = l.physical {
-                let pe = l.physical_end.unwrap_or(p) as f64;
-                return num(a, "physical")
-                    .map(|x| p as f64 <= x && x <= pe)
-                    .unwrap_or(false);
+        let mut matched: Vec<&Map<String, Value>> = frags
+            .iter()
+            .filter(|f| locate_matches(rule, &l, f.get("anchor").unwrap_or(&Value::Null), None))
+            .collect();
+        if unit_ids.is_empty() && !matched.is_empty() {
+            let order: HashMap<String, i64> = units
+                .iter()
+                .filter_map(|u| {
+                    Some((
+                        s(u, "id")?,
+                        u.get("ord").and_then(Value::as_i64).unwrap_or(0),
+                    ))
+                })
+                .collect();
+            let mut set: Vec<String> = Vec::new();
+            for f in &matched {
+                if let Some(u) = s(f, "unit") {
+                    if !set.contains(&u) {
+                        set.push(u);
+                    }
+                }
             }
-            if let Some(f) = &l.printed {
-                return unit.printed.as_ref() == Some(f) || text(a, "printed").as_ref() == Some(f);
-            }
-            if let Some(t) = l.time.as_ref().and_then(|t| t.first()) {
-                return matches!((num(a, "t0"), num(a, "t1")), (Some(t0), Some(t1)) if t0 <= *t && *t < t1);
-            }
-            if let Some(n) = l.slide {
-                return num(a, "n") == Some(n as f64);
-            }
-            if let Some(v) = l.verse.as_ref().and_then(|v| v.first()) {
-                let from = num(a, "line_from");
-                let to = num(a, "line_to").or(from);
-                return matches!((from, to), (Some(x), Some(y)) if x <= *v as f64 && *v as f64 <= y);
-            }
-            if let Some(r) = &l.reference {
-                return text(a, "scheme").as_deref() == Some(r.scheme.as_str())
-                    && text(a, "ref").as_deref() == Some(r.reference.as_str());
-            }
-            if let Some(s) = &l.section {
-                return a
-                    .get("path")
+            set.sort_by_key(|u| order.get(u).copied().unwrap_or(0));
+            unit_ids = set;
+        }
+        if let Some([c, d]) = l.chars {
+            matched.retain(|f| {
+                let in_unit = s(f, "unit").map(|u| unit_ids.contains(&u)).unwrap_or(false);
+                let ch = f
+                    .get("anchor")
+                    .and_then(|a| a.get("chars"))
                     .and_then(Value::as_array)
-                    .map(|p| {
-                        p.len() >= s.len()
-                            && p.iter().zip(s).all(|(x, y)| x.as_str() == Some(y.as_str()))
-                    })
-                    .unwrap_or(false);
-            }
-            if let Some(sh) = &l.sheet {
-                return text(a, "sheet").as_ref() == Some(sh);
-            }
-            false
-        };
-        Ok(self.units()?.into_iter().filter(|u| hit(u)).collect())
+                    .filter(|a| a.len() == 2)
+                    .and_then(|a| Some((a[0].as_f64()?, a[1].as_f64()?)));
+                match (in_unit, ch) {
+                    (true, Some((a, b))) => {
+                        let (c, d) = (c as f64, d as f64);
+                        if c < d {
+                            a < d && c < b
+                        } else {
+                            a <= c && c < b
+                        }
+                    }
+                    _ => false,
+                }
+            });
+        }
+        out.units = unit_ids;
+        out.fragments = matched.iter().filter_map(|f| s(f, "id")).collect();
+        Ok(out)
+    }
+
+    /// The units [`Spdf::locate`] finds for a reference, as full rows.
+    pub fn locate_units(&self, reference: &str) -> Result<Vec<Unit>> {
+        let at = self.locate(reference)?;
+        Ok(self
+            .units()?
+            .into_iter()
+            .filter(|u| at.units.contains(&u.id))
+            .collect())
     }
 
     /// True if the optional trigram index exists.
@@ -1271,6 +1349,101 @@ impl Spdf {
             Flavor::V5 => "fragments_fts",
             Flavor::Legacy => "fragmentos_fts",
         }
+    }
+}
+
+fn is_integral(v: Option<&Value>) -> bool {
+    v.and_then(Value::as_f64)
+        .map(|f| f.is_finite() && f.fract() == 0.0)
+        .unwrap_or(false)
+}
+
+/// The predicate of a `locate` rule on one anchor (SPEC §5.4, step 3).
+/// `printed` is the `units.printed` column for the `f` rule on units.
+fn locate_matches(
+    rule: &str,
+    l: &crate::anchor::Locator,
+    a: &Value,
+    printed: Option<&Value>,
+) -> bool {
+    let Some(m) = a.as_object() else {
+        return false;
+    };
+    let t = m.get("type").and_then(Value::as_str).unwrap_or("");
+    let num = |k: &str| m.get(k).and_then(Value::as_f64);
+    match rule {
+        "p" => {
+            let (Some(p), true) = (l.physical, is_integral(m.get("physical"))) else {
+                return false;
+            };
+            let x = num("physical").unwrap_or(0.0);
+            t == "page" && p as f64 <= x && x <= l.physical_end.unwrap_or(p) as f64
+        }
+        "f" => {
+            let v = printed
+                .filter(|v| !v.is_null())
+                .or_else(|| m.get("printed"));
+            matches!((v, &l.printed), (Some(Value::String(a)), Some(f)) if a == f)
+        }
+        "t" => {
+            let Some(x) = l.time.as_ref().and_then(|t| t.first()).copied() else {
+                return false;
+            };
+            t == "time" && matches!((num("t0"), num("t1")), (Some(a), Some(b)) if a <= x && x < b)
+        }
+        "sl" => t == "slide" && l.slide.is_some() && num("n") == l.slide.map(|n| n as f64),
+        "v" => {
+            let Some(x) = l.verse.as_ref().and_then(|v| v.first()).map(|x| *x as f64) else {
+                return false;
+            };
+            let lf = num("line_from");
+            let lt = m
+                .get("line_to")
+                .filter(|v| !v.is_null())
+                .and_then(Value::as_f64)
+                .or(lf);
+            t == "verse"
+                && is_integral(m.get("line_from"))
+                && matches!((lf, lt), (Some(a), Some(b)) if a <= x && x <= b)
+        }
+        "ref" => {
+            let Some(r) = &l.reference else { return false };
+            t == "canonical"
+                && m.get("scheme").and_then(Value::as_str) == Some(r.scheme.as_str())
+                && m.get("ref").and_then(Value::as_str) == Some(r.reference.as_str())
+        }
+        "s" => {
+            let (Some(s), Some(path)) = (&l.section, m.get("path").and_then(Value::as_array))
+            else {
+                return false;
+            };
+            if t != "section" && t != "web" {
+                return false;
+            }
+            let path: Vec<Option<&str>> = path.iter().map(Value::as_str).collect();
+            if let Some(para) = l.paragraph {
+                path.len() == s.len()
+                    && path.iter().zip(s).all(|(a, b)| *a == Some(b.as_str()))
+                    && num("paragraph") == Some(para as f64)
+            } else {
+                path.len() >= s.len() && path.iter().zip(s).all(|(a, b)| *a == Some(b.as_str()))
+            }
+        }
+        "sh" => {
+            if t != "sheet" || m.get("sheet").and_then(Value::as_str) != l.sheet.as_deref() {
+                return false;
+            }
+            match l.rows {
+                Some([x, _]) => {
+                    is_integral(m.get("row_from"))
+                        && is_integral(m.get("row_to"))
+                        && num("row_from").unwrap_or(f64::MAX) <= x as f64
+                        && x as f64 <= num("row_to").unwrap_or(f64::MIN)
+                }
+                None => true,
+            }
+        }
+        _ => false,
     }
 }
 

@@ -61,13 +61,30 @@ enum Cmd {
     },
     /// Export bibliography data.
     Export {
-        file: PathBuf,
+        /// One or more files (keys get a, b, c… when they collide).
+        #[arg(required = true)]
+        files: Vec<PathBuf>,
         /// CSL-JSON (default).
         #[arg(long)]
         csl: bool,
         /// BibTeX.
         #[arg(long)]
         bibtex: bool,
+        /// ALTO 4 XML (first file).
+        #[arg(long)]
+        alto: bool,
+        /// TEI P5 XML (first file).
+        #[arg(long)]
+        tei: bool,
+        /// IIIF Presentation 3 manifest (first file); value: base URL of the ids.
+        #[arg(long, value_name = "BASE_URL")]
+        iiif: Option<String>,
+        /// With --csl: anchor JSON of a cited passage (adds label and locator).
+        #[arg(long)]
+        anchor: Option<String>,
+        /// With --anchor: end anchor JSON.
+        #[arg(long)]
+        end: Option<String>,
     },
     /// Convert a legacy 4.x file to 5.0.
     Convert { src: PathBuf, dst: PathBuf },
@@ -140,7 +157,7 @@ enum AnchorOp {
         #[arg(long)]
         locator: Option<String>,
     },
-    /// Units of a file an anchor URI points at.
+    /// Resolve an anchor URI (or a `.spdf#…` URL) against a file (SPEC §5.4).
     Locate { file: PathBuf, uri: String },
 }
 
@@ -316,13 +333,37 @@ fn run(cli: Cli) -> Res<ExitCode> {
                 }
             }
         },
-        Cmd::Export { file, csl, bibtex } => {
-            let doc = open(&file)?;
-            let d = doc.document()?;
+        Cmd::Export {
+            files,
+            csl,
+            bibtex,
+            alto,
+            tei,
+            iiif,
+            anchor,
+            end,
+        } => {
+            if alto || tei || iiif.is_some() {
+                let doc = open(&files[0])?;
+                if alto {
+                    print!("{}", spdf::interop::to_alto(&doc)?);
+                } else if tei {
+                    print!("{}", spdf::interop::to_tei(&doc)?);
+                } else if let Some(base) = iiif {
+                    print_json(&spdf::interop::to_iiif(&doc, &base)?);
+                }
+                return Ok(ExitCode::SUCCESS);
+            }
+            let docs = files
+                .iter()
+                .map(|f| open(f).and_then(|d| Ok(d.document()?)))
+                .collect::<Res<Vec<_>>>()?;
             if bibtex && !csl {
-                print!("{}", spdf::export::bibtex(&d));
+                print!("{}", spdf::export::bibtex_many(&docs));
             } else {
-                print_json(&spdf::export::csl_json(&d));
+                let a: Option<Value> = anchor.as_deref().map(serde_json::from_str).transpose()?;
+                let e: Option<Value> = end.as_deref().map(serde_json::from_str).transpose()?;
+                print_json(&spdf::export::export_csl(&docs, a.as_ref(), e.as_ref()));
             }
         }
         Cmd::Convert { src, dst } => {

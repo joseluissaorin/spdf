@@ -554,18 +554,114 @@ pub unsafe extern "C" fn spdf_quantize(
     })
 }
 
-/// Units an anchor URI points at, as a JSON array (empty if the URI names
-/// another document).
+/// Resolves an anchor URI, or the URL of a `.spdf` with a fragment
+/// (`https://…/x.spdf#p=7`), against an open document (SPEC §5.4). Writes
+/// `{"document","units":[ids],"fragments":[ids],"char","xywh"}`; a reference
+/// to another document gives `document: false` and empty lists.
 #[no_mangle]
 pub unsafe extern "C" fn spdf_locate(
     doc: *const SpdfDoc,
-    uri: *const c_char,
+    reference: *const c_char,
     out_json: *mut *mut c_char,
 ) -> c_int {
     guard(|| {
         let d = unsafe { doc_ref(doc) }?;
-        let uri = unsafe { str_arg(uri, "uri") }?;
-        unsafe { put_string(out_json, serde_json::to_string(&d.locate(uri)?)?) }
+        let r = unsafe { str_arg(reference, "reference") }?;
+        unsafe { put_string(out_json, serde_json::to_string(&d.locate(r)?)?) }
+    })
+}
+
+unsafe fn documents_arg(
+    docs: *const *const SpdfDoc,
+    n: usize,
+) -> Result<Vec<spdf::Document>, Fail> {
+    if docs.is_null() && n > 0 {
+        return Err(arg("docs is NULL"));
+    }
+    let handles: &[*const SpdfDoc] = if n == 0 {
+        &[]
+    } else {
+        // SAFETY: the caller passes `n` readable handle pointers.
+        unsafe { std::slice::from_raw_parts(docs, n) }
+    };
+    handles
+        .iter()
+        .map(|h| unsafe { doc_ref(*h) }.and_then(|d| Ok(d.document()?)))
+        .collect()
+}
+
+/// CSL-JSON export of `n` documents in order (SPEC §19.1-19.2), keys with
+/// `a`, `b`, `c`… suffixes when they collide. With `anchor_json` (nullable)
+/// and a single document, the item carries the CSL `label` and `locator`.
+#[no_mangle]
+pub unsafe extern "C" fn spdf_export_csl_multi(
+    docs: *const *const SpdfDoc,
+    n: usize,
+    anchor_json: *const c_char,
+    anchor_end_json: *const c_char,
+    out_json: *mut *mut c_char,
+) -> c_int {
+    guard(|| {
+        let ds = unsafe { documents_arg(docs, n) }?;
+        let a = unsafe { opt_json_arg(anchor_json, "anchor_json") }?;
+        let e = unsafe { opt_json_arg(anchor_end_json, "anchor_end_json") }?;
+        let v = spdf::export::export_csl(&ds, a.as_ref(), e.as_ref());
+        unsafe { put_string(out_json, v.to_string()) }
+    })
+}
+
+/// BibTeX export of `n` documents in order (SPEC §19.1, §19.3), entries
+/// separated by one empty line.
+#[no_mangle]
+pub unsafe extern "C" fn spdf_export_bibtex_multi(
+    docs: *const *const SpdfDoc,
+    n: usize,
+    out: *mut *mut c_char,
+) -> c_int {
+    guard(|| {
+        let ds = unsafe { documents_arg(docs, n) }?;
+        unsafe { put_string(out, spdf::export::bibtex_many(&ds)) }
+    })
+}
+
+/// Exports a document as `alto` (ALTO 4 XML), `tei` (TEI P5 XML) or `iiif`
+/// (IIIF Presentation 3 manifest JSON, ids under `https://example.org/iiif/spdf`
+/// unless `base_url` is given) (SPEC §19.4).
+#[no_mangle]
+pub unsafe extern "C" fn spdf_export_format(
+    doc: *const SpdfDoc,
+    format: *const c_char,
+    base_url: *const c_char,
+    out: *mut *mut c_char,
+) -> c_int {
+    guard(|| {
+        let d = unsafe { doc_ref(doc) }?;
+        let f = unsafe { str_arg(format, "format") }?;
+        let base = unsafe { opt_str_arg(base_url, "base_url") }?
+            .unwrap_or("https://example.org/iiif/spdf");
+        let text = match f {
+            "alto" => spdf::interop::to_alto(d)?,
+            "tei" => spdf::interop::to_tei(d)?,
+            "iiif" => spdf::interop::to_iiif(d, base)?.to_string(),
+            other => return Err(arg(&format!("unknown format `{other}` (alto, tei, iiif)"))),
+        };
+        unsafe { put_string(out, text) }
+    })
+}
+
+/// The page sequence of an export (`alto`, `tei`, `iiif`) as the
+/// conformance suite compares it: `{"pages":[…]}` (SPEC §19.4).
+#[no_mangle]
+pub unsafe extern "C" fn spdf_export_structure(
+    doc: *const SpdfDoc,
+    format: *const c_char,
+    out_json: *mut *mut c_char,
+) -> c_int {
+    guard(|| {
+        let d = unsafe { doc_ref(doc) }?;
+        let f = unsafe { str_arg(format, "format") }?;
+        let v = spdf::interop::page_structure(d, f)?;
+        unsafe { put_string(out_json, v.to_string()) }
     })
 }
 

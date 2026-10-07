@@ -24,6 +24,8 @@
 //!   [`Spdf::search_hybrid`];
 //! * anchors and `spdf:` URIs, offsets in code points — [`anchor`], [`text`];
 //! * short citations (es/en) and CSL-JSON/BibTeX export — [`cite()`], [`export`];
+//! * ALTO, TEI and IIIF exports — [`interop`];
+//! * resolution of anchor URIs and `.spdf#…` URLs — [`Spdf::locate`];
 //! * writing 5.0 files and converting 4.x — [`Writer`], [`convert_legacy`];
 //! * integrity: `content_sha256` and Ed25519 signatures — [`integrity`];
 //! * sidecars: annotations (`.spdfa.json`) and collections (`.spdfl.json`) — [`sidecar`];
@@ -53,6 +55,7 @@ mod dump;
 mod error;
 pub mod export;
 pub mod integrity;
+pub mod interop;
 pub mod legacy;
 mod model;
 mod reader;
@@ -73,8 +76,8 @@ pub use cite::{cite, cite_range, Locale};
 pub use error::{Error, Result};
 pub use integrity::{IntegrityReport, KeyPair};
 pub use model::{
-    Blob, BlobInfo, Document, Dtype, Extension, Figure, Fragment, Provenance, SearchHit, Section,
-    Space, Target, Unit, Vector,
+    Blob, BlobInfo, Document, Dtype, Extension, Figure, Fragment, Location, Provenance, SearchHit,
+    Section, Space, Target, Unit, Vector,
 };
 pub use reader::{Flavor, OpenOptions, Spdf, DEFAULT_MAX_BLOB, DEFAULT_MAX_DECOMPRESSED};
 pub use search::{HYBRID_MIN_DEPTH, RRF_K};

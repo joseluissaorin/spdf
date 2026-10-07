@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use serde_json::Value;
 
-use crate::anchor::{Anchor, AnchorUri};
+use crate::anchor::AnchorUri;
 use crate::error::{Error, Result};
 use crate::model::{Fragment, SearchHit, Target};
 use crate::reader::Spdf;
@@ -40,18 +40,11 @@ pub const HYBRID_MIN_DEPTH: usize = 50;
 
 impl Spdf {
     fn hit_for_fragment(&self, f: &Fragment, docref: &str, score: f64, via: &[&str]) -> SearchHit {
-        let anchor_uri = Anchor::from_value(&f.anchor)
-            .map(|a| {
-                let end = f
-                    .anchor_end
-                    .as_ref()
-                    .filter(|v| !v.is_null())
-                    .and_then(|v| Anchor::from_value(v).ok());
-                AnchorUri::from_anchor(docref, &a, end.as_ref()).to_string()
-            })
-            .unwrap_or_else(|_| format!("spdf:{}", crate::anchor::percent_encode(docref)));
+        let end = f.anchor_end.as_ref().filter(|v| !v.is_null());
+        let anchor_uri = AnchorUri::from_anchor_value(docref, &f.anchor, end).to_string();
         SearchHit {
             fragment_id: f.id.clone(),
+            target: Target::Fragment,
             score,
             via: via.iter().map(|s| s.to_string()).collect(),
             anchor: f.anchor.clone(),
@@ -326,7 +319,7 @@ impl Spdf {
                     .iter()
                     .filter_map(|(id, s)| {
                         let u = units.get(id)?;
-                        Some(self.hit_for_anchor(id, &u.anchor, &docref, *s))
+                        Some(self.hit_for_anchor(Target::Unit, id, &u.anchor, &docref, *s))
                     })
                     .collect())
             }
@@ -340,19 +333,25 @@ impl Spdf {
                     .iter()
                     .filter_map(|(id, s)| {
                         let f = figs.get(id)?;
-                        Some(self.hit_for_anchor(id, &f.anchor, &docref, *s))
+                        Some(self.hit_for_anchor(Target::Figure, id, &f.anchor, &docref, *s))
                     })
                     .collect())
             }
         }
     }
 
-    fn hit_for_anchor(&self, id: &str, anchor: &Value, docref: &str, score: f64) -> SearchHit {
-        let anchor_uri = Anchor::from_value(anchor)
-            .map(|a| AnchorUri::from_anchor(docref, &a, None).to_string())
-            .unwrap_or_else(|_| format!("spdf:{}", crate::anchor::percent_encode(docref)));
+    fn hit_for_anchor(
+        &self,
+        target: Target,
+        id: &str,
+        anchor: &Value,
+        docref: &str,
+        score: f64,
+    ) -> SearchHit {
+        let anchor_uri = AnchorUri::from_anchor_value(docref, anchor, None).to_string();
         SearchHit {
             fragment_id: id.to_string(),
+            target,
             score,
             via: vec!["vector".into()],
             anchor: anchor.clone(),

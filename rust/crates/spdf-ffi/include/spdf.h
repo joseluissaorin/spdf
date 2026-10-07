@@ -222,10 +222,45 @@ int spdf_quantize(const double *values,
                   size_t *out_len);
 
 /*
- Units an anchor URI points at, as a JSON array (empty if the URI names
- another document).
+ Resolves an anchor URI, or the URL of a `.spdf` with a fragment
+ (`https://…/x.spdf#p=7`), against an open document (SPEC §5.4). Writes
+ `{"document","units":[ids],"fragments":[ids],"char","xywh"}`; a reference
+ to another document gives `document: false` and empty lists.
  */
-int spdf_locate(const struct SpdfDoc *doc, const char *uri, char **out_json);
+int spdf_locate(const struct SpdfDoc *doc, const char *reference, char **out_json);
+
+/*
+ CSL-JSON export of `n` documents in order (SPEC §19.1-19.2), keys with
+ `a`, `b`, `c`… suffixes when they collide. With `anchor_json` (nullable)
+ and a single document, the item carries the CSL `label` and `locator`.
+ */
+int spdf_export_csl_multi(const struct SpdfDoc *const *docs,
+                          size_t n,
+                          const char *anchor_json,
+                          const char *anchor_end_json,
+                          char **out_json);
+
+/*
+ BibTeX export of `n` documents in order (SPEC §19.1, §19.3), entries
+ separated by one empty line.
+ */
+int spdf_export_bibtex_multi(const struct SpdfDoc *const *docs, size_t n, char **out);
+
+/*
+ Exports a document as `alto` (ALTO 4 XML), `tei` (TEI P5 XML) or `iiif`
+ (IIIF Presentation 3 manifest JSON, ids under `https://example.org/iiif/spdf`
+ unless `base_url` is given) (SPEC §19.4).
+ */
+int spdf_export_format(const struct SpdfDoc *doc,
+                       const char *format,
+                       const char *base_url,
+                       char **out);
+
+/*
+ The page sequence of an export (`alto`, `tei`, `iiif`) as the
+ conformance suite compares it: `{"pages":[…]}` (SPEC §19.4).
+ */
+int spdf_export_structure(const struct SpdfDoc *doc, const char *format, char **out_json);
 
 /*
  Short citation from CSL metadata. `anchor_end_json` may be NULL;
