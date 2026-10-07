@@ -124,7 +124,10 @@ extension SPDFFile {
             if rule == "t", ids.isEmpty, let last = timed.last, let t1 = last["anchor"]?["t1"]?.doubleValue, t1 == l.t?.first {
                 ids = [last["id"]?.stringValue ?? ""]
             }
-            var matched = frags.filter { SPDFFile.matches(rule, l, $0["anchor"]) }
+            let unitAnchors = units.map { (id: $0["id"]?.stringValue ?? "", anchor: $0["anchor"] ?? .null) }
+            var matched = frags.filter { f in
+                SPDFFile.matches(rule, l, f["anchor"]) || (f["anchor_end"].map { !$0.isNull && SPDFFile.matches(rule, l, $0) } ?? false)
+            }
             if ids.isEmpty && !matched.isEmpty {
                 var seen = Set<String>()
                 for f in matched {
@@ -138,10 +141,16 @@ extension SPDFFile {
             }
             if let c = l.char, c.count == 2 {
                 let (lo, hi) = (c[0], c[1])
-                let inUnits = Set(ids)
-                matched = matched.filter { f in
-                    guard inUnits.contains(f["unit"]?.stringValue ?? ""), let a = f["anchor"].flatMap(Anchor.init), let ch = a.chars else { return false }
+                let first = ids.first  // char refers to the text of the first unit
+                func overlaps(_ x: JSONValue?) -> Bool {
+                    guard let a = x.flatMap(Anchor.init), let ch = a.chars else { return false }
                     return lo < hi ? (ch.0 < hi && lo < ch.1) : (ch.0 <= lo && lo < ch.1)
+                }
+                matched = matched.filter { f in
+                    let unit = f["unit"]?.stringValue ?? ""
+                    if unit == first && overlaps(f["anchor"]) { return true }
+                    guard let end = f["anchor_end"], let eu = SPDFFile.endUnit(unitAnchors, start: unit, anchorEnd: end) else { return false }
+                    return eu.id == first && overlaps(end)
                 }
             }
             out.units = ids
@@ -149,4 +158,33 @@ extension SPDFFile {
             return out
         }
     }
+}
+
+extension SPDFFile {
+    /// An anchor without "chars" and "region" (SPEC §4.4).
+    static func identity(_ a: JSONValue) -> JSONValue {
+        guard case .object(var o) = a else { return a }
+        o["chars"] = nil
+        o["region"] = nil
+        return .object(o)
+    }
+
+    /// The unit where a fragment ends: the first unit after its start unit (in
+    /// reading order) whose anchor equals anchor_end, ignoring chars and region.
+    static func endUnit(_ units: [(id: String, anchor: JSONValue)], start: String, anchorEnd: JSONValue) -> (id: String, anchor: JSONValue)? {
+        guard case .object = anchorEnd else { return nil }
+        let want = identity(anchorEnd)
+        var after = false
+        for u in units {
+            if u.id == start {
+                after = true
+                continue
+            }
+            if after && identity(u.anchor).jsonEquals(want) { return u }
+        }
+        return nil
+    }
+
+    /// The "matter" of an anchor (SPEC §4.1): body when absent.
+    static func matter(_ a: JSONValue) -> String { a["matter"]?.stringValue ?? "body" }
 }

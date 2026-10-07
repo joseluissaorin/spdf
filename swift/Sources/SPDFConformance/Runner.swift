@@ -153,6 +153,12 @@ public enum ConformanceRunner {
             }
             let got = normalizeBibTeX(Bibliography.bibtex(items: items))
             return got == normalizeBibTeX(e["text"]?.stringValue ?? "") ? nil : "got \(got.joined(separator: " | "))"
+        case "cite_passage":
+            let f = try SPDFFile.open(url(dir, i["file"]))
+            defer { f.close() }
+            let p = try f.citePassage(fragment: i["fragment"]?.stringValue ?? "", quote: i["quote"]?.stringValue ?? "",
+                                      locale: i["locale"]?.stringValue ?? "")
+            return p.text == e["text"]?.stringValue && p.uri == e["uri"]?.stringValue ? nil : "got \(p.text) \(p.uri)"
         case "export_structure":
             let f = try SPDFFile.open(url(dir, i["file"]))
             defer { f.close() }

@@ -140,6 +140,6 @@ final class SPDFTests: XCTestCase {
             try Data((report.json + "\n").utf8).write(to: URL(fileURLWithPath: out))
         }
         for f in report.failed { XCTFail("\(f.id): \(f.reason)") }
-        XCTAssertGreaterThanOrEqual(report.passed.count, 309)
+        XCTAssertGreaterThanOrEqual(report.passed.count, 341)
     }
 }

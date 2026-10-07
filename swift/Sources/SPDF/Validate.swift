@@ -96,6 +96,7 @@ public enum SPDFValidator {
             break
         }
         if !ok { return ("E040", "\(type) anchor misses or mistypes a required member") }
+        if let mt = m["matter"], mt.stringValue == nil { return ("E040", "matter must be a string") }
         if let r = m["region"] {
             guard case .object(let ro) = r, ["x", "y", "w", "h"].allSatisfy({ ro[$0]?.isNumber == true }) else {
                 return ("E040", "bad region")
@@ -162,6 +163,31 @@ public enum SPDFValidator {
                 return nil
             }
             return Anchor(g)
+        }
+
+        /// W103: fragments that cross between kinds of matter, or between a
+        /// page with a folio and one without.
+        mutating func checkCrossings(_ f: SPDFFile) {
+            guard let rows = try? f.db.query("SELECT id, anchor FROM units ORDER BY ord, id") else { return }
+            var units: [(id: String, anchor: JSONValue)] = []
+            for r in rows {
+                guard let a = try? JSONValue.parse(r[1].string ?? "") else { return }
+                units.append((r[0].string ?? "", a))
+            }
+            let byID = Dictionary(units.map { ($0.id, $0.anchor) }, uniquingKeysWith: { a, _ in a })
+            guard let frs = try? f.db.query("SELECT id, unit, anchor_end FROM fragments WHERE anchor_end IS NOT NULL ORDER BY n") else { return }
+            for r in frs {
+                guard let end = try? JSONValue.parse(r[2].string ?? "") else { return }
+                let unit = r[1].string ?? ""
+                guard let a1 = byID[unit], let u2 = SPDFFile.endUnit(units, start: unit, anchorEnd: end) else { continue }
+                let a2 = u2.anchor
+                let folioChange = a1["type"]?.stringValue == "page" && a2["type"]?.stringValue == "page"
+                    && ((a1["printed"] ?? .null).isNull != (a2["printed"] ?? .null).isNull)
+                if SPDFFile.matter(a1) != SPDFFile.matter(a2) || folioChange {
+                    warn("W103", "fragments/\(r[0].string ?? "")",
+                         "fragment crosses from \(SPDFFile.matter(a1)) to \(SPDFFile.matter(a2)) matter, or between a page with a folio and one without")
+                }
+            }
         }
 
         mutating func run(_ f: SPDFFile) {
@@ -270,6 +296,7 @@ public enum SPDFValidator {
                     _ = anchor(r["anchor"] ?? .null, "figures/\(r["id"]?.string ?? "")", text: texts[r["unit"]?.string ?? ""])
                 }
             }
+            if has("units", "id", "ord", "anchor") && has("fragments", "id", "unit", "anchor", "anchor_end") { checkCrossings(f) }
             var spaces: [String: (Int64, String)] = [:]
             if has("spaces", "id", "dims", "dtype"), let rows = try? f.rows("spaces", ["id", "dims", "dtype"], "ORDER BY id") {
                 for r in rows {

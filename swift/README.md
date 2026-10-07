@@ -52,6 +52,10 @@ let bib = try file.exportBibTeX()                 // keys of SPEC §19: cervante
 let csl = try file.exportCSL()
 let alto = try file.exportALTO()                  // also exportTEI(), exportIIIF()
 
+// Cite a quotation by the unit it lies in (SPEC §18.2), not by its fragment's start.
+let cited = try file.citePassage(fragment: "m4", quote: "XXXIV.\ntube N N", locale: "es")
+// cited.text == "(Hooke, 1665, p. 211)", cited.uri == "spdf:sha256-ba9d…#p=319&pe=321&fe=211"
+
 // Resolve a reference (SPEC §5.4): an spdf: URI or a .spdf URL with a fragment.
 let where = try file.locate("https://example.org/quijote.spdf#p=7")   // units ["p7"], fragments ["q5"]
 ```

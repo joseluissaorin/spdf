@@ -79,12 +79,17 @@ public enum Citation {
         return a.string("source") == "inferred" ? "[\(p)]" : p
     }
 
+    /// Ends without a printed folio never take part in a range (SPEC §18):
+    /// "p. 211", never "pp. s. p.-211".
     private static func pageLocator(_ a: Anchor, end: Anchor?, es: Bool, single: String, plural: String) -> String {
-        guard let first = label(a) else { return es ? "s. p." : "n. pag." }
-        if let end, end.type == a.type, let second = label(end), end.string("printed") != a.string("printed") {
-            return "\(plural) \(first)-\(second)"
+        var ends = [a]
+        if let end, end.type == a.type { ends.append(end) }
+        let withFolio = ends.filter { $0.string("printed") != nil }
+        guard let first = withFolio.first, let last = withFolio.last else { return es ? "s. p." : "n. pag." }
+        if withFolio.count > 1 && last.string("printed") != first.string("printed") {
+            return "\(plural) \(label(first)!)-\(label(last)!)"
         }
-        return "\(single) \(first)"
+        return "\(single) \(label(first)!)"
     }
 
     static func clock(_ t: Double) -> String {
