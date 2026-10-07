@@ -228,11 +228,14 @@ public class Hit(
 
     override fun toJson(): Map<String, Any?> {
         val m = linkedMapOf<String, Any?>()
-        if (target == "fragment") {
-            m["fragment_id"] = id
-        } else {
-            m["target"] = target
-            m["id"] = id
+        when (target) {
+            "fragment" -> m["fragment_id"] = id
+            "unit" -> m["unit_id"] = id
+            "figure" -> m["figure_id"] = id
+            else -> {
+                m["target"] = target
+                m["id"] = id
+            }
         }
         m["score"] = score
         m["via"] = via

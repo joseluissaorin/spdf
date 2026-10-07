@@ -3,6 +3,7 @@ package io.github.joseluissaorin.spdf.conformance
 import io.github.joseluissaorin.spdf.Anchor
 import io.github.joseluissaorin.spdf.AnchorUri
 import io.github.joseluissaorin.spdf.Citation
+import io.github.joseluissaorin.spdf.Export
 import io.github.joseluissaorin.spdf.Hit
 import io.github.joseluissaorin.spdf.Json
 import io.github.joseluissaorin.spdf.JsonConvertible
@@ -162,6 +163,33 @@ public class ConformanceRunner @JvmOverloads constructor(
                 val t = Citation.cite(anchor(input["anchor"]) ?: return "no anchor", anchor(input["anchor_end"]), md, str(input["locale"]))
                 return if (t == expect["text"]) null else "got \"$t\""
             }
+            "locate" -> {
+                SpdfFile.open(File(dir, str(input["file"])), driver, OpenOptions.DEFAULT).use { f ->
+                    val got = f.locate(str(input["reference"]))
+                    return Json.diff(got, expect)?.let { "got ${Json.compact(got)} ($it)" }
+                }
+            }
+            "export_csl", "export_bibtex" -> {
+                val items = ((input["files"] as? List<*>) ?: emptyList<Any?>()).map { p ->
+                    SpdfFile.open(File(dir, str(p)), driver, OpenOptions.DEFAULT).use { it.metadata() }
+                }
+                if (kind == "export_csl") {
+                    val got = Export.cslItems(items, anchor(input["anchor"]), anchor(input["anchor_end"]))
+                    return Json.diff(got, expect["items"])?.let { "got ${Json.compact(got)} ($it)" }
+                }
+                val got = Export.bibtex(items)
+                val want = Export.normalizeBibtex(str(expect["text"]))
+                val have = Export.normalizeBibtex(got)
+                if (have == want) return null
+                val i = have.indices.firstOrNull { it >= want.size || have[it] != want[it] } ?: want.size
+                return "line ${i + 1}: ${have.getOrNull(i)} != ${want.getOrNull(i)}"
+            }
+            "export_structure" -> {
+                SpdfFile.open(File(dir, str(input["file"])), driver, OpenOptions.DEFAULT).use { f ->
+                    val got = mapOf("pages" to f.structurePages(str(input["format"])))
+                    return Json.diff(got, expect)?.let { "got ${Json.compact(got)} ($it)" }
+                }
+            }
             "quantize" -> {
                 val got: Map<String, Any?> = try {
                     val bytes = Vectors.quantize(doubles(input["values"]), str(input["dtype"]))
@@ -177,11 +205,15 @@ public class ConformanceRunner @JvmOverloads constructor(
 
     private fun compareHits(hits: List<Hit>, expected: Any?, withVia: Boolean): String? {
         val exp = ((expected as? List<*>) ?: emptyList<Any?>()).map { it as Map<*, *> }
-        val gotIds = hits.map { it.id }
-        val wantIds = exp.map { it["fragment_id"] as? String ?: "" }
+        fun rid(m: Map<*, *>) = (m["fragment_id"] ?: m["unit_id"] ?: m["figure_id"]) as? String
+        val got = hits.map { h -> h.toJson().filterKeys { it != "anchor" && it != "anchor_end" } }
+        val gotIds = got.map { rid(it) }
+        val wantIds = exp.map { rid(it) }
         if (gotIds != wantIds) return "order $gotIds != $wantIds"
         for ((i, e) in exp.withIndex()) {
+            val g = got[i]
             val h = hits[i]
+            if (g.keys - "via" != e.keys.map { it as String }.toSet() - "via") return "${h.id}: members ${g.keys.sorted()} != ${e.keys}"
             val ws = (e["score"] as? Number)?.toDouble() ?: Double.NaN
             if (Math.abs(h.score - ws) > TOLERANCE) return "${h.id}: score ${h.score} != $ws"
             if (h.anchorUri != e["anchor_uri"]) return "${h.id}: anchor_uri ${h.anchorUri} != ${e["anchor_uri"]}"

@@ -108,6 +108,12 @@ usa para descargar `androidx.sqlite` al compilar.
 - El jar de documentación va vacío, cosa que Central acepta. Para publicar documentación de
   verdad se puede añadir Dokka (`org.jetbrains.dokka`) y elegir `JavadocJar.Dokka` en la
   configuración del complemento.
+- El módulo `spdf-android-device` solo sirve para probar el adaptador de Android en un
+  emulador o un dispositivo. No aplica el complemento de publicación y solo entra en la
+  compilación con `-Pspdf.androidDevice=true`, así que nunca se sube a Maven Central.
+- La clave GPG de Maven Central no tiene nada que ver con la clave Ed25519 con la que la
+  biblioteca puede firmar ficheros SPDF (`WriterOptions.signingKey`). Son dos claves
+  distintas y ninguna de las dos va en el repositorio.
 - `spdf-android` es una biblioteca JVM corriente y no necesita el SDK de Android para
   compilarse ni para publicarse. Las aplicaciones Android que la usen ya tienen `google()`
   entre sus repositorios, que es de donde Gradle descargará la variante Android de

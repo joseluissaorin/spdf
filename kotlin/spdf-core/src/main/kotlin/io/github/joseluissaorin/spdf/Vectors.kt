@@ -62,8 +62,12 @@ public object Vectors {
     public fun quantize(values: DoubleArray, dtype: String): ByteArray = when (dtype) {
         "i8" -> ByteArray(values.size) { i ->
             val x = values[i] * 127
-            val q = Math.floor(Math.abs(x) + 0.5) * (if (x >= 0) 1 else -1)
-            q.coerceIn(-127.0, 127.0).toInt().toByte()
+            if (Math.abs(x) >= 127) {
+                (if (x > 0) 127 else -127).toByte() // also when v × 127 overflows to infinity
+            } else {
+                val q = Math.floor(Math.abs(x) + 0.5) * (if (x >= 0) 1 else -1)
+                q.coerceIn(-127.0, 127.0).toInt().toByte()
+            }
         }
         "f32" -> {
             val out = ByteArray(values.size * 4)

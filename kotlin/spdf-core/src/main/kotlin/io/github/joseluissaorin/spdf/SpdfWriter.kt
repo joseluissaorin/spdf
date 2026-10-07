@@ -13,10 +13,23 @@ public class WriterOptions @JvmOverloads constructor(
     public val trigram: Boolean = false,
     /**
      * Writes every value verbatim: no default `spdf_meta` keys, no computed `unit_count`, no
-     * automatic ordinals, no NFC normalization. Used to rebuild a file from a full dump.
+     * automatic ordinals, no NFC normalization, no integrity keys. Used to rebuild a file from
+     * a full dump.
      */
     public val exact: Boolean = false,
-)
+    /** Writes `spdf_meta.content_sha256` (SPEC §8), computed on the finished file. */
+    public val integrity: Boolean = true,
+    /**
+     * A 32-byte Ed25519 secret seed: also writes `signer` (`ed25519:` + base64 public key) and
+     * `signature` (base64 of the signature over `spdf-content-sha256:<hex>`). Never stored.
+     */
+    public val signingKey: ByteArray? = null,
+) {
+    init {
+        require(signingKey == null || signingKey.size == 32) { "Ed25519 secret keys are 32-byte seeds" }
+        require(signingKey == null || integrity) { "signing needs integrity = true" }
+    }
+}
 
 /**
  * Builds an SPDF 5.0 file. Rows go to a temporary file next to the destination; [finish]
@@ -32,6 +45,7 @@ public class WriterOptions @JvmOverloads constructor(
  * ```
  */
 public class SpdfWriter private constructor(
+    private val driver: SqlDriver,
     private val conn: SqlConnection,
     private val target: File,
     private val tmp: File,
@@ -223,10 +237,23 @@ public class SpdfWriter private constructor(
                 all["document_id"] = d.id
             }
             all.putAll(meta)
+            val seal = !options.exact && options.integrity
+            if (seal) Spdf.INTEGRITY_KEYS.forEach { all.remove(it) } // computed below
             for ((k, v) in all) conn.exec("INSERT INTO spdf_meta (key, value) VALUES (?, ?)", k, v)
             conn.exec("INSERT INTO fragments_fts(fragments_fts) VALUES ('rebuild')")
             if (options.trigram) conn.exec("INSERT INTO fragments_fts_trigram(fragments_fts_trigram) VALUES ('rebuild')")
             conn.exec("COMMIT")
+            if (seal) {
+                // SPEC §8: the hash of the canonical dump of the finished file, which leaves the
+                // three integrity keys out, so adding them does not change it.
+                val hash = SpdfFile.open(tmp, driver, OpenOptions(tempDir = target.parentFile)).use { it.contentSha256() }
+                conn.exec("INSERT INTO spdf_meta (key, value) VALUES (?, ?)", "content_sha256", hash)
+                options.signingKey?.let { seed ->
+                    val signature = Ed25519.sign(seed, (Spdf.SIGNATURE_PREFIX + hash).toByteArray(Charsets.US_ASCII))
+                    conn.exec("INSERT INTO spdf_meta (key, value) VALUES (?, ?)", "signer", "ed25519:" + base64Encode(Ed25519.publicKey(seed)))
+                    conn.exec("INSERT INTO spdf_meta (key, value) VALUES (?, ?)", "signature", base64Encode(signature))
+                }
+            }
             conn.exec("INSERT INTO fragments_fts(fragments_fts) VALUES ('optimize')")
             conn.exec("VACUUM")
             conn.close()
@@ -291,7 +318,7 @@ public class SpdfWriter private constructor(
                 tmp.delete()
                 throw e
             }
-            return SpdfWriter(conn, target, tmp, options)
+            return SpdfWriter(driver, conn, target, tmp, options)
         }
     }
 }

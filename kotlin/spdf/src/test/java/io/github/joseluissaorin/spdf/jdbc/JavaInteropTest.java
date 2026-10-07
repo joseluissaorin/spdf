@@ -16,6 +16,7 @@ import io.github.joseluissaorin.spdf.SpdfFile;
 import io.github.joseluissaorin.spdf.SpdfWriter;
 import io.github.joseluissaorin.spdf.ValidationResult;
 import io.github.joseluissaorin.spdf.Validator;
+import io.github.joseluissaorin.spdf.WriterOptions;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.List;
@@ -58,6 +59,16 @@ class JavaInteropTest {
             assertFalse(file.dumpJson().isEmpty());
             assertEquals(64, file.contentSha256().length());
         }
+
+        // Every static entry point is reachable from Java, including the default adapter.
+        assertTrue(io.github.joseluissaorin.spdf.sql.SqlDriver.defaultDriver() instanceof JdbcSqlDriver);
+        byte[] seed = new byte[32];
+        File signed = new File(dir, "signed.spdf");
+        try (SpdfWriter w = SpdfWriter.create(signed, new WriterOptions("java/1", false, false, true, seed))) {
+            w.setDocument(new Document("s", "document", "text/plain", "cd".repeat(32), Map.of("type", "book", "title", "Rimas")));
+            w.finish();
+        }
+        assertTrue(Spdf.validate(signed.getPath()).isValid());
 
         Map<String, Object> md = Json.parseObject("{\"title\":\"Rimas\",\"author\":[{\"family\":\"Bécquer\"}],\"issued\":{\"date-parts\":[[1871]]}}");
         assertEquals("(Bécquer, 1871, v. 12)", Spdf.cite(Anchor.verse(12), null, md, "en"));

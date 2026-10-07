@@ -24,8 +24,9 @@ import kotlin.system.exitProcess
  * spdf vsearch FILE SPACE V1,V2,... [-n N] [--target fragment|unit|figure]
  * spdf hybrid FILE SPACE V1,V2,... QUERY [-n N]
  * spdf cite FILE FRAGMENT_ID [--locale es|en]
- * spdf export FILE csl|bibtex
+ * spdf export FILE csl|bibtex|alto|tei|iiif
  * spdf uri parse URI
+ * spdf locate FILE REFERENCE        (an spdf: URI, or FILE-URL#p=5&f=1r)
  * spdf build SOURCE.json OUT.spdf
  * spdf conformance [DIR] [-o conformance.json]
  * spdf version
@@ -42,8 +43,9 @@ public object Main {
   spdf vsearch FILE SPACE V1,V2,... [-n N] [--target fragment|unit|figure]
   spdf hybrid FILE SPACE V1,V2,... QUERY [-n N]
   spdf cite FILE FRAGMENT_ID [--locale es|en]
-  spdf export FILE csl|bibtex
+  spdf export FILE csl|bibtex|alto|tei|iiif
   spdf uri parse URI
+  spdf locate FILE REFERENCE
   spdf build SOURCE.json OUT.spdf
   spdf conformance [DIR] [-o conformance.json]
   spdf version"""
@@ -115,6 +117,9 @@ public object Main {
                         when (pos[1]) {
                             "csl" -> out.println(it.exportCslJson())
                             "bibtex" -> out.print(it.exportBibTeX())
+                            "alto" -> out.print(it.exportAlto())
+                            "tei" -> out.print(it.exportTei())
+                            "iiif" -> out.println(Json.pretty(Json.parse(it.exportIiif())))
                             else -> throw UsageException()
                         }
                     }
@@ -124,6 +129,10 @@ public object Main {
                     if (pos[0] != "parse") throw UsageException()
                     val p = AnchorUri.parse(pos[1])
                     out.println(Json.canonical(mapOf("docref" to p.docref, "locator" to p.locator, "canonical" to p.canonical())))
+                }
+                "locate" -> {
+                    need(2)
+                    open(pos[0]).use { out.println(Json.canonical(it.locate(pos[1]))) }
                 }
                 "build" -> {
                     need(2)

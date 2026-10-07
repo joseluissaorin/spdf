@@ -101,6 +101,19 @@ class Ed25519Test {
     private val sig2 = bytes("92a009a9f0d4cab8720e820b5f642540a2b27b5416503f8fb3762223ebdb69da085ac1e43e15996e458f3613d0f11d8c387b2eaeb4302aeeb00d291612bb0c00")
 
     @Test
+    fun signing() {
+        val seed1 = bytes("9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60")
+        assertTrue(pk1.contentEquals(Ed25519.Pure.publicKey(seed1)))
+        assertTrue(sig1.contentEquals(Ed25519.Pure.sign(seed1, ByteArray(0))))
+        assertTrue(sig1.contentEquals(Ed25519.sign(seed1, ByteArray(0)))) // platform provider
+        val seed2 = bytes("4ccd089b28ff96da9db6c346ec114e0f5b8a319f35aba624da8cf6ed4fb8a6fb")
+        assertTrue(pk2.contentEquals(Ed25519.publicKey(seed2)))
+        assertTrue(sig2.contentEquals(Ed25519.Pure.sign(seed2, byteArrayOf(0x72))))
+        val msg = "spdf-content-sha256:abc".toByteArray()
+        assertTrue(Ed25519.verify(Ed25519.publicKey(seed2), msg, Ed25519.sign(seed2, msg)))
+    }
+
+    @Test
     fun providerAndPureAgree() {
         assertTrue(Ed25519.verify(pk1, ByteArray(0), sig1))
         assertTrue(Ed25519.Pure.verify(pk1, ByteArray(0), sig1))

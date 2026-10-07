@@ -176,9 +176,11 @@ public interface SqlDriver {
         /**
          * The first driver registered with [ServiceLoader] (`META-INF/services/
          * io.github.joseluissaorin.spdf.sql.SqlDriver`): the JDBC adapter on the JVM, the
-         * androidx.sqlite adapter on Android. Throws if no adapter is on the classpath.
+         * androidx.sqlite adapter on Android. Throws if no adapter is on the classpath. From Java:
+         * `SqlDriver.defaultDriver()` (`default` is a Java keyword).
          */
         @JvmStatic
+        @JvmName("defaultDriver")
         public fun default(): SqlDriver = cached ?: synchronized(this) {
             cached ?: run {
                 val loader = SqlDriver::class.java.classLoader

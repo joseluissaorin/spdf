@@ -705,16 +705,84 @@ public class SpdfFile private constructor(private val c: Container) : AutoClosea
 
     // ------------------------------------------------------------------ export
 
-    /** The document as a CSL-JSON array with one item (without the `spdf` extension). */
-    public fun exportCslJson(): String {
-        val md = metadata()
-        return Json.compact(listOf(Export.cslItem(md, Export.citationKey(md))))
-    }
+    /**
+     * The document as a CSL-JSON array with one item (without the `spdf` extension, `id` = the
+     * BibTeX key). With an [anchor] the item also carries the CSL `label` and `locator` of that
+     * passage, ready for citeproc.
+     */
+    @JvmOverloads
+    public fun exportCslJson(anchor: Anchor? = null, end: Anchor? = null): String =
+        Json.compact(Export.cslItems(listOf(metadata()), anchor, end))
 
-    /** The document as a BibTeX entry. */
-    public fun exportBibTeX(): String {
-        val md = metadata()
-        return Export.bibtex(md, Export.citationKey(md))
+    /** The document as a BibTeX entry (SPEC §19.3). */
+    public fun exportBibTeX(): String = Export.bibtex(listOf(metadata()))
+
+    /** ALTO 4.4 XML of the page units (SPEC §19.4); see [Structure.alto]. */
+    public fun exportAlto(): String = Structure.alto(this)
+
+    /** A minimal TEI P5 document (SPEC §19.4); see [Structure.tei]. */
+    public fun exportTei(): String = Structure.tei(this)
+
+    /** A IIIF Presentation 3 manifest as JSON text (SPEC §19.4); see [Structure.iiif]. */
+    @JvmOverloads
+    public fun exportIiif(base: String? = null, images: ImageUrls = ImageUrls { it }): String = Json.compact(Structure.iiif(this, base, images))
+
+    /**
+     * The page sequence of the ALTO, TEI or IIIF export (`alto`, `tei`, `iiif`), read back from
+     * the export itself (SPEC §19.4); see [Structure.pageSequence].
+     */
+    public fun structurePages(format: String): List<Map<String, Any?>> = Structure.pageSequence(this, format)
+
+    // ------------------------------------------------------------------ resolution
+
+    /**
+     * Resolves a reference against this file (SPEC §5.4): an `spdf:` anchor URI, or the URL of
+     * this `.spdf` with the anchor parameters as fragment (`https://…/quijote.spdf#p=5&f=1r`).
+     * Rules in the order `p f t sl v ref s sh`; units first, then fragments (giving their
+     * units); `char` narrows the fragments. A URI naming another document gives
+     * [Location.document] false.
+     */
+    public fun locate(reference: String): Location {
+        val doc = documentRow()
+        val l: Locator
+        if (reference.startsWith("spdf:")) {
+            val p = AnchorUri.parse(reference)
+            val sha = doc["source_sha256"] as? String
+            val mine = p.docref == doc["id"] || (sha != null && (p.docref == "sha256-$sha" || p.docref == AnchorUri.docRef(sha)))
+            if (!mine) return Location.ELSEWHERE
+            l = p.locator
+        } else {
+            val hash = reference.indexOf('#')
+            val frag = if (hash >= 0) reference.substring(hash + 1) else ""
+            l = if (frag.isNotEmpty()) AnchorUri.parse("spdf:x#$frag").locator else Locator()
+        }
+        val rule = listOf(
+            "p" to l.p, "f" to l.f, "t" to l.t, "sl" to l.sl, "v" to l.v, "ref" to l.ref, "s" to l.s, "sh" to l.sh,
+        ).firstOrNull { it.second != null }?.first
+            ?: return Location(true, emptyList(), emptyList(), l.char, l.xywh)
+        val units = unitRows().map { asMap(Json.canon(it))!! }
+        val fragments = fragmentRows().map { asMap(Json.canon(it))!! }
+        var found = units.filter { u -> Locate.matches(rule, l, u["anchor"], if (rule == "f") u["printed"] else null) }.map { it["id"] as? String ?: "" }
+        if (rule == "t" && found.isEmpty()) {
+            val timed = units.filter { asMap(it["anchor"])?.get("type") == "time" }
+            val last = timed.lastOrNull()?.let { asMap(it["anchor"]) }
+            if (last != null && isNumber(last["t1"]) && numberValue(last["t1"]) == l.t!![0]) found = listOf(timed.last()["id"] as? String ?: "")
+        }
+        var frags = fragments.filter { Locate.matches(rule, l, it["anchor"], null) }
+        if (found.isEmpty() && frags.isNotEmpty()) {
+            val order = units.associate { (it["id"] as? String ?: "") to (integralValue(it["ord"]) ?: 0L) }
+            found = frags.map { it["unit"] as? String ?: "" }.distinct().sortedWith(compareBy<String>({ order[it] ?: 0L }, { it }))
+        }
+        l.char?.takeIf { it.size == 2 }?.let { (c, d) ->
+            frags = frags.filter { f ->
+                val ch = asList(asMap(f["anchor"])?.get("chars"))
+                if (f["unit"] !in found || ch == null || ch.size != 2) return@filter false
+                val a = numberValue(ch[0]) ?: return@filter false
+                val b = numberValue(ch[1]) ?: return@filter false
+                if (c < d) a < d && c < b else a <= c && c < b
+            }
+        }
+        return Location(true, found, frags.map { it["id"] as? String ?: "" }, l.char, l.xywh)
     }
 
     internal val container: Container get() = live()

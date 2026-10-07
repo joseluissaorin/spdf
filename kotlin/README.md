@@ -10,10 +10,12 @@ repository (it does not wrap the Rust ABI).
   (Android), both on top of `io.github.joseluissaorin:spdf-core`.
 - Java 17 or newer on the JVM; Android minSdk 23. Built with Kotlin 2.4 at language level 2.2,
   so apps on Kotlin 2.1 or newer can consume it.
-- Conformance: passes the whole SPDF conformance suite (`../conformance`, 229 cases in
-  suite 0.3.0) with **both** SQLite adapters, every kind (`dump`, `legacy_dump`,
-  `roundtrip`, `validate`, `search_lexical`, `search_vector`, `search_hybrid`,
-  `anchor_uri`, `cite`, `quantize`). Nothing is skipped: this is a full reader and writer.
+- Conformance: passes the whole SPDF conformance suite (`../conformance`, 309 cases in
+  suite 0.4.0) with **both** SQLite adapters, on the JVM and on Android emulators (API 31
+  and 36), every kind (`dump`, `legacy_dump`, `roundtrip`, `validate`, `search_lexical`,
+  `search_vector`, `search_hybrid`, `anchor_uri`, `cite`, `quantize`, `locate`,
+  `export_csl`, `export_bibtex`, `export_structure`). Nothing is skipped: this is a full
+  reader and writer.
 
 ## Modules
 
@@ -54,9 +56,10 @@ dependencies {
 | Validation | every code of SPEC §22 (E001–E090, W100–W110) in the reference order; FTS `integrity-check` on a private copy; Ed25519 signatures (platform provider, with a pure fallback for older Android) |
 | Search | lexical (FTS5 BM25, CJK route with `trigram` or substring), vector (`f32`, `f16`, `i8`; dot product or cosine), hybrid (reciprocal rank fusion, k = 10) |
 | Anchors | anchor ↔ URI (`spdf:sha256-…#p=29&f=21&char=118,301`), strict parser, canonical form |
+| Resolution | `locate(reference)`: an anchor URI, or the URL of a `.spdf` with the anchor as fragment (`https://…/quijote.spdf#p=5&f=1r`), resolved to units, fragments, `char` and `xywh` (SPEC §5.4) |
 | Citation | short author-date citation in Spanish and English |
-| Export | CSL-JSON and BibTeX, with the key and field rules of SPEC §19 / RFC 0002 (same keys as every other implementation: `cervantessaavedra1605`, `la1554`, `anonnd`) |
-| Writer | builds valid SPDF 5.0 files (FTS kept in sync, `VACUUM`, no triggers, atomic replace); f16/i8 quantization as the spec says |
+| Export | CSL-JSON (with the CSL `label`/`locator` of a cited passage) and BibTeX, one or several documents, with the key and field rules of SPEC §19 (same keys as every other implementation: `cervantessaavedra1605`, `lazarillo1554`, `anonnd`); ALTO 4, a minimal TEI and a IIIF Presentation 3 manifest (SPEC §19.4), with no invented coordinates or dimensions |
+| Writer | builds valid SPDF 5.0 files (FTS kept in sync, `VACUUM`, no triggers, atomic replace); f16/i8 quantization as the spec says; writes `content_sha256` by default and, given an Ed25519 key, `signer` and `signature` (SPEC §8) |
 | Typed reading | `document()`, `units()`, `fragments()`, `sections()`, `figures()`, `spaces()`, `provenance()`, `blob(key)` |
 
 ## Kotlin
@@ -75,7 +78,20 @@ SpdfFile.open("quijote.spdf").use { f ->          // also legacy .spdf (gzip) fi
     val nearest = f.searchVector(query, space = "toy-embedding@8", limit = 5)
     val fused = f.searchHybrid("hidalgo", query, "toy-embedding@8", limit = 5)
     println(f.exportBibTeX())
+
+    // Resolution of a reference (SPEC §5.4) and structural exports (SPEC §19.4)
+    val loc = f.locate("https://example.org/quijote.spdf#p=5&char=101,278")
+    println("${loc.units} ${loc.fragments}")          // [p5] [q4]
+    val alto: String = f.exportAlto()
+    val tei: String = f.exportTei()
+    val manifest: String = f.exportIiif(base = "https://example.org/quijote")
+    val citeproc = f.exportCslJson(Anchor.page(5, "1r", foliation = "leaf"))   // with "label": "folio", "locator": "1r"
 }
+
+// Several documents in one bibliography (keys disambiguated with a, b, c…)
+val items = listOf("a.spdf", "b.spdf").map { p -> SpdfFile.open(p).use { it.metadata() } }
+println(Export.bibtex(items))
+val csl = Json.compact(Export.cslItems(items))
 
 // Validation and canonical dump
 val result = Validator.validate("file.spdf")
@@ -96,7 +112,8 @@ val text = Citation.cite(a, null, mapOf(
 ), "es")                                             // (de Vega, 1609, p. [21])
 
 // Writing
-SpdfWriter.create(File("out.spdf"), WriterOptions(generator = "my-tool/1.0")).use { w ->
+// content_sha256 is written by default; a 32-byte Ed25519 seed also signs the file.
+SpdfWriter.create(File("out.spdf"), WriterOptions(generator = "my-tool/1.0", signingKey = seed)).use { w ->
     w.setDocument(Document("doc", "pdf", "application/pdf", sha256Hex, mapOf("type" to "book", "title" to "…")))
     w.addUnit(CitableUnit("u1", Anchor.page(1, "1"), "…", reader = "pdf-text-layer"))
     w.addFragment(Fragment("f1", "u1", "…", Anchor.page(1, "1")))
@@ -114,6 +131,7 @@ SpdfWriter.create(File("out.spdf"), WriterOptions(generator = "my-tool/1.0")).us
 
 ```java
 import io.github.joseluissaorin.spdf.*;
+import io.github.joseluissaorin.spdf.sql.SqlDriver;
 import java.util.List;
 import java.util.Map;
 
@@ -141,12 +159,15 @@ try (SpdfWriter w = SpdfWriter.create("out.spdf")) {
 }
 
 AnchorUri.Parsed p = Spdf.parseUri("spdf:sha256-3f2a…#p=29&f=21");
+SqlDriver driver = SqlDriver.defaultDriver();      // `default` is a Java keyword
+Location where = SpdfFile.open("quijote.spdf").locate("spdf:sha256-fa38…#f=1v");
 String cite = Spdf.cite(Anchor.verse(12), null, Json.parseObject("{\"title\":\"Rimas\",\"author\":[{\"family\":\"Bécquer\"}]}"), "es");
 ```
 
 Every entry point is static for Java (`@JvmStatic`), optional parameters have overloads
 (`@JvmOverloads`), rows are classes with a constructor for the required members and setters
 for the rest, and nothing is `suspend`. `src/test/java` in the `spdf` module checks this.
+From Java the default adapter is `SqlDriver.defaultDriver()`.
 
 ## Android
 
@@ -164,6 +185,19 @@ Windows natives too), including the whole conformance suite. Android apps consum
 jar; Gradle resolves the Android variant of `androidx.sqlite:sqlite-bundled` (with the native
 library for each ABI) for them. The core avoids JDK APIs newer than Android API 23 (a test
 checks the bytecode).
+
+On a real Android runtime, the test-only module `spdf-android-device` (Android Gradle Plugin
+9.4, Java instrumented test, never published) packages `../conformance` as test assets and
+runs the whole suite on a device or emulator. It is not part of the default build; enable it
+explicitly:
+
+```sh
+# with an emulator or device attached (ANDROID_HOME pointing at the SDK)
+ANDROID_SERIAL=emulator-5584 ./gradlew -Pspdf.androidDevice=true :spdf-android-device:connectedAndroidTest
+```
+
+Results so far: 309/309 on Android 12 (API 31) and Android 16 (API 36) arm64 emulators. CI
+runs it on x86_64 emulators (API 31 and 35) in a separate job.
 
 ## Safety notes
 
@@ -193,7 +227,8 @@ $B search file.spdf "lugar de la Mancha" -n 5
 $B vsearch file.spdf toy-embedding@8 0,0.5,0.25,0.75,0.25,0,0.25,0 -n 3
 $B hybrid file.spdf toy-embedding@8 0,0.5,0.25,0.75,0.25,0,0.25,0 selection -n 3
 $B cite file.spdf q4 --locale en
-$B export file.spdf bibtex
+$B export file.spdf bibtex          # also csl, alto, tei, iiif
+$B locate file.spdf 'spdf:sha256-…#f=1v'
 $B uri parse 'spdf:sha256-…#p=29&f=21'
 $B build source.json out.spdf
 $B conformance ../conformance -o conformance.json

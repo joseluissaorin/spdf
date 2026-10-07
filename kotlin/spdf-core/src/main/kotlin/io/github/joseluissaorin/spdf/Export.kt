@@ -1,9 +1,10 @@
 package io.github.joseluissaorin.spdf
 
 /**
- * Bibliography export (SPEC §19, RFC 0002): CSL-JSON and BibTeX. Exports never invent data:
- * fields absent from the metadata are absent from the export. The same algorithm as the
- * other implementations (`js/src/bib.ts` is the reference), so keys match across tools.
+ * Bibliographic exports (SPEC §19.1–19.3): CSL-JSON and BibTeX ([Structure] has ALTO, TEI and
+ * IIIF). Exports never invent data: fields absent from the metadata are absent from
+ * the export. Keys and fields follow SPEC §19 exactly, so every implementation produces the
+ * same `\cite{}` keys.
  */
 public object Export {
     private val TYPES = mapOf(
@@ -17,10 +18,8 @@ public object Export {
         "language" to "language", "note" to "note",
     )
 
-    private val YEAR = Regex("^-?[0-9]+$")
-
     /** NFKD, keep only ASCII letters, lowercase. */
-    private fun asciiLetters(s: String): String {
+    private fun fold(s: String): String {
         val b = StringBuilder()
         for (ch in java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFKD)) {
             if (ch in 'A'..'Z' || ch in 'a'..'z') b.append(ch.lowercaseChar())
@@ -30,7 +29,7 @@ public object Export {
 
     private fun isSpace(cp: Int): Boolean = Character.isWhitespace(cp) || Character.isSpaceChar(cp)
 
-    /** Splits on whitespace runs, keeping them as separate tokens. */
+    /** Splits on whitespace runs, keeping them as separate tokens (`re.split(r"(\s+)")`). */
     private fun tokens(s: String): List<String> {
         val out = ArrayList<String>()
         val cur = StringBuilder()
@@ -48,38 +47,48 @@ public object Export {
         return out
     }
 
-    private fun yearOf(md: Map<String, Any?>): String? {
-        val dp = asList(asMap(md["issued"])?.get("date-parts")) ?: return null
-        return when (val y = asList(dp.firstOrNull())?.firstOrNull()) {
-            is Long -> y.toString()
-            is Double -> if (isIntegral(y)) y.toLong().toString() else null
-            is String -> y.trim().takeIf { YEAR.matches(it) }?.toBigInteger()?.toString()
+    private fun words(s: String): List<String> = tokens(s).filter { it.isNotEmpty() && !isSpace(it.codePointAt(0)) }
+
+    /** The first year of `issued` as an integer, sign included (`-350`), or null. */
+    @JvmStatic
+    public fun firstYear(metadata: Map<String, Any?>): Long? {
+        val issued = asMap(metadata["issued"]) ?: return null
+        val dp = asList(issued["date-parts"])?.takeIf { it.isNotEmpty() } ?: return null
+        val first = asList(dp[0])?.takeIf { it.isNotEmpty() } ?: return null
+        return when (val y = first[0]) {
+            is Long -> y
+            is Double -> if (y.isNaN() || y.isInfinite()) null else y.toLong() // int() truncates
+            is String -> y.trim().replace("_", "").toLongOrNull()
+            is Boolean -> if (y) 1L else 0L
             else -> null
         }
     }
 
     /**
-     * The BibTeX key: the first author's `family` (or `literal`), else the first word of the
-     * title, folded to ASCII letters and lowercased (`anon` if nothing is left), plus the first
-     * year of `issued` (or `nd`): `cervantessaavedra1605`, `la1554`, `anonnd`.
+     * The base BibTeX key (SPEC §19.1): the first author's `family`, `literal` or `given` (the
+     * first non-empty), else the first word of `title-short` or `title`, folded to ASCII
+     * letters and lowercased (`anon` if nothing is left), plus the first year of `issued`
+     * (sign included) or `nd`: `cervantessaavedra1605`, `lazarillo1554`, `anonnd`.
      */
     @JvmStatic
     public fun citationKey(metadata: Map<String, Any?>): String {
         var base = ""
-        val first = asMap(asList(metadata["author"])?.firstOrNull())
-        if (first != null) {
-            val name = first["family"].takeIf { truthy(it) } ?: first["literal"].takeIf { truthy(it) } ?: ""
-            base = asciiLetters(pyStr(name))
+        val authors = asList(metadata["author"])
+        if (!authors.isNullOrEmpty()) {
+            val a = asMap(authors[0])
+            if (a != null) {
+                val name = listOf("family", "literal", "given").map { a[it] }.firstOrNull { truthy(it) }
+                base = fold(name?.let { pyStr(it) } ?: "")
+            }
         }
         if (base.isEmpty()) {
-            val title = metadata["title"]?.let { if (it is String) it else pyStr(it) } ?: ""
-            val word = tokens(title).firstOrNull { t -> t.isNotEmpty() && !isSpace(t.codePointAt(0)) }
-            if (word != null) base = asciiLetters(word)
+            val title = listOf("title-short", "title").map { metadata[it] }.firstOrNull { truthy(it) }?.let { pyStr(it) } ?: ""
+            base = words(title).firstOrNull()?.let { fold(it) } ?: ""
         }
-        return base.ifEmpty { "anon" } + (yearOf(metadata) ?: "nd")
+        return base.ifEmpty { "anon" } + (firstYear(metadata)?.toString() ?: "nd")
     }
 
-    /** Keys for several items: collisions get `a`, `b`, `c`… in document order. */
+    /** Keys of several items in one export: a base that occurs more than once gets `a`, `b`, `c`… in order. */
     @JvmStatic
     public fun citationKeys(items: List<Map<String, Any?>>): List<String> {
         val bases = items.map { citationKey(it) }
@@ -96,26 +105,106 @@ public object Export {
         }
     }
 
-    private fun suffix(n: Int): String {
-        var x = n + 1
+    private fun suffix(n0: Int): String {
+        var n = n0 + 1
         val sb = StringBuilder()
-        while (x > 0) {
-            val r = (x - 1) % 26
-            x = (x - 1) / 26
-            sb.insert(0, ('a' + r))
+        while (n > 0) {
+            val r = (n - 1) % 26
+            n = (n - 1) / 26
+            sb.insert(0, 'a' + r)
         }
         return sb.toString()
     }
 
-    /** A CSL-JSON item: the metadata without `spdf`, with `id` = [id] (default: the BibTeX key). */
+    // ------------------------------------------------------------------ CSL-JSON
+
+    private fun folio(a: Map<String, Any?>): String? {
+        val p = a["printed"] ?: return null
+        return if (a["source"] == "inferred") "[${pyStr(p)}]" else pyStr(p)
+    }
+
+    /**
+     * The CSL `label` and `locator` of an anchor (and optional end anchor) for citeproc
+     * (SPEC §19.2): `("page", "145-146")`, `("folio", "1r")`, `("timestamp", "1:09:20")`…, or
+     * null when the anchor has no locator.
+     */
+    @JvmStatic
+    @JvmOverloads
+    public fun labelLocator(anchor: Anchor?, end: Anchor? = null): Pair<String, String>? {
+        val a = anchor?.members ?: return null
+        val e = end?.members?.takeIf { it.isNotEmpty() }
+        val t = a["type"]
+        if (t == "page" || ((t == "section" || t == "web") && a["printed"] != null)) {
+            val start = folio(a) ?: return null
+            val label = if (t == "page") {
+                when (a["foliation"]) {
+                    "leaf" -> "folio"
+                    "column" -> "column"
+                    else -> "page"
+                }
+            } else {
+                "page"
+            }
+            if (e != null && e["type"] == t && e["printed"] != null && !pyEquals(e["printed"], a["printed"])) {
+                return label to "$start-${folio(e)}"
+            }
+            return label to start
+        }
+        if (t == "section" || t == "web") {
+            if (a["paragraph"] != null) return "paragraph" to pyStr(a["paragraph"])
+            val path = asList(a["path"])
+            if (!path.isNullOrEmpty()) return "section" to pyStr(path.last())
+            return null
+        }
+        if (t == "time") {
+            var s = Citation.hms(numberValue(a["t0"]) ?: return null)
+            if (e != null && e["type"] == "time") s += "-" + Citation.hms(numberValue(e["t1"]) ?: return "timestamp" to s)
+            return "timestamp" to s
+        }
+        if (t == "verse") {
+            val lf = a["line_from"]
+            val lt = a["line_to"]
+            return "verse" to if (lt == null || pyEquals(lt, lf)) pyStr(lf) else "${pyStr(lf)}-${pyStr(lt)}"
+        }
+        if (t == "canonical") return a["ref"]?.let { "section" to pyStr(it) }
+        if (t == "sheet") {
+            val rf = a["row_from"]
+            val rt = a["row_to"]
+            return "line" to if (pyEquals(rf, rt)) pyStr(rf) else "${pyStr(rf)}-${pyStr(rt)}"
+        }
+        return null
+    }
+
+    /** One CSL-JSON item: the metadata without `spdf`, `id` = [id] (default: the BibTeX key). */
     @JvmStatic
     @JvmOverloads
     public fun cslItem(metadata: Map<String, Any?>, id: String? = null): Map<String, Any?> {
         val out = LinkedHashMap<String, Any?>()
         for ((k, v) in metadata) if (k != "spdf") out[k] = v
-        out["id"] = id ?: citationKey(out)
+        out["id"] = id ?: citationKey(metadata)
         return out
     }
+
+    /**
+     * The CSL-JSON export of several items (SPEC §19.1, §19.2): `id` = their keys; with an
+     * [anchor] and exactly one item, the item also carries `label` and `locator`.
+     */
+    @JvmStatic
+    @JvmOverloads
+    public fun cslItems(items: List<Map<String, Any?>>, anchor: Anchor? = null, end: Anchor? = null): List<Map<String, Any?>> {
+        val keys = citationKeys(items)
+        val out = items.mapIndexed { i, m -> cslItem(m, keys[i]).toMutableMap() }
+        if (anchor != null && out.size == 1) {
+            labelLocator(anchor, end)?.let { (label, locator) ->
+                out[0]["label"] = label
+                out[0]["locator"] = locator
+            }
+        }
+        @Suppress("UNCHECKED_CAST")
+        return Json.canon(out) as List<Map<String, Any?>>
+    }
+
+    // ------------------------------------------------------------------ BibTeX
 
     /** Escapes `\`, `{` and `}`; the rest of UTF-8 stays as it is. */
     @JvmStatic
@@ -131,23 +220,24 @@ public object Export {
         return b.toString()
     }
 
-    /** Escapes and braces every word with an uppercase letter, so styles cannot lowercase it. */
-    private fun protect(title: String): String = tokens(title).joinToString("") { t ->
-        if (codePoints(t).any { Character.isUpperCase(it) }) "{" + escape(t) + "}" else escape(t)
+    /** Escapes and braces every token with an uppercase letter (category Lu), so styles keep it. */
+    @JvmStatic
+    public fun protect(text: String): String = tokens(text).joinToString("") { t ->
+        if (codePoints(t).any { Character.getType(it) == Character.UPPERCASE_LETTER.toInt() }) "{" + escape(t) + "}" else escape(t)
     }
 
     private fun names(v: Any?): String? {
         val out = ArrayList<String>()
-        for (e in asList(v) ?: return null) {
+        for (e in asList(v) ?: emptyList()) {
             val p = asMap(e) ?: continue
             if (truthy(p["literal"])) {
                 out += "{" + escape(pyStr(p["literal"])) + "}"
                 continue
             }
-            var family = p["family"]?.let { pyStr(it) } ?: ""
-            val particle = p["non-dropping-particle"]?.let { pyStr(it) } ?: ""
-            if (particle.isNotEmpty() && family.isNotEmpty()) family = "$particle $family"
-            val given = p["given"]?.let { pyStr(it) } ?: ""
+            var family = p["family"].takeIf { truthy(it) }?.let { pyStr(it) } ?: ""
+            val particle = p["non-dropping-particle"]
+            if (family.isNotEmpty() && truthy(particle)) family = pyStr(particle) + " " + family
+            val given = p["given"].takeIf { truthy(it) }?.let { pyStr(it) } ?: ""
             when {
                 family.isNotEmpty() && given.isNotEmpty() -> out += escape(family) + ", " + escape(given)
                 family.isNotEmpty() || given.isNotEmpty() -> out += "{" + escape(family.ifEmpty { given }) + "}"
@@ -156,35 +246,27 @@ public object Export {
         return if (out.isEmpty()) null else out.joinToString(" and ")
     }
 
-    private fun scalar(v: Any?): String = when (v) {
-        is String -> v
-        is Long -> v.toString()
-        is Double -> Json.formatNumber(v)
-        is List<*> -> v.joinToString(",") { scalar(it) }
-        else -> pyStr(v)
-    }
-
-    /** The BibTeX entry type and the fields, in order (values escaped as written in the entry). */
+    /** The BibTeX entry type and fields of an item, in canonical order (values as written in the entry). */
     @JvmStatic
     public fun bibtexFields(metadata: Map<String, Any?>): Pair<String, List<Pair<String, String>>> {
         val entry = TYPES[metadata["type"] as? String] ?: "misc"
         val fields = ArrayList<Pair<String, String>>()
         names(metadata["author"])?.let { fields += "author" to it }
         names(metadata["editor"])?.let { fields += "editor" to it }
-        if (truthy(metadata["title"])) fields += "title" to protect(scalar(metadata["title"]))
-        yearOf(metadata)?.let { fields += "year" to it }
+        if (truthy(metadata["title"])) fields += "title" to protect(pyStr(metadata["title"]))
+        firstYear(metadata)?.let { fields += "year" to it.toString() }
         if (truthy(metadata["container-title"])) {
-            fields += (if (entry == "article") "journal" else "booktitle") to protect(scalar(metadata["container-title"]))
+            fields += (if (entry == "article") "journal" else "booktitle") to protect(pyStr(metadata["container-title"]))
         }
         for ((csl, bib) in SIMPLE) {
             val v = metadata[csl]
             if (v == null || v == "" || (v is List<*> && v.isEmpty())) continue
-            fields += bib to escape(scalar(v))
+            fields += bib to escape(pyStr(v))
         }
         return entry to fields
     }
 
-    /** One CSL-JSON item as a BibTeX entry ([key] default: [citationKey]). */
+    /** One item as a BibTeX entry ([key] default: [citationKey]). */
     @JvmStatic
     @JvmOverloads
     public fun bibtex(metadata: Map<String, Any?>, key: String? = null): String {
@@ -193,10 +275,15 @@ public object Export {
         return "@$entry{$k,\n" + fields.joinToString(",\n") { (f, v) -> "  $f = {$v}" } + "\n}\n"
     }
 
-    /** Several items as BibTeX entries (keys disambiguated with a, b, c…). */
+    /** The BibTeX export of several items (SPEC §19.3): entries separated by a blank line, keys disambiguated. */
     @JvmStatic
     public fun bibtex(items: List<Map<String, Any?>>): String {
         val keys = citationKeys(items)
         return items.indices.joinToString("\n") { bibtex(items[it], keys[it]) }
     }
+
+    /** BibTeX text as compared by the conformance suite: lines trimmed, empty lines dropped. */
+    @JvmStatic
+    public fun normalizeBibtex(text: String): List<String> =
+        text.replace("\r\n", "\n").split("\n").map { it.trim() }.filter { it.isNotEmpty() }
 }

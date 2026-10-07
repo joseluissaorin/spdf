@@ -45,7 +45,7 @@ class ConformanceTest {
     @Test
     fun bibtexKeysMatchTheOtherImplementations() {
         val expected = mapOf(
-            "quijote" to "cervantessaavedra1605", "lazarillo" to "la1554",
+            "quijote" to "cervantessaavedra1605", "lazarillo" to "lazarillo1554",
             "apolo11" to "nationalaeronauticsandspaceadministration1969", "lunyu" to "anonnd", "micrographia" to "hooke1665",
         )
         for ((name, key) in expected) {
@@ -147,6 +147,63 @@ class JdbcTest {
             assertEquals(2, f.units().size)
             assertEquals(listOf("toy@3", "toy@3:i8"), f.spaces().map { it.id })
             assertEquals("core semantic", f.meta()["profile"])
+        }
+    }
+
+    @Test
+    fun writerSealsAndSigns() {
+        val seed = ByteArray(32) { (it * 7 + 1).toByte() }
+        val out = File(tmp, "signed.spdf")
+        SpdfWriter.create(out, WriterOptions(generator = "test/1", signingKey = seed), driver).use { w ->
+            w.setDocument(Document("s", "document", "text/plain", "ef".repeat(32), mapOf("type" to "book", "title" to "Rimas")).apply { created = "2026-10-07T00:00:00Z" })
+            w.addUnit(CitableUnit("u1", Anchor.verse(1, 4), "Volverán las oscuras golondrinas", "test"))
+            w.addFragment(Fragment("f1", "u1", "Volverán las oscuras golondrinas", Anchor.verse(1, 4)))
+            w.setMeta("content_sha256", "will be replaced")
+            w.finish()
+        }
+        val r = Validator.validate(out, driver)
+        assertTrue(r.isValid, r.toString())
+        SpdfFile.open(out, driver).use { f ->
+            val meta = f.meta()
+            assertEquals(f.contentSha256(), meta["content_sha256"])
+            assertEquals("ed25519:" + java.util.Base64.getEncoder().encodeToString(io.github.joseluissaorin.spdf.Ed25519.publicKey(seed)), meta["signer"])
+            assertTrue(Validator.verifySignature(meta["content_sha256"]!!, meta["signature"], meta["signer"]))
+        }
+        // Unsigned files still get content_sha256; exact mode keeps the meta verbatim.
+        SpdfFile.open(sample(), driver).use { assertEquals(it.contentSha256(), it.meta()["content_sha256"]) }
+        // Tampering is detected.
+        val bad = File(tmp, "tampered.spdf")
+        out.copyTo(bad)
+        DriverManager.getConnection("jdbc:sqlite:" + bad.absolutePath).use { it.createStatement().use { s -> s.execute("UPDATE units SET text = 'otra cosa'") } }
+        assertEquals(listOf("E081"), Validator.validate(bad, driver).errorCodes)
+        val forged = File(tmp, "forged.spdf")
+        out.copyTo(forged)
+        DriverManager.getConnection("jdbc:sqlite:" + forged.absolutePath).use {
+            it.createStatement().use { s -> s.execute("UPDATE spdf_meta SET value = '" + java.util.Base64.getEncoder().encodeToString(ByteArray(64)) + "' WHERE key = 'signature'") }
+        }
+        assertEquals(listOf("E082"), Validator.validate(forged, driver).errorCodes)
+    }
+
+    @Test
+    fun structuralExports() {
+        val dir = conformanceDir()
+        SpdfFile.open(File(dir, "files/quijote.spdf"), driver).use { f ->
+            val alto = f.exportAlto()
+            assertTrue(alto.contains("<Page ID=\"P1\" PHYSICAL_IMG_NR=\"1\">"), alto.take(800))
+            assertTrue(alto.contains("<String ID=\"P1_B1_L1_S1\" CONTENT="))
+            val tei = f.exportTei()
+            assertTrue(tei.contains("<pb facs=\"blob:pages/0001.png\"/>") && tei.contains("<pb n=\"[iv]\"/>"), tei.take(400))
+            val iiif = Json.parseObject(f.exportIiif())
+            assertEquals("Manifest", iiif["type"])
+            assertEquals(f.units().size, (iiif["items"] as List<*>).size)
+            assertEquals(f.structurePages("tei").size, f.units().count { it.anchor.type == "page" })
+        }
+        SpdfFile.open(File(dir, "files/apolo11.spdf"), driver).use { f ->
+            val m = Json.parseObject(f.exportIiif())
+            val canvas = (m["items"] as List<*>).single() as Map<*, *>
+            assertTrue(canvas.containsKey("duration"))
+            assertEquals(f.units().size, (m["structures"] as List<*>).size)
+            assertTrue(f.exportTei().contains("<u who=\""))
         }
     }
 

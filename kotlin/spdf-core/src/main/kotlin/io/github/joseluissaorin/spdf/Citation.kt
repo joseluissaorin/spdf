@@ -90,7 +90,7 @@ public object Citation {
         return "$single $first"
     }
 
-    private fun hms(t: Double): String {
+    internal fun hms(t: Double): String {
         val s = Math.floor(t).toLong()
         val h = s.floorDiv(3600L)
         val m = s.mod(3600L).floorDiv(60L)
