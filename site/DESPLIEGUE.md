@@ -17,10 +17,27 @@ El guion hace, en orden y parando si algo falla:
 
 1. `js/`: `npm ci && npm run build` (spdf-format, que mueve el validador).
 2. `reader/`: `npm ci && npm run build:web` (el lector web, que se publica en `/reader`).
-3. `site/`: `npm ci`, `npm run build` (la web entera en `site/dist`) y `npm test`.
-4. `npx wrangler deploy` (siempre `npx`, nunca `wrangler` a secas).
-5. Comprueba con `curl` que responden `/`, `/es`, `/spec`, `/validator`,
+3. `integrations/zotero/`: `npm ci && npm run build` (el `.xpi`, que se publica en `/zotero`).
+4. `site/`: `npm ci`, `npm run build` (la web entera en `site/dist`) y `npm test`.
+5. `npx wrangler deploy` (siempre `npx`, nunca `wrangler` a secas).
+6. Comprueba con `curl` que responden `/`, `/es`, `/spec`, `/validator`,
    `/llms.txt`, `/sitemap.xml` y `/reader/`, y que `curl` a la raíz devuelve Markdown.
+
+## Ningún SPDF que no valide, y en Commons ni siquiera eso basta
+
+- `construir.ts` valida con spdf-format todos los `.spdf` de `public/` antes de
+  escribir nada y para si uno falla. La copia rota de las pruebas
+  (`integrations/fixtures/roto.spdf`) no se publica.
+- El job «Todos los SPDF validan» del workflow `site` pasa por el validador de
+  referencia (Rust, `spdf-tools`) y por el de spdf-format todos los `.spdf`
+  versionados en `site/` e `integrations/` y todos los de SPDF Commons
+  descargados de la web.
+- Validar no basta: un folio puesto en la página equivocada pasa el validador.
+  Cada obra de `commons/catalogo.json` lleva `verificacion` (en y es: qué
+  páginas se miraron a ojo contra las imágenes o la transcripción, y qué se
+  encontró) y `verificado` (fecha); sin eso, ni `construir.ts` publica la hoja
+  ni `commons/publicar.ts` sube el fichero. La hoja de Commons lo enseña obra a
+  obra, con un enlace para inspeccionarla en el validador (`/validator#url=…`).
 
 Sin red (o sin `gh`), `SPDF_SIN_RED=1 site/scripts/desplegar.sh`: el estado del
 CI sale de la última copia (`site/.cache/estado.json`) o como «sin datos».
@@ -47,7 +64,9 @@ del propio repositorio al construir.
 | Muestras del validador (`/muestras/`) | `public/muestras/`, generadas por `muestras/generar.ts` |
 | SPDF Commons (`/commons`) | `commons/catalogo.json`; los ficheros, en R2 |
 | Descargas del lector (`/download`) | `descargas.json`; los binarios, en R2 |
-| Lector web (`/reader/`) | `reader/dist-web` |
+| Lector web (`/reader/`) | `reader/dist-web`; sus cabeceras (COOP, COEP) se trasladan al `_headers` de la raíz |
+| Complemento de Zotero (`/zotero/`) | `integrations/zotero/dist/*.xpi` y un `updates.json` con su SHA-256 (el `update_url` del manifiesto) |
+| JSON Schema (`/schema/5.0/`) | `spec/json-schema/*.schema.json`, en la dirección de su `$id` |
 | Para máquinas | `llms.txt`, `llms-full.txt` (la especificación entera y todas las hojas), `sitemap.xml`, `robots.txt`, `status.json`, `.well-known/security.txt` y un gemelo `.md` de cada hoja |
 
 Los textos de cada hoja están en `contenido/en/*.md` y `contenido/es/*.md`
@@ -73,7 +92,11 @@ npx wrangler r2 object put spdf-web/commons/<fichero>.spdf --file <ruta> --conte
 npx wrangler r2 object put spdf-web/reader/<versión>/<fichero> --file <ruta> --remote
 ```
 
-`commons/publicar.ts` sube la colección entera y reescribe `commons/catalogo.json`.
+`npx tsx commons/publicar.ts [catálogo] [carpeta]` comprueba cada obra (SHA-256,
+validez, verificación), la sube a R2 y copia el catálogo a `commons/catalogo.json`.
+`npx tsx scripts/subir-lector.ts reader-v<versión>` baja con `gh` los binarios
+de una release del lector, los sube a R2 (`reader/<versión>/`) y reescribe
+`descargas.json`.
 
 ## Imágenes fijas
 
