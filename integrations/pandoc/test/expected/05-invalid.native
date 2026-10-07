@@ -1,0 +1,24 @@
+[ Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_EN_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "1}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 1
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_EN#p=2]"
+        ]
+    ]
+, Plain
+    [ Str "reference:"
+    , Space
+    , Str "spdf-HASH_EN_12"
+    , Space
+    , Str "SPDF in five pages"
+    ]
+]

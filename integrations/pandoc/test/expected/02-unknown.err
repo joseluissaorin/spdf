@@ -1,0 +1,18 @@
+[WARNING] spdf: [@spdf:sha256-0000000000000000000000000000000000000000000000000000000000000000#p=2]: no SPDF file in the library holds the document sha256-0000000000000000000000000000000000000000000000000000000000000000; the citation is left unresolved
+[WARNING] spdf: [@spdf:no-such-document#p=1]: no SPDF file in the library holds a document with id 'no-such-document'; the citation is left unresolved
+[WARNING] spdf: [@spdf:sha256-HASH_EN#p=99]: page p=99 is not in spdf-in-five-pages.spdf; the citation is left unresolved
+[WARNING] spdf: [@spdf:sha256-HASH_EN#f=xiv]: no page of spdf-in-five-pages.spdf is printed with the folio f=xiv; the citation is left unresolved
+[WARNING] spdf: [@spdf:sha256-HASH_EN#p=0]: malformed parameter p=0 (an integer from 1); the citation is left unresolved
+[WARNING] spdf: [@spdf:sha256-54284912f18b#p=2]: a sha256- document reference needs the 64 hex digits of documents.source_sha256; the citation is left unresolved
+[WARNING] spdf: [@spdf:sha256-HASH_EN#t=12]: t=12 is not inside any time unit of spdf-in-five-pages.spdf; the citation is left unresolved
+[WARNING] spdf: [@spdf:sha256-HASH_EN#p=2&pg=9]: unknown parameter 'pg' ignored
+[WARNING] spdf: [@spdf:sha256-HASH_EN#p=42]: page p=42 is not in spdf-in-five-pages.spdf; the citation is left unresolved
+[WARNING] spdf: '[@{spdf:spdf in five pages#p=2}]' looks like an SPDF citation but Pandoc cannot read it as one; write spaces and other reserved characters percent-encoded (%20)
+[WARNING] Citeproc: citation spdf:no-such-document#p=1 not found
+[WARNING] Citeproc: citation spdf:sha256-0000000000000000000000000000000000000000000000000000000000000000#p=2 not found
+[WARNING] Citeproc: citation spdf:sha256-HASH_EN#f=xiv not found
+[WARNING] Citeproc: citation spdf:sha256-HASH_EN#p=0 not found
+[WARNING] Citeproc: citation spdf:sha256-HASH_EN#p=42 not found
+[WARNING] Citeproc: citation spdf:sha256-HASH_EN#p=99 not found
+[WARNING] Citeproc: citation spdf:sha256-HASH_EN#t=12 not found
+[WARNING] Citeproc: citation spdf:sha256-54284912f18b#p=2 not found

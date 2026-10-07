@@ -1,0 +1,23 @@
+An unknown document (spdf:sha256-0000000000000000000000000000000000000000000000000000000000000000#p=2?).
+
+An unknown document id (spdf:no-such-document#p=1?).
+
+A page the file does not have (spdf:sha256-HASH_EN#p=99?).
+
+A folio the file does not have (spdf:sha256-HASH_EN#f=xiv?).
+
+A malformed parameter (spdf:sha256-HASH_EN#p=0?).
+
+A truncated hash (spdf:sha256-54284912f18b#p=2?).
+
+A time in a paged document (spdf:sha256-HASH_EN#t=12?).
+
+An unknown parameter is ignored (Saorín Ferrer 2026, 1).
+
+A good citation next to a bad one (Saorín Ferrer 2026, 1; spdf:sha256-HASH_EN#p=42?).
+
+Text Pandoc cannot read as a citation, because of the space in the key, is reported [@{spdf:spdf in five pages#p=2}], while an address such as someone@spdf:8080 is not.
+
+References
+
+Saorín Ferrer, José Luis. 2026. SPDF in Five Pages. Spdf.joseluissaorin.com. https://spdf.joseluissaorin.com/validator.

@@ -1,0 +1,282 @@
+[ Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_EN_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "1}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 1
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_EN#p=2]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_EN_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "2}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 2
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_EN#f=2]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_EN_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "[3]}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 3
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_EN#p=4]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_EN_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "[3]}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 4
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_EN#f=3]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_EN_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str ","
+                , Space
+                , Str "{},"
+                , Space
+                , Str "n.\160pag."
+                ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 5
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_EN#p=1]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_EN_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "1-2}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 6
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_EN#p=2&pe=3]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_EN_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "2-[3]}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 7
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_EN#p=3&pe=4]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_EN_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "4-5}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 8
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_EN#f=4&fe=5]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_EN_12"
+            , citationPrefix = [ Str "see" ]
+            , citationSuffix =
+                [ Str ","
+                , Space
+                , Str "{p."
+                , Space
+                , Str "4}"
+                , Str ","
+                , Space
+                , Str "emphasis"
+                , Space
+                , Str "added"
+                ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 9
+            , citationHash = 0
+            }
+        ]
+        [ Str "[see"
+        , Space
+        , Str
+            "@spdf:sha256-HASH_EN#p=5,"
+        , Space
+        , Str "emphasis"
+        , Space
+        , Str "added]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_EN_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "1}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 10
+            , citationHash = 0
+            }
+        , Citation
+            { citationId = "spdf-HASH_EN_12"
+            , citationPrefix = [ Str "compare" ]
+            , citationSuffix =
+                [ Str ","
+                , Space
+                , Str "{p."
+                , Space
+                , Str "5}"
+                , Str ","
+                , Space
+                , Str "for"
+                , Space
+                , Str "the"
+                , Space
+                , Str "summary"
+                ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 10
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_EN#p=2;"
+        , Space
+        , Str "compare"
+        , SoftBreak
+        , Str
+            "@spdf:sha256-HASH_EN#p=6,"
+        , Space
+        , Str "for"
+        , Space
+        , Str "the"
+        , Space
+        , Str "summary]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_EN_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "2}" ]
+            , citationMode = SuppressAuthor
+            , citationNoteNum = 11
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[-@spdf:sha256-HASH_EN#p=3]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_EN_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "1}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 12
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_EN#p=2&f=7]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_EN_12"
+            , citationPrefix = []
+            , citationSuffix = []
+            , citationMode = NormalCitation
+            , citationNoteNum = 13
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_EN]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_EN_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "5}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 14
+            , citationHash = 0
+            }
+        ]
+        [ Str "[@spdf:spdf-in-five-pages#p=6]" ]
+    ]
+, Plain
+    [ Str "reference:"
+    , Space
+    , Str "spdf-HASH_EN_12"
+    , Space
+    , Str "SPDF in five pages"
+    ]
+]

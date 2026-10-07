@@ -1,0 +1,23 @@
+Roman folios (Cervantes Saavedra 1605, ii) and an inferred one (Cervantes Saavedra 1605, [iv]).
+
+Leaves: a recto (Cervantes Saavedra 1605, fol. 1r), an inferred verso (Cervantes Saavedra 1605, fol. [1v]), a range of leaves (Cervantes Saavedra 1605, fols. 1r–[1v]), and a leaf by folio (Cervantes Saavedra 1605, fol. 2r).
+
+Time: one moment (National Aeronautics and Space Administration 1969, 1:09:20), a span (National Aeronautics and Space Administration 1969, 0:12-0:24), a span inside one second (National Aeronautics and Space Administration 1969, 1:09:20), and clock syntax (National Aeronautics and Space Administration 1969, 1:09:20).
+
+Sections: (孔子, n.d., § 學而第一, para. 1), and the IRI form (孔子, n.d., § 為政第二).
+
+Verses (Garcilaso de la Vega and Plato 1871, v. 2), (Garcilaso de la Vega and Plato 1871, vv. 1–3), a verse that is not there (spdf:sha256-b74f52c7fbbf58aac689f9b78a79891bbf6b7b316a278bd16f857e21921fb214#v=40?).
+
+Slides (Garcilaso de la Vega and Plato 1871, slide 2), sheets (Garcilaso de la Vega and Plato 1871, Data, rows 4-9) (Garcilaso de la Vega and Plato 1871, Data, row 4), and a canonical reference (Garcilaso de la Vega and Plato 1871, 514a).
+
+Parameters that only narrow a unit do not change the citation (Cervantes Saavedra 1605, fol. 1r).
+
+References
+
+Cervantes Saavedra, Miguel de. 1605. El ingenioso hidalgo don Quijote de la Mancha. Juan de la Cuesta.
+
+Garcilaso de la Vega, and Plato. 1871. Anchors of Every Kind.
+
+National Aeronautics and Space Administration. 1969. Apollo 11 Air-to-Ground Voice Transmissions (Excerpts). Aired July 20, on.
+
+孔子. n.d. 論語.

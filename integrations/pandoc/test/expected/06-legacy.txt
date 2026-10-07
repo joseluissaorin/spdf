@@ -1,0 +1,9 @@
+Garcilaso, an unnumbered page (Garcilaso de la Vega [1543] 1580, n. pag.), a roman folio (Garcilaso de la Vega [1543] 1580, ix), an inferred roman folio (Garcilaso de la Vega [1543] 1580, [x]), by document id and folio (Garcilaso de la Vega [1543] 1580, ix), and a range (Garcilaso de la Vega [1543] 1580, ix–[x]).
+
+Kennedy, a moment (Kennedy 1962, 0:12), a span (Kennedy 1962, 0:09-0:41), and a time after the end of the recording (spdf:kennedy-rice#t=99?).
+
+References
+
+Garcilaso de la Vega. (1543) 1580. Obras de Garcilaso de la Vega: con anotaciones de Fernando de Herrera. Edited by Fernando de Herrera. Prueba de conformidad SPDF. Alonso de la Barrera.
+
+Kennedy, John F. 1962. “Address at Rice University on the Nation’s Space Effort.” Houston, September 12.

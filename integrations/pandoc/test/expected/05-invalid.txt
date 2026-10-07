@@ -1,0 +1,5 @@
+roto.spdf holds the same document as spdf-in-five-pages.spdf but carries a view, so it is refused and the valid copy is used (Saorín Ferrer 2026, 1).
+
+References
+
+Saorín Ferrer, José Luis. 2026. SPDF in Five Pages. Spdf.joseluissaorin.com. https://spdf.joseluissaorin.com/validator.

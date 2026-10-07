@@ -1,0 +1,9 @@
+In brackets (Saorín Ferrer 2026, 1). With prefix and suffix (see Saorín Ferrer 2026, 2, emphasis added). Two in one bracket (Saorín Ferrer 2026, [3]; Saorín Ferrer 2026, n. pag.).
+
+In text, Saorín Ferrer (2026, 5) says so, and emphasis stays emphasis.
+
+An e-mail address such as someone@spdf.example is left alone.
+
+References
+
+Saorín Ferrer, José Luis. 2026. SPDF in Five Pages. Spdf.joseluissaorin.com. https://spdf.joseluissaorin.com/validator.

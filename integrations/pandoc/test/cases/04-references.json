@@ -1,0 +1,10 @@
+[
+  {
+    "id": "cinco",
+    "type": "pamphlet",
+    "title": "SPDF en cinco páginas",
+    "author": [{"family": "Saorín Ferrer", "given": "José Luis"}],
+    "issued": {"date-parts": [[2026]]},
+    "language": "es"
+  }
+]

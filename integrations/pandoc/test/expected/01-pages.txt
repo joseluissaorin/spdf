@@ -1,0 +1,23 @@
+Physical page 2 carries the printed folio 1 (Saorín Ferrer 2026, 1).
+
+A folio can be given directly (Saorín Ferrer 2026, 2).
+
+An inferred folio goes in brackets (Saorín Ferrer 2026, [3]), also when it is cited by folio (Saorín Ferrer 2026, [3]).
+
+The cover has no folio (Saorín Ferrer 2026, n. pag.).
+
+A range (Saorín Ferrer 2026, 1–2), a range that ends on an inferred folio (Saorín Ferrer 2026, 2–[3]), and one written with folios (Saorín Ferrer 2026, 4–5).
+
+Prefix and suffix are kept (see Saorín Ferrer 2026, 4, emphasis added).
+
+Two citations in one bracket (Saorín Ferrer 2026, 1; compare Saorín Ferrer 2026, 5, for the summary).
+
+The author can be suppressed (2026, 2).
+
+A folio that disagrees with its page is corrected (Saorín Ferrer 2026, 1).
+
+The whole document (Saorín Ferrer 2026), and the same booklet by its document id (Saorín Ferrer 2026, 5).
+
+References
+
+Saorín Ferrer, José Luis. 2026. SPDF in Five Pages. Spdf.joseluissaorin.com. https://spdf.joseluissaorin.com/validator.

@@ -1,0 +1,19 @@
+A citation gets a note with its anchor (Saorín Ferrer 2026, [3])[1].
+
+A range links to its canonical anchor (Saorín Ferrer 2026, 2–[3])[2].
+
+Two citations get one note (Saorín Ferrer 2026, 1; 2026, 5)[3].
+
+Inside a footnote the anchor goes in parentheses.[4]
+
+References
+
+Saorín Ferrer, José Luis. 2026. SPDF in Five Pages. Spdf.joseluissaorin.com. https://spdf.joseluissaorin.com/validator.
+
+[1] spdf:sha256-HASH_EN#p=4&f=3
+
+[2] spdf:sha256-HASH_EN#p=3&pe=4&f=2&fe=3
+
+[3] spdf:sha256-HASH_EN#p=2&f=1; spdf:sha256-HASH_EN#p=6&f=5
+
+[4] As shown in Saorín Ferrer (2026, 2) (spdf:sha256-HASH_EN#p=3&f=2).

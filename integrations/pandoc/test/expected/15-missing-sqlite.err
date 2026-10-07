@@ -1,0 +1,2 @@
+Error running filter spdf.lua:
+spdf.lua: the sqlite3 command-line tool was not found (looked for '/nonexistent/sqlite3'). Install it (macOS ships it; Debian/Ubuntu: apt install sqlite3; Fedora: dnf install sqlite) or point the metadata field spdf-sqlite3 at it.

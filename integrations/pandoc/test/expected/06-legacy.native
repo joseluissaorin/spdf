@@ -1,0 +1,144 @@
+[ Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-9f47b3f77732"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str ","
+                , Space
+                , Str "{},"
+                , Space
+                , Str "n.\160pag."
+                ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 1
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-9f47b3f777324459aa6ee013085c85bf06b02aff716220c5766c0311dc20f5a6#p=1]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-9f47b3f77732"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "ix}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 2
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-9f47b3f777324459aa6ee013085c85bf06b02aff716220c5766c0311dc20f5a6#p=2]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-9f47b3f77732"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "[x]}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 3
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-9f47b3f777324459aa6ee013085c85bf06b02aff716220c5766c0311dc20f5a6#p=3]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-9f47b3f77732"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "ix}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 4
+            , citationHash = 0
+            }
+        ]
+        [ Str "[@spdf:garcilaso#f=ix]" ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-9f47b3f77732"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "ix-[x]}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 5
+            , citationHash = 0
+            }
+        ]
+        [ Str "[@spdf:garcilaso#p=2&pe=3]" ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-546afd0cb0d0"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{}," , Space , Str "0:12" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 6
+            , citationHash = 0
+            }
+        ]
+        [ Str "[@spdf:kennedy-rice#t=12]" ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-546afd0cb0d0"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str ","
+                , Space
+                , Str "{},"
+                , Space
+                , Str "0:09-0:41"
+                ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 7
+            , citationHash = 0
+            }
+        ]
+        [ Str "[@spdf:kennedy-rice#t=9.5,41]" ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf:kennedy-rice#t=99"
+            , citationPrefix = []
+            , citationSuffix = []
+            , citationMode = NormalCitation
+            , citationNoteNum = 8
+            , citationHash = 0
+            }
+        ]
+        [ Str "[@spdf:kennedy-rice#t=99]" ]
+    ]
+, Plain
+    [ Str "reference:"
+    , Space
+    , Str "spdf-9f47b3f77732"
+    , Space
+    , Str
+        "Obras de Garcilaso de la Vega: con anotaciones de Fernando de Herrera"
+    ]
+, Plain
+    [ Str "reference:"
+    , Space
+    , Str "spdf-546afd0cb0d0"
+    , Space
+    , Str
+        "Address at Rice University on the Nation\8217s Space Effort"
+    ]
+]

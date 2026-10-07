@@ -1,0 +1,2 @@
+[WARNING] spdf: [@spdf:sha256-HASH_EN#p=1]: physical page 1 of spdf-in-five-pages.spdf has no printed folio; cited as unnumbered (n. pag.)
+[WARNING] spdf: [@spdf:sha256-HASH_EN#p=2&f=7]: f=7 does not match the folio printed on physical page 2 (1); citing the page

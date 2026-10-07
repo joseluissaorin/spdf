@@ -1,0 +1,130 @@
+[ Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_EN_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{S." , Space , Str "1}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 1
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_EN#p=2]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_EN_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{S." , Space , Str "2-[3]}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 2
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_EN#p=3&pe=4]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-fa38e514734b"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{Fol." , Space , Str "[1v]}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 3
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=6]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-b74f52c7fbbf"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{V." , Space , Str "4-6}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 4
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-b74f52c7fbbf58aac689f9b78a79891bbf6b7b316a278bd16f857e21921fb214#v=4-6]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_EN_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str ","
+                , Space
+                , Str "{},"
+                , Space
+                , Str "n.\160pag."
+                ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 5
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_EN#p=1]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-b74f52c7fbbf"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str ","
+                , Space
+                , Str "{},"
+                , Space
+                , Str "slide"
+                , Space
+                , Str "1"
+                ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 6
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-b74f52c7fbbf58aac689f9b78a79891bbf6b7b316a278bd16f857e21921fb214#sl=1]"
+        ]
+    ]
+, Plain
+    [ Str "reference:"
+    , Space
+    , Str "spdf-HASH_EN_12"
+    , Space
+    , Str "SPDF in five pages"
+    ]
+, Plain
+    [ Str "reference:"
+    , Space
+    , Str "spdf-fa38e514734b"
+    , Space
+    , Str "El ingenioso hidalgo don Quijote de la Mancha"
+    ]
+, Plain
+    [ Str "reference:"
+    , Space
+    , Str "spdf-b74f52c7fbbf"
+    , Space
+    , Str "Anchors of every kind"
+    ]
+]

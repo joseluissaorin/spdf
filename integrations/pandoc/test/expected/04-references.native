@@ -1,0 +1,102 @@
+[ Plain
+    [ Cite
+        [ Citation
+            { citationId = "darwin1859"
+            , citationPrefix = []
+            , citationSuffix = []
+            , citationMode = NormalCitation
+            , citationNoteNum = 1
+            , citationHash = 0
+            }
+        ]
+        [ Str "[@darwin1859]" ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "saorin2026"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "1}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 2
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_EN#p=2]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "saorin2026"
+            , citationPrefix = []
+            , citationSuffix = [ Str "," , Space , Str "p.\160\&4" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 3
+            , citationHash = 0
+            }
+        ]
+        [ Str "[@saorin2026,"
+        , Space
+        , Str "p."
+        , Space
+        , Str "4]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "cinco"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "2}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 4
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_ES#p=3]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-fa38e514734b"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{fol." , Space , Str "1r}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 5
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=5]"
+        ]
+    ]
+, Plain
+    [ Str "reference:"
+    , Space
+    , Str "darwin1859"
+    , Space
+    , Str "On the Origin of Species"
+    ]
+, Plain
+    [ Str "reference:"
+    , Space
+    , Str "saorin2026"
+    , Space
+    , Str "SPDF in Five Pages"
+    ]
+, Plain
+    [ Str "reference:"
+    , Space
+    , Str "spdf-fa38e514734b"
+    , Space
+    , Str
+        "Don Quijote (an entry written by hand under the filter\8217s own key)"
+    ]
+]

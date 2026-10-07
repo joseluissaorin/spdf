@@ -1,0 +1,403 @@
+[ Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-fa38e514734b"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "ii}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 1
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=2]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-fa38e514734b"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "[iv]}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 2
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=4]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-fa38e514734b"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{fol." , Space , Str "1r}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 3
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=5]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-fa38e514734b"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{fol." , Space , Str "[1v]}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 4
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=6]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-fa38e514734b"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str ","
+                , Space
+                , Str "{fol."
+                , Space
+                , Str "1r-[1v]}"
+                ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 5
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=5&pe=6]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-fa38e514734b"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{fol." , Space , Str "2r}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 6
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#f=2r]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-704f8c86caec"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{}," , Space , Str "1:09:20" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 7
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=4160]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-704f8c86caec"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str ","
+                , Space
+                , Str "{},"
+                , Space
+                , Str "0:12-0:24"
+                ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 8
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=12,24.5]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-704f8c86caec"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{}," , Space , Str "1:09:20" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 9
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=4160,4160.5]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-704f8c86caec"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{}," , Space , Str "1:09:20" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 10
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=1:09:20]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-c5fbea8e0b34"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str ","
+                , Space
+                , Str "{},"
+                , Space
+                , Str "\167"
+                , Space
+                , Str "\23416\32780\31532\19968,"
+                , Space
+                , Str "para."
+                , Space
+                , Str "1"
+                ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 11
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-c5fbea8e0b34b1011a7002b2d8a69fcec184055902fbcbc4b0c08b1813c70e4f#s=%E5%AD%B8%E8%80%8C%E7%AC%AC%E4%B8%80&para=1]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-c5fbea8e0b34"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str ","
+                , Space
+                , Str "{},"
+                , Space
+                , Str "\167"
+                , Space
+                , Str "\28858\25919\31532\20108"
+                ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 12
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@{spdf:sha256-c5fbea8e0b34b1011a7002b2d8a69fcec184055902fbcbc4b0c08b1813c70e4f#s=\28858\25919\31532\20108}]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-b74f52c7fbbf"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{v." , Space , Str "2}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 13
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-b74f52c7fbbf58aac689f9b78a79891bbf6b7b316a278bd16f857e21921fb214#v=2]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-b74f52c7fbbf"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{v." , Space , Str "1-3}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 14
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-b74f52c7fbbf58aac689f9b78a79891bbf6b7b316a278bd16f857e21921fb214#v=1-3]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId =
+                "spdf:sha256-b74f52c7fbbf58aac689f9b78a79891bbf6b7b316a278bd16f857e21921fb214#v=40"
+            , citationPrefix = []
+            , citationSuffix = []
+            , citationMode = NormalCitation
+            , citationNoteNum = 15
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-b74f52c7fbbf58aac689f9b78a79891bbf6b7b316a278bd16f857e21921fb214#v=40]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-b74f52c7fbbf"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str ","
+                , Space
+                , Str "{},"
+                , Space
+                , Str "slide"
+                , Space
+                , Str "2"
+                ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 16
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-b74f52c7fbbf58aac689f9b78a79891bbf6b7b316a278bd16f857e21921fb214#sl=2]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-b74f52c7fbbf"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str ","
+                , Space
+                , Str "{},"
+                , Space
+                , Str "Data,"
+                , Space
+                , Str "rows"
+                , Space
+                , Str "4-9"
+                ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 17
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-b74f52c7fbbf58aac689f9b78a79891bbf6b7b316a278bd16f857e21921fb214#sh=Data&rows=4-9]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-b74f52c7fbbf"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str ","
+                , Space
+                , Str "{},"
+                , Space
+                , Str "Data,"
+                , Space
+                , Str "row"
+                , Space
+                , Str "4"
+                ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 18
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-b74f52c7fbbf58aac689f9b78a79891bbf6b7b316a278bd16f857e21921fb214#sh=Data&rows=4-4]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-b74f52c7fbbf"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{}," , Space , Str "514a" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 19
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-b74f52c7fbbf58aac689f9b78a79891bbf6b7b316a278bd16f857e21921fb214#ref=stephanus:514a]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-fa38e514734b"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{fol." , Space , Str "1r}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 20
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=5&char=0,12&xywh=percent:10,20,30,40]"
+        ]
+    ]
+, Plain
+    [ Str "reference:"
+    , Space
+    , Str "spdf-fa38e514734b"
+    , Space
+    , Str "El ingenioso hidalgo don Quijote de la Mancha"
+    ]
+, Plain
+    [ Str "reference:"
+    , Space
+    , Str "spdf-704f8c86caec"
+    , Space
+    , Str
+        "Apollo 11 air-to-ground voice transmissions (excerpts)"
+    ]
+, Plain
+    [ Str "reference:"
+    , Space
+    , Str "spdf-c5fbea8e0b34"
+    , Space
+    , Str "\35542\35486"
+    ]
+, Plain
+    [ Str "reference:"
+    , Space
+    , Str "spdf-b74f52c7fbbf"
+    , Space
+    , Str "Anchors of every kind"
+    ]
+]

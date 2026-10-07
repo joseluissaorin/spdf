@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  A test style for spdf.lua: it prints the locator together with the name of
+  the label citeproc recognised (page, folio, column, verse…) and that label's
+  own term, so the tests can see that the filter's suffix was read as a real
+  CSL locator in every locale. Not meant for writing.
+  Dedicated to the public domain (CC0 1.0).
+-->
+<style xmlns="http://purl.org/net/xbiblio/csl" class="in-text" version="1.0">
+  <info>
+    <title>spdf.lua test style: locator labels</title>
+    <id>spdf-lua-test-labels</id>
+    <updated>2026-10-07T00:00:00+00:00</updated>
+  </info>
+  <citation>
+    <layout prefix="(" suffix=")" delimiter="; ">
+      <group delimiter=", ">
+        <names variable="author">
+          <name form="short"/>
+        </names>
+        <date variable="issued">
+          <date-part name="year"/>
+        </date>
+        <group delimiter=" ">
+          <choose>
+            <if locator="page">
+              <text value="[page]"/>
+            </if>
+            <else-if locator="folio">
+              <text value="[folio]"/>
+            </else-if>
+            <else-if locator="column">
+              <text value="[column]"/>
+            </else-if>
+            <else-if locator="verse">
+              <text value="[verse]"/>
+            </else-if>
+            <else-if locator="paragraph">
+              <text value="[paragraph]"/>
+            </else-if>
+          </choose>
+          <label variable="locator" form="short"/>
+          <text variable="locator"/>
+        </group>
+      </group>
+    </layout>
+  </citation>
+</style>

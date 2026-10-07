@@ -1,0 +1,7 @@
+[WARNING] spdf: library path not found: no-such-folder
+[WARNING] spdf: skipping roto.spdf: it contains view x_rotura; SPDF files must not carry triggers, views or foreign virtual tables (E020)
+[WARNING] spdf: skipping E001-not-sqlite.spdf: it is not a SQLite database (E001)
+[WARNING] spdf: skipping E001-gzip-of-text.spdf: it is not a SQLite database (E001)
+[WARNING] spdf: skipping E002-application-id.spdf: it is not an SPDF file (unknown application_id, E002)
+[WARNING] spdf: skipping E013-two-documents.spdf: its documents table does not hold exactly one row (E013)
+[WARNING] spdf: skipping E020-trigger.spdf: it contains trigger units_ai; SPDF files must not carry triggers, views or foreign virtual tables (E020)

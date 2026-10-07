@@ -1,0 +1,21 @@
+Saorín Ferrer (2026, 1) says so.
+
+As Saorín Ferrer (2026, [3]), argues, inferred folios are bracketed.
+
+At the end of a sentence Saorín Ferrer (2026, 4).
+
+Braced, with a suffix: Saorín Ferrer (2026, 1, emphasis added) says so.
+
+In parentheses (Saorín Ferrer (2026, 2)).
+
+Followed by a colon, Saorín Ferrer (2026, 4): then the text.
+
+A folio at the end of a sentence: Saorín Ferrer (2026, 5).
+
+The braced form in brackets (Saorín Ferrer 2026, 1–2, emphasis added).
+
+The braced form keeps every character (spdf:sha256-HASH_EN#f=4.?).
+
+References
+
+Saorín Ferrer, José Luis. 2026. SPDF in Five Pages. Spdf.joseluissaorin.com. https://spdf.joseluissaorin.com/validator.

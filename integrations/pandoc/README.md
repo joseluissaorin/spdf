@@ -24,7 +24,7 @@ The cover has no folio [@spdf:sha256-50d942445564fe24effe743701f0c9a16fde414e6eb
 ```
 
 ```console
-$ pandoc paper.md --lua-filter spdf.lua --citeproc -t plain
+$ pandoc paper.md --lua-filter spdf.lua --citeproc -t plain --wrap=none
 [WARNING] Scripting warning at spdf.lua line 46 column 1: spdf: [@spdf:sha256-50d942445564fe24effe743701f0c9a16fde414e6eb1f0ce2095b866d0555f4c#p=1]: physical page 1 of spdf-in-five-pages.spdf has no printed folio; cited as unnumbered (n. pag.)
 Physical page 2 carries the printed folio 1 (Saorín Ferrer 2026, 1).
 
@@ -37,10 +37,11 @@ References
 Saorín Ferrer, José Luis. 2026. SPDF in Five Pages. Spdf.joseluissaorin.com. https://spdf.joseluissaorin.com/validator.
 ```
 
-Every example in this file is real output from the tests in [`test/`](test/), run on the
-sample booklet [`integrations/fixtures/spdf-in-five-pages.spdf`](../fixtures/) (six page
-units: a cover without folio, then printed folios 1, 2, an inferred [3], 4 and 5) with
-Pandoc 3.9 and its default style, Chicago author-date.
+Every output in this file is real, produced with Pandoc 3.9 and its default style,
+Chicago author-date, mostly from the sample booklet
+[`integrations/fixtures/spdf-in-five-pages.spdf`](../fixtures/) (six page units: a cover
+without folio, then printed folios 1, 2, an inferred [3], 4 and 5); the same cases are
+checked by the tests in [`test/`](test/).
 
 ## Why Pandoc, and not Calibre
 

@@ -1,0 +1,125 @@
+[ Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_ES_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{}," , Space , Str "s.\160p." ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 1
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_ES#p=1]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_ES_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "1}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 2
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_ES#p=2]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_ES_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "[3]}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 3
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_ES#p=4]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_ES_12"
+            , citationPrefix = [ Str "v\233ase" ]
+            , citationSuffix =
+                [ Str ","
+                , Space
+                , Str "{p."
+                , Space
+                , Str "5}"
+                , Str ","
+                , Space
+                , Str "la"
+                , Space
+                , Str "cursiva"
+                , Space
+                , Str "es"
+                , Space
+                , Str "nuestra"
+                ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 4
+            , citationHash = 0
+            }
+        ]
+        [ Str "[v\233ase"
+        , Space
+        , Str
+            "@spdf:sha256-HASH_ES#f=5,"
+        , Space
+        , Str "la"
+        , Space
+        , Str "cursiva"
+        , Space
+        , Str "es"
+        , Space
+        , Str "nuestra]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_ES_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "1-[3]}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 5
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_ES#p=2&pe=4]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_ES_12"
+            , citationPrefix = []
+            , citationSuffix = [ Str "{p." , Space , Str "2}" ]
+            , citationMode = AuthorInText
+            , citationNoteNum = 6
+            , citationHash = 0
+            }
+        ]
+        [ Str "@spdf:spdf-en-cinco-paginas#p" , Str "=3" ]
+    ]
+, Plain
+    [ Str "reference:"
+    , Space
+    , Str "spdf-HASH_ES_12"
+    , Space
+    , Str "SPDF en cinco p\225ginas"
+    ]
+]

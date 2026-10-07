@@ -1,0 +1,15 @@
+La portada no lleva folio (Saorín Ferrer 2026, s. p.).
+
+La página física 2 lleva impreso el folio 1 (Saorín Ferrer 2026, 1).
+
+El folio deducido va entre corchetes (Saorín Ferrer 2026, [3]).
+
+Por folio (véase Saorín Ferrer 2026, 5, la cursiva es nuestra).
+
+Un intervalo de páginas (Saorín Ferrer 2026, 1-[3]).
+
+Según Saorín Ferrer (2026, 2), el formato guarda el folio impreso.
+
+Referencias
+
+Saorín Ferrer, José Luis. 2026. SPDF en cinco páginas. Spdf.joseluissaorin.com. https://spdf.joseluissaorin.com/es/validador.

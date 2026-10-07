@@ -1,0 +1,26 @@
+[ Plain
+    [ Cite
+        [ Citation
+            { citationId = "darwin1859"
+            , citationPrefix = []
+            , citationSuffix = [ Str "," , Space , Str "p.\160\&61" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 1
+            , citationHash = 0
+            }
+        ]
+        [ Str "[@darwin1859,"
+        , Space
+        , Str "p."
+        , Space
+        , Str "61]"
+        ]
+    ]
+, Plain
+    [ Str "reference:"
+    , Space
+    , Str "darwin1859"
+    , Space
+    , Str "On the Origin of Species"
+    ]
+]
