@@ -245,7 +245,7 @@ def build_metadata(source, units, kind: str, language: Optional[str], llm=None, 
         rec.put("author", [parse_name(a, language) for a in h["authors"]], "embedded", emb)
     elif h.get("author_raw"):
         parts = re.split(r"\s*(?:;|\band\b|&|, (?=[A-Z][a-z]+ [A-Z]))\s*", h["author_raw"])
-        rec.put("author", [parse_name(a, language) for a in parts if a.strip()], "embedded", emb - 0.1)
+        rec.put("author", [parse_name(a, language) for a in parts if a.strip()], "embedded", emb - 0.1 if kind not in ("audio", "video") else 0.5)
     if h.get("language"):
         rec.put("language", h["language"], "embedded", emb)
     if h.get("publisher") and kind not in ("epub",):
@@ -415,6 +415,12 @@ def build_metadata(source, units, kind: str, language: Optional[str], llm=None, 
         item["title-short"] = title
     else:
         item["title"] = title
+    try:  # the work's year only when it differs from the edition's
+        if rec.fields["original-date"]["date-parts"][0][0] >= rec.fields["issued"]["date-parts"][0][0]:
+            rec.fields.pop("original-date")
+            rec.prov.pop("original-date", None)
+    except (KeyError, IndexError, TypeError):
+        pass
     for k in ("author", "editor", "translator", "issued", "original-date", "publisher", "publisher-place", "container-title",
               "collection-title", "edition", "DOI", "ISBN", "URL", "language", "accessed"):
         if k in rec.fields:

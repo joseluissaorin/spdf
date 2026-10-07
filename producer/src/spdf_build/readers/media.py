@@ -202,7 +202,8 @@ def read_media(data: bytes, path: str, kind: str, transcriber, language: Optiona
     if tags.get("title"):
         hints["title"] = tags["title"]
     if tags.get("artist"):
-        hints["performer"] = tags["artist"]
+        # ID3 «artist» is the author in audiobooks (LibriVox) and the performer in music: a weak author hint
+        hints["author_raw"] = tags["artist"]
     if tags.get("album"):
         hints["container"] = tags["album"]
     if tags.get("date") or tags.get("year"):

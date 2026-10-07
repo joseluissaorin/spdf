@@ -94,6 +94,8 @@ class FakeLLM:
             return {"contexts": [{"n": i + 1, "context": f"Fragmento {i + 1} del grupo."} for i in range(n)]}
         if "speakers" in props:
             return {"speakers": []}
+        if "single_speaker" in props:
+            return {"single_speaker": False, "speaker": "", "evidence": ""}
         if "title" in props:
             return dict(self.record)
         return {}

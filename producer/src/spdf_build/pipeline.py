@@ -369,6 +369,19 @@ def build(inputs: list[str], out: str, engines: Engines, opts: Options) -> Repor
     if lang:
         lang = lang.split("_")[0] if "_" in lang else lang
 
+    # speakers of a recording
+    if src.kind in ("audio", "video") and engines.llm is not None and units:
+        t = time.time()
+        from .steps.speakers import name_speakers
+
+        try:
+            det = name_speakers(units, engines.llm, {k: v for k, v in src.hints.items() if k in ("title", "performer", "container")})
+        except Exception as e:
+            det = {"error": str(e)[:200]}
+        prov.append(Provenance("speakers", provider=getattr(engines.llm, "name", "llm"), model=getattr(engines.llm, "model", None),
+                               detail=det, ms=int((time.time() - t) * 1000)))
+        lap("speakers", t)
+
     # record
     t = time.time()
     online = not opts.offline
@@ -501,7 +514,8 @@ def build(inputs: list[str], out: str, engines: Engines, opts: Options) -> Repor
             "input": "context + text"}, ms=int((time.time() - t) * 1000)))
     lap("vectors", t)
 
-    if opts.embed_source:
+    if opts.embed_source or src.hints.get("accessed"):
+        # a fetched URL always ships its dated copy: the bytes as they were served on `accessed`
         blobs["source"] = (src.mime, src.data)
 
     built = Built(source=src, doc_id=doc_id, metadata=metadata, units=units, sections=sections, fragments=frags, figures=figures,
