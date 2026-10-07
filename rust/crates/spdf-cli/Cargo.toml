@@ -1,0 +1,12 @@
+[package]
+name = "spdf-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "spdf"
+path = "src/main.rs"
+
+[dependencies]
+spdf.workspace = true

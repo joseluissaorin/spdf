@@ -1,0 +1,43 @@
+[package]
+name = "spdf"
+description = "Reference implementation of SPDF (Semantic Processed Document Format): safe reading, validation, canonical dump, search, anchors, citation and writing."
+readme = "README.md"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[features]
+default = []
+## Read SPDF files over HTTP range requests through a read-only SQLite VFS (experimental).
+http = ["dep:ureq"]
+
+[dependencies]
+rusqlite.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror = "2"
+flate2 = "1"
+unicode-normalization = "0.1"
+caseless = "0.2"
+unicode-general-category = "1"
+sha2 = "0.10"
+half = "2"
+base64 = "0.22"
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+rand_core = { version = "0.6", features = ["getrandom"] }
+ureq = { version = "3", optional = true }
+
+[dev-dependencies]
+proptest = "1"
+tempfile = "3"
+criterion = { version = "0.5", default-features = false }
+
+[[bench]]
+name = "spdf"
+harness = false
