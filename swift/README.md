@@ -48,8 +48,12 @@ let semantic = try await file.searchVector(vector, space: "embeddinggemma-2@768"
 let hybrid = try await file.searchHybrid(query, vector: vector, space: "embeddinggemma-2@768", limit: 10)
 
 let units = try await file.units()                // pages, time spans, slides…
-let bib = try file.exportBibTeX()
+let bib = try file.exportBibTeX()                 // keys of SPEC §19: cervantessaavedra1605…
 let csl = try file.exportCSL()
+let alto = try file.exportALTO()                  // also exportTEI(), exportIIIF()
+
+// Resolve a reference (SPEC §5.4): an spdf: URI or a .spdf URL with a fragment.
+let where = try file.locate("https://example.org/quijote.spdf#p=7")   // units ["p7"], fragments ["q5"]
 ```
 
 Every method also has a synchronous form (`try file.searchLexical(…)`), handy in
@@ -95,8 +99,14 @@ try writer.add(SPDFFragment(id: "f1", unit: "u1", text: "…", anchor: page))
 try writer.add(VectorSpace(id: "embeddinggemma-2@768", provider: "local", model: "embeddinggemma-2", dims: 768))
 try writer.addVector(target: .fragment, id: "f1", space: "embeddinggemma-2@768", values: embedding) // [Float]
 try writer.addBlob(key: "pages/0001.png", mime: "image/png", data: png)
-try writer.finish()   // FTS rebuilt, VACUUM, atomic replace; no triggers in the file
+try writer.finish()   // FTS rebuilt, content_sha256 written, VACUUM, atomic replace; no triggers
 ```
+
+Every file the writer produces carries `spdf_meta.content_sha256`; pass
+`.init(signingKey: seed)` (a 32-byte Ed25519 seed) to sign it too (`signer`,
+`signature`, SPEC §8). Files signed this way verify with the Go, Rust, Python, C# and
+JavaScript implementations. `SPDFSeal.seal(url, signingKey:)` hashes and signs an
+existing file in place.
 
 `SPDFSource.write(_:to:)` builds a file from a full JSON dump (the format of
 `conformance/sources/`).
@@ -111,6 +121,8 @@ swift run spdf-swift cite file.spdf q4 -locale en
 swift run spdf-swift export file.spdf bibtex
 swift run spdf-swift uri parse 'spdf:sha256-…#p=29&f=21'
 swift run spdf-swift build source.json out.spdf
+swift run spdf-swift seal out.spdf -key seed.hex
+swift run spdf-swift export file.spdf tei            # also alto, iiif
 swift run spdf-swift conformance ../conformance -o conformance.json
 ```
 

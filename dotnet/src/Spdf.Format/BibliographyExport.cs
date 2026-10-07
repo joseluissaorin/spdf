@@ -40,7 +40,7 @@ public static partial class BibliographyExport
         ("DOI", "doi"), ("ISBN", "isbn"), ("URL", "url"), ("language", "language"), ("note", "note"),
     ];
 
-    [GeneratedRegex("^-?[0-9]+\\z", RegexOptions.CultureInvariant)]
+    [GeneratedRegex("^[+-]?[0-9]+\\z", RegexOptions.CultureInvariant)]
     private static partial Regex IntegerText();
 
     [GeneratedRegex("(\\s+)", RegexOptions.CultureInvariant)]
@@ -62,19 +62,110 @@ public static partial class BibliographyExport
     /// <summary>The metadata as a CSL-JSON array with one item (compact JSON).</summary>
     public static string CslJson(IDictionary<string, object?> metadata) => SpdfJson.Compact(new List<object?> { CslItem(metadata) });
 
-    /// <summary>Several documents as a CSL-JSON array; colliding keys get <c>a</c>, <c>b</c>, <c>c</c>… in document order.</summary>
-    public static string CslJson(IEnumerable<IDictionary<string, object?>> metadata)
+    /// <summary>
+    /// The CSL-JSON export of several documents (§19.1, §19.2): items without <c>spdf</c>, <c>id</c>
+    /// = the export key. With an anchor and exactly one document, the item also carries the CSL
+    /// <c>label</c> and <c>locator</c> of the citation (when the anchor has one).
+    /// </summary>
+    public static List<Dictionary<string, object?>> CslItems(IEnumerable<IDictionary<string, object?>> metadata, Anchor? anchor = null, Anchor? end = null)
     {
         var items = metadata.ToList();
         var keys = Keys(items);
-        return SpdfJson.Compact(items.Select((m, i) => (object?)CslItem(m, keys[i])).ToList());
+        var out_ = items.Select((m, i) => CslItem(m, keys[i])).ToList();
+        if (anchor is not null && out_.Count == 1 && CslLabelLocator(anchor, end) is { } ll)
+        {
+            out_[0]["label"] = ll.Label;
+            out_[0]["locator"] = ll.Locator;
+        }
+        return out_;
     }
 
+    /// <summary>Several documents as a CSL-JSON array (compact JSON); see <see cref="CslItems"/>.</summary>
+    public static string CslJson(IEnumerable<IDictionary<string, object?>> metadata, Anchor? anchor = null, Anchor? end = null) =>
+        SpdfJson.Compact(CslItems(metadata, anchor, end));
+
     /// <summary>
-    /// The base citation key (§19, RFC 0002): the first author's <c>family</c> (or <c>literal</c>),
-    /// else the first word of the title, decomposed with NFKD and reduced to lowercase ASCII
-    /// letters (<c>anon</c> if nothing is left), followed by the first year of <c>issued</c>
-    /// (or <c>nd</c>): <c>cervantessaavedra1605</c>, <c>la1554</c>, <c>anonnd</c>.
+    /// The CSL <c>label</c> and <c>locator</c> of a citation (§19.2): <c>page</c>, <c>folio</c>,
+    /// <c>column</c>, <c>timestamp</c>, <c>paragraph</c>, <c>section</c>, <c>verse</c> or <c>line</c>;
+    /// <c>null</c> when the anchor has no locator (an unnumbered page, an image).
+    /// </summary>
+    public static (string Label, string Locator)? CslLabelLocator(Anchor anchor, Anchor? end = null)
+    {
+        ArgumentNullException.ThrowIfNull(anchor);
+        string? type = anchor.Type;
+        static string? Folio(Anchor a) => a.GetString("printed") is { } p ? (a.GetString("source") == "inferred" ? "[" + p + "]" : p) : null;
+        if (type == "page" || (type is "section" or "web" && anchor["printed"] is not null))
+        {
+            string? start = Folio(anchor);
+            if (start is null)
+            {
+                return null;
+            }
+            string label = type == "page"
+                ? (anchor.GetString("foliation") ?? "page") switch { "leaf" => "folio", "column" => "column", _ => "page" }
+                : "page";
+            if (end is not null && end.Type == type && end.GetString("printed") is { } endPrinted && endPrinted != anchor.GetString("printed"))
+            {
+                return (label, start + "-" + Folio(end));
+            }
+            return (label, start);
+        }
+        switch (type)
+        {
+            case "section":
+            case "web":
+                if (anchor["paragraph"] is { } paragraph)
+                {
+                    return ("paragraph", PyString(paragraph));
+                }
+                return anchor.Path is { Count: > 0 } path ? ("section", path[^1]) : null;
+            case "time":
+                if (anchor.GetNumber("t0") is not double t0)
+                {
+                    return null;
+                }
+                string loc = Citation.Clock(t0);
+                if (end is not null && end.Type == "time" && end.GetNumber("t1") is double t1)
+                {
+                    loc += "-" + Citation.Clock(t1);
+                }
+                return ("timestamp", loc);
+            case "verse":
+            {
+                if (anchor["line_from"] is not { } lf)
+                {
+                    return null;
+                }
+                var lt = anchor["line_to"];
+                return ("verse", lt is null || SpdfJson.JsonEquals(lt, lf) ? PyString(lf) : PyString(lf) + "-" + PyString(lt));
+            }
+            case "canonical":
+                return anchor.GetString("ref") is { } r ? ("section", r) : null;
+            case "sheet":
+            {
+                if (anchor["row_from"] is not { } a || anchor["row_to"] is not { } b)
+                {
+                    return null;
+                }
+                return ("line", SpdfJson.JsonEquals(a, b) ? PyString(a) : PyString(a) + "-" + PyString(b));
+            }
+        }
+        return null;
+    }
+
+    private static string PyString(object? v) => v switch
+    {
+        long l => l.ToString(CultureInfo.InvariantCulture),
+        double d when Math.Floor(d) == d && Math.Abs(d) < 1e16 => ((long)d).ToString(CultureInfo.InvariantCulture),
+        _ => JsString(v),
+    };
+
+    /// <summary>
+    /// The base citation key (§19.1): the first author's <c>family</c>, <c>literal</c> or
+    /// <c>given</c> (the first that is not empty), else the first word of <c>title-short</c>
+    /// or <c>title</c>, decomposed with NFKD and reduced to lowercase ASCII letters (<c>anon</c>
+    /// if nothing is left), followed by the first year of <c>issued</c> with its sign (or
+    /// <c>nd</c>): <c>cervantessaavedra1605</c>, <c>lazarillo1554</c>, <c>anonnd</c>.
     /// </summary>
     public static string CitationKey(IDictionary<string, object?> metadata)
     {
@@ -83,17 +174,21 @@ public static partial class BibliographyExport
         string baseText = "";
         if (md.GetValueOrDefault("author") is List<object?> { Count: > 0 } authors && authors[0] is Dictionary<string, object?> first)
         {
-            object? source = Legacy.Truthy(first.GetValueOrDefault("family")) ? first["family"] : first.GetValueOrDefault("literal");
-            baseText = AsciiLetters(Legacy.Truthy(source) ? JsString(source) : "");
+            object? source = new[] { "family", "literal", "given" }.Select(k => first.GetValueOrDefault(k)).FirstOrDefault(Legacy.Truthy);
+            baseText = source is null ? "" : AsciiLetters(JsString(source));
         }
         if (baseText.Length == 0)
         {
-            string title = md.GetValueOrDefault("title") is { } t ? JsString(t) : "";
+            object? t = new[] { "title-short", "title" }.Select(k => md.GetValueOrDefault(k)).FirstOrDefault(Legacy.Truthy);
+            string title = t is null ? "" : JsString(t);
             string? word = title.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
             baseText = word is null ? "" : AsciiLetters(word);
         }
         return (baseText.Length > 0 ? baseText : "anon") + (YearOf(md) ?? "nd");
     }
+
+    /// <summary>The keys of an export of several documents (§19.1): a base key that occurs more than once gets <c>a</c>, <c>b</c>, <c>c</c>… in document order.</summary>
+    public static IReadOnlyList<string> ExportKeys(IEnumerable<IDictionary<string, object?>> metadata) => Keys(metadata.ToList());
 
     /// <summary>NFKD, marks removed, only ASCII letters kept, lowercased.</summary>
     private static string AsciiLetters(string s)
@@ -109,7 +204,7 @@ public static partial class BibliographyExport
         return sb.ToString();
     }
 
-    /// <summary>The first year of <c>issued</c> (an integer, or a string of digits), or <c>null</c>.</summary>
+    /// <summary>The first year of <c>issued</c> as an integer with its sign (a number or a string of digits), or <c>null</c>.</summary>
     private static string? YearOf(Dictionary<string, object?> md)
     {
         if (md.GetValueOrDefault("issued") is Dictionary<string, object?> issued
@@ -120,10 +215,10 @@ public static partial class BibliographyExport
             {
                 case long l:
                     return l.ToString(CultureInfo.InvariantCulture);
-                case double d when double.IsFinite(d) && Math.Floor(d) == d:
-                    return SpdfJson.FormatNumber(d);
-                case string s when IntegerText().IsMatch(s.Trim()):
-                    return SpdfJson.FormatNumber(double.Parse(s.Trim(), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture));
+                case double d when double.IsFinite(d) && Math.Abs(d) < 9e15:
+                    return ((long)Math.Truncate(d)).ToString(CultureInfo.InvariantCulture);
+                case string s when IntegerText().IsMatch(s.Trim()) && long.TryParse(s.Trim(), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out long y):
+                    return y.ToString(CultureInfo.InvariantCulture);
             }
         }
         return null;

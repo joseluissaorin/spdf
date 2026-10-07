@@ -19,12 +19,27 @@ public sealed record SpdfWriterOptions
     /// from a full dump (<see cref="SpdfSource.Write(IDictionary{string, object?}, string)"/>).
     /// </summary>
     public bool Exact { get; init; }
+
+    /// <summary>
+    /// Writes <c>spdf_meta.content_sha256</c> (§13), computed on the finished file. Default
+    /// true; ignored in <see cref="Exact"/> mode, where <c>spdf_meta</c> is written verbatim.
+    /// </summary>
+    public bool ContentSha256 { get; init; } = true;
+
+    /// <summary>
+    /// A 32-byte Ed25519 secret key (seed). When set, the writer also signs the content hash and
+    /// writes <c>spdf_meta.signer</c> and <c>spdf_meta.signature</c> (§13). The signer is not
+    /// constant-time: sign on a trusted machine (see <see cref="Ed25519"/>). Never store the key
+    /// in a repository.
+    /// </summary>
+    public byte[]? SigningKey { get; init; }
 }
 
 /// <summary>
 /// Builds an SPDF 5.0 file. Rows go to a temporary file next to the destination, inside one
 /// transaction; <see cref="Commit"/> writes the document and <c>spdf_meta</c>, rebuilds the FTS
-/// index, runs <c>VACUUM</c> and moves the file into place. Disposing without committing
+/// index, writes <c>content_sha256</c> (and the signature, if a key was given), runs
+/// <c>VACUUM</c> and moves the file into place. Disposing without committing
 /// discards everything. The file never contains triggers or views.
 /// </summary>
 /// <example>
@@ -68,6 +83,10 @@ public sealed class SpdfWriter : IDisposable
     {
         ArgumentNullException.ThrowIfNull(path);
         options ??= new SpdfWriterOptions();
+        if (options.SigningKey is { Length: not 32 })
+        {
+            throw new ArgumentException("the Ed25519 signing key must be a 32-byte seed", nameof(options));
+        }
         string full = System.IO.Path.GetFullPath(path);
         string dir = System.IO.Path.GetDirectoryName(full) ?? ".";
         string tmp = System.IO.Path.Combine(dir, ".spdf-writer-" + Guid.NewGuid().ToString("N") + ".tmp");
@@ -314,6 +333,12 @@ public sealed class SpdfWriter : IDisposable
             {
                 meta[k] = v;
             }
+            if (!_options.Exact && (_options.ContentSha256 || _options.SigningKey is not null))
+            {
+                meta.Remove("content_sha256");
+                meta.Remove("signature");
+                meta.Remove("signer");
+            }
             foreach (var k in meta.Keys.Order(CodePointComparer.Instance))
             {
                 Exec("INSERT INTO spdf_meta (key, value) VALUES (@p0, @p1)", k, meta[k]);
@@ -327,6 +352,10 @@ public sealed class SpdfWriter : IDisposable
             _tx.Dispose();
             _tx = null;
             SqliteUtil.Exec(_con, "INSERT INTO fragments_fts(fragments_fts) VALUES ('optimize')");
+            if (!_options.Exact && (_options.ContentSha256 || _options.SigningKey is not null))
+            {
+                WriteIntegrity();
+            }
             SqliteUtil.Exec(_con, "VACUUM");
             _con.Dispose();
             _con = null;
@@ -337,6 +366,27 @@ public sealed class SpdfWriter : IDisposable
         {
             Abort();
             throw;
+        }
+    }
+
+    /// <summary>Computes the content hash of the finished file and writes it (and the signature, if a key was given).</summary>
+    private void WriteIntegrity()
+    {
+        string hash;
+        using (var f = SpdfFile.OpenLenient(_tmp, new SpdfOpenOptions()))
+        {
+            hash = f.ContentSha256();
+        }
+        var rows = new List<(string Key, string Value)> { ("content_sha256", hash) };
+        if (_options.SigningKey is { } key)
+        {
+            var (signer, signature) = SpdfValidator.SignContentHash(hash, key);
+            rows.Add(("signer", signer));
+            rows.Add(("signature", signature));
+        }
+        foreach (var (k, v) in rows)
+        {
+            SqliteUtil.Exec(_con!, "INSERT OR REPLACE INTO spdf_meta (key, value) VALUES (@p0, @p1)", [k, v]);
         }
     }
 

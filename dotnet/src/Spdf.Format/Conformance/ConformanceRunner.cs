@@ -193,6 +193,42 @@ public static class ConformanceRunner
             }
             case "anchor_uri":
                 return RunAnchorUri(input, expect);
+            case "locate":
+            {
+                using var f = SpdfFile.Open(In(dir, Str(input, "file")));
+                var got = f.Locate(Str(input, "reference")).ToTree();
+                return SpdfJson.Diff(got, expect) is { } diff ? $"got {SpdfJson.Compact(got)} ({diff})" : null;
+            }
+            case "export_csl":
+            case "export_bibtex":
+            {
+                var items = new List<IDictionary<string, object?>>();
+                foreach (var file in (input.GetValueOrDefault("files") as List<object?> ?? []).OfType<string>())
+                {
+                    using var f = SpdfFile.Open(In(dir, file));
+                    items.Add(f.GetMetadata());
+                }
+                if (kind == "export_csl")
+                {
+                    var got = BibliographyExport.CslItems(items, Anchor.FromTree(input.GetValueOrDefault("anchor")), Anchor.FromTree(input.GetValueOrDefault("anchor_end")));
+                    return SpdfJson.Diff(got, expect.GetValueOrDefault("items")) is { } diff ? $"got {SpdfJson.Compact(got)} ({diff})" : null;
+                }
+                string text = BibliographyExport.BibTeX(items);
+                return NormalizeBibTeX(text).SequenceEqual(NormalizeBibTeX(Str(expect, "text")), StringComparer.Ordinal) ? null : "got " + text;
+            }
+            case "export_structure":
+            {
+                using var f = SpdfFile.Open(In(dir, Str(input, "file")));
+                var format = Str(input, "format") switch
+                {
+                    "alto" => StructureFormat.Alto,
+                    "tei" => StructureFormat.Tei,
+                    "iiif" => StructureFormat.Iiif,
+                    var other => throw new FormatException("unknown format " + other),
+                };
+                var got = f.ExportStructure(format);
+                return SpdfJson.Diff(got, expect) is { } diff ? $"got {SpdfJson.Compact(got)} ({diff})" : null;
+            }
             case "cite":
             {
                 var md = input.GetValueOrDefault("metadata") as Dictionary<string, object?> ?? [];
@@ -253,14 +289,20 @@ public static class ConformanceRunner
         return canonical == Str(expect, "canonical") ? null : "canonical form " + canonical;
     }
 
+    private static List<string> NormalizeBibTeX(string text) =>
+        text.Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).ToList();
+
     private static List<object?> SortedCodes(object? v) =>
         (v as List<object?> ?? []).OfType<string>().Distinct().Order(StringComparer.Ordinal).Cast<object?>().ToList();
 
     private static string? CompareResults(IReadOnlyList<SearchHit> hits, object? expected, bool withVia)
     {
         var exp = (expected as List<object?> ?? []).OfType<Dictionary<string, object?>>().ToList();
-        var gotIds = hits.Select(h => h.Id).ToList();
-        var wantIds = exp.Select(e => e.GetValueOrDefault("fragment_id") as string ?? "").ToList();
+        var gotIds = hits.Select(h => h.Target + ":" + h.Id).ToList();
+        var wantIds = exp.Select(e =>
+            e.TryGetValue("fragment_id", out var fid) ? "fragment:" + fid
+            : e.TryGetValue("unit_id", out var uid) ? "unit:" + uid
+            : "figure:" + e.GetValueOrDefault("figure_id")).ToList();
         if (!gotIds.SequenceEqual(wantIds, StringComparer.Ordinal))
         {
             return $"order [{string.Join(",", gotIds)}] != [{string.Join(",", wantIds)}]";

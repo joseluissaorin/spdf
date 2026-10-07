@@ -461,6 +461,20 @@ public static class SpdfValidator
         return Ed25519.Verify(pub, message, sig);
     }
 
+    /// <summary>
+    /// Signs a content hash as §13 specifies: Ed25519 over the ASCII bytes
+    /// <c>spdf-content-sha256:</c> + the lowercase hex hash. Returns the values of
+    /// <c>spdf_meta.signer</c> (<c>ed25519:</c> + base64 of the public key) and
+    /// <c>spdf_meta.signature</c> (base64 with padding). Not constant-time: see <see cref="Ed25519"/>.
+    /// </summary>
+    public static (string Signer, string Signature) SignContentHash(string contentSha256, byte[] secretKey)
+    {
+        ArgumentNullException.ThrowIfNull(contentSha256);
+        ArgumentNullException.ThrowIfNull(secretKey);
+        byte[] message = [.. SignPrefix, .. System.Text.Encoding.ASCII.GetBytes(contentSha256.ToLowerInvariant())];
+        return ("ed25519:" + Convert.ToBase64String(Ed25519.PublicKey(secretKey)), Convert.ToBase64String(Ed25519.Sign(secretKey, message)));
+    }
+
     private static byte[]? StrictBase64(string s)
     {
         if (s.Length % 4 != 0 || s.Any(c => !(char.IsAsciiLetterOrDigit(c) || c is '+' or '/' or '=')))

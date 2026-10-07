@@ -11,7 +11,8 @@ anchor (printed page, folio, second of a recording, slide, verse).
   Ed25519 verification, RFC 8785 serialization and the exact rounding rules are written in C#.
 - Conformance: passes the whole SPDF conformance suite (`../conformance`), every kind
   (`dump`, `legacy_dump`, `roundtrip`, `quantize`, `validate`, `search_lexical`,
-  `search_vector`, `search_hybrid`, `anchor_uri`, `cite`). Nothing is skipped.
+  `search_vector`, `search_hybrid`, `anchor_uri`, `cite`, `locate`, `export_csl`,
+  `export_bibtex`, `export_structure`). Nothing is skipped.
 
 ```sh
 dotnet add package Spdf.Format
@@ -25,11 +26,11 @@ dotnet add package Spdf.Format
 | Versions | SPDF 5.0, and the legacy 4.0 / 4.1 files of Scholaris (Spanish schema, gzip-wrapped) through the 5.0 view, with metadata mapped to CSL-JSON |
 | Dump | canonical JSON (RFC 8785) of the whole file and `content_sha256` (§12, §13) |
 | Validation | every code of the specification (E001–E090, W100–W110), FTS integrity on an in-memory copy, Ed25519 signatures |
-| Search | lexical (FTS5 BM25, CJK route with `trigram` or substring), vector (`f32`, `f16`, `i8`), hybrid (reciprocal rank fusion, k = 10) |
-| Anchors | anchor ↔ URI (`spdf:sha256-…#p=29&f=21&char=118,301`), strict parser, canonical form |
+| Search | lexical (FTS5 BM25, CJK route with `trigram` or substring), vector over fragments, units or figures (`f32`, `f16`, `i8`; dot product or cosine), hybrid (reciprocal rank fusion, k = 10) |
+| Anchors | anchor ↔ URI (`spdf:sha256-…#p=29&f=21&char=118,301`), strict parser, canonical form; resolution of `spdf:` URIs and `.spdf` URLs to units and fragments (§5.4) |
 | Citation | short author-date citation in Spanish and English |
-| Export | CSL-JSON and BibTeX with the keys of RFC 0002 (`cervantessaavedra1605`, `la1554`, `anonnd`) |
-| Writer | builds valid SPDF 5.0 files (FTS kept in sync, `VACUUM`, no triggers, atomic replace) |
+| Export | CSL-JSON (with the CSL `label`/`locator` of a citation) and BibTeX with the keys of §19.1 (`cervantessaavedra1605`, `lazarillo1554`, `anonnd`, collision suffixes `a`, `b`…); ALTO 4, minimal TEI and IIIF Presentation 3 (§19.4) |
+| Writer | builds valid SPDF 5.0 files (FTS kept in sync, `VACUUM`, no triggers, atomic replace), with `content_sha256` and an optional Ed25519 signature (§13) |
 
 ## Reading and searching
 
@@ -48,6 +49,7 @@ foreach (var hit in file.SearchLexical("«lugar de la Mancha»", limit: 5))
 // Vector and hybrid search with your own query embedding.
 double[] query = new double[8];
 var nearest = file.SearchVector(query, space: "toy-embedding@8", target: "fragment", limit: 5);
+var pages = file.SearchVector(query, "toy-embedding@8", target: "unit");      // hits carry UnitId
 var fused = file.SearchHybrid("hidalgo", query, "toy-embedding@8", limit: 5);
 
 // Typed reading.
@@ -59,6 +61,21 @@ Blob? original = file.GetBlob("blob:original.pdf");
 Console.Write(file.ExportBibTeX());              // @book{cervantessaavedra1605, …
 Console.WriteLine(file.ExportCslJson());         // [{"id":"cervantessaavedra1605", …}]
 BibTexEntry entry = file.ExportBibTeXEntry();    // entry type, key and fields
+
+// Several documents at once (keys disambiguated with a, b, c…), and a CSL citation item.
+string bib = BibliographyExport.BibTeX([file.GetMetadata(), other.GetMetadata()]);
+var cited = BibliographyExport.CslItems([file.GetMetadata()], hit.Anchor, hit.AnchorEnd);  // + label, locator
+
+// Resolving a reference (§5.4): units, fragments, char range and region it designates.
+LocateResult where = file.Locate("spdf:sha256-…#p=5&pe=6&char=101,278");
+LocateResult byUrl = file.Locate("https://example.org/quijote.spdf#f=1v");
+
+// Structural exports (§19.4): ALTO 4, a minimal TEI and a IIIF Presentation 3 manifest.
+// No invented coordinates or dimensions; inferred folios bracketed (TEI, IIIF) or absent (ALTO).
+string alto = file.ExportAlto();      // Page per page unit, TextBlock / TextLine / String per word
+string tei = file.ExportTei();        // teiHeader, <pb n facs/>, <p>, <lg>/<l n>, <u who>, <note place="foot">
+string iiif = file.ExportIiif(new IiifOptions { Base = "https://example.org/quijote" });
+var pageSequence = StructureExport.PageSequence(StructureFormat.Tei, tei);   // read back from the XML
 ```
 
 `SpdfFile.OpenAsync(path)` decompresses or copies asynchronously when the file needs it;
@@ -118,6 +135,29 @@ w.Commit();   // document + spdf_meta, FTS rebuild, VACUUM, atomic move into pla
 Disposing a writer without `Commit()` discards the file. `SpdfSource.Write(source, path)`
 builds a file from a full JSON dump (the format of `conformance/sources/`), value for value.
 
+### Integrity and signatures
+
+By default the writer stores `spdf_meta.content_sha256` (§13), computed on the finished file.
+Give it a 32-byte Ed25519 secret key (seed) to sign as well; it writes `signer`
+(`ed25519:` + base64 public key) and `signature` (base64 of the RFC 8032 signature over
+`spdf-content-sha256:` + the hex hash):
+
+```csharp
+byte[] seed = LoadSeedFromYourKeyStore();   // 32 bytes; never commit it to a repository
+using var w = SpdfWriter.Create("signed.spdf", new SpdfWriterOptions { SigningKey = seed });
+// … rows …
+w.Commit();
+bool ok = SpdfValidator.Validate("signed.spdf").Valid;   // recomputes the hash, verifies the signature
+```
+
+**The Ed25519 signer is not constant-time.** It is a portable BigInteger implementation
+(.NET 8 has no built-in Ed25519): signing handles the secret key with variable-time
+arithmetic, which can leak it through timing to anyone able to measure many signatures on
+the same machine. Sign only on a trusted machine, never in a shared or multi-tenant
+service. Verification uses public data only and is safe anywhere. `Ed25519.Sign`,
+`Ed25519.PublicKey`, `Ed25519.Verify` and `SpdfValidator.SignContentHash` are public for
+producers that sign outside the writer.
+
 ## Command line
 
 The repository includes a small CLI (`src/Spdf.Cli`, not published as a package):
@@ -128,7 +168,8 @@ dotnet run --project src/Spdf.Cli -- dump file.spdf
 dotnet run --project src/Spdf.Cli -- search file.spdf "lugar de la Mancha" -n 5
 dotnet run --project src/Spdf.Cli -- vsearch file.spdf toy-embedding@8 0.5,0.25,0.5,0.25,0,0.25,0.25,0.5
 dotnet run --project src/Spdf.Cli -- cite file.spdf q4 --locale en
-dotnet run --project src/Spdf.Cli -- export file.spdf bibtex
+dotnet run --project src/Spdf.Cli -- export file.spdf bibtex        # also csl, alto, tei, iiif
+dotnet run --project src/Spdf.Cli -- sample demo.spdf --key-file seed.hex   # small signed demo file
 dotnet run --project src/Spdf.Cli -- uri parse 'spdf:sha256-…#p=29&f=21'
 dotnet run --project src/Spdf.Cli -- build source.json out.spdf
 dotnet run --project src/Spdf.Cli -- conformance ../conformance -o conformance.json

@@ -128,7 +128,7 @@ public enum SPDFValidator {
               let sig = Data(base64Encoded: signature), sig.count == 64,
               let key = try? Curve25519.Signing.PublicKey(rawRepresentation: pub)
         else { return false }
-        return key.isValidSignature(sig, for: Data(("spdf-content-sha256:" + hash).utf8))
+        return key.isValidSignature(sig, for: Data((SPDFSeal.signaturePrefix + hash).utf8))
     }
 
     struct Run {

@@ -151,7 +151,7 @@ public static class Citation
         return single + " " + first;
     }
 
-    private static string Clock(double t)
+    internal static string Clock(double t)
     {
         long s = Math.Max(0, (long)Math.Floor(t));
         long h = s / 3600, m = s % 3600 / 60, sec = s % 60;

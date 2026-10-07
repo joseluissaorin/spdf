@@ -14,6 +14,12 @@ public sealed record SearchHit
     /// <summary>The fragment id, for fragment results.</summary>
     public string? FragmentId => Target == "fragment" ? Id : null;
 
+    /// <summary>The unit id, for unit results.</summary>
+    public string? UnitId => Target == "unit" ? Id : null;
+
+    /// <summary>The figure id, for figure results.</summary>
+    public string? FigureId => Target == "figure" ? Id : null;
+
     /// <summary>Score (higher is better).</summary>
     public double Score { get; init; }
 
@@ -32,7 +38,10 @@ public sealed record SearchHit
     /// <summary>Tie-break key: fragment <c>n</c> or unit <c>ord</c>.</summary>
     public long Order { get; init; }
 
-    /// <summary>The result item of the specification as a JSON value tree.</summary>
+    /// <summary>
+    /// The result item of the specification as a JSON value tree: <c>fragment_id</c>,
+    /// <c>unit_id</c> or <c>figure_id</c>, <c>score</c>, <c>via</c>, <c>anchor</c>, <c>anchor_uri</c>.
+    /// </summary>
     public Dictionary<string, object?> ToTree()
     {
         var m = new Dictionary<string, object?>(StringComparer.Ordinal)
@@ -46,15 +55,7 @@ public sealed record SearchHit
         {
             m["anchor_end"] = AnchorEnd.Members;
         }
-        if (Target == "fragment")
-        {
-            m["fragment_id"] = Id;
-        }
-        else
-        {
-            m["target"] = Target;
-            m["id"] = Id;
-        }
+        m[Target + "_id"] = Id;
         return m;
     }
 }

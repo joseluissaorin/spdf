@@ -11,22 +11,123 @@ public enum Bibliography {
         return out
     }
 
-    /// The BibTeX key of SPEC §19 (RFC 0002): the first author's family (or
-    /// literal), else the first word of the title, folded to ASCII letters and
-    /// lowercased ("anon" if nothing is left), plus the first year of issued
-    /// (or "nd"): cervantessaavedra1605, hookend.
+    /// The base BibTeX key of SPEC §19.3: the first author's family, literal
+    /// or given name (the first present), else the first word of title-short
+    /// or title, folded to ASCII letters and lowercased ("anon" if nothing is
+    /// left), plus the first year of issued (with its sign) or "nd".
+    /// `exportKeys` adds the collision suffixes of a multi-document export.
     public static func citationKey(_ md: [String: JSONValue]) -> String {
         var base = ""
         if case .object(let a)? = md["author"]?.arrayValue?.first {
-            let fam = a["family"]?.stringValue ?? ""
-            base = asciiLetters(fam.isEmpty ? (a["literal"]?.stringValue ?? "") : fam)
+            for k in ["family", "literal", "given"] {
+                if let s = a[k]?.stringValue, !s.isEmpty {
+                    base = asciiLetters(s)
+                    break
+                }
+            }
         }
-        if base.isEmpty, let t = md["title"]?.stringValue,
-           let first = t.split(whereSeparator: { $0.isWhitespace }).first {
-            base = asciiLetters(String(first))
+        if base.isEmpty {
+            var t = md["title-short"]?.stringValue ?? ""
+            if t.isEmpty { t = md["title"]?.stringValue ?? "" }
+            if let first = t.split(whereSeparator: { $0.isWhitespace }).first { base = asciiLetters(String(first)) }
         }
         if base.isEmpty { base = "anon" }
         return base + (year(md) ?? "nd")
+    }
+
+    /// The keys of the items of one export: the base key, plus a, b, c… on
+    /// every item whose base key occurs more than once.
+    public static func exportKeys(_ items: [[String: JSONValue]]) -> [String] {
+        let bases = items.map(citationKey)
+        var count: [String: Int] = [:]
+        for b in bases { count[b, default: 0] += 1 }
+        var seen: [String: Int] = [:]
+        return bases.map { b in
+            guard count[b]! > 1 else { return b }
+            let n = seen[b, default: 0]
+            seen[b] = n + 1
+            return b + suffix(n)
+        }
+    }
+
+    static func suffix(_ n: Int) -> String {
+        var out = ""
+        var x = n + 1
+        while x > 0 {
+            let r = (x - 1) % 26
+            x = (x - 1) / 26
+            out = String(UnicodeScalar(UInt8(97 + r))) + out
+        }
+        return out
+    }
+
+    /// The CSL "label" and "locator" of a citation of an anchor (SPEC §19.2),
+    /// or nil when the anchor has no locator.
+    public static func cslLabelLocator(_ a: Anchor, end: Anchor?) -> (label: String, locator: String)? {
+        let t = a.type
+        func folio(_ x: Anchor) -> String? {
+            guard let p = x.string("printed") else { return nil }
+            return x.string("source") == "inferred" ? "[\(p)]" : p
+        }
+        let hasPrinted = a["printed"].map { !$0.isNull } ?? false
+        if t == "page" || ((t == "section" || t == "web") && hasPrinted) {
+            guard let f = folio(a) else { return nil }
+            var label = "page"
+            if t == "page" {
+                switch a.string("foliation") {
+                case "leaf": label = "folio"
+                case "column": label = "column"
+                default: break
+                }
+            }
+            if let end, end.type == t, let ep = end.string("printed"), ep != a.string("printed") {
+                return (label, f + "-" + (folio(end) ?? ""))
+            }
+            return (label, f)
+        }
+        switch t {
+        case "section", "web":
+            if let p = a["paragraph"], !p.isNull { return ("paragraph", p.canonicalJSON) }
+            if let path = a.path, let last = path.last { return ("section", last) }
+            return nil
+        case "time":
+            var s = Citation.clock(a.number("t0") ?? 0)
+            if let end, end.type == "time", let t1 = end.number("t1") { s += "-" + Citation.clock(t1) }
+            return ("timestamp", s)
+        case "verse":
+            let lf = a["line_from"] ?? .null
+            if let lt = a["line_to"], !lt.isNull, !lt.jsonEquals(lf) { return ("verse", lf.canonicalJSON + "-" + lt.canonicalJSON) }
+            return ("verse", lf.canonicalJSON)
+        case "canonical":
+            return ("section", a.string("ref") ?? "")
+        case "sheet":
+            let rf = a["row_from"] ?? .null, rt = a["row_to"] ?? .null
+            return ("line", rf.jsonEquals(rt) ? rf.canonicalJSON : rf.canonicalJSON + "-" + rt.canonicalJSON)
+        default:
+            return nil
+        }
+    }
+
+    /// The CSL-JSON export of several documents' metadata (SPEC §19.2): each
+    /// item without "spdf", id = its key; with an anchor and a single item,
+    /// the item carries "label" and "locator".
+    public static func cslItems(_ items: [[String: JSONValue]], anchor: Anchor? = nil, end: Anchor? = nil) -> [JSONValue] {
+        var out = zip(items, exportKeys(items)).map { item, key -> [String: JSONValue] in
+            var m = item
+            m["spdf"] = nil
+            m["id"] = .string(key)
+            return m
+        }
+        if let anchor, out.count == 1, let ll = cslLabelLocator(anchor, end: end) {
+            out[0]["label"] = .string(ll.label)
+            out[0]["locator"] = .string(ll.locator)
+        }
+        return out.map { .object($0) }
+    }
+
+    /// The BibTeX export of several documents' metadata (SPEC §19.3).
+    public static func bibtex(items: [[String: JSONValue]]) -> String {
+        zip(items, exportKeys(items)).map { bibtex($0, key: $1) }.joined(separator: "\n")
     }
 
     /// NFKD, keep only ASCII letters, lowercase.
@@ -40,9 +141,12 @@ public enum Bibliography {
 
     static func year(_ md: [String: JSONValue]) -> String? {
         guard let y = md["issued"]?["date-parts"]?[0]?[0] else { return nil }
-        if let i = SPDFValidator.integral(y) { return String(i) }
-        if let s = y.stringValue, let i = Int64(s.trimmingCharacters(in: .whitespaces)) { return String(i) }
-        return nil
+        switch y {
+        case .int(let i): return String(i)
+        case .double(let d) where d.isFinite: return String(Int64(d))
+        case .string(let s): return Int64(s.trimmingCharacters(in: .whitespaces)).map(String.init)
+        default: return nil
+        }
     }
 
     static let types: [String: String] = [
@@ -69,7 +173,7 @@ public enum Bibliography {
         var word = ""
         func flush() {
             guard !word.isEmpty else { return }
-            out += word.unicodeScalars.contains { $0.properties.isUppercase } ? "{" + escape(word) + "}" : escape(word)
+            out += word.unicodeScalars.contains { $0.properties.generalCategory == .uppercaseLetter } ? "{" + escape(word) + "}" : escape(word)
             word = ""
         }
         for c in t {
@@ -141,8 +245,12 @@ public enum Bibliography {
 extension SPDFFile {
     /// The document as a CSL-JSON array (one item), serialized.
     public func exportCSL() throws -> String {
-        let md = try metadata()
-        return JSONValue.array([.object(Bibliography.cslItem(md, id: Bibliography.citationKey(md)))]).compactJSON
+        JSONValue.array(Bibliography.cslItems([try metadata()])).compactJSON
+    }
+
+    /// The CSL-JSON item of a citation of an anchor of this file, with "label" and "locator".
+    public func exportCSLCitation(_ anchor: Anchor, end: Anchor? = nil) throws -> String {
+        JSONValue.array(Bibliography.cslItems([try metadata()], anchor: anchor, end: end)).compactJSON
     }
 
     /// The document as a BibTeX entry.

@@ -112,6 +112,27 @@ final class SPDFTests: XCTestCase {
         XCTAssertThrowsError(try AnchorURI.parse("spdf:x#p=0"))
     }
 
+    func testWriterSealsAndSigns() throws {
+        let url = ProcessInfo.processInfo.environment["SPDF_SIGNED_OUT"].map { URL(fileURLWithPath: $0) } ?? tmp("signed.spdf")
+        let w = try SPDFWriter(url: url, options: .init(generator: "test/1", signingKey: Data((32..<64).map { UInt8($0) })))
+        try w.setDocument(SPDFDocumentInfo(id: "rimas", kind: "document",
+                                           metadata: ["type": "book", "title": "Rimas", "author": [["family": "Bécquer", "given": "Gustavo Adolfo"]]],
+                                           sourceSHA256: String(repeating: "cd", count: 32), mime: "text/plain", bytes: 64,
+                                           created: "2026-10-07T00:00:00Z"))
+        let a = Anchor(["type": "verse", "line_from": 1, "line_to": 2])
+        try w.add(SPDFUnit(id: "u1", anchor: a, text: "Volverán las oscuras golondrinas\nen tu balcón sus nidos a colgar,", reader: "manual"))
+        try w.add(SPDFFragment(id: "f1", unit: "u1", text: "Volverán las oscuras golondrinas en tu balcón sus nidos a colgar,", anchor: a))
+        try w.finish()
+        let r = SPDFValidator.validate(url)
+        XCTAssertTrue(r.valid, "\(r.errors)")
+        let f = try SPDFFile.open(url)
+        defer { f.close() }
+        let meta = try f.meta()
+        XCTAssertEqual(meta["content_sha256"], try f.contentSHA256())
+        XCTAssertTrue(meta["signer"]?.hasPrefix("ed25519:") == true)
+        XCTAssertNotNil(meta["signature"])
+    }
+
     /// The whole conformance suite: every case must pass.
     func testConformanceSuite() throws {
         let report = try ConformanceRunner.run(directory: SPDFTests.conformance)
@@ -119,6 +140,6 @@ final class SPDFTests: XCTestCase {
             try Data((report.json + "\n").utf8).write(to: URL(fileURLWithPath: out))
         }
         for f in report.failed { XCTFail("\(f.id): \(f.reason)") }
-        XCTAssertGreaterThanOrEqual(report.passed.count, 228)
+        XCTAssertGreaterThanOrEqual(report.passed.count, 309)
     }
 }

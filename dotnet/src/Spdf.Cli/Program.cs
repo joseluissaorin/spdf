@@ -17,10 +17,12 @@ internal static class Program
           spdf vsearch FILE SPACE V1,V2,... [-n N] [--target fragment|unit|figure]
           spdf hybrid FILE SPACE V1,V2,... QUERY... [-n N]
           spdf cite FILE FRAGMENT_ID [--locale es|en]
-          spdf export FILE csl|bibtex
+          spdf export FILE csl|bibtex|alto|tei|iiif
           spdf uri parse URI
           spdf uri format DOCREF ANCHOR_JSON [END_ANCHOR_JSON]
           spdf build SOURCE.json OUT.spdf
+          spdf sample OUT.spdf [--key-file KEY]     small demo file with content_sha256 (signed with
+                                                   the 32-byte Ed25519 seed in KEY, raw or hex)
           spdf conformance [DIR] [-o conformance.json]
           spdf version
         """;
@@ -38,6 +40,7 @@ internal static class Program
         string locale = "es";
         string target = "fragment";
         string? output = null;
+        string? keyFile = null;
         for (int i = 1; i < argv.Length; i++)
         {
             string a = argv[i];
@@ -62,6 +65,9 @@ internal static class Program
                 case "--output":
                     output = Next();
                     break;
+                case "--key-file":
+                    keyFile = Next();
+                    break;
                 default:
                     positional.Add(a);
                     break;
@@ -69,12 +75,28 @@ internal static class Program
         }
         try
         {
-            return Execute(cmd, positional, n, locale, target, output);
+            return Execute(cmd, positional, n, locale, target, output, keyFile);
         }
         catch (Exception e) when (e is SpdfException or IOException or FormatException or ArgumentException or KeyNotFoundException or UnauthorizedAccessException)
         {
             return Fail("spdf: " + e.Message, 1);
         }
+    }
+
+    /// <summary>A 32-byte Ed25519 seed from a file: raw bytes, or 64 hex digits.</summary>
+    private static byte[] ReadKey(string path)
+    {
+        var raw = File.ReadAllBytes(path);
+        if (raw.Length == 32)
+        {
+            return raw;
+        }
+        string hex = Encoding.ASCII.GetString(raw).Trim();
+        if (hex.Length == 64)
+        {
+            return Convert.FromHexString(hex);
+        }
+        throw new ArgumentException("the key file must hold a 32-byte Ed25519 seed (raw or 64 hex digits)");
     }
 
     private static int Fail(string message, int code)
@@ -88,7 +110,7 @@ internal static class Program
     private static List<double> Vector(string s) =>
         s.Split(',').Select(x => double.Parse(x.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture)).ToList();
 
-    private static int Execute(string cmd, List<string> pos, int n, string locale, string target, string? output)
+    private static int Execute(string cmd, List<string> pos, int n, string locale, string target, string? output, string? keyFile)
     {
         bool Need(int k) => pos.Count >= k;
         switch (cmd)
@@ -155,6 +177,15 @@ internal static class Program
                     case "bibtex":
                         Console.Out.Write(f.ExportBibTeX());
                         return 0;
+                    case "alto":
+                        Console.Out.Write(f.ExportAlto());
+                        return 0;
+                    case "tei":
+                        Console.Out.Write(f.ExportTei());
+                        return 0;
+                    case "iiif":
+                        Console.Out.Write(f.ExportIiif() + "\n");
+                        return 0;
                 }
                 break;
             }
@@ -177,6 +208,9 @@ internal static class Program
             }
             case "build" when Need(2):
                 SpdfSource.Write(pos[0], pos[1]);
+                return 0;
+            case "sample" when Need(1):
+                Sample.Write(pos[0], keyFile is null ? null : ReadKey(keyFile));
                 return 0;
             case "conformance":
             {

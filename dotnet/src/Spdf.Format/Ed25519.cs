@@ -4,12 +4,18 @@ using System.Security.Cryptography;
 namespace Spdf;
 
 /// <summary>
-/// Ed25519 (RFC 8032, §5.1) over <see cref="BigInteger"/>, ported from the reference of the
-/// conformance suite (<c>conformance/tools/ed25519.py</c>). .NET 8 has no built-in Ed25519.
-/// Verification is what SPDF needs; signing exists for tests and is NOT constant-time, so it
-/// is internal.
+/// Ed25519 (RFC 8032, §5.1, pure) over <see cref="BigInteger"/>, ported from the reference of
+/// the conformance suite (<c>conformance/tools/ed25519.py</c>); .NET 8 has no built-in
+/// Ed25519. Signatures are deterministic, as RFC 8032 requires.
 /// </summary>
-internal static class Ed25519
+/// <remarks>
+/// <b>Not constant-time.</b> <see cref="Sign"/> and <see cref="PublicKey"/> handle the secret
+/// key with variable-time big-integer arithmetic, which can leak it through timing to anyone
+/// able to measure many signatures on the same machine. Sign only on a trusted machine, never
+/// in a shared or multi-tenant service. <see cref="Verify"/> handles public data only and is
+/// safe anywhere.
+/// </remarks>
+public static class Ed25519
 {
     private static readonly BigInteger P = BigInteger.Pow(2, 255) - 19;
     private static readonly BigInteger L = BigInteger.Pow(2, 252) + BigInteger.Parse("27742317777372353535851937790883648493", System.Globalization.CultureInfo.InvariantCulture);
@@ -147,12 +153,20 @@ internal static class Ed25519
         return (a, h[32..]);
     }
 
-    /// <summary>The public key of a 32-byte secret key.</summary>
-    public static byte[] PublicKey(byte[] secret) => Compress(Multiply(Expand(secret).A, G));
+    /// <summary>The 32-byte public key of a 32-byte secret key (seed). Not constant-time: see the remarks of <see cref="Ed25519"/>.</summary>
+    /// <exception cref="ArgumentException">The secret key is not 32 bytes.</exception>
+    public static byte[] PublicKey(byte[] secret)
+    {
+        ArgumentNullException.ThrowIfNull(secret);
+        return Compress(Multiply(Expand(secret).A, G));
+    }
 
-    /// <summary>Signs a message (not constant-time: tests only).</summary>
+    /// <summary>The deterministic 64-byte signature of a message (RFC 8032). Not constant-time: sign on a trusted machine (see the remarks of <see cref="Ed25519"/>).</summary>
+    /// <exception cref="ArgumentException">The secret key is not 32 bytes.</exception>
     public static byte[] Sign(byte[] secret, byte[] message)
     {
+        ArgumentNullException.ThrowIfNull(secret);
+        ArgumentNullException.ThrowIfNull(message);
         var (a, prefix) = Expand(secret);
         var pub = Compress(Multiply(a, G));
         var r = Sha512ModL(prefix, message);
@@ -162,9 +176,12 @@ internal static class Ed25519
         return [.. rEnc, .. ToLittleEndian32(s)];
     }
 
-    /// <summary>Verifies a 64-byte signature with a 32-byte public key.</summary>
+    /// <summary>Verifies a 64-byte signature of a message with a 32-byte public key.</summary>
     public static bool Verify(byte[] publicKey, byte[] message, byte[] signature)
     {
+        ArgumentNullException.ThrowIfNull(publicKey);
+        ArgumentNullException.ThrowIfNull(message);
+        ArgumentNullException.ThrowIfNull(signature);
         if (publicKey.Length != 32 || signature.Length != 64)
         {
             return false;

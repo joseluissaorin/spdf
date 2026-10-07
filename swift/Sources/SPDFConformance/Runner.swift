@@ -105,7 +105,9 @@ public enum ConformanceRunner {
                 hits = try f.searchHybrid(i["query"]?.stringValue ?? "", vector: i["query_vector"]?.arrayValue?.compactMap(\.doubleValue),
                                           space: i["space"]?.stringValue, limit: limit)
             }
-            return compare(hits, e["results"]?.arrayValue ?? [], withVia: kind != "search_vector")
+            let target = i["target"]?.stringValue ?? "fragment"
+            let idKey = kind == "search_vector" && target != "fragment" ? target + "_id" : "fragment_id"
+            return compare(hits, e["results"]?.arrayValue ?? [], withVia: kind != "search_vector", idKey: idKey)
         case "anchor_uri":
             if let anchorJSON = i["anchor"] {
                 let docref = i["docref"]?.stringValue ?? ""
@@ -132,6 +134,30 @@ public enum ConformanceRunner {
             let t = Citation.cite(anchor, end: i["anchor_end"].flatMap(Anchor.init), metadata: i["metadata"]?.objectValue ?? [:],
                                   locale: i["locale"]?.stringValue ?? "")
             return t == e["text"]?.stringValue ? nil : "got \(t)"
+        case "locate":
+            let f = try SPDFFile.open(url(dir, i["file"]))
+            defer { f.close() }
+            let got = try f.locate(i["reference"]?.stringValue ?? "").jsonValue
+            return JSONValue.diff(got, e).map { "got \(got.compactJSON) (\($0))" }
+        case "export_csl", "export_bibtex":
+            var items: [[String: JSONValue]] = []
+            for p in i["files"]?.arrayValue ?? [] {
+                let f = try SPDFFile.open(url(dir, p))
+                items.append(try f.metadata())
+                f.close()
+            }
+            if kind == "export_csl" {
+                let got = JSONValue.array(Bibliography.cslItems(items, anchor: i["anchor"].flatMap(Anchor.init),
+                                                               end: i["anchor_end"].flatMap(Anchor.init)))
+                return JSONValue.diff(got, e["items"] ?? .null).map { "items differ at \($0)" }
+            }
+            let got = normalizeBibTeX(Bibliography.bibtex(items: items))
+            return got == normalizeBibTeX(e["text"]?.stringValue ?? "") ? nil : "got \(got.joined(separator: " | "))"
+        case "export_structure":
+            let f = try SPDFFile.open(url(dir, i["file"]))
+            defer { f.close() }
+            let got: JSONValue = .object(["pages": .array(try f.pageSequence(format: i["format"]?.stringValue ?? ""))])
+            return JSONValue.diff(got, e).map { "pages differ at \($0)" }
         case "quantize":
             let got: JSONValue
             do {
@@ -146,8 +172,13 @@ public enum ConformanceRunner {
         }
     }
 
-    static func compare(_ hits: [SearchHit], _ expected: [JSONValue], withVia: Bool) -> String? {
-        let got = hits.map(\.id), want = expected.map { $0["fragment_id"]?.stringValue ?? "" }
+    static func normalizeBibTeX(_ t: String) -> [String] {
+        t.replacingOccurrences(of: "\r\n", with: "\n").split(separator: "\n", omittingEmptySubsequences: false)
+            .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+    }
+
+    static func compare(_ hits: [SearchHit], _ expected: [JSONValue], withVia: Bool, idKey: String) -> String? {
+        let got = hits.map(\.id), want = expected.map { $0[idKey]?.stringValue ?? "" }
         if got != want { return "order \(got) != \(want)" }
         for (h, x) in zip(hits, expected) {
             if Swift.abs(h.score - (x["score"]?.doubleValue ?? .nan)) > tolerance { return "\(h.id): score \(h.score) != \(x["score"]?.compactJSON ?? "")" }

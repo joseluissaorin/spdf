@@ -192,13 +192,22 @@ public final class SPDFWriter {
         /// Adds the optional CJK trigram index.
         public var trigram: Bool
         /// Writes every value verbatim (no default meta keys, no computed
-        /// unit_count, no automatic ordinals, no NFC normalization).
+        /// unit_count, no automatic ordinals, no NFC normalization, no
+        /// generated content_sha256).
         public var exact: Bool
+        /// Writes spdf_meta.content_sha256 (§8). On by default.
+        public var contentHash: Bool
+        /// 32-byte Ed25519 seed: signs the content hash (signer, signature).
+        public var signingKey: Data?
 
-        public init(generator: String = "\(SPDF.implementationName)/\(SPDF.version)", trigram: Bool = false, exact: Bool = false) {
+        public init(generator: String = "\(SPDF.implementationName)/\(SPDF.version)", trigram: Bool = false, exact: Bool = false,
+                    contentHash: Bool = true, signingKey: Data? = nil)
+        {
             self.generator = generator
             self.trigram = trigram
             self.exact = exact
+            self.contentHash = contentHash
+            self.signingKey = signingKey
         }
     }
 
@@ -420,6 +429,12 @@ public final class SPDFWriter {
             try db.exec("INSERT INTO fragments_fts(fragments_fts) VALUES ('rebuild')")
             if options.trigram { try db.exec("INSERT INTO fragments_fts_trigram(fragments_fts_trigram) VALUES ('rebuild')") }
             try db.exec("COMMIT")
+            if !options.exact && (options.contentHash || options.signingKey != nil) {
+                for (k, v) in try SPDFSeal.integrityMeta(path: tmp.path, signingKey: options.signingKey) {
+                    try db.run("INSERT INTO spdf_meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                               [.text(k), .text(v)])
+                }
+            }
             try db.exec("INSERT INTO fragments_fts(fragments_fts) VALUES ('optimize')")
             try db.exec("VACUUM")
             db.close()

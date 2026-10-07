@@ -174,6 +174,119 @@ public class FileTests
     }
 
     [Fact]
+    public void LocatesReferences()
+    {
+        using var f = SpdfFile.Open(TestPaths.Conformance("files/quijote.spdf"));
+        string docRef = f.DocRef;
+        var page = f.Locate($"spdf:{docRef}#p=3&pe=4");
+        Assert.True(page.Document);
+        Assert.Equal(["p3", "p4"], page.Units);
+        Assert.Equal(["q3"], page.Fragments);
+        Assert.Equal(["p6"], f.Locate($"spdf:{docRef}#f=1v").Units);
+        Assert.Equal(["p7"], f.Locate("https://example.org/quijote.spdf#p=7").Units);
+        var other = f.Locate("spdf:sha256-" + new string('0', 64) + "#p=1");
+        Assert.False(other.Document);
+        Assert.Empty(other.Units);
+        Assert.Equal("""{"char":null,"document":true,"fragments":[],"units":[],"xywh":null}""",
+            SpdfJson.Canonical(f.Locate("https://example.org/quijote.spdf").ToTree()));
+        Assert.Throws<FormatException>(() => f.Locate("spdf:x#p=0"));
+    }
+
+    [Fact]
+    public void GivesThePageSequenceOfStructuralExports()
+    {
+        using var f = SpdfFile.Open(TestPaths.Conformance("files/quijote.spdf"));
+        var pages = f.GetStructurePages();
+        Assert.Equal(8, pages.Count);
+        Assert.Null(pages[0].Printed);
+        Assert.Equal("1r", pages[4].Printed);
+        Assert.Null(pages[5].Printed);
+        Assert.Equal("[1v]", pages[5].Label);
+        Assert.Equal("""{"pages":[{"n":null}""", SpdfJson.Canonical(f.ExportStructure(StructureFormat.Tei))[..20]);
+    }
+
+    [Fact]
+    public void SearchesUnitAndFigureVectors()
+    {
+        using var f = SpdfFile.Open(TestPaths.Conformance("files/micrographia.spdf"));
+        var figures = f.SearchVector([1, 0.5, 0.25, 0], "toy-clip@4", "figure", 2);
+        Assert.Equal(["fig-flea", "fig-louse"], figures.Select(h => h.FigureId));
+        Assert.Equal(0.9759, figures[0].Score, 4);
+        Assert.Contains("xywh=percent:10,25,80,50", figures[0].AnchorUri, StringComparison.Ordinal);
+        Assert.True(figures[0].ToTree().ContainsKey("figure_id"));
+        var units = f.SearchVector([1, 0.5, 0.25, 0], "toy-clip@4", "unit", 2);
+        Assert.All(units, h => Assert.NotNull(h.UnitId));
+    }
+
+    [Fact]
+    public void WriterAddsContentHashAndSignature()
+    {
+        string plain = TestPaths.TempFile(), signed = TestPaths.TempFile();
+        var seed = Convert.FromHexString("9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60");
+        try
+        {
+            void Build(string path, byte[]? key)
+            {
+                using var w = SpdfWriter.Create(path, new SpdfWriterOptions { SigningKey = key });
+                w.SetDocument(new Document
+                {
+                    Id = "d", Kind = "document", Mime = "text/plain", SourceSha256 = new string('b', 64), Created = "2026-10-07T00:00:00Z",
+                    Metadata = new Dictionary<string, object?> { ["type"] = "book", ["title"] = "T" },
+                });
+                w.SetMeta("content_sha256", "ignored");
+                w.AddUnit(new Unit { Id = "u1", Reader = "test", Text = "Uno dos tres", Anchor = Anchor.Page(1, "1") });
+                w.AddFragment(new Fragment { Id = "f1", Unit = "u1", Text = "Uno dos tres", Anchor = Anchor.Page(1, "1").WithChars(0, 12) });
+                w.Commit();
+            }
+            Build(plain, null);
+            Build(signed, seed);
+            using (var f = SpdfFile.Open(plain))
+            {
+                var meta = f.GetMeta();
+                Assert.Equal(f.ContentSha256(), meta["content_sha256"]);
+                Assert.False(meta.ContainsKey("signature"));
+            }
+            using (var f = SpdfFile.Open(signed))
+            {
+                var meta = f.GetMeta();
+                Assert.Equal(f.ContentSha256(), meta["content_sha256"]);
+                Assert.Equal("ed25519:" + Convert.ToBase64String(Ed25519.PublicKey(seed)), meta["signer"]);
+                Assert.True(SpdfValidator.VerifySignature(meta["content_sha256"], meta["signature"], meta["signer"]));
+            }
+            var r = SpdfValidator.Validate(signed);
+            Assert.True(r.Valid, string.Join(", ", r.ErrorCodes));
+            Assert.DoesNotContain("E081", r.ErrorCodes);
+            Assert.DoesNotContain("E082", r.ErrorCodes);
+            Assert.Throws<ArgumentException>(() => SpdfWriter.Create(TestPaths.TempFile(), new SpdfWriterOptions { SigningKey = new byte[31] }));
+        }
+        finally
+        {
+            File.Delete(plain);
+            File.Delete(signed);
+        }
+    }
+
+    [Fact]
+    public void StructuralExportsAreWellFormedAndParseBack()
+    {
+        using var f = SpdfFile.Open(TestPaths.Conformance("files/quijote.spdf"));
+        var alto = System.Xml.Linq.XDocument.Parse(f.ExportAlto());
+        Assert.Equal(8, alto.Descendants(System.Xml.Linq.XName.Get("Page", StructureExport.AltoNamespace)).Count());
+        var tei = StructureExport.PageSequence(StructureFormat.Tei, f.ExportTei());
+        Assert.Equal("[1v]", tei[5]["n"]);
+        Assert.Null(tei[0]["n"]);
+        var iiif = SpdfJson.ParseObject(f.ExportIiif(new IiifOptions { Base = "https://example.org/q" }));
+        Assert.Equal("https://example.org/q/manifest", iiif["id"]);
+        Assert.Equal(8, StructureExport.PageSequence(StructureFormat.Iiif, f.ExportIiif()).Count);
+        using var a = SpdfFile.Open(TestPaths.Conformance("files/apolo11.spdf"));
+        var manifest = a.ExportIiifManifest();
+        var canvas = Assert.IsType<Dictionary<string, object?>>(Assert.Single((List<object?>)manifest["items"]!));
+        Assert.True(canvas.ContainsKey("duration"));
+        Assert.Equal(6, ((List<object?>)manifest["structures"]!).Count);
+        Assert.Contains("<u who=\"Neil Armstrong\">", a.ExportTei(), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void DisposingWithoutCommitLeavesNothing()
     {
         string dir = Path.Combine(Path.GetTempPath(), "spdf-abort-" + Guid.NewGuid().ToString("N"));
