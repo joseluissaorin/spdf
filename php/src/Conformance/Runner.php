@@ -145,6 +145,9 @@ final class Runner
                     }
                 }
                 return count($got) === count($want) ? null : 'expected ' . count($want) . ' lines, got ' . count($got);
+            case 'cite_passage':
+                $got = Document::open($this->path($in['file']))->citePassage((string) $in['fragment'], (string) $in['quote'], (string) ($in['locale'] ?? 'en'));
+                return self::compare($ex, $got, 'cite_passage');
             case 'export_structure':
                 $doc = Document::open($this->path($in['file']));
                 return self::compare($ex['pages'], self::pages($doc, (string) $in['format']), 'pages');

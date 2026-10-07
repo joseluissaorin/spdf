@@ -267,6 +267,30 @@ final class Validator
             }
         }
 
+        // W103: fragments that cross matter, or between a page with a folio and one without (§4.4).
+        if ($ok('units', 'id', 'ord', 'anchor') && $ok('fragments', 'id', 'unit', 'anchor', 'anchor_end')) {
+            $us = [];
+            foreach ($pdo->query('SELECT id, anchor FROM units ORDER BY ord, id') as $r) {
+                $us[] = ['id' => $r['id'], 'anchor' => is_string($r['anchor']) ? json_decode($r['anchor'], true) : null];
+            }
+            $byId = array_column($us, null, 'id');
+            foreach ($pdo->query('SELECT id, unit, anchor_end FROM fragments WHERE anchor_end IS NOT NULL ORDER BY n') as $f) {
+                $u1 = $byId[$f['unit']] ?? null;
+                $endAnchor = is_string($f['anchor_end']) ? json_decode($f['anchor_end'], true) : null;
+                $u2 = $u1 !== null ? Document::endUnit($us, (string) $f['unit'], $endAnchor) : null;
+                if ($u1 === null || $u2 === null || !is_array($u1['anchor']) || !is_array($u2['anchor'])) {
+                    continue;
+                }
+                $a1 = $u1['anchor'];
+                $a2 = $u2['anchor'];
+                $folioChange = ($a1['type'] ?? null) === 'page' && ($a2['type'] ?? null) === 'page'
+                    && (($a1['printed'] ?? null) === null) !== (($a2['printed'] ?? null) === null);
+                if (Document::matterOf($a1) !== Document::matterOf($a2) || $folioChange) {
+                    $this->warning('W103', 'Fragment crosses matter, or between a page with a folio and one without.', "fragments/{$f['id']}");
+                }
+            }
+        }
+
         if (in_array('semantic', $profile, true) && $nvec === 0) {
             $this->warning('W100', 'Profile semantic without vectors.');
         }
@@ -339,6 +363,9 @@ final class Validator
         };
         if (!$ok) {
             return ['E040', "{$t} anchor misses or mistypes a required member."];
+        }
+        if (array_key_exists('matter', $a) && !is_string($a['matter'])) {
+            return ['E040', 'matter must be a string.'];
         }
         if (array_key_exists('region', $a)) {
             $r = $a['region'];

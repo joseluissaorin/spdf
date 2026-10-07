@@ -63,6 +63,7 @@ $parsed = AnchorUri::parse('spdf:sha256-3f2a…#p=29&f=21&char=118,301');
 // ['docref' => 'sha256-3f2a…', 'locator' => ['p' => 29, 'f' => '21', 'char' => [118, 301]]]
 AnchorUri::format($parsed['docref'], $parsed['locator']);   // the same URI, byte for byte
 $doc->locate($uri);   // {document, units, fragments, char, xywh} (SPEC §5.4)
+$doc->citePassage('f12', 'molinos de viento', 'es');   // {text, uri}: cites the unit the quote lies in (§18.2)
 ```
 
 ### Bibliography

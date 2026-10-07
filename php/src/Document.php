@@ -652,7 +652,8 @@ final class Document
                 $hits = [$timed[count($timed) - 1]['id']];
             }
         }
-        $frags = array_values(array_filter($this->fragments(), fn ($f) => self::anchorMatches($rule, $l, $f['anchor'], null)));
+        $frags = array_values(array_filter($this->fragments(), fn ($f) => self::anchorMatches($rule, $l, $f['anchor'], null)
+            || (is_array($f['anchor_end'] ?? null) && self::anchorMatches($rule, $l, $f['anchor_end'], null))));
         if ($hits === [] && $frags !== []) {
             $wanted = array_flip(array_map(fn ($f) => (string) $f['unit'], $frags));
             foreach ($units as $u) {
@@ -663,18 +664,136 @@ final class Document
         }
         if (isset($l['char'])) {
             [$c, $dd] = $l['char'];
-            $frags = array_values(array_filter($frags, function ($f) use ($hits, $c, $dd) {
-                $ch = is_array($f['anchor']) ? ($f['anchor']['chars'] ?? null) : null;
-                if (!in_array($f['unit'], $hits, true) || !is_array($ch) || count($ch) !== 2) {
+            $first = $hits[0] ?? null;   // `char` refers to the text of the first unit
+            $overlaps = function (mixed $x) use ($c, $dd): bool {
+                $ch = is_array($x) ? ($x['chars'] ?? null) : null;
+                if (!is_array($ch) || count($ch) !== 2) {
                     return false;
                 }
                 [$a, $b] = array_values($ch);
                 return $c < $dd ? ($a < $dd && $c < $b) : ($a <= $c && $c < $b);
+            };
+            $frags = array_values(array_filter($frags, function ($f) use ($first, $overlaps, $units) {
+                if ($f['unit'] === $first && $overlaps($f['anchor'])) {
+                    return true;
+                }
+                $eu = self::endUnit($units, (string) $f['unit'], $f['anchor_end'] ?? null);
+                return $eu !== null && $eu['id'] === $first && $overlaps($f['anchor_end']);
             }));
         }
         $out['units'] = $hits;
         $out['fragments'] = array_map(fn ($f) => $f['id'], $frags);
         return $out;
+    }
+
+    /** An anchor without `chars` and `region` (the identity used to find end units, §4.4). */
+    private static function identity(mixed $a): mixed
+    {
+        if (!is_array($a)) {
+            return $a;
+        }
+        unset($a['chars'], $a['region']);
+        ksort($a);
+        return $a;
+    }
+
+    /**
+     * The unit where a fragment ends: the first unit after its start unit (in `ord`
+     * order) whose anchor equals `anchor_end` once `chars` and `region` are removed.
+     *
+     * @param list<array> $units units in reading order
+     */
+    public static function endUnit(array $units, string $startId, mixed $anchorEnd): ?array
+    {
+        if (!is_array($anchorEnd)) {
+            return null;
+        }
+        $want = self::identity($anchorEnd);
+        $after = false;
+        foreach ($units as $u) {
+            if ((string) $u['id'] === $startId) {
+                $after = true;
+                continue;
+            }
+            if ($after && self::identity($u['anchor']) == $want && self::sameTypes(self::identity($u['anchor']), $want)) {
+                return $u;
+            }
+        }
+        return null;
+    }
+
+    /** Strict comparison that still treats 10 and 10.0 as the same JSON number. */
+    private static function sameTypes(mixed $a, mixed $b): bool
+    {
+        if (is_array($a) && is_array($b)) {
+            if (count($a) !== count($b)) {
+                return false;
+            }
+            foreach ($a as $k => $v) {
+                if (!array_key_exists($k, $b) || !self::sameTypes($v, $b[$k])) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        if ((is_int($a) || is_float($a)) && (is_int($b) || is_float($b))) {
+            return $a == $b;
+        }
+        return $a === $b;
+    }
+
+    /** Matter of an anchor: absent or not a string means `body` (§4.1). */
+    public static function matterOf(mixed $a): string
+    {
+        $m = is_array($a) ? ($a['matter'] ?? null) : null;
+        return is_string($m) ? $m : 'body';
+    }
+
+    /**
+     * Cites a quotation taken from a fragment by the unit(s) it actually lies in
+     * (SPEC §18.2). Returns `{text, uri}`.
+     */
+    public function citePassage(string $fragmentId, string $quote, string $locale = 'es'): array
+    {
+        $units = $this->units();
+        $byId = array_column($units, null, 'id');
+        $f = $this->fragment($fragmentId) ?? throw new SpdfException('E040', "Unknown fragment: {$fragmentId}");
+        $q = Text::nfc($quote);
+        $u1 = $byId[$f['unit']] ?? throw new SpdfException('E040', "Fragment {$fragmentId} has no unit.");
+        $a = is_array($f['anchor']) ? $f['anchor'] : [];
+        $c1 = $a['chars'] ?? [0, Text::length((string) $u1['text'])];
+        $seg1 = Text::slice((string) $u1['text'], (int) $c1[0], (int) $c1[1]);
+        $u2 = self::endUnit($units, (string) $u1['id'], $f['anchor_end'] ?? null);
+        $seg2 = '';
+        $c2 = null;
+        if ($u2 !== null) {
+            $c2 = $f['anchor_end']['chars'] ?? [0, Text::length((string) $u2['text'])];
+            $seg2 = Text::slice((string) $u2['text'], (int) $c2[0], (int) $c2[1]);
+        }
+        $strip = function (array $x): array {
+            unset($x['chars'], $x['region']);
+            return $x;
+        };
+        if (($pos = mb_strpos($seg1, $q, 0, 'UTF-8')) !== false) {
+            $i = $pos + (int) $c1[0];
+            $anchor = $strip((array) $u1['anchor']) + [];
+            $anchor['chars'] = [$i, $i + Text::length($q)];
+            $end = null;
+        } elseif ($u2 !== null && ($pos = mb_strpos($seg2, $q, 0, 'UTF-8')) !== false) {
+            $i = $pos + (int) $c2[0];
+            $anchor = $strip((array) $u2['anchor']);
+            $anchor['chars'] = [$i, $i + Text::length($q)];
+            $end = null;
+        } elseif ($u2 !== null && mb_strpos((string) $f['text'], $q, 0, 'UTF-8') !== false) {
+            $anchor = $strip((array) $u1['anchor']);
+            $end = $strip((array) $u2['anchor']);
+        } else {
+            throw new SpdfException('E040', 'The quote is not in the fragment.');
+        }
+        return [
+            'text' => Cite::short($this->metadata(), $anchor, $end, $locale),
+            'uri' => AnchorUri::fromAnchor('sha256-' . $this->document()['source_sha256'], $anchor, $end),
+        ];
     }
 
     private static function isInt(mixed $v): bool

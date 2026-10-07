@@ -159,19 +159,23 @@ final class Cite
         return ($a['source'] ?? null) === 'inferred' ? "[{$p}]" : (string) $p;
     }
 
+    /** Page locator; an end without a printed folio never takes part in a range (SPEC §18.1). */
     private static function pageLocator(array $a, ?array $end, bool $es, string $one, string $many): string
     {
-        $la = self::label($a);
-        if ($la === null) {
+        $ends = [$a];
+        if ($end !== null && ($end['type'] ?? null) === ($a['type'] ?? null)) {
+            $ends[] = $end;
+        }
+        $withFolio = array_values(array_filter($ends, fn ($x) => ($x['printed'] ?? null) !== null));
+        if ($withFolio === []) {
             return $es ? 's. p.' : 'n. pag.';
         }
-        if ($end !== null && ($end['type'] ?? null) === ($a['type'] ?? null)) {
-            $lb = self::label($end);
-            if ($lb !== null && ($end['printed'] ?? null) !== ($a['printed'] ?? null)) {
-                return "{$many} {$la}-{$lb}";
-            }
+        $first = $withFolio[0];
+        $last = $withFolio[count($withFolio) - 1];
+        if (count($withFolio) > 1 && ($last['printed'] ?? null) !== ($first['printed'] ?? null)) {
+            return "{$many} " . self::label($first) . '-' . self::label($last);
         }
-        return "{$one} {$la}";
+        return "{$one} " . self::label($first);
     }
 
     /**
