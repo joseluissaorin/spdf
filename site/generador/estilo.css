@@ -1,0 +1,350 @@
+/*
+ * La web de SPDF: una hoja impresa. Papel crema con grano, tinta de café, los
+ * tres colores de la Bauhaus (que son los del escritorio medieval: minio,
+ * azurita y oro), Georgia para leer y una monoespaciada que susurra los datos.
+ * Una sola cosa grande por pantalla; la retícula se ve; algo corta el borde.
+ */
+:root {
+  --papel: #f5f0e8;
+  --papel-2: #ede6d6;
+  --hoja: #faf7f0;
+  --tinta: #2c1810;
+  --tinta-2: #5c3d2e;
+  --apagado: #6f5546;
+  --filete: #d9cbb8;
+  --filete-2: #c4ae96;
+  --rojo: #b3392f;
+  --rojo-bauhaus: #c1453b;
+  --azul: #2b4c7e;
+  --amarillo: #e8a838;
+  --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Noto Serif', serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  --mano: Mano, 'Segoe Print', 'Bradley Hand', cursive;
+  --canal: clamp(1.1rem, 4vw, 3rem);
+  --ancho: 78rem;
+  --curva: cubic-bezier(0.16, 1, 0.3, 1);
+  --sombra: 0 1px 0 rgb(255 255 255 / 0.6) inset, 0 1px 2px rgb(44 24 16 / 0.08), 0 6px 18px rgb(44 24 16 / 0.07);
+  color-scheme: light;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scroll-padding-top: 1.5rem; overflow-x: clip; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+body {
+  margin: 0;
+  overflow-x: clip;
+  background-color: var(--papel);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .17 0 0 0 0 .1 0 0 0 0 .06 0 0 0 -1.4 .62'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='.5'/%3E%3C/svg%3E");
+  color: var(--tinta);
+  font-family: var(--serif);
+  font-size: 1.0625rem;
+  line-height: 1.62;
+  font-variant-numeric: oldstyle-nums proportional-nums;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+::selection { background: rgb(232 168 56 / 0.42); color: var(--tinta); }
+a { color: inherit; text-decoration-color: var(--filete-2); text-underline-offset: 0.18em; text-decoration-thickness: 1px; }
+a:hover { text-decoration-color: var(--rojo); }
+:focus-visible { outline: 2px solid var(--rojo); outline-offset: 3px; border-radius: 3px; }
+img, svg { display: block; max-width: 100%; }
+code, kbd, samp, pre { font-family: var(--mono); font-size: 0.86em; font-variant-numeric: lining-nums tabular-nums; }
+:not(pre) > code { background: rgb(212 196 176 / 0.32); padding: 0.05em 0.22em; border-radius: 4px; overflow-wrap: anywhere; }
+h1, h2, h3, h4 { font-weight: normal; line-height: 1.15; text-wrap: balance; }
+p, li { text-wrap: pretty; }
+
+.solo-lector { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.saltar { position: absolute; left: var(--canal); top: -4rem; z-index: 20; background: var(--tinta); color: var(--hoja); padding: 0.6rem 1rem; text-decoration: none; }
+.saltar:focus { top: 1rem; }
+
+/* La monoespaciada que susurra. */
+.rotulo { font: 500 0.72rem/1.4 var(--mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--apagado); font-variant-numeric: lining-nums tabular-nums; }
+
+/* ------------------------------------------------------------------ */
+/* Cabecera y pie                                                      */
+/* ------------------------------------------------------------------ */
+.cabecera {
+  position: relative; z-index: 5;
+  max-width: var(--ancho); margin: 0 auto; padding: 1.1rem var(--canal) 0.9rem;
+  display: flex; align-items: center; gap: 1rem 2rem; flex-wrap: wrap;
+  border-bottom: 1px solid var(--filete);
+}
+.marca { display: inline-flex; align-items: baseline; gap: 0.55rem; text-decoration: none; font-size: 1.45rem; letter-spacing: 0.02em; line-height: 1; }
+.marca::before { content: ''; width: 0.72em; height: 0.72em; background: var(--rojo-bauhaus); align-self: center; transform: rotate(-4deg); }
+.marca small { font: 500 0.7rem var(--mono); letter-spacing: 0.06em; color: var(--apagado); }
+.cabecera nav { display: flex; align-items: center; gap: 0.2rem 1.25rem; flex-wrap: wrap; margin-left: auto; font-size: 0.98rem; }
+.cabecera nav a { text-decoration: none; padding: 0.35rem 0; background: linear-gradient(var(--rojo), var(--rojo)) 0 100% / 0 2px no-repeat; transition: background-size 250ms var(--curva); }
+.cabecera nav a:hover, .cabecera nav a[aria-current] { background-size: 100% 2px; }
+.cabecera nav a[aria-current] { color: var(--rojo); }
+.cabecera nav .lengua { font: 500 0.74rem var(--mono); letter-spacing: 0.08em; text-transform: uppercase; border: 1px solid var(--filete-2); padding: 0.32rem 0.55rem; background: none; border-radius: 2px; }
+.cabecera nav .lengua:hover { border-color: var(--rojo); color: var(--rojo); }
+.cabecera nav .lector { font-style: italic; }
+
+.pie { margin-top: 5rem; border-top: 2px solid var(--tinta); background: var(--papel-2); }
+.pie-dentro { max-width: var(--ancho); margin: 0 auto; padding: 2.4rem var(--canal) 2.2rem; display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr)); gap: 2rem 3rem; font-size: 0.95rem; }
+.pie h2 { font: 500 0.72rem/1.4 var(--mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--apagado); margin: 0 0 0.7rem; }
+.pie ul { list-style: none; margin: 0; padding: 0; }
+.pie li { margin: 0 0 0.3rem; }
+.pie a { text-decoration: none; }
+.pie a:hover { text-decoration: underline; text-decoration-color: var(--rojo); }
+.pie .lema { font-size: 1.3rem; line-height: 1.25; margin: 0 0 0.8rem; }
+.pie .lema em { color: var(--rojo); }
+.pie .legal { color: var(--tinta-2); margin: 0 0 0.6rem; max-width: 30rem; }
+.pie .colofon { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding-top: 1.2rem; border-top: 1px solid var(--filete); }
+
+/* ------------------------------------------------------------------ */
+/* La portada                                                          */
+/* ------------------------------------------------------------------ */
+.portada { position: relative; overflow-x: clip; }
+.heroe {
+  position: relative; max-width: var(--ancho); margin: 0 auto; padding: clamp(2rem, 6vw, 4.5rem) var(--canal) 2rem;
+  display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 1.2rem; align-items: start;
+}
+/* La retícula se ve: doce columnas a lápiz detrás del titular. */
+.heroe::before {
+  content: ''; position: absolute; inset: 0 var(--canal); pointer-events: none; z-index: -1;
+  background: repeating-linear-gradient(90deg, rgb(196 174 150 / 0.28) 0 1px, transparent 1px calc((100% + 1.2rem) / 12));
+  -webkit-mask: linear-gradient(transparent, #000 15%, #000 70%, transparent);
+  mask: linear-gradient(transparent, #000 15%, #000 70%, transparent);
+}
+.heroe .texto { grid-column: 1 / span 6; grid-row: 1; position: relative; z-index: 2; padding-top: 1rem; }
+.heroe .sobre { margin: 0 0 1.6rem; }
+.heroe h1 { margin: 0 0 1.6rem; font-size: clamp(3.4rem, 8.4vw, 7.2rem); line-height: 0.92; letter-spacing: -0.035em; }
+.heroe h1 em { color: var(--rojo); }
+.heroe h1 span { display: block; }
+.heroe .entrada { font-size: clamp(1.1rem, 1.6vw, 1.28rem); line-height: 1.55; max-width: 34rem; margin: 0 0 1.8rem; color: var(--tinta-2); }
+.heroe .entrada strong { font-weight: normal; color: var(--tinta); }
+.acciones { display: flex; flex-wrap: wrap; gap: 0.7rem; }
+.boton {
+  display: inline-flex; align-items: center; gap: 0.55rem; min-height: 2.9rem; padding: 0.7rem 1.25rem;
+  font: inherit; font-size: 1rem; text-decoration: none; border: 1.5px solid var(--tinta); border-radius: 2px;
+  transition: transform 160ms var(--curva), background-color 160ms, color 160ms;
+}
+.boton:hover { transform: translateY(-2px); }
+.boton:active { transform: translateY(1px); }
+.boton.tinta { background: var(--tinta); color: var(--hoja); }
+.boton.tinta:hover { background: var(--rojo); border-color: var(--rojo); }
+.boton.papel { background: var(--hoja); }
+.boton.papel:hover { color: var(--rojo); border-color: var(--rojo); }
+.boton .flecha { font-family: var(--mono); transition: transform 200ms var(--curva); }
+.boton:hover .flecha { transform: translateX(3px); }
+
+.heroe .lamina { grid-column: 6 / -1; grid-row: 1; position: relative; z-index: 1; margin: 3.5rem calc(-1 * var(--canal)) 0 -2rem; }
+/* El sol rojo: la única cosa gigante. Se esconde tras la esquina doblada y corta el borde. */
+.heroe .sol {
+  position: absolute; z-index: -1; width: min(40vw, 34rem); aspect-ratio: 1; border-radius: 50%;
+  background: var(--rojo-bauhaus); right: max(-16vw, -13rem); bottom: -62%;
+}
+/* La hoja: el papel de la página dibujada, para que el sol no se vea a través. */
+.heroe .hoja {
+  position: absolute; z-index: 0; left: 27.2%; top: 8.6%; width: 52.6%; height: 86%;
+  background: var(--hoja); box-shadow: 0 10px 30px rgb(44 24 16 / 0.12);
+  clip-path: polygon(0 0, 100% 0, 100% 90.6%, 94.6% 100%, 0 100%);
+}
+.heroe .lamina svg { position: relative; z-index: 1; width: 100%; height: auto; }
+.heroe .canto {
+  position: absolute; left: 0.5rem; top: 52%; transform: translateY(-50%) rotate(180deg);
+  writing-mode: vertical-rl; white-space: nowrap; z-index: 3;
+}
+
+/* La línea del ancla, a todo lo ancho. */
+.ancla-demo {
+  max-width: var(--ancho); margin: 0 auto; padding: 1.1rem var(--canal);
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0.6rem 1.4rem; align-items: baseline;
+  border-top: 1px solid var(--tinta); border-bottom: 1px solid var(--filete);
+}
+.ancla-demo code { background: none; padding: 0; font-size: clamp(0.82rem, 1.5vw, 1.02rem); color: var(--tinta); overflow-wrap: anywhere; }
+.ancla-demo code b { color: var(--rojo); font-weight: 600; }
+.ancla-demo .cita { font-size: clamp(1.05rem, 2vw, 1.4rem); white-space: nowrap; }
+.ancla-demo .cita::before { content: '→'; font-family: var(--mono); color: var(--rojo); margin-right: 0.7rem; }
+.ancla-demo p { grid-column: 1 / -1; margin: 0; font-size: 0.92rem; color: var(--apagado); }
+
+/* Los capítulos de la portada */
+.capitulos { max-width: var(--ancho); margin: 0 auto; padding: 3.5rem var(--canal) 0; }
+.capitulos > header { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 1.2rem; margin-bottom: 2rem; }
+.capitulos > header h2 { grid-column: 1 / span 7; margin: 0; font-size: clamp(2rem, 4.4vw, 3.4rem); letter-spacing: -0.02em; }
+.capitulos > header p { grid-column: 8 / -1; margin: 0.4rem 0 0; color: var(--tinta-2); align-self: end; }
+.principios { list-style: none; margin: 0; padding: 0; counter-reset: cap; border-top: 2px solid var(--tinta); }
+.principios li {
+  counter-increment: cap; display: grid; grid-template-columns: 5.5rem minmax(0, 1.05fr) minmax(0, 1.4fr) minmax(0, 1fr); gap: 0.5rem 2rem;
+  padding: 1.6rem 0 1.7rem; border-bottom: 1px solid var(--filete); align-items: baseline;
+}
+.principios li::before { content: counter(cap, upper-roman) '.'; font-size: 1.6rem; color: var(--rojo); font-variant-numeric: lining-nums; }
+.principios h3 { margin: 0; font-size: clamp(1.35rem, 2.2vw, 1.75rem); }
+.principios p { margin: 0; color: var(--tinta-2); }
+.principios p strong { font-weight: normal; font-style: italic; color: var(--tinta); }
+.principios code { justify-self: start; font-size: 0.78rem; color: var(--apagado); background: none; padding: 0; line-height: 1.5; }
+
+/* Dentro de un .spdf: las tablas como un índice de imprenta */
+.dentro { max-width: var(--ancho); margin: 0 auto; padding: 4.5rem var(--canal) 0; display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 2rem 3.5rem; }
+.dentro h2 { margin: 0 0 1rem; font-size: clamp(1.9rem, 3.6vw, 2.8rem); letter-spacing: -0.015em; }
+.dentro p { color: var(--tinta-2); }
+.tablas { list-style: none; margin: 0; padding: 0; columns: 2 17rem; column-gap: 2.5rem; }
+.tablas li { break-inside: avoid; display: grid; grid-template-columns: 8.4rem minmax(0, 1fr); gap: 0.8rem; padding: 0.55rem 0; border-top: 1px solid var(--filete); font-size: 0.95rem; }
+.tablas li code { background: none; padding: 0; color: var(--rojo); font-size: 0.82rem; }
+.tablas li span { color: var(--tinta-2); }
+
+/* Los perfiles, con las formas de la Bauhaus */
+.perfiles { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem 1.4rem; }
+.perfiles li { padding: 1rem 0 0; border-top: 2px solid var(--tinta); }
+.perfiles .forma { display: flex; gap: 0.3rem; height: 2.2rem; align-items: center; margin-bottom: 0.6rem; }
+.cuadrado, .circulo, .triangulo { display: inline-block; width: 1.9rem; height: 1.9rem; }
+.cuadrado { background: var(--rojo-bauhaus); }
+.circulo { background: var(--azul); border-radius: 50%; }
+.triangulo { background: var(--amarillo); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.perfiles strong { display: block; font: 600 0.82rem var(--mono); letter-spacing: 0.04em; }
+.perfiles span { display: block; font-size: 0.93rem; color: var(--tinta-2); line-height: 1.45; }
+
+/* Las implementaciones, de un vistazo */
+.franja { max-width: var(--ancho); margin: 0 auto; padding: 4.5rem var(--canal) 0; }
+.franja h2 { margin: 0 0 0.4rem; font-size: clamp(1.9rem, 3.6vw, 2.8rem); letter-spacing: -0.015em; }
+.franja > p { color: var(--tinta-2); max-width: 44rem; }
+.lenguajes { list-style: none; margin: 1.6rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr)); border-left: 1px solid var(--filete); border-top: 1px solid var(--filete); }
+.lenguajes li { border-right: 1px solid var(--filete); border-bottom: 1px solid var(--filete); }
+.lenguajes a { display: block; height: 100%; padding: 0.9rem 1rem 1rem; text-decoration: none; transition: background-color 160ms; }
+.lenguajes a:hover { background: var(--hoja); }
+.lenguajes strong { display: block; font-weight: normal; font-size: 1.15rem; }
+.lenguajes code { display: block; background: none; padding: 0; margin: 0.15rem 0 0.5rem; font-size: 0.74rem; color: var(--apagado); overflow-wrap: anywhere; }
+
+/* El estado del CI: un punto y una palabra (nunca solo color). */
+.estado { display: inline-flex; align-items: center; gap: 0.4rem; font: 500 0.7rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--tinta-2); }
+.estado::before { content: ''; width: 0.62rem; height: 0.62rem; border-radius: 50%; border: 1.5px solid currentColor; }
+.estado.verde { color: #2f6b3a; }
+.estado.verde::before { background: currentColor; }
+.estado.rojo { color: var(--rojo); }
+.estado.rojo::before { background: currentColor; border-radius: 0; }
+.estado.ambar { color: #8a5a00; }
+.estado.ambar::before { background: var(--amarillo); border-color: #8a5a00; clip-path: polygon(50% 0, 100% 100%, 0 100%); border-radius: 0; }
+
+/* Empezar: tres caminos */
+.caminos { max-width: var(--ancho); margin: 0 auto; padding: 4.5rem var(--canal) 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; }
+.caminos > h2 { grid-column: 1 / -1; margin: 0 0 1.4rem; font-size: clamp(1.9rem, 3.6vw, 2.8rem); letter-spacing: -0.015em; }
+.camino { padding: 1.4rem 1.4rem 1.6rem 0; border-top: 2px solid var(--tinta); }
+.camino + .camino { padding-left: 1.4rem; border-left: 1px solid var(--filete); }
+.camino h3 { margin: 0 0 0.5rem; font-size: 1.5rem; }
+.camino p { margin: 0 0 1rem; color: var(--tinta-2); }
+.camino a.mas { font-style: italic; }
+
+/* ------------------------------------------------------------------ */
+/* Las hojas de texto (especificación, documentación, etc.)            */
+/* ------------------------------------------------------------------ */
+.marco { max-width: var(--ancho); margin: 0 auto; padding: 0 var(--canal); display: grid; grid-template-columns: 15rem minmax(0, 1fr); column-gap: clamp(1.5rem, 4vw, 4rem); }
+.marco.ancho { grid-template-columns: minmax(0, 1fr); }
+.indice { grid-column: 1; grid-row: 1; padding-top: 2.6rem; font-size: 0.9rem; }
+.indice .pegado { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; padding-right: 0.4rem; scrollbar-width: thin; }
+.indice h2 { font: 500 0.7rem/1.4 var(--mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--apagado); margin: 0 0 0.6rem; }
+.indice ol { list-style: none; margin: 0 0 1.4rem; padding: 0; }
+.indice li a { display: block; padding: 0.18rem 0 0.18rem 0.7rem; border-left: 2px solid transparent; text-decoration: none; color: var(--tinta-2); line-height: 1.35; }
+.indice li a:hover { color: var(--tinta); border-left-color: var(--filete-2); }
+.indice li a[aria-current] { color: var(--rojo); border-left-color: var(--rojo); }
+.indice li.n3 a { padding-left: 1.5rem; font-size: 0.86rem; }
+.indice .formatos a { display: block; padding: 0.15rem 0; color: var(--apagado); font: 0.8rem/1.5 var(--mono); }
+
+.doc { grid-column: 2; grid-row: 1; min-width: 0; max-width: 47rem; padding-top: 2.4rem; }
+.marco.ancho .doc { grid-column: 1; max-width: 60rem; }
+.miga { margin: 0 0 1.2rem; }
+.miga ol { list-style: none; display: flex; flex-wrap: wrap; gap: 0.3rem 0.5rem; margin: 0; padding: 0; }
+.miga li + li::before { content: '/'; margin-right: 0.5rem; color: var(--filete-2); }
+.miga a { text-decoration: none; }
+.miga a:hover { color: var(--rojo); }
+.cabeza { position: relative; margin-bottom: 2rem; padding-bottom: 1.6rem; border-bottom: 2px solid var(--tinta); }
+.cabeza h1 { margin: 0 0 0.9rem; font-size: clamp(2.2rem, 5.4vw, 3.8rem); letter-spacing: -0.025em; line-height: 1.02; }
+.cabeza .entradilla { font-size: 1.16rem; color: var(--tinta-2); margin: 0 0 1rem; max-width: 40rem; }
+.cabeza .datos { display: flex; flex-wrap: wrap; gap: 0.3rem 1.3rem; }
+.cabeza .datos a { color: var(--tinta-2); }
+.aviso { margin: 0 0 1.8rem; padding: 0.9rem 1.1rem; border-left: 4px solid var(--amarillo); background: rgb(232 168 56 / 0.12); font-size: 0.97rem; }
+.aviso p { margin: 0; }
+
+.cuerpo h2 { margin: 3rem 0 1rem; padding-top: 0.2rem; font-size: clamp(1.5rem, 2.6vw, 1.9rem); letter-spacing: -0.01em; scroll-margin-top: 1rem; }
+.cuerpo h3 { margin: 2.2rem 0 0.6rem; font-size: 1.28rem; scroll-margin-top: 1rem; }
+.cuerpo h4 { margin: 1.6rem 0 0.4rem; font-size: 1.06rem; font-style: italic; scroll-margin-top: 1rem; }
+.cuerpo h2 .ancla, .cuerpo h3 .ancla, .cuerpo h4 .ancla { float: left; margin-left: -1.3em; width: 1.1em; color: var(--filete-2); text-decoration: none; opacity: 0; transition: opacity 120ms; font-size: 0.8em; padding-top: 0.12em; }
+.cuerpo h2:hover .ancla, .cuerpo h3:hover .ancla, .cuerpo h4:hover .ancla, .cuerpo .ancla:focus { opacity: 1; color: var(--rojo); }
+.cuerpo p, .cuerpo ul, .cuerpo ol, .cuerpo dl { margin: 0 0 1.05rem; }
+.cuerpo ul, .cuerpo ol { padding-left: 1.35rem; }
+.cuerpo li { margin: 0 0 0.4rem; padding-left: 0.15rem; }
+.cuerpo li::marker { color: var(--rojo); }
+.cuerpo hr { border: 0; border-top: 1px dashed var(--filete-2); margin: 2.4rem 0; }
+.cuerpo blockquote { margin: 0 0 1.2rem; padding: 0.1rem 0 0.1rem 1.1rem; border-left: 3px solid var(--rojo); color: var(--tinta-2); }
+.cuerpo blockquote p:last-child { margin-bottom: 0; }
+.cuerpo img { margin: 1rem 0; }
+.bcp14 { font-variant-caps: all-small-caps; letter-spacing: 0.05em; font-weight: 600; color: var(--rojo); font-size: 1.05em; }
+
+.tabla { overflow-x: auto; margin: 0 0 1.5rem; }
+.cuerpo table { width: 100%; border-collapse: collapse; font-size: 0.92rem; font-variant-numeric: lining-nums tabular-nums; }
+.cuerpo thead th { text-align: left; font: 500 0.7rem/1.3 var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--apagado); padding: 0.45rem 0.8rem 0.45rem 0; vertical-align: bottom; border-bottom: 1.5px solid var(--tinta); }
+.cuerpo tbody td { border-top: 1px solid var(--filete); padding: 0.5rem 0.8rem 0.5rem 0; vertical-align: top; }
+.cuerpo td.a-right, .cuerpo th.a-right { text-align: right; }
+.cuerpo td.a-center, .cuerpo th.a-center { text-align: center; }
+
+.codigo { position: relative; margin: 0 0 1.3rem; }
+.codigo pre { margin: 0; padding: 1rem 1.1rem; overflow-x: auto; background: #2a1d16; color: #f3eadb; border-radius: 2px; line-height: 1.55; font-size: 0.86rem; tab-size: 2; }
+.codigo pre code { font-size: inherit; background: none; padding: 0; }
+.codigo[data-lengua]::after { content: attr(data-lengua); position: absolute; left: 1.1rem; top: -0.62rem; font: 500 0.62rem/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; background: var(--amarillo); color: var(--tinta); padding: 0.25rem 0.4rem; }
+.copiar { position: absolute; right: 0.45rem; top: 0.45rem; font: 500 0.7rem var(--mono); letter-spacing: 0.04em; text-transform: uppercase; padding: 0.3rem 0.55rem; border: 1px solid rgb(243 234 219 / 0.3); background: rgb(42 29 22 / 0.85); color: #f3eadb; border-radius: 2px; cursor: pointer; }
+.copiar:hover, .copiar.hecho { border-color: var(--amarillo); color: var(--amarillo); }
+
+/* Listas de enlaces a hojas (índices de documentación, RFC, etc.) */
+.hojas { list-style: none; margin: 0 0 2rem; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 0; border-top: 1px solid var(--filete); }
+.cuerpo .hojas li { margin: 0; padding: 0; border-bottom: 1px solid var(--filete); }
+.hojas a { display: block; height: 100%; padding: 0.9rem 1rem 1rem 0; text-decoration: none; }
+.hojas a:hover strong { color: var(--rojo); }
+.hojas strong { display: block; font-weight: normal; font-size: 1.12rem; }
+.hojas span { display: block; font-size: 0.92rem; color: var(--apagado); line-height: 1.45; }
+
+/* La tabla de estado de las implementaciones */
+.cuerpo table.estado-impl td:first-child { white-space: nowrap; }
+.cuerpo table.estado-impl small { display: block; color: var(--apagado); font-size: 0.82rem; }
+.barra { display: inline-block; width: 6rem; height: 0.42rem; background: var(--papel-2); border: 1px solid var(--filete-2); vertical-align: middle; margin-right: 0.4rem; }
+.barra i { display: block; height: 100%; background: var(--tinta); }
+
+/* Descargas */
+.descargas { list-style: none; margin: 0 0 2rem; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 1rem; }
+.cuerpo .descargas li { margin: 0; padding: 1rem 1.1rem 1.1rem; background: var(--hoja); border: 1px solid var(--filete); box-shadow: var(--sombra); }
+.descargas strong { display: block; font-weight: normal; font-size: 1.15rem; }
+.descargas span { display: block; color: var(--apagado); font-size: 0.88rem; margin-bottom: 0.6rem; }
+
+/* La lámina al margen de cada hoja */
+.vineta { position: absolute; right: 0; top: -0.6rem; width: clamp(5.5rem, 15vw, 10rem); pointer-events: none; }
+.cabeza.con-vineta { padding-right: clamp(0rem, 17vw, 11rem); }
+
+@media (max-width: 1000px) {
+  .heroe .texto { grid-column: 1 / -1; }
+  .heroe .lamina { grid-column: 1 / -1; grid-row: 2; margin: 1rem calc(-1 * var(--canal)) 0; }
+  .heroe .sol { width: 70vw; right: -24vw; bottom: -12%; }
+  .heroe .canto { display: none; }
+  .principios li { grid-template-columns: 3.6rem minmax(0, 1fr); }
+  .principios li > p, .principios li > code { grid-column: 2; }
+  .capitulos > header h2, .capitulos > header p { grid-column: 1 / -1; }
+  .dentro { grid-template-columns: minmax(0, 1fr); }
+  .perfiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .caminos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .camino:nth-of-type(odd) { padding-left: 0; border-left: 0; }
+  .marco { grid-template-columns: minmax(0, 1fr); }
+  .doc { grid-column: 1; }
+  .indice { grid-column: 1; grid-row: 2; padding-top: 1.5rem; margin-top: 2rem; border-top: 2px solid var(--tinta); }
+  .indice .pegado { position: static; max-height: none; }
+  .pie-dentro { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .pie-dentro > :first-child { grid-column: 1 / -1; }
+}
+@media (max-width: 640px) {
+  body { font-size: 1.03rem; }
+  .cabecera { gap: 0.6rem; }
+  .cabecera nav { margin-left: 0; width: 100%; gap: 0.1rem 1rem; font-size: 0.95rem; }
+  .ancla-demo { grid-template-columns: minmax(0, 1fr); }
+  .heroe h1 { font-size: 14.5vw; }
+  .heroe .lamina { margin: 1.5rem 0 0; }
+  .heroe .sol { width: 62vw; right: -20vw; bottom: -20%; }
+  .lenguajes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ancla-demo .rotulo { display: none; }
+  .tablas li { grid-template-columns: minmax(0, 1fr); gap: 0.1rem; }
+  .caminos { grid-template-columns: minmax(0, 1fr); }
+  .camino, .camino + .camino { padding-left: 0; border-left: 0; }
+  .cabeza.con-vineta { padding-right: 0; }
+  .vineta { position: static; width: 9rem; margin: 0 0 1rem; }
+}
+@media print {
+  .cabecera nav, .indice, .copiar, .pie, .heroe .sol { display: none; }
+  .marco { display: block; }
+  body { background: #fff; }
+}

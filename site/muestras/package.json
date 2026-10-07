@@ -1,0 +1,19 @@
+{
+  "name": "spdf-site-muestras",
+  "private": true,
+  "type": "module",
+  "description": "Genera los ficheros de muestra del validador (un librito sobre SPDF, impreso a PDF y leído a SPDF).",
+  "scripts": {
+    "generar": "tsx generar.ts"
+  },
+  "devDependencies": {
+    "@huggingface/transformers": "^4.3.1",
+    "spdf-format": "file:../../js",
+    "tsx": "^4.23.15"
+  },
+  "allowScripts": {
+    "onnxruntime-node@1.30.0": true,
+    "sharp@0.35.5": true,
+    "protobufjs@7.6.6": true
+  }
+}

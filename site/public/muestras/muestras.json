@@ -1,0 +1,38 @@
+[
+  {
+    "fichero": "spdf-in-five-pages.spdf",
+    "nombre": {
+      "en": "SPDF in five pages",
+      "es": "SPDF in five pages"
+    },
+    "bytes": 393216,
+    "sha256": "7ff9383dd1e68d1158b471e435da076a563db319894087c69cb5ab5242a1f9d6",
+    "valido": true,
+    "codigos": []
+  },
+  {
+    "fichero": "spdf-en-cinco-paginas.spdf",
+    "nombre": {
+      "en": "SPDF en cinco páginas",
+      "es": "SPDF en cinco páginas"
+    },
+    "bytes": 397312,
+    "sha256": "7fd770fa1bc728eb27ab5b0563eb5936dfc31e730b3ed8073d01f2047e2b529c",
+    "valido": true,
+    "codigos": []
+  },
+  {
+    "fichero": "roto.spdf",
+    "nombre": {
+      "en": "A broken copy",
+      "es": "Una copia rota"
+    },
+    "bytes": 393216,
+    "sha256": "b02e0258188d094bfe52f7424016e48ad87b1e3ecf4b24f368449508ef62409c",
+    "valido": false,
+    "codigos": [
+      "E020",
+      "E090"
+    ]
+  }
+]

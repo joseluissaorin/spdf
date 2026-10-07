@@ -1,0 +1,24 @@
+{
+  // La web del estándar SPDF: un Worker con assets estáticos (site/dist) que
+  // negocia Markdown para agentes y sirve SPDF Commons y las descargas desde R2.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "spdf-web",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  "account_id": "f22c7a728ddc8e41cefd2644f8fb7632",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page",
+    "run_worker_first": true
+  },
+  "r2_buckets": [
+    { "binding": "ARCHIVOS", "bucket_name": "spdf-web" }
+  ],
+  "routes": [
+    { "pattern": "spdf.joseluissaorin.com", "custom_domain": true }
+  ],
+  "observability": { "enabled": true },
+  "workers_dev": true
+}

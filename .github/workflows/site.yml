@@ -1,0 +1,47 @@
+# La web del estándar (site/): construye todas las hojas, sus gemelos .md y los
+# ficheros para agentes, empaqueta el validador con spdf-format y pasa las
+# pruebas de la web. El despliegue a Cloudflare se hace desde local (ver
+# site/DESPLIEGUE.md) mientras no haya un token de API en los secretos.
+name: site
+
+on:
+  push:
+    branches: [main]
+    paths: ['site/**', 'spec/**', 'governance/**', 'js/**', '.github/workflows/site.yml', '*/README.md']
+  pull_request:
+    paths: ['site/**', 'spec/**', 'governance/**', '.github/workflows/site.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  construir:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: spdf-format (js)
+        working-directory: js
+        run: npm ci && npm run build
+      - name: Dependencias de la web
+        working-directory: site
+        run: npm ci
+      - name: Construir
+        working-directory: site
+        env:
+          SPDF_SIN_RED: '1'
+        run: npm run build
+      - name: Pruebas
+        working-directory: site
+        run: npm test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site-dist
+          path: site/dist
+          retention-days: 7

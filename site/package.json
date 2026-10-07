@@ -1,0 +1,29 @@
+{
+  "name": "spdf-site",
+  "private": true,
+  "type": "module",
+  "description": "La web del estándar SPDF: https://spdf.joseluissaorin.com",
+  "scripts": {
+    "build": "tsx generador/construir.ts",
+    "dev": "npx wrangler dev",
+    "deploy": "npm run build && npx wrangler deploy",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261007.1",
+    "@sqlite.org/sqlite-wasm": "^3.53.4-build2",
+    "esbuild": "^0.28.2",
+    "marked": "^18.1.0",
+    "spdf-format": "file:../js",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.3",
+    "vitest": "^5.0.3",
+    "wrangler": "^4.148.0"
+  },
+  "allowScripts": {
+    "workerd@1.20261006.1": true,
+    "esbuild@0.28.2": true,
+    "esbuild@0.28.1": true
+  }
+}

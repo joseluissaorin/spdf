@@ -1,0 +1,69 @@
+/*
+ * Dibujos a mano: tintas, capas y la mano que dibuja.
+ * Funciona igual con el SVG en línea (aSvg) en cualquier web: HTML estático,
+ * React, Svelte o Astro. Solo hace falta añadir la clase `visto` al <svg class="dibujo">
+ * (o al contenedor .boceto) cuando deba dibujarse: animar.js o <Boceto> lo hacen.
+ */
+
+@font-face {
+  font-family: 'Mano';
+  font-display: swap;
+  src: url('/fuentes/mano.woff2') format('woff2'); /* ajustar la ruta al proyecto */
+}
+
+/* Las tintas: papel crema, tinta ferrogálica, lápiz y los tres colores de la Bauhaus. */
+.dibujo, .boceto {
+  --d-papel: #f5f0e8;
+  --d-tinta: #2c1810;
+  --d-lapiz: #9a8e80;
+  --d-rojo: #c1453b;
+  --d-azul: #2b4c7e;
+  --d-amarillo: #e8a838;
+  --d-oro: #d6a03a;
+  --d-negro: #1a120d;
+  --ease-tinta: cubic-bezier(0.55, 0.1, 0.45, 0.95);
+}
+/* Papel oscuro: la tinta pasa a ser clara y el color deja de multiplicar. */
+.oscuro .dibujo, .oscuro .boceto, .dibujo.oscuro, .boceto.oscuro {
+  --d-papel: #1f1712;
+  --d-tinta: #f5ece0;
+  --d-lapiz: #8f7a6a;
+  --d-rojo: #e0705f;
+  --d-azul: #8ea8d6;
+  --d-amarillo: #efbd5e;
+  --d-oro: #d9a53a;
+  --d-negro: #f5ece0;
+}
+/* Sobre un fondo de color (un botón rojo o una zona café): tinta clara y sin multiplicar. */
+.boceto.sobre-color, .dibujo.sobre-color { --d-tinta: #fbf5ec; --d-lapiz: rgb(251 245 236 / 0.55); --d-papel: transparent; }
+
+.boceto { display: block; }
+.boceto > svg, svg.dibujo { display: block; width: 100%; height: auto; overflow: visible; }
+
+/* El color se imprime encima de la tinta, como una segunda pasada de imprenta. */
+.dibujo .c-pl, .dibujo .c-co, .dibujo .c-en { mix-blend-mode: multiply; }
+.oscuro .dibujo .c-pl, .oscuro .dibujo .c-co, .oscuro .dibujo .c-en,
+.dibujo.oscuro .c-pl, .dibujo.oscuro .c-co, .dibujo.oscuro .c-en,
+.sobre-color .dibujo .c-pl, .sobre-color .dibujo .c-co, .sobre-color .dibujo .c-en { mix-blend-mode: normal; opacity: 0.92; }
+
+.dibujo .nt { font-family: 'Mano', 'Segoe Print', 'Bradley Hand', cursive; }
+
+/*
+ * La pluma: primero el lápiz, luego la tinta y el color, al final las notas.
+ * Cada trazo lleva --d (cuándo empieza) y --t (cuánto dura), calculados por aSvg
+ * en proporción a su largo. --ritmo acelera o frena el dibujo entero.
+ * Sin `visto` el dibujo está en blanco; con `visto` se dibuja. Si el usuario
+ * pide menos movimiento, el dibujo aparece ya hecho (no hay transiciones).
+ */
+@media screen and (prefers-reduced-motion: no-preference) {
+  .anima .dibujo .tl, .anima .dibujo .mt { stroke-dasharray: 1 1; }
+  .anima .dibujo .tl { transition: stroke-dashoffset calc(var(--t, 0.4s) * var(--ritmo, 1)) linear calc(var(--d, 0s) * var(--ritmo, 1)); }
+  .anima .dibujo .mt { transition: stroke-dashoffset calc(var(--t, 0.4s) * var(--ritmo, 1)) var(--ease-tinta) calc(var(--d, 0s) * var(--ritmo, 1)); }
+  .anima .dibujo .pl { transition: opacity 0.7s ease calc(var(--d, 0s) * var(--ritmo, 1)); }
+  .anima .dibujo .nt { transition: opacity 0.9s ease calc(var(--d, 0s) * var(--ritmo, 1)); }
+  .anima .dibujo:not(.visto) .tl, .anima .dibujo:not(.visto) .mt { stroke-dashoffset: 1; }
+  .anima .dibujo:not(.visto) .pl, .anima .dibujo:not(.visto) .nt { opacity: 0; }
+}
+
+/* Al imprimir, todo dibujado. */
+@media print { .dibujo .tl, .dibujo .mt { stroke-dashoffset: 0 !important; } .dibujo .pl, .dibujo .nt { opacity: 1 !important; } }
