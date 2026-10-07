@@ -143,6 +143,8 @@ function conf_case(dir, c)
             (i <= length(got) && want[i] == got[i]) || return "line $i: expected $(want[i]), got $(i <= length(got) ? got[i] : "(nothing)")"
         end
         return length(want) == length(got) ? nothing : "expected $(length(want)) lines, got $(length(got))"
+    elseif kind == "cite_passage"
+        return open(d -> conf_compare(ex, cite_passage(d, input["fragment"], input["quote"]; locale = get(input, "locale", "en")), "cite_passage"), p(input["file"]))
     elseif kind == "export_structure"
         return open(d -> conf_compare(ex["pages"], export_pages(d, input["format"]), "pages"), p(input["file"]))
     elseif kind == "quantize"

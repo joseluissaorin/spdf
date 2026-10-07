@@ -23,11 +23,13 @@ using SPDF
 
 SPDF.open("quijote.spdf") do doc
     println(title(doc), " (", doc.version, ")")
-    for hit in search_lexical(doc, "\"lugar de la Mancha\""; limit = 5)
+    for hit in search_lexical(doc, "hermoso"; limit = 5)   # the 1608 edition prints «hermoſo»
         f = SPDF.fragment(doc, hit.fragment_id)
-        println(cite(doc, hit.anchor, f["anchor_end"]; locale = "es"))   # (Cervantes Saavedra, 1605, fols. 1r-[1v])
-        println(hit.anchor_uri)                                          # spdf:sha256-…#p=5&pe=6&f=1r&fe=1v&char=101,278
+        println(cite(doc, hit.anchor, f["anchor_end"]; locale = "es"))   # (Cervantes Saavedra, 1608, s. p.)
+        println(hit.anchor_uri)                                          # spdf:sha256-27ea…#p=13&char=10,194
     end
+    # a quotation is cited by the page it lies in, not by the start of its fragment (§18.2)
+    println(cite_passage(doc, "q5", "rozin, como tomaua la podadera.")["text"])   # (Cervantes Saavedra, 1608, fol. [Iv])
     println(bibtex(doc))
 end
 ```

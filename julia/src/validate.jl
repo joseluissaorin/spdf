@@ -35,6 +35,7 @@ function check_anchor(a, text)
         g("scheme") isa AbstractString && g("ref") isa AbstractString
     end
     ok || return ("E040", "$t anchor misses or mistypes a required member")
+    haskey(a, "matter") && !(a["matter"] isa AbstractString) && return ("E040", "matter must be a string")
     if haskey(a, "region")
         r = a["region"]
         (r isa AbstractDict && all(k -> isjnum(get(r, k, nothing)), ("x", "y", "w", "h"))) || return ("E040", "bad region")
@@ -246,6 +247,27 @@ function _validate(doc::Document, err, warn, result, errors, forward)
                 false
             end
             good || err("E082", "signature does not verify", "spdf_meta.signature")
+        end
+    end
+    # W103: fragments that cross matter, or between a page with a folio and one without (§4.4).
+    if ok("units", "id", "ord", "anchor") && ok("fragments", "id", "unit", "anchor", "anchor_end")
+        jp(x) = try
+            x isa AbstractString ? json_parse(x) : nothing
+        catch
+            nothing
+        end
+        us = [Dict{String,Any}("id" => r["id"], "anchor" => jp(r["anchor"])) for r in query(db, "SELECT id, anchor FROM units ORDER BY ord, id")]
+        byid = Dict(string(u["id"]) => u for u in us)
+        for f in query(db, "SELECT id, unit, anchor_end FROM fragments WHERE anchor_end IS NOT NULL ORDER BY n")
+            u1 = get(byid, string(f["unit"]), nothing)
+            u2 = u1 === nothing ? nothing : end_unit(us, string(f["unit"]), jp(f["anchor_end"]))
+            (u1 === nothing || u2 === nothing || !(u1["anchor"] isa AbstractDict) || !(u2["anchor"] isa AbstractDict)) && continue
+            a1, a2 = u1["anchor"], u2["anchor"]
+            foliochange = get(a1, "type", nothing) == "page" && get(a2, "type", nothing) == "page" &&
+                          (get(a1, "printed", nothing) === nothing) != (get(a2, "printed", nothing) === nothing)
+            if matter_of(a1) != matter_of(a2) || foliochange
+                warn("W103", "fragment crosses matter, or between a page with a folio and one without", "fragments/$(f["id"])")
+            end
         end
     end
     "semantic" in profile && nvec == 0 && warn("W100", "profile semantic without vectors")

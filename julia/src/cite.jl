@@ -41,14 +41,17 @@ function label(a)
     return get(a, "source", nothing) == "inferred" ? "[" * string(p) * "]" : string(p)
 end
 
+"An end without a printed folio never takes part in a range (SPEC §18.1)."
 function page_locator(a, e, es, one, many)
-    la = label(a)
-    la === nothing && return es ? "s. p." : "n. pag."
-    if e isa AbstractDict && get(e, "type", nothing) == get(a, "type", nothing)
-        lb = label(e)
-        lb !== nothing && get(e, "printed", nothing) != get(a, "printed", nothing) && return "$many $la-$lb"
+    ends = Any[a]
+    e isa AbstractDict && get(e, "type", nothing) == get(a, "type", nothing) && push!(ends, e)
+    withfolio = [x for x in ends if get(x, "printed", nothing) !== nothing]
+    isempty(withfolio) && return es ? "s. p." : "n. pag."
+    first_, last_ = withfolio[1], withfolio[end]
+    if length(withfolio) > 1 && last_["printed"] != first_["printed"]
+        return "$many $(label(first_))-$(label(last_))"
     end
-    return "$one $la"
+    return "$one $(label(first_))"
 end
 
 function cite_locator(a, e, es)

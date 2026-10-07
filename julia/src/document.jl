@@ -315,18 +315,25 @@ function locate(doc::Document, reference::AbstractString)
             hits = Any[timed[end]["id"]]
         end
     end
-    frags = [f for f in fragments(doc) if locate_match(rule, l, f["anchor"], nothing)]
+    frags = [f for f in fragments(doc) if locate_match(rule, l, f["anchor"], nothing) ||
+                                         (f["anchor_end"] isa AbstractDict && locate_match(rule, l, f["anchor_end"], nothing))]
     if isempty(hits) && !isempty(frags)
         wanted = Set(f["unit"] for f in frags)
         hits = Any[u["id"] for u in us if u["id"] in wanted]
     end
     if haskey(l, "char")
         c, dd = l["char"][1], l["char"][2]
-        frags = filter(frags) do f
-            ch = f["anchor"] isa AbstractDict ? get(f["anchor"], "chars", nothing) : nothing
-            (f["unit"] in hits && ch isa AbstractVector && length(ch) == 2) || return false
+        first_ = isempty(hits) ? nothing : hits[1]   # char refers to the text of the first unit
+        function overlaps(x)
+            ch = x isa AbstractDict ? get(x, "chars", nothing) : nothing
+            (ch isa AbstractVector && length(ch) == 2) || return false
             a, b = ch[1], ch[2]
-            c < dd ? (a < dd && c < b) : (a <= c < b)
+            return c < dd ? (a < dd && c < b) : (a <= c < b)
+        end
+        frags = filter(frags) do f
+            f["unit"] == first_ && overlaps(f["anchor"]) && return true
+            eu = end_unit(us, string(f["unit"]), f["anchor_end"])
+            return eu !== nothing && eu["id"] == first_ && overlaps(f["anchor_end"])
         end
     end
     out["units"] = hits
@@ -366,4 +373,82 @@ function locate_match(rule, l, a, printed)
         return isint(g("row_from")) && isint(g("row_to")) && g("row_from") <= x <= g("row_to")
     end
     return false
+end
+
+anchor_identity(a) = a isa AbstractDict ? Dict{String,Any}(k => v for (k, v) in a if !(k in ("chars", "region"))) : a
+
+"JSON equality: key order ignored, 10 equals 10.0, \"1\" differs from 1."
+json_same(a::AbstractDict, b::AbstractDict) = Set(keys(a)) == Set(keys(b)) && all(json_same(v, b[k]) for (k, v) in a)
+json_same(a::AbstractVector, b::AbstractVector) = length(a) == length(b) && all(json_same(x, y) for (x, y) in zip(a, b))
+json_same(a::Bool, b::Bool) = a == b
+json_same(a::Real, b::Real) = !(a isa Bool) && !(b isa Bool) && a == b
+json_same(a, b) = isequal(a, b)
+
+"""
+    end_unit(units, start_id, anchor_end)
+
+The unit where a fragment ends: the first unit after its start unit (in `ord` order)
+whose anchor equals `anchor_end` once `chars` and `region` are removed (SPEC §4.4).
+"""
+function end_unit(us, start_id, anchor_end)
+    anchor_end isa AbstractDict || return nothing
+    want = anchor_identity(anchor_end)
+    after = false
+    for u in us
+        if string(u["id"]) == string(start_id)
+            after = true
+            continue
+        end
+        after && json_same(anchor_identity(u["anchor"]), want) && return u
+    end
+    return nothing
+end
+
+matter_of(a) = (m = a isa AbstractDict ? get(a, "matter", nothing) : nothing; m isa AbstractString ? m : "body")
+
+"""
+    cite_passage(doc, fragment_id, quotation; locale = "es") -> Dict
+
+Cites a quotation taken from a fragment by the unit or units it lies in (SPEC §18.2):
+`Dict("text" => short citation, "uri" => anchor URI)`.
+"""
+function cite_passage(doc::Document, fragment_id::AbstractString, quotation::AbstractString; locale::AbstractString = "es")
+    us = units(doc)
+    byid = Dict(string(u["id"]) => u for u in us)
+    f = fragment(doc, fragment_id)
+    f === nothing && spdf_error("E040", "unknown fragment $fragment_id")
+    q = nfc(quotation)
+    u1 = byid[string(f["unit"])]
+    a = f["anchor"] isa AbstractDict ? f["anchor"] : Dict{String,Any}()
+    t1 = collect(string(something(get(u1, "text", nothing), "")))
+    c1 = something(get(a, "chars", nothing), Any[0, length(t1)])
+    seg1 = String(t1[c1[1]+1:c1[2]])
+    u2 = end_unit(us, string(u1["id"]), f["anchor_end"])
+    seg2 = ""
+    c2 = nothing
+    if u2 !== nothing
+        t2 = collect(string(something(get(u2, "text", nothing), "")))
+        c2 = something(get(f["anchor_end"], "chars", nothing), Any[0, length(t2)])
+        seg2 = String(t2[c2[1]+1:c2[2]])
+    end
+    strip_(x) = Dict{String,Any}(k => v for (k, v) in x if !(k in ("chars", "region")))
+    cpos(hay, needle) = (r = findfirst(needle, hay); r === nothing ? nothing : length(hay[1:prevind(hay, first(r))]))
+    finish = nothing
+    if (p = cpos(seg1, q)) !== nothing
+        i = p + c1[1]
+        anchor = strip_(u1["anchor"])
+        anchor["chars"] = Any[i, i + length(q)]
+    elseif u2 !== nothing && (p = cpos(seg2, q)) !== nothing
+        i = p + c2[1]
+        anchor = strip_(u2["anchor"])
+        anchor["chars"] = Any[i, i + length(q)]
+    elseif u2 !== nothing && occursin(q, string(f["text"]))
+        anchor = strip_(u1["anchor"])
+        finish = strip_(u2["anchor"])
+    else
+        spdf_error("E040", "the quote is not in the fragment")
+    end
+    d = document(doc)
+    return Dict{String,Any}("text" => cite(metadata(doc), anchor, finish; locale),
+        "uri" => anchor_uri("sha256-" * string(d["source_sha256"]), anchor, finish))
 end
