@@ -39,6 +39,7 @@ KINDS = {
     "search_hybrid": ({"file", "query", "space", "query_vector", "limit"}, {"results"}),
     "anchor_uri": (set(), set()),
     "cite": ({"anchor", "anchor_end", "metadata", "locale"}, {"text"}),
+    "quantize": ({"dtype", "values"}, set()),
 }
 TOL = 1e-6
 
@@ -156,6 +157,12 @@ def run_case(c: dict, base: Path = CONF) -> str | None:
         if R.jcs(p) != R.jcs(R.canon({"docref": e["docref"], "locator": e["locator"]})):
             return f"parse gives {p}"
         return None if R.format_locator(p["docref"], p["locator"]) == e["canonical"] else "canonical form differs"
+    if k == "quantize":
+        try:
+            got = {"hex": R.quantize(i["values"], i["dtype"]).hex()}
+        except R.SpdfError:
+            got = {"error": True}
+        return None if got == e else f"got {got}"
     if k == "cite":
         t = R.cite(i["anchor"], i["anchor_end"], i["metadata"], i["locale"])
         return None if t == e["text"] else f"got {t!r}"

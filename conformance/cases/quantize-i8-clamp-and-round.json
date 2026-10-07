@@ -1,0 +1,11 @@
+{
+  "expect": {
+    "hex": "7f810df3"
+  },
+  "id": "quantize-i8-clamp-and-round",
+  "input": {
+    "dtype": "i8",
+    "values": [1.5, -2, 0.1, -0.1]
+  },
+  "kind": "quantize"
+}

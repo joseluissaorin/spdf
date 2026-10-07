@@ -1,0 +1,11 @@
+{
+  "expect": {
+    "error": true
+  },
+  "id": "quantize-f32-overflow",
+  "input": {
+    "dtype": "f32",
+    "values": [1e+39]
+  },
+  "kind": "quantize"
+}

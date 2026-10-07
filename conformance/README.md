@@ -79,6 +79,7 @@ How expectations are made, so nobody has to trust a single implementation:
 | `anchor_uri` (parse) | `uri` | `docref`, `locator`, `canonical` | `parse(uri) == {docref, locator}` and `format(parse(uri)) == canonical` |
 | `anchor_uri` (error) | `uri` | `{"error": true}` | `parse(uri)` fails |
 | `cite` | `anchor`, `anchor_end`, `metadata` (CSL-JSON item), `locale` | `text` | `cite(...) == text`, byte for byte |
+| `quantize` | `dtype` (`f32`, `f16`, `i8`), `values` | `hex` or `{"error": true}` | encoding the values as a writer would gives these little-endian bytes (lowercase hex), or fails for out-of-range values |
 
 A search result item is `{"fragment_id", "score", "anchor_uri"}` plus `"via"` for lexical
 and hybrid searches. JSON values compare structurally: numbers as IEEE doubles (`1` and
@@ -98,7 +99,8 @@ cases and prints one JSON object on standard output, also saved as `conformance.
 
 - A case that throws is a failure, never a pass.
 - `skipped` is allowed only for a whole kind the implementation does not claim (a
-  reader-only library skips `roundtrip`); say which kinds in the implementation README.
+  reader-only library skips `roundtrip` and `quantize`); say which kinds in the
+  implementation README.
 - The process exits non-zero if `failed` is not empty. CI fails on any failure.
 - New cases appear over time: a runner MUST discover them by listing `cases/*.json`,
   never from a hard-coded list.

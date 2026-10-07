@@ -1,0 +1,11 @@
+{
+  "expect": {
+    "hex": "cdcccc3d9faaaa3e"
+  },
+  "id": "quantize-f32",
+  "input": {
+    "dtype": "f32",
+    "values": [0.1, 0.333333]
+  },
+  "kind": "quantize"
+}

@@ -1,4 +1,4 @@
-# SPDF 5.0 implementation contract (draft 1.1, 2026-10-07)
+# SPDF 5.0 implementation contract (draft 1.2, 2026-10-07)
 
 This is the working contract every implementation in this repository codes against
 while the normative specification (`SPEC.md`) is being written. `SPEC.md` absorbs
@@ -7,6 +7,13 @@ change here. Key words MUST, SHOULD, MAY as in RFC 2119.
 
 ## Change log (read this first)
 
+- **2026-10-07, draft 1.2 (spec agent).** `spec/SPEC.md` is written and is now the
+  reference text; this contract stays as a summary. New in the suite (0.2.0): kind
+  `quantize`; E020 also covers virtual tables other than `fragments_fts` and
+  `fragments_fts_trigram`; an "integer" in anchors and metadata is any JSON number with an
+  integral value (`1.0` counts); f16/f32 values out of range are a writer error. Legacy
+  validation is deliberately limited to W110, E010 (`spdf`, `documentos`, `unidades`,
+  `fragmentos`, `fragmentos_fts`) and E020 (SPEC §22.1 step 3).
 - **2026-10-07, draft 1.1 (spec agent).** `provenance` in the dump is sorted by the UTF-8
   bytes of each entry's JCS form (ordering by the stored `detail` text depended on how each
   writer serialized it). Conformance layout, `manifest.json` and the CI artifact convention
@@ -432,7 +439,7 @@ Layout under `conformance/`: `sources/*.json` (full dumps: dump + vector values 
 `expected/*.dump.json`, `cases/*.json` (one case per file), `manifest.json`,
 `tools/generar.py`, `tools/verificar.py`, `tools/spdfref.py` (reference oracle). Case: `{"id","kind","input":{…},"expect":{…}}`, kinds `dump`,
 `validate`, `search_lexical`, `search_vector`, `search_hybrid`, `anchor_uri`, `cite`,
-`legacy_dump`, `roundtrip`. Paths are relative to `conformance/`. Exact input/expect
+`legacy_dump`, `roundtrip`, `quantize`. Paths are relative to `conformance/`. Exact input/expect
 shapes per kind: `conformance/README.md`. Every implementation ships a runner that prints
 `{"impl","version","passed":[…],"failed":[{"id","reason"}],"skipped":[…]}`; CI fails on
 any failure. Implementations MAY declare a profile subset (e.g. reader-only skips

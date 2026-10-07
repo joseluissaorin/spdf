@@ -1,0 +1,11 @@
+{
+  "expect": {
+    "hex": "662eff7b00005535"
+  },
+  "id": "quantize-f16-round-nearest-even",
+  "input": {
+    "dtype": "f16",
+    "values": [0.1, 65504, 0, 0.333333]
+  },
+  "kind": "quantize"
+}

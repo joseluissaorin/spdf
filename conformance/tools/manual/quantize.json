@@ -1,0 +1,87 @@
+[
+ {
+  "id": "quantize-i8-basic",
+  "input": {
+   "dtype": "i8",
+   "values": [
+    0,
+    1,
+    -1,
+    0.5,
+    -0.5,
+    0.25,
+    0.75
+   ]
+  },
+  "expect": {
+   "hex": "007f8140c0205f"
+  }
+ },
+ {
+  "id": "quantize-i8-clamp-and-round",
+  "input": {
+   "dtype": "i8",
+   "values": [
+    1.5,
+    -2,
+    0.1,
+    -0.1
+   ]
+  },
+  "expect": {
+   "hex": "7f810df3"
+  }
+ },
+ {
+  "id": "quantize-f16-round-nearest-even",
+  "input": {
+   "dtype": "f16",
+   "values": [
+    0.1,
+    65504,
+    1e-08,
+    0.333333
+   ]
+  },
+  "expect": {
+   "hex": "662eff7b00005535"
+  }
+ },
+ {
+  "id": "quantize-f16-overflow",
+  "input": {
+   "dtype": "f16",
+   "values": [
+    65520
+   ]
+  },
+  "expect": {
+   "error": true
+  }
+ },
+ {
+  "id": "quantize-f32",
+  "input": {
+   "dtype": "f32",
+   "values": [
+    0.1,
+    0.333333
+   ]
+  },
+  "expect": {
+   "hex": "cdcccc3d9faaaa3e"
+  }
+ },
+ {
+  "id": "quantize-f32-overflow",
+  "input": {
+   "dtype": "f32",
+   "values": [
+    1e+39
+   ]
+  },
+  "expect": {
+   "error": true
+  }
+ }
+]

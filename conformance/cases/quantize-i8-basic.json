@@ -1,0 +1,11 @@
+{
+  "expect": {
+    "hex": "007f8140c0205f"
+  },
+  "id": "quantize-i8-basic",
+  "input": {
+    "dtype": "i8",
+    "values": [0, 1, -1, 0.5, -0.5, 0.25, 0.75]
+  },
+  "kind": "quantize"
+}

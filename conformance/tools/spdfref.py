@@ -607,6 +607,25 @@ def pack_vector(values, dtype: str) -> bytes:
     return out
 
 
+def quantize(values, dtype: str) -> bytes:
+    """Writer-side encoding of float values (CONTRACT §2): f32/f16 round to nearest even, i8 = clamp(round_half_away(v*127))."""
+    if dtype == "i8":
+        out = []
+        for v in values:
+            x = float(v) * 127
+            q = math.floor(abs(x) + 0.5) * (1 if x >= 0 else -1)
+            out.append(max(-127, min(127, int(q))))
+        return struct.pack(f"<{len(out)}b", *out)
+    if dtype in ("f32", "f16"):
+        fmt = "f" if dtype == "f32" else "e"
+        try:
+            data = struct.pack(f"<{len(values)}{fmt}", *[float(v) for v in values])
+        except (OverflowError, struct.error):
+            raise SpdfError(f"value out of range for {dtype}")
+        return data
+    raise SpdfError(f"unknown dtype {dtype}")
+
+
 def unpack_vector(data: bytes, dtype: str) -> list[float]:
     fmt, size = DTYPE[dtype]
     n = len(data) // size
@@ -1273,11 +1292,15 @@ REQUIRED_COLUMNS = {
 REQUIRED_META = ("spdf_version", "profile", "created", "generator", "document_id")
 ANCHOR_TYPES = {"page", "time", "section", "slide", "sheet", "web", "image", "verse", "canonical"}
 LEGACY_TRIGGERS = {"fragmentos_ai", "fragmentos_ad", "fragmentos_au"}
+ALLOWED_VTABLES = {"fragments_fts", "fragments_fts_trigram"}
 KNOWN_EXTENSIONS: set[str] = set()
 
 
 def _is_int(v):
-    return isinstance(v, int) and not isinstance(v, bool)
+    """A JSON number with an integral value (10 and 10.0 are the same JSON value)."""
+    if isinstance(v, bool):
+        return False
+    return isinstance(v, int) or (isinstance(v, float) and v.is_integer())
 
 
 def _is_num(v):
@@ -1360,6 +1383,9 @@ def validate_file(path: Path) -> dict:
             warn("W105", f"newer minor version {version}")
         for name, typ in con.execute("SELECT name, type FROM sqlite_master WHERE type IN ('trigger', 'view')"):
             err("E020", f"{typ} {name} present", name)
+        for name, sql in con.execute("SELECT name, sql FROM sqlite_master WHERE type = 'table' AND sql LIKE 'CREATE VIRTUAL TABLE%'"):
+            if name not in ALLOWED_VTABLES or not re.search(r"USING\s+fts5\s*\(", sql or "", re.I):
+                err("E020", f"virtual table {name} present", name)
         tables = table_names(con)
         present = {}
         for t, cols in REQUIRED_COLUMNS.items():

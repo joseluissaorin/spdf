@@ -1,0 +1,11 @@
+{
+  "expect": {
+    "error": true
+  },
+  "id": "quantize-f16-overflow",
+  "input": {
+    "dtype": "f16",
+    "values": [65520]
+  },
+  "kind": "quantize"
+}

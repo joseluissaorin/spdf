@@ -2,6 +2,17 @@
 
 Newest first. Implementers: read this before updating your runner.
 
+## 0.2.0 (2026-10-07)
+
+- New kind `quantize` (6 cases): writer-side encoding of f32, f16 and i8 values, with
+  i8 rounding half away from zero and clamping to ±127, and f16/f32 overflow as an error.
+  Reader-only implementations may skip it.
+- `invalid/E020-virtual-table.spdf`: a virtual table other than `fragments_fts` and
+  `fragments_fts_trigram` is E020 (SPEC §2.4, §22).
+- `invalid/OK-integral-number.spdf`: anchors whose integer members are written as `1.0`
+  are valid; an integer is a JSON number with an integral value.
+- 228 cases.
+
 ## 0.1.0 (2026-10-07), first batch
 
 - 220 cases: `anchor_uri` 40, `cite` 79 (es and en), `dump` 7, `legacy_dump` 2,

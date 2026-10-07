@@ -4,16 +4,17 @@
     "cite": 79,
     "dump": 7,
     "legacy_dump": 2,
+    "quantize": 6,
     "roundtrip": 7,
     "search_hybrid": 2,
     "search_lexical": 39,
     "search_vector": 5,
-    "validate": 39
+    "validate": 41
   },
-  "cases": 220,
-  "cases_sha256": "fc176c6736112b4462fcf9927be7bb542171e543df76c3ca695475df9d92d5e0",
+  "cases": 228,
+  "cases_sha256": "2d28cb5169e426ce26fec1df6c7481e2e5a3b208f0f14f66411e51043aa442c3",
   "spdf_version": "5.0",
   "suite": "spdf-conformance",
-  "suite_version": "0.1.0",
+  "suite_version": "0.2.0",
   "test_public_key": "ed25519:zTT6Bhc+ydufqk04cT9bPz9jDlHiRgXyOJ/VBgKzpv4="
 }

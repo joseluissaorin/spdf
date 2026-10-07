@@ -40,7 +40,7 @@ import spdfref as R  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 CONF = HERE.parent
-SUITE_VERSION = "0.1.0"
+SUITE_VERSION = "0.2.0"
 # Public test key. NEVER use it for anything but this suite.
 TEST_SECRET = hashlib.sha256(b"SPDF conformance test key: public, never use it for real signatures").digest()
 SIGNED = {"quijote"}
@@ -171,6 +171,8 @@ def build_invalid(out: Path, sources: dict) -> list[tuple[str, dict]]:
     expect("E020-trigger", ["E020"])
     _mutate(fresh("E020-view"), "CREATE VIEW v_units AS SELECT id, text FROM units")
     expect("E020-view", ["E020"])
+    _mutate(fresh("E020-virtual-table"), "CREATE VIRTUAL TABLE x_acme_index USING fts5(body)")
+    expect("E020-virtual-table", ["E020"])
 
     space = ("INSERT INTO spaces (id, provider, model, version, dims, dtype, normalized, truncated_from, modalities, task_prefixes, created) "
              "VALUES ('toy@8', 'spdf-conformance', 'toy', '1', 8, '{dtype}', 1, NULL, '[\"text\"]', NULL, NULL)")
@@ -213,6 +215,9 @@ def build_invalid(out: Path, sources: dict) -> list[tuple[str, dict]]:
     _mutate(fresh("E090-ord-gap"), "UPDATE units SET ord = 3 WHERE id = 'u2'")
     expect("E090-ord-gap", ["E090"])
 
+    _mutate(fresh("OK-integral-number"), "UPDATE units SET anchor = '{\"paragraph\":1.0,\"path\":[\"XXI\"],\"type\":\"section\"}' WHERE id = 'u1'",
+            "UPDATE fragments SET anchor = '{\"chars\":[0.0,111],\"line_from\":1.0,\"line_to\":4,\"type\":\"verse\"}' WHERE id = 'f1'")
+    expect("OK-integral-number")
     _mutate(fresh("W100-semantic-without-vectors"), "UPDATE spdf_meta SET value = 'core semantic' WHERE key = 'profile'")
     expect("W100-semantic-without-vectors", warnings=["W100"])
     _mutate(fresh("W101-media-without-time"), "UPDATE spdf_meta SET value = 'core media' WHERE key = 'profile'")
@@ -320,7 +325,7 @@ def build_cases(out: Path, dumps: dict, legacy: dict, invalid: list) -> list[dic
 
     m = R.read_json(HERE / "manual" / "anchor_uri.json")
     for c in m["format"]:
-        i, e = c["input"], c["expect"]
+        i, e = R.canon(c["input"]), R.canon(c["expect"])
         got = R.format_uri(i["docref"], i["anchor"], i["anchor_end"])
         check(got == e["uri"], f"{c['id']}: reference formats {got!r}, the hand-written case says {e['uri']!r}")
         parsed = R.parse_uri(e["uri"])
@@ -342,8 +347,17 @@ def build_cases(out: Path, dumps: dict, legacy: dict, invalid: list) -> list[dic
             raise Fallo(f"{c['id']}: the reference accepts an invalid URI")
         add(c["id"], "anchor_uri", c["input"], c["expect"])
 
+    for c in R.read_json(HERE / "manual" / "quantize.json"):
+        i, e = R.canon(c["input"]), c["expect"]  # check exactly what the case file will hold
+        try:
+            got = {"hex": R.quantize(i["values"], i["dtype"]).hex()}
+        except R.SpdfError:
+            got = {"error": True}
+        check(got == e, f"{c['id']}: reference quantizes to {got}, the hand-written case says {e}")
+        add(c["id"], "quantize", i, e)
+
     for c in R.read_json(HERE / "manual" / "cite.json"):
-        i = c["input"]
+        i = R.canon(c["input"])
         got = R.cite(i["anchor"], i["anchor_end"], i["metadata"], i["locale"])
         check(got == c["expect"]["text"], f"{c['id']}: reference cites {got!r}, the hand-written case says {c['expect']['text']!r}")
         add(c["id"], "cite", i, c["expect"])
