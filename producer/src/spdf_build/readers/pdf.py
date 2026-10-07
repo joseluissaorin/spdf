@@ -299,7 +299,10 @@ def read_pdf(data: bytes, path: Optional[str] = None, use_labels: bool = True, f
         cover, regions = _image_regions(page)
         layer["coverage"], layer["regions"] = cover, regions
         layer["diag"] = diagnose(layer["raw"], cover)
-        layer["label"] = page.get_label() if has_labels else None
+        try:
+            layer["label"] = (page.get_label() or None) if has_labels else None
+        except Exception:  # pages before the first label rule have none
+            layer["label"] = None
         layers.append(layer)
         if layer["diag"]["useful"]:
             for b in layer["blocks"]:
@@ -362,6 +365,16 @@ def read_pdf(data: bytes, path: Optional[str] = None, use_labels: bool = True, f
 
     vision = sum(1 for u in units if u.needs_vision)
     kind = "scanned_pdf" if vision > n / 2 else "pdf"
+    if kind == "scanned_pdf":
+        # In a scan, an OCR layer that passed the quality bar is still an old OCR (long s read as f,
+        # running heads glued to the text): the vision reader reads those pages too, for consistency.
+        for u, layer in zip(units, layers):
+            if not u.needs_vision and layer["diag"]["origin"] == "ocr" and not force_vision:
+                u.needs_vision = True
+                u.reader, u.confidence = "none", 0.0
+                u.extra["ocr_layer"] = layer["raw"]
+                u.extra["ocr_blocks"] = [b["text"] for b in layer["blocks"]]
+        vision = sum(1 for u in units if u.needs_vision)
     toc = []
     try:
         for lvl, title, pg in doc.get_toc(simple=True):

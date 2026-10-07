@@ -1,0 +1,33 @@
+name: producer
+
+on:
+  push:
+    paths: ["producer/**", "python/**", "conformance/**", "spec/**", ".github/workflows/producer.yml"]
+  pull_request:
+    paths: ["producer/**", "python/**", "conformance/**", "spec/**", ".github/workflows/producer.yml"]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: producer
+    steps:
+      - uses: actions/checkout@v4
+      - name: ffmpeg (audio and video fixtures)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - name: Install (no models)
+        run: uv sync --extra test
+      - name: Fast tests with simulated engines
+        run: uv run pytest -q
+      - name: Conformance report of the producer
+        run: uv run python bench/conformance_producer.py -o conformance.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: conformance-producer
+          path: producer/conformance.json
