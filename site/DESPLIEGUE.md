@@ -43,10 +43,12 @@ Sin red (o sin `gh`), `SPDF_SIN_RED=1 site/scripts/desplegar.sh`: el estado del
 CI sale de la última copia (`site/.cache/estado.json`) o como «sin datos».
 
 Hay que desplegar desde un checkout al día de `main` (en este proyecto, el
-worktree `~/Developer/spdf-worktrees/site`, rama `agente-site`, después de
-`git pull --rebase --autostash origin main`): la web lee la especificación, los
-README de cada implementación y de cada integración, la gobernanza y las RFC
-del propio repositorio al construir.
+worktree `~/Developer/spdf-worktrees/site-push`, rama `agente-site-push`,
+después de `git pull --rebase origin main`): la web lee la especificación, los
+README de cada implementación y de cada integración, la gobernanza, las RFC y
+la tabla de clases de producto del README raíz del propio repositorio al
+construir. Desde el 7 de octubre de 2026 el repositorio es público y la web
+enlaza a GitHub (`SPDF_REPO_PUBLICO=0` lo evita).
 
 ## Qué se construye
 
@@ -107,21 +109,30 @@ favicon. `cd muestras && npm run generar` rehace las muestras del validador.
 ## Comprobaciones hechas (7 de octubre de 2026)
 
 - `curl` a `/`, `/es`, `/spec`, `/validator`, `/llms.txt`, `/robots.txt`,
-  `/sitemap.xml`, `/spec.md`, `/status.json`, `/reader/` y una muestra `.spdf`:
-  200; una ruta inexistente: 404 con su hoja. `curl` a la raíz devuelve el
+  `/sitemap.xml`, `/spec.md`, `/status.json`, `/reader/`, una muestra `.spdf`,
+  `/zotero/spdf-zotero.xpi`, `/zotero/updates.json`, `/schema/5.0/*.schema.json`
+  y las doce obras de Commons (200 completas y 206 con `Range`): todo responde.
+  Una ruta inexistente da 404 con su hoja. `curl` a la raíz devuelve el
   Markdown de la portada.
-- Lighthouse 13 (móvil): 100 · 100 · 100 · 100 en `/`, `/spec`, `/validator`,
-  `/es/citar` y `/docs/rust`; escritorio: 100 en las cuatro en `/` y
-  `/validator`. Portada en móvil: LCP 1,3 s, TBT 0 ms, CLS 0.
+- Lighthouse 13, móvil: 100 · 100 · 100 · 100 en `/`, `/es`, `/spec`,
+  `/implementations`, `/validator`, `/es/citar`, `/es/commons` y `/docs/rust`;
+  escritorio: 100 en las cuatro en `/` y `/validator`. Portada en móvil:
+  LCP 1,2 s, TBT 0 ms, CLS 0.
 - Capturas con Chrome headless por CDP, en escritorio (1440 px) y en móvil
   (390 px, iPhone emulado), de la portada en las dos lenguas, la especificación,
-  la documentación y el validador con una muestra cargada; el validador,
-  probado pestaña a pestaña sin errores en la consola.
+  las implementaciones, la documentación, Commons, el 404 y el validador con una
+  muestra y con una obra de Commons cargadas, probado pestaña a pestaña sin
+  errores en la consola.
+- SPDF Commons: las doce obras validan con Rust (`spdf-tools`), JS y Python sin
+  errores ni avisos, y cada una dice en su ficha cómo se verificaron a ojo sus
+  folios o sus tiempos.
 
 ## Pendiente
 
 - Desplegar desde el CI: hace falta un token de API de Cloudflare con permiso
   de Workers en los secretos del repositorio (`CLOUDFLARE_API_TOKEN`). Mientras
   tanto, el workflow `site` construye y prueba, y el despliegue se hace en local.
-- Cuando el repositorio sea público, construir con `SPDF_REPO_PUBLICO=1` para
-  que la web enlace a GitHub (README, código, RFC).
+- Los binarios del lector (releases `reader-v…`): cuando existan,
+  `npx tsx scripts/subir-lector.ts reader-v<versión>` y desplegar.
+- El dataset de Hugging Face de SPDF Commons no se ha preparado: no hay token en
+  `~/.cache/huggingface/token`.
