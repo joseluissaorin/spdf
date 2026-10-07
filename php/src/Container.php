@@ -97,7 +97,7 @@ final class Container
             $this->pdo->exec('PRAGMA trusted_schema = OFF');
             $this->pdo->exec('PRAGMA cell_size_check = ON');
             $this->pdo->exec('PRAGMA mmap_size = 0');
-            $master = $this->pdo->query('SELECT type, name FROM sqlite_master')->fetchAll();
+            $master = $this->pdo->query('SELECT type, name, sql FROM sqlite_master')->fetchAll();
         } catch (\PDOException $e) {
             throw new SpdfException('E001', 'SQLite cannot read this file: ' . $e->getMessage(), $e);
         }
@@ -111,7 +111,14 @@ final class Container
         }
         $this->detectVersion();
 
+        $allowedVtables = $this->legacy ? ['fragmentos_fts'] : ['fragments_fts', 'fragments_fts_trigram'];
         foreach ($master as $row) {
+            $sql = (string) ($row['sql'] ?? '');
+            if ($row['type'] === 'table' && preg_match('/^\s*CREATE\s+VIRTUAL\s+TABLE/i', $sql)
+                && (!in_array($row['name'], $allowedVtables, true) || !preg_match('/USING\s+fts5\s*\(/i', $sql))) {
+                $this->forbidden[] = ['type' => 'virtual table', 'name' => $row['name']];
+                continue;
+            }
             if ($row['type'] === 'trigger' || $row['type'] === 'view') {
                 $tolerated = $this->legacy && $row['type'] === 'trigger'
                     && in_array($row['name'], self::LEGACY_TRIGGERS, true);

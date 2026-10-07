@@ -20,12 +20,29 @@ module Spdf
       end
     end
 
-    # Encodes floats; i8 quantizes as clamp(round_half_away(v * 127), -127, 127).
+    # Writer-side encoding: f32 and f16 round to nearest even and refuse overflow;
+    # i8 = clamp(round_half_away(v * 127), -127, 127).
     def encode(values, dtype = "f32")
       case dtype
-      when "f32" then values.map(&:to_f).pack("e*")
-      when "f16" then values.map { |v| float_to_half(v.to_f) }.pack("v*")
-      when "i8" then values.map { |v| (v.to_f * 127).round.clamp(-127, 127) }.pack("c*")
+      when "f32"
+        out = values.map(&:to_f).pack("e*")
+        out.unpack("e*").each_with_index do |f, i|
+          raise Error.new("E030", "value out of range for f32: #{values[i]}") if f.infinite? && !values[i].to_f.infinite?
+        end
+        out
+      when "f16"
+        values.map do |v|
+          h = float_to_half(v.to_f)
+          raise Error.new("E030", "value out of range for f16: #{v}") if (h & 0x7fff) == 0x7c00 && !v.to_f.infinite?
+
+          h
+        end.pack("v*")
+      when "i8"
+        values.map do |v|
+          y = v.to_f * 127
+          q = (y.abs + 0.5).floor * (y >= 0 ? 1 : -1)
+          q.clamp(-127, 127)
+        end.pack("c*")
       else raise Error.new("E032", "unknown dtype #{dtype}")
       end
     end

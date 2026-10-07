@@ -10,6 +10,7 @@ use Spdf\Document;
 use Spdf\Json;
 use Spdf\SpdfException;
 use Spdf\Validator;
+use Spdf\Vectors;
 use Spdf\Writer;
 
 /**
@@ -111,6 +112,16 @@ final class Runner
                 return self::compareResults($ex['results'], $got, true);
             case 'anchor_uri':
                 return self::anchorUriCase($in, $ex);
+            case 'quantize':
+                try {
+                    $hex = bin2hex(Vectors::encode($in['values'], (string) $in['dtype']));
+                } catch (SpdfException $e) {
+                    return ($ex['error'] ?? false) === true ? null : 'unexpected error: ' . $e->getMessage();
+                }
+                if (($ex['error'] ?? false) === true) {
+                    return "expected an error, got {$hex}";
+                }
+                return $hex === $ex['hex'] ? null : "expected {$ex['hex']}, got {$hex}";
             case 'cite':
                 $meta = $in['metadata'] instanceof \stdClass ? [] : (array) $in['metadata'];
                 $end = is_array($in['anchor_end'] ?? null) ? $in['anchor_end'] : null;

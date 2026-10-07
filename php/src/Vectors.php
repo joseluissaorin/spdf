@@ -28,21 +28,41 @@ final class Vectors
         throw new SpdfException('E030', "Unknown vector dtype: {$dtype}");
     }
 
-    /** @param list<float|int> $v */
+    /**
+     * Writer-side encoding (quantization) of float values: f32 and f16 round to
+     * nearest even and refuse values that overflow; i8 = clamp(round_half_away(v x 127), -127, 127).
+     *
+     * @param list<float|int> $v
+     */
     public static function encode(array $v, string $dtype = 'f32'): string
     {
         switch ($dtype) {
             case 'f32':
-                return pack('g*', ...array_map('floatval', $v));
+                $out = pack('g*', ...array_map('floatval', $v));
+                foreach (array_values(unpack('g*', $out) ?: []) as $i => $f) {
+                    if (is_infinite($f) && !is_infinite((float) $v[$i])) {
+                        throw new SpdfException('E030', "Value out of range for f32: {$v[$i]}");
+                    }
+                }
+                return $out;
             case 'f16':
-                return pack('v*', ...array_map([self::class, 'floatToHalf'], $v));
+                $halves = [];
+                foreach ($v as $x) {
+                    $h = self::floatToHalf((float) $x);
+                    if (($h & 0x7fff) === 0x7c00 && !is_infinite((float) $x)) {
+                        throw new SpdfException('E030', "Value out of range for f16: {$x}");
+                    }
+                    $halves[] = $h;
+                }
+                return pack('v*', ...$halves);
             case 'i8':
-                return pack('c*', ...array_map(
-                    fn ($x) => (int) max(-127, min(127, round(((float) $x) * 127))),
-                    $v,
-                ));
+                return pack('c*', ...array_map(function ($x) {
+                    $y = ((float) $x) * 127;
+                    $q = floor(abs($y) + 0.5) * ($y >= 0 ? 1 : -1);
+                    return (int) max(-127, min(127, $q));
+                }, $v));
         }
-        throw new SpdfException('E030', "Unknown vector dtype: {$dtype}");
+        throw new SpdfException('E032', "Unknown vector dtype: {$dtype}");
     }
 
     public static function halfToFloat(int $h): float

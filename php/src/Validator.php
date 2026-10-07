@@ -313,7 +313,8 @@ final class Validator
         if (!in_array($t, self::ANCHOR_TYPES, true)) {
             return ['E041', "Unknown anchor type {$t}."];
         }
-        $isInt = fn ($v) => is_int($v);
+        // An integer is a JSON number with an integral value (10 and 10.0 are the same value).
+        $isInt = fn ($v) => is_int($v) || (is_float($v) && is_finite($v) && floor($v) == $v);
         $isNum = fn ($v) => is_int($v) || is_float($v);
         $ok = match ($t) {
             'page' => $isInt($a['physical'] ?? null) && $a['physical'] >= 1 && array_key_exists('printed', $a)

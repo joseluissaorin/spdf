@@ -46,7 +46,8 @@ module Spdf
       return ["E040", "anchor without type"] unless t.is_a?(String)
       return ["E041", "unknown anchor type #{t}"] unless ANCHOR_TYPES.include?(t)
 
-      int = ->(v) { v.is_a?(Integer) }
+      # An integer is a JSON number with an integral value (10 and 10.0 are the same value).
+      int = ->(v) { v.is_a?(Integer) || (v.is_a?(Float) && v.finite? && v == v.floor) }
       num = ->(v) { v.is_a?(Integer) || v.is_a?(Float) }
       ok = case t
            when "page" then int[a["physical"]] && a["physical"] >= 1 && a.key?("printed") && (a["printed"].nil? || a["printed"].is_a?(String))

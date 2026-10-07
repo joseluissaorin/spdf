@@ -133,6 +133,15 @@ module Spdf
           compare_results(ex["results"], d.search_hybrid(input["query"], input["query_vector"], space: input["space"], limit: input.fetch("limit", 10)), true)
         end
       when "anchor_uri" then anchor_uri_case(input, ex)
+      when "quantize"
+        hex = begin
+          Vectors.encode(input["values"], input["dtype"]).unpack1("H*")
+        rescue Error => e
+          return ex["error"] == true ? nil : "unexpected error: #{e.message}"
+        end
+        return "expected an error, got #{hex}" if ex["error"] == true
+
+        hex == ex["hex"] ? nil : "expected #{ex["hex"]}, got #{hex}"
       when "cite"
         text = Cite.short(input["metadata"] || {}, input["anchor"], input["anchor_end"], locale: input.fetch("locale", "en"))
         text == ex["text"] ? nil : "expected #{ex["text"]}, got #{text}"

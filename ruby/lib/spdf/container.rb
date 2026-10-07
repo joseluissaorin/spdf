@@ -92,7 +92,7 @@ module Spdf
         @db.execute("PRAGMA query_only = 1")
         @db.execute("PRAGMA trusted_schema = OFF")
         @db.execute("PRAGMA cell_size_check = ON")
-        master = @db.execute("SELECT type, name FROM sqlite_master")
+        master = @db.execute("SELECT type, name, sql FROM sqlite_master")
       rescue SQLite3::Exception => e
         raise Error.new("E001", "SQLite cannot read this file: #{e.message}")
       end
@@ -100,7 +100,13 @@ module Spdf
       @user_version = @db.get_first_value("PRAGMA user_version").to_i
       @tables = master.select { |t, _| t == "table" }.map { |_, n| n }
       detect_version
-      master.each do |type, name|
+      allowed = @legacy ? %w[fragmentos_fts] : %w[fragments_fts fragments_fts_trigram]
+      master.each do |type, name, sql|
+        if type == "table" && sql.to_s.match?(/\A\s*CREATE\s+VIRTUAL\s+TABLE/i) &&
+           (!allowed.include?(name) || !sql.match?(/USING\s+fts5\s*\(/i))
+          @forbidden << { "type" => "virtual table", "name" => name }
+          next
+        end
         next unless %w[trigger view].include?(type)
         next if @legacy && type == "trigger" && LEGACY_TRIGGERS.include?(name)
 
