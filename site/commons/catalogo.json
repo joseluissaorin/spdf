@@ -35,6 +35,70 @@
       "verificado": "2026-10-07"
     },
     {
+      "fichero": "galilei-sidereus-nuncius-1610.spdf",
+      "sha256": "93ea8f62e9f4c0a0ae43d917d8ab17a54d0f2ea4dfe86f9d4f950b05df925c27",
+      "source_sha256": "a156ce5ac9858e29e74bdc90c424fa1b77621bde7204d43faf18c2e726243ab0",
+      "title": "Sidereus nuncius: Magna, longeqve admirabilia spectacula pandens, suspiciendaque proponens vnicuique, præsertim verò philosophis, atq́; astronomis, quæ à Galileo Galileo patritio Florentino Patauini Gymnasij publico mathematico perspicilli nuper à se reperti beneficio sunt obseruata in Lunæ facie, fixis innumeris, Lacteo Circulo, stellis nebulosis, apprime verò in quatuor planetis circa Iovis stellam disparibus interuallis, atque periodis, celeritate mirabili circumuolutis; quos, nemini in hanc vsque diem cognitos, nouissimè author depræhendit primus; atque Medicea Sidera nuncupandos decrevit",
+      "authors": "Galilei, Galileo",
+      "year": 1610,
+      "language": "la",
+      "kind": "scanned_pdf",
+      "profile": [
+        "core",
+        "semantic"
+      ],
+      "bytes": 9125888,
+      "units": 68,
+      "fragments": 54,
+      "source": {
+        "name": "Internet Archive",
+        "url": "https://archive.org/details/Sidereusnuncius00Gali"
+      },
+      "ejemplo": {
+        "cita": "(Galilei, 1610, fol. 17r)",
+        "uri": "spdf:sha256-a156ce5ac9858e29e74bdc90c424fa1b77621bde7204d43faf18c2e726243ab0#p=41&f=17r&char=0,1424"
+      },
+      "generator": "spdf-build/0.1.0",
+      "created": "2026-10-07T10:02:30Z",
+      "verificacion": {
+        "en": "Foliated book: leaves numbered on the recto. Checked by eye against the page images: physical pages 7, 19, 35, 41 and 63 carry the printed leaf numbers 2, 8, 16, 17 and 28 (cited as fols. 2r, 8r, 16r, 17r, 28r); versos take the number of their leaf in brackets, e.g. [16v] on physical 36, where the text of 16r continues, and [28v] on physical 64, the FINIS page. The two unnumbered leaves inserted after leaf 16 (physical 37-40: Orion and Pleiades star maps, Nebulosa Orionis and Praesepe) have no folio, nor do the title leaf, binding and endpapers. No fragment mixes pages with and without a folio: the opening of 17r (\"De Luna, de inerrantibus Stellis\") cites fol. 17r.",
+        "es": "Libro foliado: las hojas se numeran en el recto. Comprobado a ojo contra las imágenes de página: las páginas físicas 7, 19, 35, 41 y 63 llevan impresos los números de hoja 2, 8, 16, 17 y 28 (se citan como fols. 2r, 8r, 16r, 17r y 28r); los versos llevan el número de su hoja entre corchetes, por ejemplo [16v] en la física 36, donde sigue el texto del 16r, y [28v] en la física 64, la del FINIS. Las dos hojas sin numerar intercaladas tras la 16 (físicas 37-40: mapas estelares de Orión y de las Pléyades, nebulosas de Orión y del Pesebre) no tienen folio, igual que la hoja de portada, la encuadernación y las guardas. Ningún fragmento mezcla páginas con folio y sin él: el comienzo del 17r («De Luna, de inerrantibus Stellis») se cita fol. 17r."
+      },
+      "verificado": "2026-10-07"
+    },
+    {
+      "fichero": "gilman-yellow-wall-paper-1901.spdf",
+      "sha256": "8780b299baa9a3e8793a4f6a93cb43dc9a5fb39da4d6008e75a6b09bd6758a19",
+      "source_sha256": "46148462cff2eb98ed0962f5499bcdc3e28241abcbbe0a2c3c9e135e1704278e",
+      "title": "The Yellow Wall Paper",
+      "authors": "Gilman, Charlotte Perkins",
+      "year": 1901,
+      "language": "en",
+      "kind": "scanned_pdf",
+      "profile": [
+        "core",
+        "semantic"
+      ],
+      "bytes": 5316608,
+      "units": 80,
+      "fragments": 25,
+      "source": {
+        "name": "Internet Archive",
+        "url": "https://archive.org/details/yellowwallpaper1901gilm"
+      },
+      "ejemplo": {
+        "cita": "(Gilman, 1901, pp. 1-3)",
+        "uri": "spdf:sha256-46148462cff2eb98ed0962f5499bcdc3e28241abcbbe0a2c3c9e135e1704278e#p=13&pe=15&f=1&fe=3&char=0,584"
+      },
+      "generator": "spdf-build/0.1.0",
+      "created": "2026-10-07T10:03:53Z",
+      "verificacion": {
+        "en": "Read page by page with the vision engine. Printed page numbers checked by eye against the page images on physical pages 13 (p. 1), 40 (p. 28) and 67 (p. 55, the last page of the text): all match, and every page of the text (pp. 1-55) carries a folio read on the page. Front matter, the blank leaves after the text, the binding and the library slips (physical 1-12 and 68-80) have no folio. The title page reads \"Charlotte Perkins Stetson\"; the record uses the author's later name, Gilman. No fragment mixes pages with and without a folio: the opening of the story (\"ancestral halls for the summer\") cites pp. 1-3, its fragment starting at the top of p. 1.",
+        "es": "Leído página a página con el motor de visión. Folios comprobados a ojo contra las imágenes de página en las páginas físicas 13 (p. 1), 40 (p. 28) y 67 (p. 55, la última del texto): coinciden todos, y todas las páginas del texto (pp. 1-55) llevan un folio leído en la página. Los preliminares, las hojas en blanco tras el texto, la encuadernación y las fichas de la biblioteca (físicas 1-12 y 68-80) no tienen folio. La portada dice «Charlotte Perkins Stetson»; la ficha usa el nombre posterior de la autora, Gilman. Ningún fragmento mezcla páginas con folio y sin él: el comienzo del cuento («ancestral halls for the summer») se cita pp. 1-3, con su fragmento empezando en lo alto de la p. 1."
+      },
+      "verificado": "2026-10-07"
+    },
+    {
       "fichero": "baudelaire-fleurs-du-mal-1857.spdf",
       "sha256": "fa27b747bd9a9dfe0b04be643fc83a4dc0025212c2ba26bdbd88daea782446ea",
       "source_sha256": "58244305ebe4d81cb8e4bebee90af06abbb32c07089e0d5e8124c8dba8d0b936",
@@ -63,6 +127,166 @@
       "verificacion": {
         "en": "Read page by page with the vision engine. Printed page numbers checked by eye against the page images on physical pages 14 (p. 6), 51 (p. 43), 55 (p. 47), 137 (p. 129) and 256 (p. 248): all match, with a constant offset of 8 between physical page and folio. Pages without a printed number (the first page of each poem, the table) carry the inferred folio in brackets, e.g. [11] for \"Bénédiction\" and [128] for \"A une dame créole\". Of the 102 entries of the book's own table, 96 were found on the page the table gives; of the other six, the table gives p. 43 for \"Châtiment de l'orgueil\", which begins on p. [44], the dedication (p. 1) has no folio, and four titles were not read as such although their pages are right. Physical 53 prints \"44\" by mistake and is cited as [45]. Four pages (physical 30, 53, 97 and 225) were refused by the vision engine as recitation of a known text and carry the old OCR layer instead, marked with low confidence: their folios are right, their text is poor. Front matter and endpapers have no folio.",
         "es": "Leído página a página con el motor de visión. Folios comprobados a ojo contra las imágenes de página en las páginas físicas 14 (p. 6), 51 (p. 43), 55 (p. 47), 137 (p. 129) y 256 (p. 248): coinciden todos, con una diferencia constante de 8 entre página física y folio. Las páginas sin número impreso (la primera de cada poema, la tabla) llevan el folio deducido entre corchetes, por ejemplo [11] en «Bénédiction» y [128] en «A une dame créole». De las 102 entradas de la tabla del propio libro, 96 se encontraron en la página que da la tabla; de las otras seis, la tabla da la p. 43 para «Châtiment de l'orgueil», que empieza en la p. [44], la dedicatoria (p. 1) no tiene folio, y cuatro títulos no se leyeron como tales aunque su página es la correcta. La física 53 imprime «44» por error y se cita como [45]. Cuatro páginas (físicas 30, 53, 97 y 225) las rechazó el motor de visión por considerarlas recitación de un texto conocido y llevan en su lugar la capa de OCR antigua, marcada con confianza baja: sus folios son correctos y su texto es pobre. Los preliminares y las guardas no tienen folio."
+      },
+      "verificado": "2026-10-07"
+    },
+    {
+      "fichero": "kafka-die-verwandlung-1917.spdf",
+      "sha256": "5eaad7d3251cc8d644b3ab5047387798b2357f980d94ee0df4eca844a27a964b",
+      "source_sha256": "0f87a4651d099229448a499523fd34ba53269430631260ccdc7496d8c3ff1159",
+      "title": "Die Verwandlung",
+      "authors": "Kafka, Franz",
+      "year": 1917,
+      "language": "de",
+      "kind": "epub",
+      "profile": [
+        "core",
+        "semantic"
+      ],
+      "bytes": 1089536,
+      "units": 73,
+      "fragments": 106,
+      "source": {
+        "name": "Project Gutenberg",
+        "url": "https://www.gutenberg.org/ebooks/22367"
+      },
+      "ejemplo": {
+        "cita": "(Kafka, 1917, p. 5)",
+        "uri": "spdf:sha256-0f87a4651d099229448a499523fd34ba53269430631260ccdc7496d8c3ff1159#p=2&f=5&char=7,1153"
+      },
+      "generator": "spdf-build/0.1.0",
+      "created": "2026-10-07T09:59:39Z",
+      "verificacion": {
+        "en": "Page numbers of the 1917 Kurt Wolff edition, taken from the page markers of the EPUB (Project Gutenberg's own page list leaves out 11 of them). All 71 pages (5-75) checked: each unit starts exactly at its page marker in the EPUB, with no page missing or repeated; p. 23 starts with \"Leibe zu spüren bekommt\" and p. 75 is the last page of the story. The Project Gutenberg header and licence carry no folio and are in fragments of their own; the last sentence (\"ihren jungen Körper dehnte\") cites pp. 74-75, the fragment covering the last paragraph.",
+        "es": "Paginación de la edición de Kurt Wolff de 1917, tomada de los marcadores de página del EPUB (la lista de páginas de Project Gutenberg omite 11). Comprobadas las 71 páginas (5-75): cada unidad empieza exactamente en su marcador de página del EPUB, sin páginas perdidas ni repetidas; la p. 23 empieza en «Leibe zu spüren bekommt» y la p. 75 es la última del relato. La cabecera y la licencia de Project Gutenberg no llevan folio y van en fragmentos propios; la última frase («ihren jungen Körper dehnte») se cita pp. 74-75, el fragmento del último párrafo."
+      },
+      "verificado": "2026-10-07"
+    },
+    {
+      "fichero": "collodi-pinocchio-1902.spdf",
+      "sha256": "314b8cc1730f8b67d9578a2286615858228ffd3a4f11538ed57edcfdc028fed7",
+      "source_sha256": "51a4a28df89d52b7e1a86340ee8688a7d008801b8e014cb5acac8486a31431c9",
+      "title": "Le avventure di Pinocchio: storia di un burattino",
+      "authors": "Collodi, Carlo",
+      "year": 1902,
+      "language": "it",
+      "kind": "epub",
+      "profile": [
+        "core",
+        "semantic"
+      ],
+      "bytes": 5525504,
+      "units": 289,
+      "fragments": 192,
+      "source": {
+        "name": "Project Gutenberg",
+        "url": "https://www.gutenberg.org/ebooks/52484"
+      },
+      "ejemplo": {
+        "cita": "(Collodi, 1902, pp. 5-7)",
+        "uri": "spdf:sha256-51a4a28df89d52b7e1a86340ee8688a7d008801b8e014cb5acac8486a31431c9#p=2&pe=4&f=5&fe=7&char=112,427"
+      },
+      "generator": "spdf-build/0.1.0",
+      "created": "2026-10-07T10:07:33Z",
+      "verificacion": {
+        "en": "Page numbers of the 1902 Bemporad edition, taken from the page markers of the EPUB (Project Gutenberg's own page list leaves out p. 268). All 287 page markers (pp. 5-300) checked: each unit starts exactly at its page marker in the EPUB, with no page missing or repeated. The Project Gutenberg header and licence carry no folio and are in fragments of their own; no fragment mixes pages with and without a folio.",
+        "es": "Paginación de la edición de Bemporad de 1902, tomada de los marcadores de página del EPUB (la lista de páginas de Project Gutenberg omite la p. 268). Comprobados los 287 marcadores de página (pp. 5-300): cada unidad empieza exactamente en su marcador de página del EPUB, sin páginas perdidas ni repetidas. La cabecera y la licencia de Project Gutenberg no llevan folio y van en fragmentos propios; ningún fragmento mezcla páginas con folio y sin él."
+      },
+      "verificado": "2026-10-07"
+    },
+    {
+      "fichero": "machado-de-assis-reliquias-de-casa-velha-1906.spdf",
+      "sha256": "c35d0f4b9abb76a696ff0b7b8d86fe0e76b41b8dfcdb9171b4bf56cc74cf75cb",
+      "source_sha256": "536aaec6dc72a38cfb4d14317f7ea637c6e43428964a3ad68a704b9336537fa2",
+      "title": "Reliquias de casa velha",
+      "authors": "Machado de Assis, Joaquim Maria",
+      "year": 1906,
+      "language": "pt",
+      "kind": "epub",
+      "profile": [
+        "core",
+        "semantic"
+      ],
+      "bytes": 2326528,
+      "units": 240,
+      "fragments": 229,
+      "source": {
+        "name": "Project Gutenberg",
+        "url": "https://www.gutenberg.org/ebooks/67935"
+      },
+      "ejemplo": {
+        "cita": "(Machado de Assis, 1906, pp. 3-4)",
+        "uri": "spdf:sha256-536aaec6dc72a38cfb4d14317f7ea637c6e43428964a3ad68a704b9336537fa2#p=5&pe=6&f=3&fe=4&char=19,1100"
+      },
+      "generator": "spdf-build/0.1.0",
+      "created": "2026-10-07T10:00:37Z",
+      "verificacion": {
+        "en": "Page numbers of the 1906 Garnier edition, taken from the page markers of the EPUB. All 238 page markers (I-III and 3-264) checked: each unit starts exactly at its page marker in the EPUB, with no page missing or repeated. The Project Gutenberg header and licence carry no folio and are in fragments of their own; no fragment mixes pages with and without a folio.",
+        "es": "Paginación de la edición de Garnier de 1906, tomada de los marcadores de página del EPUB. Comprobados los 238 marcadores de página (I-III y 3-264): cada unidad empieza exactamente en su marcador de página del EPUB, sin páginas perdidas ni repetidas. La cabecera y la licencia de Project Gutenberg no llevan folio y van en fragmentos propios; ningún fragmento mezcla páginas con folio y sin él."
+      },
+      "verificado": "2026-10-07"
+    },
+    {
+      "fichero": "rusinol-auca-del-senyor-esteve-1907.spdf",
+      "sha256": "64b1422944c8c2367de5af897f346fcbaaa9a60b66e97f06fd5e9d2d628df568",
+      "source_sha256": "e99bc8cdb19a983b20a0ce8088c729b27a8b5bbacbcc1f9f6ed98a57e5f49518",
+      "title": "L'auca del senyor Esteve",
+      "authors": "Rusiñol, Santiago",
+      "year": 1907,
+      "language": "ca",
+      "kind": "epub",
+      "profile": [
+        "core",
+        "semantic"
+      ],
+      "bytes": 5959680,
+      "units": 265,
+      "fragments": 227,
+      "source": {
+        "name": "Project Gutenberg",
+        "url": "https://www.gutenberg.org/ebooks/56856"
+      },
+      "ejemplo": {
+        "cita": "(Rusiñol, 1907, pp. 17-19)",
+        "uri": "spdf:sha256-e99bc8cdb19a983b20a0ce8088c729b27a8b5bbacbcc1f9f6ed98a57e5f49518#p=15&pe=17&f=17&fe=19&char=1272,1314"
+      },
+      "generator": "spdf-build/0.1.0",
+      "created": "2026-10-07T10:09:43Z",
+      "verificacion": {
+        "en": "Page numbers of the first edition (Antoni López, [1907]), taken from the page markers of the EPUB (Project Gutenberg's own page list leaves out pp. 1, 3 and 204). All 263 page markers (pp. 1-280) checked: each unit starts exactly at its page marker in the EPUB, with no page missing or repeated. The Project Gutenberg header and licence carry no folio and are in fragments of their own; no fragment mixes pages with and without a folio.",
+        "es": "Paginación de la primera edición (Antoni López, [1907]), tomada de los marcadores de página del EPUB (la lista de páginas de Project Gutenberg omite las pp. 1, 3 y 204). Comprobados los 263 marcadores de página (pp. 1-280): cada unidad empieza exactamente en su marcador de página del EPUB, sin páginas perdidas ni repetidas. La cabecera y la licencia de Project Gutenberg no llevan folio y van en fragmentos propios; ningún fragmento mezcla páginas con folio y sin él."
+      },
+      "verificado": "2026-10-07"
+    },
+    {
+      "fichero": "becquer-obras-escogidas-1912.spdf",
+      "sha256": "679d0aae8defe66370fdd6c22ce45d7d3629a18e7072e2e43e19d84bf9dd562a",
+      "source_sha256": "bab7e363cb517e99c90cfd312b4e0a743e20509a2b514bfe5bbf51fd3a43d208",
+      "title": "Obras escogidas",
+      "authors": "Bécquer, Gustavo Adolfo",
+      "year": 1912,
+      "language": "es",
+      "kind": "epub",
+      "profile": [
+        "core",
+        "semantic"
+      ],
+      "bytes": 6156288,
+      "units": 354,
+      "fragments": 473,
+      "source": {
+        "name": "Project Gutenberg",
+        "url": "https://www.gutenberg.org/ebooks/53552"
+      },
+      "ejemplo": {
+        "cita": "(Bécquer, 1912, p. 331)",
+        "uri": "spdf:sha256-bab7e363cb517e99c90cfd312b4e0a743e20509a2b514bfe5bbf51fd3a43d208#p=331&f=331&char=10,792"
+      },
+      "generator": "spdf-build/0.1.0",
+      "created": "2026-10-07T10:03:59Z",
+      "verificacion": {
+        "en": "Page numbers of the 1912 Fernando Fé edition, taken from the page markers of the EPUB (Project Gutenberg's own page list leaves out pp. 18, 186, 209 and 250). All 352 page markers (pp. ii-xii and 1-353) checked: each unit starts exactly at its page marker in the EPUB, with no page missing or repeated. The Project Gutenberg header and licence carry no folio and are in fragments of their own; no fragment mixes pages with and without a folio.",
+        "es": "Paginación de la edición de Fernando Fé de 1912, tomada de los marcadores de página del EPUB (la lista de páginas de Project Gutenberg omite las pp. 18, 186, 209 y 250). Comprobados los 352 marcadores de página (pp. ii-xii y 1-353): cada unidad empieza exactamente en su marcador de página del EPUB, sin páginas perdidas ni repetidas. La cabecera y la licencia de Project Gutenberg no llevan folio y van en fragmentos propios; ningún fragmento mezcla páginas con folio y sin él."
       },
       "verificado": "2026-10-07"
     },

@@ -844,7 +844,7 @@ async function ejemploAncla(commons: ReturnType<typeof cargarCommons>): Promise<
     if (!o.ejemplo) continue;
     const loc = parseAnchorUri(o.ejemplo.uri).locator;
     if (loc.p !== undefined && loc.f !== undefined && String(loc.p) !== loc.f) {
-      return { uri: o.ejemplo.uri, cita: o.ejemplo.cita, p: loc.p, pe: loc.pe, f: loc.f, fe: loc.fe, char: loc.char, obra: o.title, inspeccionar: { en: `/validator#url=/commons/files/${encodeURIComponent(o.fichero)}`, es: `/es/validador#url=/commons/files/${encodeURIComponent(o.fichero)}` } };
+      return { uri: o.ejemplo.uri, cita: o.ejemplo.cita, p: loc.p, pe: loc.pe, f: loc.f, fe: loc.fe, char: loc.char, obra: o.title.split(':')[0]!.trim(), inspeccionar: { en: `/validator#url=/commons/files/${encodeURIComponent(o.fichero)}`, es: `/es/validador#url=/commons/files/${encodeURIComponent(o.fichero)}` } };
     }
   }
   const d = await openSpdf(resolve(SITIO, 'public/muestras/spdf-in-five-pages.spdf'));
