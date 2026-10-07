@@ -42,7 +42,15 @@ Todo es bloqueante: en Tauri, llámalo desde `spawn_blocking`. Para pruebas sin 
 1. `LLAMA_CPP_DIR`, si apunta a una copia de ese commit (compilaciones sin red o con parches);
 2. si no, `git fetch --depth 1` del commit en `$SPDF_LLAMA_CPP_CACHE` (por defecto `~/.cache/spdf-models/src`), que el propio hash del commit verifica.
 
-Compilaciones cruzadas probadas: `aarch64-apple-ios`, `aarch64-apple-ios-sim` y `aarch64-linux-android` (con `ANDROID_NDK_HOME`). Si la aplicación enlaza además otra copia de ggml (whisper.cpp, por ejemplo), habrá símbolos duplicados: hay que compartir una sola.
+Si la aplicación enlaza además otra copia de ggml (whisper.cpp, por ejemplo), habrá símbolos duplicados: hay que compartir una sola.
+
+## Móviles
+
+**iOS.** Metal en el dispositivo; en el simulador el crate usa CPU (el Metal emulado da vectores erróneos). Exporta `IPHONEOS_DEPLOYMENT_TARGET` con el mínimo de la app (Tauri lo hace) para que llama.cpp y el enlace final coincidan. Como Tauri enlaza la crate como `staticlib`, el proyecto de Xcode debe enlazar `Foundation`, `Metal`, `MetalKit` y `Accelerate`, más `libc++` y `libiconv` (en `gen/apple/project.yml`: `dependencies: [{sdk: Metal.framework}, {sdk: MetalKit.framework}, {sdk: Accelerate.framework}, {sdk: libc++.tbd}, {sdk: libiconv.tbd}]`). Gemma 4 E2B necesita unos 4,4 GB residentes: iPhone de 8 GB y la entitlement `com.apple.developer.kernel.increased-memory-limit`; los embeddings caben en cualquiera (1,3 GB con imagen y audio, 0,5 GB solo texto).
+
+**Android.** arm64-v8a, CPU (con `dotprod`). Variables: `ANDROID_NDK_HOME` (o `NDK_HOME`), `CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=<ndk>/toolchains/llvm/prebuilt/<host>/bin/aarch64-linux-android24-clang` y `CC_`, `CXX_`, `AR_aarch64_linux_android` (clang, clang++, llvm-ar); Tauri las pone al compilar para Android. API mínima 24 (`SPDF_ANDROID_API` la cambia). libc++ va estática dentro de la `.so`. Vulkan en Android no está validado (sin hardware real; en el emulador es software).
+
+Medido en emulador Android arm64 con aceleración (4 núcleos) y en el simulador de iOS, CPU en los dos: consulta recortada a 256 en 23-61 ms, pasaje de 230 palabras en 0,6 s, imagen en 2,6-4,6 s, audio de 10 s en 0,6-1,5 s; Gemma 4 E2B genera a 48-65 tok/s, pero procesa el prompt a 110-125 tok/s, así que cada pregunta del juez tarda de 0,8 a 3,7 s. En un iPhone el prompt va por Metal y será bastante más rápido; falta medirlo en dispositivos reales.
 
 ## Imágenes
 

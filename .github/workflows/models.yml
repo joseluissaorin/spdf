@@ -78,9 +78,9 @@ jobs:
           sudo apt-get update && sudo apt-get install -y libclang-dev
           echo "ANDROID_NDK_HOME=$ANDROID_NDK_LATEST_HOME" >> "$GITHUB_ENV"
           TC="$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
-          echo "CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=$TC/aarch64-linux-android28-clang" >> "$GITHUB_ENV"
-          echo "CC_aarch64_linux_android=$TC/aarch64-linux-android28-clang" >> "$GITHUB_ENV"
-          echo "CXX_aarch64_linux_android=$TC/aarch64-linux-android28-clang++" >> "$GITHUB_ENV"
+          echo "CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=$TC/aarch64-linux-android24-clang" >> "$GITHUB_ENV"
+          echo "CC_aarch64_linux_android=$TC/aarch64-linux-android24-clang" >> "$GITHUB_ENV"
+          echo "CXX_aarch64_linux_android=$TC/aarch64-linux-android24-clang++" >> "$GITHUB_ENV"
           echo "AR_aarch64_linux_android=$TC/llvm-ar" >> "$GITHUB_ENV"
       - run: cargo build --release -p spdf-infer --lib --target ${{ matrix.target }}
 

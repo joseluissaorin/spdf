@@ -57,6 +57,12 @@ fn source_dir() -> PathBuf {
     dir
 }
 
+/// Minimum Android API level (24 = Tauri's default minSdk); SPDF_ANDROID_API overrides it.
+fn android_api() -> String {
+    println!("cargo:rerun-if-env-changed=SPDF_ANDROID_API");
+    env::var("SPDF_ANDROID_API").unwrap_or_else(|_| "24".into())
+}
+
 fn main() {
     let src = source_dir();
     let target = env::var("TARGET").unwrap();
@@ -112,7 +118,7 @@ fn main() {
         };
         cfg.define("CMAKE_TOOLCHAIN_FILE", format!("{ndk}/build/cmake/android.toolchain.cmake"))
             .define("ANDROID_ABI", abi)
-            .define("ANDROID_PLATFORM", "android-28")
+            .define("ANDROID_PLATFORM", format!("android-{}", android_api()))
             .define("ANDROID_STL", "c++_static");
         if abi == "arm64-v8a" && !cfg!(feature = "native") {
             // dotprod: every arm64 phone core since Cortex-A55/A75 (2017-18); big speed-up for Q8_0/Q4
@@ -247,7 +253,7 @@ fn main() {
     if android {
         // NDK r30+ headers refuse unversioned triples: use the same API level as the CMake build
         let t = target.replace("armv7-linux-androideabi", "armv7a-linux-androideabi");
-        b = b.clang_arg(format!("--target={t}28"));
+        b = b.clang_arg(format!("--target={t}{}", android_api()));
     }
     if android {
         // ...and at the NDK sysroot, or it picks up the host's libc headers
