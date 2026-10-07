@@ -1,0 +1,4 @@
+.venv/
+bench/out/
+bench/cache/
+*.spdf.tmp
