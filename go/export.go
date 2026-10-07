@@ -2,7 +2,7 @@ package spdf
 
 import (
 	"fmt"
-	"sort"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -55,51 +55,42 @@ func (f *File) ExportCSL() ([]byte, error) {
 	return CompactJSON([]any{item}), nil
 }
 
-// CitationKey builds a BibTeX key: first author family (ASCII, lowercase) +
-// year, or the first word of the title.
+// CitationKey builds the BibTeX key of SPEC §19 (RFC 0002): the first
+// author's family (or literal), else the first word of the title, folded to
+// ASCII letters and lowercased ("anon" if nothing is left), plus the first
+// year of issued (or "nd"): cervantessaavedra1605, lazarillo1554, hookend.
 func CitationKey(md map[string]any) string {
 	base := ""
 	if list, ok := md["author"].([]any); ok && len(list) > 0 {
 		if m, ok := list[0].(map[string]any); ok {
-			if s, ok := m["family"].(string); ok {
-				base = s
-			} else if s, ok := m["literal"].(string); ok {
-				base = s
+			name, _ := m["family"].(string)
+			if name == "" {
+				name, _ = m["literal"].(string)
 			}
+			base = asciiLetters(name)
 		}
 	}
 	if base == "" {
 		t, _ := md["title"].(string)
-		base = t
+		if words := strings.Fields(t); len(words) > 0 {
+			base = asciiLetters(words[0])
+		}
 	}
-	key := asciiFold(base)
-	if len(key) > 24 {
-		key = key[:24]
-	}
-	if key == "" {
-		key = "spdf"
+	if base == "" {
+		base = "anon"
 	}
 	if y := yearOf(md); y != "" {
-		key += y
+		return base + y
 	}
-	return key
+	return base + "nd"
 }
 
-func asciiFold(s string) string {
+// asciiLetters: NFKD, keep only ASCII letters, lowercase.
+func asciiLetters(s string) string {
 	var b strings.Builder
-	for _, r := range norm.NFD.String(s) {
-		switch {
-		case r == 'ß':
-			b.WriteString("ss")
-		case r == 'æ' || r == 'Æ':
-			b.WriteString("ae")
-		case r == 'ø' || r == 'Ø':
-			b.WriteString("o")
-		case r < 128 && (unicode.IsLetter(r) || unicode.IsDigit(r)):
+	for _, r := range norm.NFKD.String(s) {
+		if (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') {
 			b.WriteRune(unicode.ToLower(r))
-		case r == ' ' && b.Len() > 0:
-			// first word only for titles
-			return b.String()
 		}
 	}
 	return b.String()
@@ -109,8 +100,17 @@ func yearOf(md map[string]any) string {
 	if issued, ok := md["issued"].(map[string]any); ok {
 		if dp, ok := issued["date-parts"].([]any); ok && len(dp) > 0 {
 			if first, ok := dp[0].([]any); ok && len(first) > 0 {
-				if y, ok := asInt(first[0]); ok {
+				switch y := first[0].(type) {
+				case int64:
 					return fmt.Sprintf("%d", y)
+				case float64:
+					if y == float64(int64(y)) {
+						return fmt.Sprintf("%d", int64(y))
+					}
+				case string:
+					if n, err := strconv.ParseInt(strings.TrimSpace(y), 10, 64); err == nil {
+						return fmt.Sprintf("%d", n)
+					}
 				}
 			}
 		}
@@ -120,16 +120,49 @@ func yearOf(md map[string]any) string {
 
 var bibtexTypes = map[string]string{
 	"book": "book", "article-journal": "article", "article-magazine": "article",
-	"article-newspaper": "article", "article": "article", "chapter": "incollection",
-	"paper-conference": "inproceedings", "thesis": "phdthesis", "report": "techreport",
-	"manuscript": "unpublished", "webpage": "misc", "post-weblog": "misc", "speech": "misc",
-	"interview": "misc", "motion_picture": "misc", "song": "misc", "dataset": "misc",
-	"graphic": "misc", "entry-encyclopedia": "inbook", "entry-dictionary": "inbook",
+	"article-newspaper": "article", "chapter": "incollection", "paper-conference": "inproceedings",
+	"thesis": "phdthesis", "report": "techreport",
 }
 
+// bibEscape escapes \, { and } (the rest of UTF-8 stays as it is).
 func bibEscape(s string) string {
-	r := strings.NewReplacer(`\`, `\textbackslash{}`, `{`, `\{`, `}`, `\}`, `&`, `\&`, `%`, `\%`, `$`, `\$`, `#`, `\#`, `_`, `\_`)
+	r := strings.NewReplacer(`\`, `\textbackslash{}`, `{`, `\{`, `}`, `\}`)
 	return r.Replace(s)
+}
+
+// protectTitle braces every word the source capitalizes, so styles cannot lowercase it.
+func protectTitle(t string) string {
+	var b strings.Builder
+	word := []rune{}
+	flush := func() {
+		if len(word) == 0 {
+			return
+		}
+		w := string(word)
+		upper := false
+		for _, r := range word {
+			if unicode.IsUpper(r) {
+				upper = true
+				break
+			}
+		}
+		if upper {
+			b.WriteString("{" + bibEscape(w) + "}")
+		} else {
+			b.WriteString(bibEscape(w))
+		}
+		word = word[:0]
+	}
+	for _, r := range t {
+		if unicode.IsSpace(r) {
+			flush()
+			b.WriteRune(r)
+		} else {
+			word = append(word, r)
+		}
+	}
+	flush()
+	return b.String()
 }
 
 func bibNames(v any) string {
@@ -148,7 +181,7 @@ func bibNames(v any) string {
 			continue
 		}
 		fam, _ := m["family"].(string)
-		if p, ok := m["non-dropping-particle"].(string); ok && p != "" {
+		if p, ok := m["non-dropping-particle"].(string); ok && p != "" && fam != "" {
 			fam = p + " " + fam
 		}
 		given, _ := m["given"].(string)
@@ -156,65 +189,50 @@ func bibNames(v any) string {
 		case fam != "" && given != "":
 			names = append(names, bibEscape(fam)+", "+bibEscape(given))
 		case fam != "":
-			names = append(names, bibEscape(fam))
+			names = append(names, "{"+bibEscape(fam)+"}")
 		case given != "":
-			names = append(names, bibEscape(given))
+			names = append(names, "{"+bibEscape(given)+"}")
 		}
 	}
 	return strings.Join(names, " and ")
 }
 
-// BibTeX renders a CSL-JSON item as a BibTeX entry.
-func BibTeX(md map[string]any, key string) string {
+// BibTeXFields returns the entry type and the field map of a CSL-JSON item
+// (SPEC §19): what BibTeX writes, before layout.
+func BibTeXFields(md map[string]any) (string, [][2]string) {
 	typ, _ := md["type"].(string)
 	bt, ok := bibtexTypes[typ]
 	if !ok {
 		bt = "misc"
 	}
-	if key == "" {
-		key = CitationKey(md)
-	}
-	fields := map[string]string{}
-	str := func(k string) string { s, _ := md[k].(string); return s }
-	if s := str("title"); s != "" {
-		fields["title"] = "{" + bibEscape(s) + "}"
-	}
+	var fields [][2]string
 	if s := bibNames(md["author"]); s != "" {
-		fields["author"] = s
+		fields = append(fields, [2]string{"author", s})
 	}
 	if s := bibNames(md["editor"]); s != "" {
-		fields["editor"] = s
+		fields = append(fields, [2]string{"editor", s})
 	}
-	if s := bibNames(md["translator"]); s != "" {
-		fields["translator"] = s
+	if t, ok := md["title"].(string); ok && t != "" {
+		fields = append(fields, [2]string{"title", protectTitle(t)})
 	}
 	if y := yearOf(md); y != "" {
-		fields["year"] = y
+		fields = append(fields, [2]string{"year", y})
 	}
-	ct := str("container-title")
-	switch bt {
-	case "article":
-		if ct != "" {
-			fields["journal"] = bibEscape(ct)
+	if ct, ok := md["container-title"].(string); ok && ct != "" {
+		k := "booktitle"
+		if bt == "article" {
+			k = "journal"
 		}
-	case "incollection", "inproceedings", "inbook":
-		if ct != "" {
-			fields["booktitle"] = bibEscape(ct)
-		}
-	default:
-		if ct != "" {
-			fields["howpublished"] = bibEscape(ct)
-		}
+		fields = append(fields, [2]string{k, protectTitle(ct)})
 	}
-	simple := map[string]string{
-		"publisher": "publisher", "publisher-place": "address", "volume": "volume", "issue": "number",
-		"page": "pages", "edition": "edition", "DOI": "doi", "ISBN": "isbn", "URL": "url",
-		"language": "language", "abstract": "abstract", "collection-title": "series", "note": "note",
+	simple := [][2]string{
+		{"publisher", "publisher"}, {"publisher-place", "address"}, {"collection-title", "series"},
+		{"volume", "volume"}, {"issue", "number"}, {"page", "pages"}, {"edition", "edition"},
+		{"DOI", "doi"}, {"ISBN", "isbn"}, {"URL", "url"}, {"language", "language"}, {"note", "note"},
 	}
-	for csl, b := range simple {
-		v := md[csl]
+	for _, p := range simple {
 		var s string
-		switch t := v.(type) {
+		switch t := md[p[0]].(type) {
 		case string:
 			s = t
 		case int64:
@@ -222,56 +240,24 @@ func BibTeX(md map[string]any, key string) string {
 		case float64:
 			s = FormatNumber(t)
 		}
-		if s == "" {
-			continue
-		}
-		if b == "pages" {
-			s = strings.ReplaceAll(s, "-", "--")
-			s = strings.ReplaceAll(s, "----", "--")
-		}
-		if b == "url" || b == "doi" {
-			fields[b] = s
-		} else {
-			fields[b] = bibEscape(s)
+		if s != "" {
+			fields = append(fields, [2]string{p[1], bibEscape(s)})
 		}
 	}
-	if bt == "phdthesis" {
-		if s := str("publisher"); s != "" {
-			fields["school"] = bibEscape(s)
-			delete(fields, "publisher")
-		}
+	return bt, fields
+}
+
+// BibTeX renders a CSL-JSON item as a BibTeX entry (SPEC §19).
+func BibTeX(md map[string]any, key string) string {
+	if key == "" {
+		key = CitationKey(md)
 	}
-	if bt == "techreport" {
-		if s := str("publisher"); s != "" {
-			fields["institution"] = bibEscape(s)
-			delete(fields, "publisher")
-		}
+	bt, fields := BibTeXFields(md)
+	lines := make([]string, len(fields))
+	for i, f := range fields {
+		lines[i] = fmt.Sprintf("  %s = {%s}", f[0], f[1])
 	}
-	order := []string{"author", "editor", "translator", "title", "journal", "booktitle", "howpublished", "series", "edition",
-		"volume", "number", "pages", "publisher", "school", "institution", "address", "year", "doi", "isbn", "url", "language", "abstract", "note"}
-	var b strings.Builder
-	fmt.Fprintf(&b, "@%s{%s,\n", bt, key)
-	written := map[string]bool{}
-	var lines []string
-	for _, k := range order {
-		if v, ok := fields[k]; ok {
-			lines = append(lines, fmt.Sprintf("  %s = {%s}", k, v))
-			written[k] = true
-		}
-	}
-	var rest []string
-	for k := range fields {
-		if !written[k] {
-			rest = append(rest, k)
-		}
-	}
-	sort.Strings(rest)
-	for _, k := range rest {
-		lines = append(lines, fmt.Sprintf("  %s = {%s}", k, fields[k]))
-	}
-	b.WriteString(strings.Join(lines, ",\n"))
-	b.WriteString("\n}\n")
-	return b.String()
+	return "@" + bt + "{" + key + ",\n" + strings.Join(lines, ",\n") + "\n}\n"
 }
 
 // ExportBibTeX returns the document as a BibTeX entry.

@@ -11,48 +11,76 @@ public enum Bibliography {
         return out
     }
 
-    /// First author family (ASCII, lowercase) + year, or the first title word.
+    /// The BibTeX key of SPEC §19 (RFC 0002): the first author's family (or
+    /// literal), else the first word of the title, folded to ASCII letters and
+    /// lowercased ("anon" if nothing is left), plus the first year of issued
+    /// (or "nd"): cervantessaavedra1605, hookend.
     public static func citationKey(_ md: [String: JSONValue]) -> String {
         var base = ""
-        if let first = md["author"]?.arrayValue?.first {
-            base = first["family"]?.stringValue ?? first["literal"]?.stringValue ?? ""
+        if case .object(let a)? = md["author"]?.arrayValue?.first {
+            let fam = a["family"]?.stringValue ?? ""
+            base = asciiLetters(fam.isEmpty ? (a["literal"]?.stringValue ?? "") : fam)
         }
-        if base.isEmpty { base = md["title"]?.stringValue ?? "" }
-        var key = ""
-        for u in base.decomposedStringWithCanonicalMapping.unicodeScalars {
-            if u == "ß" { key += "ss"; continue }
-            if u == "æ" || u == "Æ" { key += "ae"; continue }
-            if u == "ø" || u == "Ø" { key += "o"; continue }
-            if u == " " && !key.isEmpty { break }
-            if u.isASCII, u.properties.isAlphabetic || ("0"..."9").contains(u) { key.unicodeScalars.append(contentsOf: String(u).lowercased().unicodeScalars) }
+        if base.isEmpty, let t = md["title"]?.stringValue,
+           let first = t.split(whereSeparator: { $0.isWhitespace }).first {
+            base = asciiLetters(String(first))
         }
-        if key.count > 24 { key = String(key.prefix(24)) }
-        if key.isEmpty { key = "spdf" }
-        if let y = year(md) { key += y }
-        return key
+        if base.isEmpty { base = "anon" }
+        return base + (year(md) ?? "nd")
+    }
+
+    /// NFKD, keep only ASCII letters, lowercase.
+    static func asciiLetters(_ s: String) -> String {
+        var out = ""
+        for u in s.decomposedStringWithCompatibilityMapping.unicodeScalars where ("A"..."Z").contains(u) || ("a"..."z").contains(u) {
+            out.unicodeScalars.append(contentsOf: String(u).lowercased().unicodeScalars)
+        }
+        return out
     }
 
     static func year(_ md: [String: JSONValue]) -> String? {
         guard let y = md["issued"]?["date-parts"]?[0]?[0] else { return nil }
         if let i = SPDFValidator.integral(y) { return String(i) }
+        if let s = y.stringValue, let i = Int64(s.trimmingCharacters(in: .whitespaces)) { return String(i) }
         return nil
     }
 
     static let types: [String: String] = [
         "book": "book", "article-journal": "article", "article-magazine": "article", "article-newspaper": "article",
-        "article": "article", "chapter": "incollection", "paper-conference": "inproceedings", "thesis": "phdthesis",
-        "report": "techreport", "manuscript": "unpublished", "entry-encyclopedia": "inbook", "entry-dictionary": "inbook",
+        "chapter": "incollection", "paper-conference": "inproceedings", "thesis": "phdthesis", "report": "techreport",
     ]
 
+    /// Escapes `\`, `{` and `}` (the rest of UTF-8 stays as it is).
     static func escape(_ s: String) -> String {
         var out = ""
         for c in s {
             switch c {
             case "\\": out += "\\textbackslash{}"
-            case "{", "}", "&", "%", "$", "#", "_": out += "\\" + String(c)
+            case "{", "}": out += "\\" + String(c)
             default: out.append(c)
             }
         }
+        return out
+    }
+
+    /// Braces every word the source capitalizes, so styles cannot lowercase it.
+    static func protectTitle(_ t: String) -> String {
+        var out = ""
+        var word = ""
+        func flush() {
+            guard !word.isEmpty else { return }
+            out += word.unicodeScalars.contains { $0.properties.isUppercase } ? "{" + escape(word) + "}" : escape(word)
+            word = ""
+        }
+        for c in t {
+            if c.isWhitespace {
+                flush()
+                out.append(c)
+            } else {
+                word.append(c)
+            }
+        }
+        flush()
         return out
     }
 
@@ -60,60 +88,53 @@ public enum Bibliography {
         (v?.arrayValue ?? []).compactMap { n -> String? in
             if let lit = n["literal"]?.stringValue, !lit.isEmpty { return "{" + escape(lit) + "}" }
             var fam = n["family"]?.stringValue ?? ""
-            if let p = n["non-dropping-particle"]?.stringValue, !p.isEmpty { fam = p + " " + fam }
+            if let p = n["non-dropping-particle"]?.stringValue, !p.isEmpty, !fam.isEmpty { fam = p + " " + fam }
             let given = n["given"]?.stringValue ?? ""
             switch (fam.isEmpty, given.isEmpty) {
             case (false, false): return escape(fam) + ", " + escape(given)
-            case (false, true): return escape(fam)
-            case (true, false): return escape(given)
+            case (false, true): return "{" + escape(fam) + "}"
+            case (true, false): return "{" + escape(given) + "}"
             default: return nil
             }
         }.joined(separator: " and ")
     }
 
-    /// Renders a CSL-JSON item as a BibTeX entry.
-    public static func bibtex(_ md: [String: JSONValue], key: String? = nil) -> String {
+    /// The entry type and the fields of a CSL-JSON item (SPEC §19), before layout.
+    public static func bibtexFields(_ md: [String: JSONValue]) -> (type: String, fields: [(String, String)]) {
         let type = types[md["type"]?.stringValue ?? ""] ?? "misc"
-        var fields: [String: String] = [:]
-        if let t = md["title"]?.stringValue, !t.isEmpty { fields["title"] = "{" + escape(t) + "}" }
-        for (csl, bib) in [("author", "author"), ("editor", "editor"), ("translator", "translator")] {
+        var fields: [(String, String)] = []
+        for (csl, bib) in [("author", "author"), ("editor", "editor")] {
             let n = names(md[csl])
-            if !n.isEmpty { fields[bib] = n }
+            if !n.isEmpty { fields.append((bib, n)) }
         }
-        if let y = year(md) { fields["year"] = y }
+        if let t = md["title"]?.stringValue, !t.isEmpty { fields.append(("title", protectTitle(t))) }
+        if let y = year(md) { fields.append(("year", y)) }
         if let ct = md["container-title"]?.stringValue, !ct.isEmpty {
-            switch type {
-            case "article": fields["journal"] = escape(ct)
-            case "incollection", "inproceedings", "inbook": fields["booktitle"] = escape(ct)
-            default: fields["howpublished"] = escape(ct)
-            }
+            fields.append((type == "article" ? "journal" : "booktitle", protectTitle(ct)))
         }
         let simple: [(String, String)] = [
-            ("publisher", "publisher"), ("publisher-place", "address"), ("volume", "volume"), ("issue", "number"),
-            ("page", "pages"), ("edition", "edition"), ("DOI", "doi"), ("ISBN", "isbn"), ("URL", "url"),
-            ("language", "language"), ("abstract", "abstract"), ("collection-title", "series"), ("note", "note"),
+            ("publisher", "publisher"), ("publisher-place", "address"), ("collection-title", "series"), ("volume", "volume"),
+            ("issue", "number"), ("page", "pages"), ("edition", "edition"), ("DOI", "doi"), ("ISBN", "isbn"), ("URL", "url"),
+            ("language", "language"), ("note", "note"),
         ]
         for (csl, bib) in simple {
-            guard let v = md[csl] else { continue }
-            var s: String
-            switch v {
-            case .string(let x): s = x
-            case .int(let i): s = String(i)
-            case .double(let d): s = SPDFNumber.format(d)
+            let s: String
+            switch md[csl] {
+            case .string(let x)?: s = x
+            case .int(let i)?: s = String(i)
+            case .double(let d)?: s = SPDFNumber.format(d)
             default: continue
             }
-            if s.isEmpty { continue }
-            if bib == "pages" { s = s.replacingOccurrences(of: "-", with: "--").replacingOccurrences(of: "----", with: "--") }
-            fields[bib] = (bib == "url" || bib == "doi") ? s : escape(s)
+            if !s.isEmpty { fields.append((bib, escape(s))) }
         }
-        if type == "phdthesis", let p = fields.removeValue(forKey: "publisher") { fields["school"] = p }
-        if type == "techreport", let p = fields.removeValue(forKey: "publisher") { fields["institution"] = p }
-        let order = ["author", "editor", "translator", "title", "journal", "booktitle", "howpublished", "series", "edition", "volume",
-                     "number", "pages", "publisher", "school", "institution", "address", "year", "doi", "isbn", "url", "language",
-                     "abstract", "note"]
-        var lines = order.compactMap { k in fields[k].map { "  \(k) = {\($0)}" } }
-        lines += fields.keys.filter { !order.contains($0) }.sorted().map { "  \($0) = {\(fields[$0]!)}" }
-        return "@\(type){\(key ?? citationKey(md)),\n" + lines.joined(separator: ",\n") + "\n}\n"
+        return (type, fields)
+    }
+
+    /// Renders a CSL-JSON item as a BibTeX entry (SPEC §19).
+    public static func bibtex(_ md: [String: JSONValue], key: String? = nil) -> String {
+        let (type, fields) = bibtexFields(md)
+        let body = fields.map { "  \($0.0) = {\($0.1)}" }.joined(separator: ",\n")
+        return "@\(type){\(key ?? citationKey(md)),\n" + body + "\n}\n"
     }
 }
 
