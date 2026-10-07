@@ -275,6 +275,7 @@ p, li { text-wrap: pretty; }
 .cuerpo thead th { text-align: left; font: 500 0.7rem/1.3 var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--apagado); padding: 0.45rem 0.8rem 0.45rem 0; vertical-align: bottom; border-bottom: 1.5px solid var(--tinta); }
 .cuerpo tbody td { border-top: 1px solid var(--filete); padding: 0.5rem 0.8rem 0.5rem 0; vertical-align: top; }
 .cuerpo td.a-right, .cuerpo th.a-right { text-align: right; }
+.cuerpo td.nowrap { white-space: nowrap; }
 .cuerpo td.a-center, .cuerpo th.a-center { text-align: center; }
 
 .codigo { position: relative; margin: 0 0 1.3rem; }

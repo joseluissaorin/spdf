@@ -64,4 +64,14 @@ if (raiz && raiz.dataset.activo === '1') {
   // Una muestra por la dirección: /validator#muestra=spdf-in-five-pages.spdf
   const m = /muestra=([\w.-]+)/.exec(location.hash);
   if (m) document.querySelector<HTMLButtonElement>(`.muestra[data-url$="/${m[1]}"]`)?.click();
+  // Una obra de SPDF Commons (solo de esta misma web): /validator#url=/commons/files/<fichero>.spdf
+  const u = /url=(\/(?:commons\/files|muestras)\/[\w.%-]+\.spdf)$/.exec(location.hash);
+  if (u) {
+    const ruta = decodeURIComponent(u[1]!);
+    progreso(T.leyendo ?? '…');
+    void Promise.all([fetch(ruta), cargar()]).then(async ([r]) => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      await procesar(new Uint8Array(await r.arrayBuffer()), ruta.split('/').pop()!);
+    }).catch((e: Error) => { resultado.innerHTML = `<p class="aviso">${esc(T.errorFetch)} ${esc(e.message)}</p>`; });
+  }
 }

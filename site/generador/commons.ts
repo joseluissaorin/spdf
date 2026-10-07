@@ -122,8 +122,10 @@ export function commonsBloque(l: Lengua, c: Commons): Bloque {
     const lengua = LENGUAS_NOMBRE[o.language]?.[l] ?? o.language;
     const tipo = TIPOS[o.kind]?.[l] ?? o.kind;
     const ej = o.ejemplo ? `<small><code>${esc(o.ejemplo.cita)}</code></small>` : '';
-    const ver = `<small class="verificacion"><span class="rotulo">${l === 'es' ? 'Verificado el' : 'Verified on'} ${esc(o.verificado)}</span> ${esc(o.verificacion[l])}</small>`;
-    return `<tr><td><strong>${esc(o.title)}</strong><small>${esc(o.authors)}${o.year ? `, ${o.year}` : ''} · <a href="${esc(o.source.url)}" rel="noopener">${esc(o.source.name)}</a></small>${ej}${ver}</td><td>${lengua}</td><td>${tipo}</td><td class="a-right">${o.units}</td><td class="a-right">${megas(o.bytes)}</td><td><a href="${c.url(o)}" download>.spdf</a></td></tr>`;
+    const fecha = new Date(`${o.verificado}T12:00:00Z`).toLocaleDateString(l === 'es' ? 'es-ES' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+    const ver = `<small class="verificacion"><span class="rotulo">${l === 'es' ? 'Verificado el' : 'Verified on'} ${esc(fecha)}.</span> ${esc(o.verificacion[l])}</small>`;
+    const inspeccionar = `${l === 'es' ? '/es/validador' : '/validator'}#url=/commons/files/${encodeURIComponent(o.fichero)}`;
+    return `<tr><td><strong>${esc(o.title)}</strong><small>${esc(o.authors)}${o.year ? `, ${o.year}` : ''} · <a href="${esc(o.source.url)}" rel="noopener">${esc(o.source.name)}</a></small>${ej}${ver}</td><td>${lengua}</td><td>${tipo}</td><td class="a-right">${o.units}</td><td class="a-right nowrap">${megas(o.bytes)}</td><td><a href="${c.url(o)}" download>.spdf</a><br><a href="${inspeccionar}">${l === 'es' ? 'inspeccionar' : 'inspect'}</a></td></tr>`;
   }).join('');
   const manifiesto = l === 'es' ? 'El manifiesto de la colección' : 'The collection manifest';
   const htmlT = `<div class="tabla" tabindex="0"><table class="estado-impl commons"><thead><tr>${cab.map((x, i) => `<th scope="col"${i === 3 || i === 4 ? ' class="a-right"' : ''}>${x}</th>`).join('')}</tr></thead><tbody>${filas}</tbody></table></div><p><a class="boton papel" href="/commons/commons.spdfl.json" download>${manifiesto} <code>commons.spdfl.json</code></a></p>`;
