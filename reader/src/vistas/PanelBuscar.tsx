@@ -144,7 +144,8 @@ export function PanelBuscar({ ambitoFijo, documento, titulo, alCerrar }: { ambit
 }
 
 function resaltar(texto: string, re: RegExp | null): ReactNode[] {
-  const s = texto.replace(/\s+/g, ' ').replace(/^#+\s*/, '');
+  // Sin los marcadores de Markdown ligero (títulos, negrita y cursiva): en la lista se lee texto.
+  const s = texto.replace(/\s+/g, ' ').replace(/^#+\s*/, '').replace(/\*\*([^*]+)\*\*/g, '$1').replace(/(^|[^\p{L}\p{N}*])\*([^*]+)\*(?![\p{L}\p{N}*])/gu, '$1$2');
   if (!re) return [s];
   const out: ReactNode[] = [];
   let i = 0;

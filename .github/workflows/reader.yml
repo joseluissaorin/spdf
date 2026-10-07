@@ -94,7 +94,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libdbus-1-dev pkg-config libssl-dev build-essential file
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libdbus-1-dev pkg-config libssl-dev build-essential file libclang-dev cmake
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
@@ -109,12 +109,13 @@ jobs:
       - name: Dependencias del lector
         working-directory: reader
         run: npm ci
+      - name: libclang para bindgen (Windows; en macOS viene con Xcode y en Linux con libclang-dev)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: printf '%s\n' 'LIBCLANG_PATH=C:\Program Files\LLVM\bin' >> "$GITHUB_ENV"
       - name: Compilar y empaquetar
         working-directory: reader
         shell: bash
-        env:
-          # bindgen (spdf-llama-sys) necesita libclang; en Windows viene con el LLVM del runner.
-          LIBCLANG_PATH: ${{ runner.os == 'Windows' && 'C:\Program Files\LLVM\bin' || '' }}
         run: npx tauri build --bundles ${{ matrix.paquetes }}
       - name: Recoger paquetes
         shell: bash

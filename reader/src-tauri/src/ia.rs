@@ -464,7 +464,15 @@ pub mod local {
                 _ => {
                     let reuso = self.generador.lock().unwrap().as_ref().filter(|(k, _)| *k == id).map(|(_, g)| g.clone());
                     let x = Arc::new(match reuso {
-                        Some(g) => Judge::new(g).map_err(e)?,
+                        Some(g) => {
+                            // Con los pesos del generador, pero con la calibración del manifiesto (como Judge::load).
+                            let mut j = Judge::new(g).map_err(e)?;
+                            if let Some(c) = self.mm.entry(&id).and_then(|c| c.judge_calibration.clone()) {
+                                j.calibration = c.choice;
+                                j.support_calibration = c.noul;
+                            }
+                            j
+                        }
                         None => Judge::load(&self.mm, &id).map_err(e)?,
                     });
                     *j = Some((id, x.clone()));

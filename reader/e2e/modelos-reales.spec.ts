@@ -7,18 +7,32 @@
  *
  *   MODELOS_REALES=1 COMMONS=/ruta/gilman-yellow-wall-paper-1901.spdf npx playwright test e2e/modelos-reales.spec.ts
  */
-import { test, expect } from '@playwright/test';
+import { test as base, expect, chromium, type Page } from '@playwright/test';
 import { importarYAbrir, CAPTURAS } from './ayudas';
 import { resolve } from 'node:path';
 
 const commons = process.env.COMMONS ?? '/tmp/commons/gilman-yellow-wall-paper-1901.spdf';
+// Perfil persistente: los modelos se quedan en su OPFS entre ejecuciones (no se bajan 2,4 GB cada vez).
+const test = base.extend<{ page: Page }>({
+  page: async ({}, usar) => {
+    const ctx = await chromium.launchPersistentContext(process.env.PERFIL ?? '/tmp/perfil-lector-modelos', {
+      headless: true, viewport: { width: 1440, height: 900 }, locale: 'es-ES', baseURL: 'http://localhost:4173/',
+      args: ['--mute-audio', '--enable-unsafe-webgpu', '--use-angle=metal'],
+    });
+    await usar(ctx.pages()[0] ?? (await ctx.newPage()));
+    await ctx.close();
+  },
+});
 test.skip(process.env.MODELOS_REALES !== '1', 'solo bajo demanda (descarga modelos reales)');
-test.use({ launchOptions: { args: ['--mute-audio', '--enable-unsafe-webgpu', '--use-angle=metal'] } });
 
 test('web con WebGPU: EmbeddingGemma 2 (revectorizar y buscar por sentido) y Gemma 4 (preguntar)', async ({ page }) => {
   test.setTimeout(3_600_000);
-  page.on('console', (m) => { if (m.type() === 'error') console.log('consola:', m.text().slice(0, 300)); });
+  const fase = (f: string) => console.log(new Date().toISOString().slice(11, 19), f);
+  page.on('console', (m) => console.log('consola', m.type(), m.text().slice(0, 300)));
+  page.on('pageerror', (e) => console.log('error de página:', e.message));
+  page.on('worker', (w) => w.on('console' as never, (m: { type(): string; text(): string }) => console.log('worker', m.type(), m.text().slice(0, 300))));
   await page.goto('./');
+  // La biblioteca se vacía; los modelos (OPFS de spdf-infer-web) se conservan.
   await page.evaluate(async () => { localStorage.clear(); const r = await navigator.storage.getDirectory(); try { await r.removeEntry('spdf-lector', { recursive: true }); } catch { /* vacío */ } });
   await page.reload();
   await importarYAbrir(page, commons);
@@ -55,6 +69,7 @@ test('web con WebGPU: EmbeddingGemma 2 (revectorizar y buscar por sentido) y Gem
   console.log('primer resultado:', (await page.locator('.resultado .cita').first().textContent()), (await page.locator('.resultado .fragmento').first().textContent())?.slice(0, 120));
   await page.screenshot({ path: resolve(CAPTURAS, 'web-modelos-busqueda-semantica.png') });
 
+  fase('preguntar');
   // Preguntar con Gemma 4 (se baja con un clic desde el panel).
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Preguntar', exact: true }).first().click();
@@ -67,6 +82,7 @@ test('web con WebGPU: EmbeddingGemma 2 (revectorizar y buscar por sentido) y Gem
     await expect(panel.getByRole('button', { name: /Descargar \(|Descargando/ })).toHaveCount(0, { timeout: 3_000_000 });
     console.log('Gemma 4 descargado en', Math.round((Date.now() - t0) / 1000), 's');
   }
+  fase('Gemma 4 listo');
   await page.locator('#pregunta').fill("Why does the narrator's husband forbid her to write?");
   t0 = Date.now();
   await panel.getByRole('button', { name: 'Preguntar' }).click();
