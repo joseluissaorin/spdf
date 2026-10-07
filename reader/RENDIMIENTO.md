@@ -70,13 +70,29 @@ SPDF_MEDIR=1 SPDF_MEDIR_CONSULTAS='astronomy|Ptolemy|medieval model|angels heave
 El primer arranque tras instalar o compilar paga la creación del proceso de WebKit y la
 verificación de la firma; a partir del segundo, la ventana aparece en menos de medio segundo.
 
+## Con modelos locales
+
+Con *The Yellow Wall Paper* de SPDF Commons (80 unidades, 25 fragmentos), el mismo M4 Max,
+modelos descargados desde Hugging Face en una conexión doméstica.
+
+| Qué | macOS (llama.cpp, Metal) | Web (Chromium, WebGPU) |
+|---|---:|---:|
+| Descargar EmbeddingGemma 2 de solo texto | 310 MB en 7,8 s | 346 MB en 10 s |
+| Revectorizar (25 fragmentos, recorte 256, con la carga del modelo) | 5,7 s | 5 s |
+| Primera búsqueda semántica (con la carga del modelo) | 173 ms | 85-99 ms |
+| Búsqueda híbrida, ya cargado | 25 ms | 36 ms |
+| Descargar Gemma 4 E2B | 3,1 GB en 117 s | 2 GB en 45 s |
+| Preguntar (recuperar, redactar, comprobar cada cita y juzgar) | 3,9-5,4 s | 7-13 s |
+
+`MODELOS_REALES=1 npx playwright test e2e/modelos-reales.spec.ts` repite la medición web (con
+un perfil persistente: los modelos se bajan una sola vez); en macOS, `SPDF_GUION` con los
+pasos de descargar, abrir, revectorizar, buscar y preguntar.
+
 ## Lo que no se ha medido todavía
 
 - iOS y Android: la app funciona en el simulador de iOS 26.4 y en el emulador de Android
   (API 36), pero un simulador no dice nada útil del rendimiento en un teléfono real. Queda
   medirlo en dispositivo.
 - Windows y Linux: se compilan en la CI (GitHub Actions); no se han medido.
-- La búsqueda semántica con un modelo real (EmbeddingGemma 2 en llama.cpp o WebGPU) y
-  revectorizar un libro entero: dependen de `spdf-infer` y `spdf-infer-web`, que aún no
-  están en el repositorio. Con el modelo de pruebas (sin descarga), revectorizar el Quijote
-  de prueba (15 fragmentos) y validar la copia tarda menos de un segundo en la web.
+- Revectorizar un libro grande (el de 245 páginas tiene 298 fragmentos) con el modelo real:
+  por lo medido con 25 fragmentos, en torno a un minuto en los dos.

@@ -14,7 +14,8 @@ performance.mark('spdf:inicio');
 
 async function crearNucleo(): Promise<Nucleo> {
   const pruebas = new URLSearchParams(location.search).has('pruebas') || import.meta.env.DEV;
-  if ('__TAURI_INTERNALS__' in window) {
+  // La build de escritorio y móvil no lleva el núcleo web (ni spdf-format ni spdf-infer-web).
+  if (__DESTINO__ === 'tauri' || '__TAURI_INTERNALS__' in window) {
     const { NucleoTauri } = await import('./nucleo/tauri/nucleo-tauri');
     return new NucleoTauri({ pruebas });
   }

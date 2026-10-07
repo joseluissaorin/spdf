@@ -16,8 +16,7 @@
     "e2e": "playwright test",
     "fixtures": "node scripts/fixtures.mjs",
     "tauri": "tauri",
-    "prebuild:web": "node scripts/preparar-hermanas.mjs",
-    "prebuild:tauri": "node scripts/preparar-hermanas.mjs"
+    "prebuild:web": "node scripts/preparar-hermanas.mjs"
   },
   "dependencies": {
     "@sqlite.org/sqlite-wasm": "3.53.4-build2",
