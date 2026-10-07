@@ -330,7 +330,7 @@ p, li { text-wrap: pretty; }
 @media (max-width: 640px) {
   body { font-size: 1.03rem; }
   .cabecera { gap: 0.6rem; }
-  .cabecera nav { margin-left: 0; width: 100%; gap: 0.1rem 1rem; font-size: 0.95rem; }
+  .cabecera nav { margin-left: 0; width: 100%; gap: 0 0.85rem; font-size: 0.9rem; }
   .ancla-demo { grid-template-columns: minmax(0, 1fr); }
   .heroe h1 { font-size: 14.5vw; }
   .heroe .lamina { margin: 1.5rem 0 0; }

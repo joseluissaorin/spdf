@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 26
       - name: spdf-format (js)
         working-directory: js
         run: npm ci && npm run build
