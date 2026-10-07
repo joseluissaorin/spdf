@@ -354,42 +354,7 @@ public final class SPDFFile: @unchecked Sendable {
         if isLegacy { out["legacy"] = .bool(true) }
         out["meta"] = .object(meta.mapValues { .string($0) })
         out["document"] = try documentRow().map { .object($0) } ?? .null
-        var units = try dumpRows("units", "ORDER BY \(col("units", "ord")), \(col("units", "id"))")
-        if isLegacy {
-            let keys = try blobKeys()
-            units = units.enumerated().map { i, u in
-                guard case .object(var o) = u else { return u }
-                o["ord"] = .int(Int64(i + 1))
-                o["image"] = Legacy.ref(o["image"] ?? .null, keys: keys, keepEmpty: false)
-                o["thumbnail"] = Legacy.ref(o["thumbnail"] ?? .null, keys: keys, keepEmpty: false)
-                return .object(o)
-            }
-        }
-        out["units"] = .array(units)
-        out["sections"] = .array(try dumpRows("sections", "ORDER BY \(col("sections", "id"))"))
-        out["fragments"] = .array(try dumpRows("fragments", "ORDER BY \(col("fragments", "n"))"))
-        var figures = try dumpRows("figures", "ORDER BY \(col("figures", "id"))")
-        if isLegacy {
-            let keys = try blobKeys()
-            figures = figures.map { g in
-                guard case .object(var o) = g else { return g }
-                o["image"] = Legacy.ref(o["image"] ?? .null, keys: keys, keepEmpty: true)
-                return .object(o)
-            }
-        }
-        out["figures"] = .array(figures)
-        var spaces = try dumpRows("spaces", "ORDER BY \(col("spaces", "id"))")
-        if isLegacy {
-            spaces = spaces.map { s in
-                guard case .object(var o) = s, case .array(let mods)? = o["modalities"] else { return s }
-                o["modalities"] = .array(mods.map { m in
-                    if let str = m.stringValue, let mm = Schema.legacyModalities[str] { return .string(mm) }
-                    return m
-                })
-                return .object(o)
-            }
-        }
-        out["spaces"] = .array(spaces)
+        for t in ["units", "sections", "fragments", "figures", "spaces"] { out[t] = .array(try tableView(t)) }
         out["vectors"] = try vectorDigests()
         out["blobs"] = try blobList()
         // Provenance is sorted by the UTF-8 bytes of each entry's JCS form (§5).
@@ -398,6 +363,50 @@ public final class SPDFFile: @unchecked Sendable {
         out["fts"] = ftsInfo()
         out["extensions"] = .array(!isLegacy && hasTable("extensions") ? try dumpRows("extensions", "ORDER BY name") : [])
         return .object(out)
+    }
+
+    /// One array of the dump (units, sections, fragments, figures, spaces) in
+    /// the 5.0 view, without computing the rest.
+    func tableView(_ t: String) throws -> [JSONValue] {
+        switch t {
+        case "units":
+            let units = try dumpRows("units", "ORDER BY \(col("units", "ord")), \(col("units", "id"))")
+            guard isLegacy else { return units }
+            let keys = try blobKeys()
+            return units.enumerated().map { i, u in
+                guard case .object(var o) = u else { return u }
+                o["ord"] = .int(Int64(i + 1))
+                o["image"] = Legacy.ref(o["image"] ?? .null, keys: keys, keepEmpty: false)
+                o["thumbnail"] = Legacy.ref(o["thumbnail"] ?? .null, keys: keys, keepEmpty: false)
+                return .object(o)
+            }
+        case "sections":
+            return try dumpRows("sections", "ORDER BY \(col("sections", "id"))")
+        case "fragments":
+            return try dumpRows("fragments", "ORDER BY \(col("fragments", "n"))")
+        case "figures":
+            let figures = try dumpRows("figures", "ORDER BY \(col("figures", "id"))")
+            guard isLegacy else { return figures }
+            let keys = try blobKeys()
+            return figures.map { g in
+                guard case .object(var o) = g else { return g }
+                o["image"] = Legacy.ref(o["image"] ?? .null, keys: keys, keepEmpty: true)
+                return .object(o)
+            }
+        case "spaces":
+            let spaces = try dumpRows("spaces", "ORDER BY \(col("spaces", "id"))")
+            guard isLegacy else { return spaces }
+            return spaces.map { s in
+                guard case .object(var o) = s, case .array(let mods)? = o["modalities"] else { return s }
+                o["modalities"] = .array(mods.map { m in
+                    if let str = m.stringValue, let mm = Schema.legacyModalities[str] { return .string(mm) }
+                    return m
+                })
+                return .object(o)
+            }
+        default:
+            throw SPDFError("W", "no table view \(t)")
+        }
     }
 
     func vectorDigests() throws -> JSONValue {

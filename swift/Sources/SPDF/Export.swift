@@ -140,7 +140,7 @@ extension SPDFFile {
         locked { AnchorURI.format(docref: docRef(), anchor: anchor, end: end) }
     }
 
-    private func dumpArray(_ key: String) throws -> [JSONValue] { try dump()[key]?.arrayValue ?? [] }
+    private func dumpArray(_ key: String) throws -> [JSONValue] { try locked { try tableView(key) } }
 
     /// The citable units, in order (legacy files mapped).
     public func units() throws -> [SPDFUnit] {

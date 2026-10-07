@@ -10,11 +10,13 @@ import (
 // same ones the Writer takes.
 
 func (f *File) dumpObjects(key string) ([]map[string]any, error) {
-	d, err := f.Dump()
+	if f.db == nil {
+		return nil, errClosed
+	}
+	l, err := f.tableView(key)
 	if err != nil {
 		return nil, err
 	}
-	l, _ := d[key].([]any)
 	out := make([]map[string]any, 0, len(l))
 	for _, e := range l {
 		if m, ok := e.(map[string]any); ok {

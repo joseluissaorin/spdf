@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
+	"fmt"
 	"regexp"
 	"sort"
 )
@@ -147,63 +148,11 @@ func (f *File) Dump() (map[string]any, error) {
 		out["document"] = doc
 	}
 
-	units, err := f.rowsForDump("units", "ORDER BY "+f.col("units", "ord")+", "+f.col("units", "id"))
-	if err != nil {
-		return nil, err
-	}
-	if f.legacy {
-		keys, err := f.legacyBlobKeys()
-		if err != nil {
+	for _, t := range []string{"units", "sections", "fragments", "figures", "spaces"} {
+		if out[t], err = f.tableView(t); err != nil {
 			return nil, err
 		}
-		for i, u := range units {
-			um := u.(map[string]any)
-			um["ord"] = int64(i + 1)
-			um["image"] = legacyRef(um["image"], keys, false)
-			um["thumbnail"] = legacyRef(um["thumbnail"], keys, false)
-		}
 	}
-	out["units"] = units
-	if out["sections"], err = f.rowsForDump("sections", "ORDER BY "+f.col("sections", "id")); err != nil {
-		return nil, err
-	}
-	if out["fragments"], err = f.rowsForDump("fragments", "ORDER BY "+f.col("fragments", "n")); err != nil {
-		return nil, err
-	}
-	figures, err := f.rowsForDump("figures", "ORDER BY "+f.col("figures", "id"))
-	if err != nil {
-		return nil, err
-	}
-	if f.legacy {
-		keys, err := f.legacyBlobKeys()
-		if err != nil {
-			return nil, err
-		}
-		for _, fg := range figures {
-			fm := fg.(map[string]any)
-			fm["image"] = legacyRef(fm["image"], keys, true)
-		}
-	}
-	out["figures"] = figures
-	spaces, err := f.rowsForDump("spaces", "ORDER BY "+f.col("spaces", "id"))
-	if err != nil {
-		return nil, err
-	}
-	if f.legacy {
-		for _, sp := range spaces {
-			sm := sp.(map[string]any)
-			if l, ok := sm["modalities"].([]any); ok {
-				for i, e := range l {
-					if s, ok := e.(string); ok {
-						if mm, ok := legacyModalities[s]; ok {
-							l[i] = mm
-						}
-					}
-				}
-			}
-		}
-	}
-	out["spaces"] = spaces
 
 	vecs, err := f.vectorDigests()
 	if err != nil {
@@ -420,4 +369,64 @@ func sortProvenance(entries []any) {
 		sorted[i] = entries[j]
 	}
 	copy(entries, sorted)
+}
+
+// tableView returns one array of the dump (units, sections, fragments,
+// figures or spaces) in the 5.0 view, without computing the rest.
+func (f *File) tableView(t string) ([]any, error) {
+	switch t {
+	case "units":
+		units, err := f.rowsForDump("units", "ORDER BY "+f.col("units", "ord")+", "+f.col("units", "id"))
+		if err != nil || !f.legacy {
+			return units, err
+		}
+		keys, err := f.legacyBlobKeys()
+		if err != nil {
+			return nil, err
+		}
+		for i, u := range units {
+			um := u.(map[string]any)
+			um["ord"] = int64(i + 1)
+			um["image"] = legacyRef(um["image"], keys, false)
+			um["thumbnail"] = legacyRef(um["thumbnail"], keys, false)
+		}
+		return units, nil
+	case "sections":
+		return f.rowsForDump("sections", "ORDER BY "+f.col("sections", "id"))
+	case "fragments":
+		return f.rowsForDump("fragments", "ORDER BY "+f.col("fragments", "n"))
+	case "figures":
+		figures, err := f.rowsForDump("figures", "ORDER BY "+f.col("figures", "id"))
+		if err != nil || !f.legacy {
+			return figures, err
+		}
+		keys, err := f.legacyBlobKeys()
+		if err != nil {
+			return nil, err
+		}
+		for _, fg := range figures {
+			fm := fg.(map[string]any)
+			fm["image"] = legacyRef(fm["image"], keys, true)
+		}
+		return figures, nil
+	case "spaces":
+		spaces, err := f.rowsForDump("spaces", "ORDER BY "+f.col("spaces", "id"))
+		if err != nil || !f.legacy {
+			return spaces, err
+		}
+		for _, sp := range spaces {
+			sm := sp.(map[string]any)
+			if l, ok := sm["modalities"].([]any); ok {
+				for i, e := range l {
+					if s, ok := e.(string); ok {
+						if mm, ok := legacyModalities[s]; ok {
+							l[i] = mm
+						}
+					}
+				}
+			}
+		}
+		return spaces, nil
+	}
+	return nil, fmt.Errorf("spdf: no table view %q", t)
 }
