@@ -96,3 +96,33 @@ def test_media(inputs, kind, tmp_path):
     assert "media" in meta["profile"].split()
     if kind == "video":
         assert db.execute("SELECT count(*) FROM units WHERE image IS NOT NULL").fetchone()[0] >= 1
+
+
+def test_blank_pages_skip_the_vision_engine(tmp_path):
+    import io
+
+    import pymupdf
+    from PIL import Image, ImageDraw
+
+    from spdf_build.pipeline import ink_ratio
+
+    doc = pymupdf.open()
+    for k in range(3):
+        im = Image.new("RGB", (400, 600), (245, 240, 225))
+        if k != 1:
+            ImageDraw.Draw(im).rectangle((50, 100, 350, 500), fill=(30, 30, 30))
+        b = io.BytesIO()
+        im.save(b, "JPEG")
+        if k == 1:
+            assert ink_ratio(b.getvalue()) < 0.0025
+        p = doc.new_page(width=400, height=600)
+        p.insert_image(p.rect, stream=b.getvalue())
+    path = tmp_path / "b.pdf"
+    doc.save(path)
+    vision = FakeVision({1: {"text": "Texto de la primera página, bastante largo para no ser poco."},
+                         2: {"text": "ALUCINACIÓN"}, 3: {"text": "Texto de la tercera página."}})
+    out = tmp_path / "b.spdf"
+    build([str(path)], str(out), engines(vision), Options(offline=True))
+    db = sqlite3.connect(out)
+    assert db.execute("SELECT reader, text FROM units WHERE ord = 2").fetchone() == ("blank-page-detector", "")
+    assert spdf.validate(str(out)).valid

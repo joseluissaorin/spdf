@@ -636,6 +636,11 @@ def _assemble(prep: _Prep, seq: SequenceResult) -> FolioResult:
     # A roman zone needs two readings or a strong one: a lone «i» at the edge of the body text is
     # OCR noise far more often than a preliminary page (Tesseract on a 1737 title page).
     rom = [a for a in anchors if a[1].roman]
+    # ... and a single roman whose «i» would fall before the first physical page is not a folio either
+    # (a library shelfmark «J. XVIII» handwritten on a title page, read by Gemma 4 as the running head).
+    if len(rom) == 1 and rom[0][1].source != "judge" and (rom[0][1].value - 1) / step > rom[0][0] + 3:
+        rom[0] = (rom[0][0], replace(rom[0][1], weight=0.0), rom[0][2])
+        anchors = [a for a in anchors if not a[1].roman] + [rom[0]]
     if len(rom) == 1 and rom[0][1].weight < 0.85 and rom[0][1].source != "judge":
         anchors = [a for a in anchors if not a[1].roman]
         warnings.append("A single weak roman reading was ignored.")

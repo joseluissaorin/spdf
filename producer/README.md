@@ -45,7 +45,9 @@ Useful options: `--no-labels` (deduce folios only from what is seen, ignoring PD
 labels), `--language`, `--title/--author/--year/--type/--publisher` (always win over every
 other source), `--license` (goes into `documents.rights`), `--page-images none|scans|all`,
 `--image-vectors useful|all|none`, `--dtype f32|f16|i8`, `--embed-source`, `--no-context`,
-`--max-units N`, `--json`.
+`--max-units N`, `--json`. `--save-reading pages.json` keeps what the page reader saw and
+`--reuse-reading pages.json` replays every later step (folios, record, fragments…) without
+paying for the vision engine again.
 
 ## Engines
 

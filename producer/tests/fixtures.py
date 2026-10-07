@@ -73,6 +73,11 @@ def scanned_pdf(path: Path, pages: int = 6) -> tuple[Path, dict]:
     truth = {}
     for i in range(pages):
         im = Image.new("RGB", (400, 600), (245, 240, 225))
+        from PIL import ImageDraw
+
+        d = ImageDraw.Draw(im)
+        for y in range(80, 540, 18):  # lines of «text», so the page is not taken for a blank one
+            d.rectangle((50, y, 350, y + 7), fill=(40, 35, 30))
         buf = io.BytesIO()
         im.save(buf, "JPEG")
         p = doc.new_page(width=400, height=600)

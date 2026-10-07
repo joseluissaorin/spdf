@@ -287,6 +287,46 @@ def read_with_vision(src: Source, engines: Engines, opts: Options, hint: str) ->
     return stats
 
 
+def ink_ratio(image: bytes) -> float:
+    """Share of «ink» pixels (darker than the local background by 40 levels) in the central 90 % of a page image.
+    Blank pages of a 1737 scan measure 0.06-0.15 %, pages with text 4.6-20 %."""
+    from PIL import Image, ImageFilter
+
+    im = Image.open(io.BytesIO(image)).convert("L")
+    k = 500 / max(im.size)
+    if k < 1:
+        im = im.resize((max(1, int(im.width * k)), max(1, int(im.height * k))))
+    a = np.asarray(im, dtype=np.float32)
+    bg = np.asarray(im.filter(ImageFilter.MedianFilter(15)), dtype=np.float32)
+    h, w = a.shape
+    dark = ((bg - a) > 40)[int(h * 0.05):int(h * 0.95), int(w * 0.05):int(w * 0.95)]
+    return float(dark.mean()) if dark.size else 0.0
+
+
+BLANK_INK = 0.0025
+
+
+def detect_blank_pages(src: Source, opts: Options) -> list[int]:
+    """Pages for vision that are blank (endpapers, versos): marked empty without calling any model."""
+    out = []
+    for u in src.units:
+        if not u.needs_vision:
+            continue
+        if u.image is None and src.render:
+            u.image = src.render(u.ord, opts.image_side)
+            u.image_mime = "image/jpeg"
+        if u.image is None:
+            continue
+        r = ink_ratio(u.image)
+        u.extra["ink"] = round(r, 5)
+        if r < BLANK_INK:
+            u.needs_vision = False
+            u.empty, u.text, u.reader, u.confidence = True, "", "blank-page-detector", 0.95
+            u.extra["blank"] = True
+            out.append(u.ord)
+    return out
+
+
 def _too_short(u: Unit, p: dict) -> bool:
     layer = u.extra.get("ocr_layer") or ""
     return len(layer) > 600 and len((p.get("text") or "")) + sum(len(n) for n in p.get("notes") or []) < 0.3 * len(layer) \
@@ -333,13 +373,17 @@ def build(inputs: list[str], out: str, engines: Engines, opts: Options) -> Repor
 
     hint = src.hints.get("title") or ""
     t = time.time()
+    blanks = detect_blank_pages(src, opts)
+    if blanks:
+        prov.append(Provenance("read", provider="spdf-build/blank-pages", detail={"pages": blanks, "threshold_ink": BLANK_INK},
+                               ms=int((time.time() - t) * 1000)))
     if opts.reuse_reading:
         import json as _json
 
         saved = {p["ord"]: p for p in _json.loads(Path(opts.reuse_reading).read_text("utf-8"))["units"]}
         for u in src.units:
             p = saved.get(u.ord)
-            if p and u.needs_vision:
+            if p and u.needs_vision and not u.extra.get("blank"):
                 for k in ("text", "notes", "header", "footer", "folio_seen", "empty", "reader", "confidence", "language"):
                     setattr(u, k, p.get(k))
                 u.titles = [tuple(x) for x in p.get("titles") or []]
@@ -389,12 +433,17 @@ def build(inputs: list[str], out: str, engines: Engines, opts: Options) -> Repor
 
     # language
     lang = opts.language or src.hints.get("language_detected")
+    stat_lang = detect_language(" ".join(u.text for u in units[:80])[:80000])
+    if not lang and stat_lang:
+        # stop-word statistics over the whole text beat a small model's per-page guess (Gemma 4 E4B called a
+        # 1737 Spanish book Latin)
+        lang = stat_lang
     if not lang:
         langs = [u.language for u in units if u.language]
         if langs:
             lang = max(set(langs), key=langs.count)
     if not lang:
-        lang = detect_language(" ".join(u.text for u in units[:60])[:60000]) or src.hints.get("language")
+        lang = src.hints.get("language")
     if lang:
         lang = lang.split("_")[0] if "_" in lang else lang
 
@@ -414,7 +463,8 @@ def build(inputs: list[str], out: str, engines: Engines, opts: Options) -> Repor
     # record
     t = time.time()
     online = not opts.offline
-    metadata, mevents = build_metadata(src, units, src.kind, lang, llm=engines.llm, online=online, user=opts.metadata, log=log)
+    metadata, mevents = build_metadata(src, units, src.kind, lang, llm=engines.llm, online=online, user=opts.metadata, log=log,
+                                       stat_language=stat_lang)
     lap("metadata", t)
     for e in mevents:
         prov.append(Provenance(e["stage"], provider=e.get("provider"), model=e.get("model"), detail=e.get("detail")))
@@ -501,7 +551,8 @@ def build(inputs: list[str], out: str, engines: Engines, opts: Options) -> Repor
 
     # unit images to ship
     for u in units:
-        ship = (opts.page_images == "all" and (u.image or src.render)) or (opts.page_images == "scans" and (u.needs_vision or u.kind in ("slide", "time", "image")) and (u.image or (src.render and u.needs_vision)))
+        scan = u.needs_vision or u.extra.get("blank") or u.extra.get("reused")
+        ship = (opts.page_images == "all" and (u.image or src.render)) or (opts.page_images == "scans" and (scan or u.kind in ("slide", "time", "image")) and (u.image or (src.render and scan)))
         if ship:
             img = u.image or src.render(u.ord, opts.image_side)  # type: ignore[misc]
             small = _resize(img, opts.shipped_side, 65)

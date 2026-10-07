@@ -233,7 +233,7 @@ def _year(s: Any) -> Optional[int]:
 
 
 def build_metadata(source, units, kind: str, language: Optional[str], llm=None, online: bool = True,
-                   user: Optional[dict] = None, log=None) -> tuple[dict, list[dict]]:
+                   user: Optional[dict] = None, log=None, stat_language: Optional[str] = None) -> tuple[dict, list[dict]]:
     """Returns (CSL item with "spdf" extension, provenance entries)."""
     rec = Record()
     events: list[dict] = []
@@ -317,6 +317,8 @@ def build_metadata(source, units, kind: str, language: Optional[str], llm=None, 
             events.append({"stage": "metadata", "provider": name, "model": getattr(llm, "model", None), "detail": det})
         except Exception as e:  # the record is still built from the other sources
             events.append({"stage": "metadata", "provider": getattr(llm, "name", "llm"), "detail": {"error": str(e)[:300]}})
+    if stat_language:
+        rec.put("language", stat_language, "text-statistics", 0.78)
     # 4. catalogues
     if online:
         title = rec.fields.get("title")
