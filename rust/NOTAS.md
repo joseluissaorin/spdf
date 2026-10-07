@@ -2,7 +2,7 @@
 
 Decisiones que tomé donde el contrato o la especificación no bajaban al detalle, y
 observaciones sobre la batería. Todas están implementadas y la referencia en Rust pasa
-los 341 casos de la conformidad 0.4.1.
+los 347 casos de la conformidad 0.4.2.
 
 ## Decisiones propias (no las prueba la batería)
 

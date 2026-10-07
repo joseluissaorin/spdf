@@ -33,7 +33,7 @@ An SPDF file is an SQLite 3 database. This crate bundles SQLite (with FTS5) thro
 - **Remote reading** (feature `http`, experimental): a read-only SQLite VFS that reads an
   SPDF over HTTP range requests without downloading it.
 
-It passes the whole conformance suite of the repository (`conformance/`, 341 cases in 0.4.1).
+It passes the whole conformance suite of the repository (`conformance/`, 347 cases in 0.4.2).
 
 ## Example
 

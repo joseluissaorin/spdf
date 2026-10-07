@@ -167,15 +167,23 @@ fn printed_label(a: &Value) -> Option<String> {
     })
 }
 
-/// Page locator (SPEC §18): an end without a printed folio never takes part
-/// in a range; `s. p.` / `n. pag.` only when neither end has a folio.
-fn page_locator(
-    anchor: &Value,
-    end: Option<&Value>,
-    es: bool,
-    single: &str,
-    plural: &str,
-) -> String {
+/// Labels of a page anchor's foliation: (single, plural).
+fn foliation_labels(a: &Value) -> (&'static str, &'static str) {
+    if a.get("type").and_then(Value::as_str) != Some("page") {
+        return ("p.", "pp.");
+    }
+    match a.get("foliation").and_then(Value::as_str).unwrap_or("page") {
+        "leaf" => ("fol.", "fols."),
+        "column" => ("col.", "cols."),
+        _ => ("p.", "pp."),
+    }
+}
+
+/// Page locator (SPEC §18.1): an end without a printed folio never takes
+/// part in a range; every label comes from the foliation of the printed
+/// end(s): `pp. 145-146`, `p. xiv-fol. 1r`; `s. p.` / `n. pag.` only when
+/// neither end has a folio.
+fn page_locator(anchor: &Value, end: Option<&Value>, es: bool) -> String {
     let mut ends = vec![anchor];
     if let Some(e) = end.filter(|e| e.get("type") == anchor.get("type")) {
         ends.push(e);
@@ -188,10 +196,17 @@ fn page_locator(
         return if es { "s. p." } else { "n. pag." }.to_string();
     };
     let a = printed_label(first).unwrap_or_default();
-    if with_folio.len() > 1 && last.get("printed") != first.get("printed") {
-        return format!("{plural} {a}-{}", printed_label(last).unwrap_or_default());
+    let (s1, p1) = foliation_labels(first);
+    if with_folio.len() == 1 || last.get("printed") == first.get("printed") {
+        return format!("{s1} {a}");
     }
-    format!("{single} {a}")
+    let b = printed_label(last).unwrap_or_default();
+    let (s2, _) = foliation_labels(last);
+    if (s1, p1) == foliation_labels(last) {
+        format!("{p1} {a}-{b}")
+    } else {
+        format!("{s1} {a}-{s2} {b}")
+    }
 }
 
 fn num_text(v: Option<&Value>) -> String {
@@ -211,14 +226,7 @@ pub fn locator_value(anchor: &Value, end: Option<&Value>, locale: Locale) -> Opt
     let es = locale == Locale::Es;
     let t = s(anchor, "type")?;
     match t {
-        "page" => {
-            let (single, plural) = match s(anchor, "foliation").unwrap_or("page") {
-                "leaf" => ("fol.", "fols."),
-                "column" => ("col.", "cols."),
-                _ => ("p.", "pp."),
-            };
-            Some(page_locator(anchor, end, es, single, plural))
-        }
+        "page" => Some(page_locator(anchor, end, es)),
         "time" => {
             let t0 = anchor.get("t0").and_then(Value::as_f64).unwrap_or(0.0);
             let mut out = format_time(t0);
@@ -235,7 +243,7 @@ pub fn locator_value(anchor: &Value, end: Option<&Value>, locale: Locale) -> Opt
         }
         "section" | "web" => {
             if anchor.get("printed").map(|p| !p.is_null()).unwrap_or(false) {
-                return Some(page_locator(anchor, end, es, "p.", "pp."));
+                return Some(page_locator(anchor, end, es));
             }
             let mut parts = Vec::new();
             if let Some(last) = anchor
