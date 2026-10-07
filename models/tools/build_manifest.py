@@ -171,11 +171,16 @@ VALEN_ENTRIES = [
 def local_entries() -> list[dict]:
     """Valen ONNX exports (models/valen/export_onnx.py, export_static.py), hashed from the local cache."""
     out = []
+    current = {}
+    if (MODELS / "manifest.json").exists():
+        current = {m["id"]: m for m in json.loads((MODELS / "manifest.json").read_text())["models"]}
     for e in VALEN_ENTRIES:
         fes = []
         for role, path in e["files"]:
             f = VALEN_DIR / path
             if not f.exists():
+                if e["id"] in current:  # no local export here (CI): keep the published hashes
+                    out.append(current[e["id"]])
                 break
             h = hashlib.sha256()
             with f.open("rb") as fh:
