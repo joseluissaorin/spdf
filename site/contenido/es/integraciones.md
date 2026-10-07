@@ -6,6 +6,8 @@ description: SPDF en las herramientas que la gente ya usa: un servidor MCP para 
 
 El formato vale lo que valgan los sitios a los que llega. Estas integraciones viven en la carpeta `integrations/` del repositorio, cada una con sus pruebas y su README, y todas se apoyan en las bibliotecas oficiales: ninguna vuelve a implementar el formato.
 
+<!-- integraciones -->
+
 ## Servidor MCP {#mcp}
 
 `spdf-mcp` es un servidor del [Model Context Protocol](https://modelcontextprotocol.io) en TypeScript sobre `spdf-format`. Apúntalo a una carpeta de ficheros `.spdf` y cualquier agente podrá listar los documentos, buscar en ellos, leer un pasaje, ver las figuras y citar con el folio exacto, sin poder inventárselo.

@@ -122,6 +122,17 @@ export const IMPLEMENTACIONES: Implementacion[] = [
     nota: { en: 'C ABI over the Rust core, for C, C++ and any FFI.', es: 'ABI de C sobre el núcleo de Rust, para C, C++ y cualquier FFI.' } },
 ];
 
+/** Las integraciones del ecosistema (integrations/<carpeta>), cada una con su README. */
+export const INTEGRACIONES: { id: string; carpeta: string; nombre: Record<Lengua, string>; resumen: Record<Lengua, string> }[] = [
+  { id: 'mcp', carpeta: 'spdf-mcp', nombre: { en: 'MCP server: spdf-mcp', es: 'Servidor MCP: spdf-mcp' }, resumen: { en: 'Any agent searches a folder of SPDF files and cites with the exact folio.', es: 'Cualquier agente busca en una carpeta de SPDF y cita con el folio exacto.' } },
+  { id: 'langchain-js', carpeta: 'langchain-js', nombre: { en: 'LangChain.js loader', es: 'Cargador de LangChain.js' }, resumen: { en: 'Passages as LangChain documents with citation and anchor URI.', es: 'Pasajes como documentos de LangChain con su cita y su URI de ancla.' } },
+  { id: 'llamaindex-js', carpeta: 'llamaindex-js', nombre: { en: 'LlamaIndex.TS reader', es: 'Lector de LlamaIndex.TS' }, resumen: { en: 'Passages as LlamaIndex documents, with the stored vectors if you want them.', es: 'Pasajes como documentos de LlamaIndex, con los vectores guardados si los quieres.' } },
+  { id: 'langchain-python', carpeta: 'langchain-python', nombre: { en: 'LangChain loader (Python)', es: 'Cargador de LangChain (Python)' }, resumen: { en: 'The same loader for LangChain in Python.', es: 'El mismo cargador para LangChain en Python.' } },
+  { id: 'llamaindex-python', carpeta: 'llamaindex-python', nombre: { en: 'LlamaIndex reader (Python)', es: 'Lector de LlamaIndex (Python)' }, resumen: { en: 'The same reader for LlamaIndex in Python.', es: 'El mismo lector para LlamaIndex en Python.' } },
+  { id: 'zotero', carpeta: 'zotero', nombre: { en: 'Zotero 7 and 8 plugin', es: 'Complemento para Zotero 7 y 8' }, resumen: { en: 'Import an SPDF as an item, attach it, copy a citation with the folio.', es: 'Importa un SPDF como ítem, adjúntalo y copia una cita con el folio.' } },
+  { id: 'pandoc', carpeta: 'pandoc', nombre: { en: 'Pandoc filter', es: 'Filtro de Pandoc' }, resumen: { en: 'SPDF anchors in Markdown become citations with the printed folio, in any CSL style.', es: 'Las anclas de SPDF en Markdown se convierten en citas con el folio impreso, en cualquier estilo CSL.' } },
+];
+
 /** Las otras piezas del repositorio que también tienen CI. */
 export const OTRAS_PIEZAS = [
   { id: 'producer', carpeta: 'producer', nombre: { en: 'Reference producer (spdf build)', es: 'Productor de referencia (spdf build)' } },

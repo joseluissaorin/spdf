@@ -113,7 +113,7 @@ function cabecera(h: Hoja): string {
   const u = UI[h.lengua];
   const enlace = (c: Clave) => `<a href="${RUTAS[c][h.lengua]}"${h.seccion === c ? ' aria-current="page"' : ''}>${u.nav[c]}</a>`;
   return `<header class="cabecera">
-<a class="marca" href="${RUTAS.inicio[h.lengua]}" aria-label="SPDF, ${h.lengua === 'es' ? 'inicio' : 'home'}">SPDF <small>${VERSION}</small></a>
+<a class="marca" href="${RUTAS.inicio[h.lengua]}">SPDF <small>${VERSION}</small></a>
 <nav aria-label="${u.principal}">${NAV.map(enlace).join('')}<a class="lector" href="/reader/">${u.lector}</a><a class="lengua" href="${h.alterna}" hreflang="${OTRA[h.lengua]}" lang="${OTRA[h.lengua]}" title="${u.otraTitulo}">${u.otra}</a></nav>
 </header>`;
 }

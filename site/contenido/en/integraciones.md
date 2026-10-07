@@ -6,6 +6,8 @@ description: SPDF in the tools people already use: an MCP server for agents, loa
 
 The format is only as useful as the places it reaches. These integrations live in the `integrations/` folder of the repository, each with its tests and its README, and all of them sit on the official libraries: none reimplements the format.
 
+<!-- integraciones -->
+
 ## MCP server {#mcp}
 
 `spdf-mcp` is a [Model Context Protocol](https://modelcontextprotocol.io) server in TypeScript over `spdf-format`. Point it at a folder of `.spdf` files and any agent can list the documents, search them, read a passage, look at the figures and cite with the exact folio, without being able to invent one.

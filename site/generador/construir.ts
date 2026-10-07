@@ -30,7 +30,7 @@ import { html, indice, fechaLegible, ID, type Hoja } from './plantilla';
 import { portadaHtml, portadaMd, TEXTOS as PORTADA } from './portada';
 import { estados, estadoDe, etiquetaEstado, type Estado } from './estado';
 import {
-  AUTOR, IMPLEMENTACIONES, LENGUAS, ORIGEN, OTRA, OTRAS_PIEZAS, PUBLICADO, RAIZ, REPO, REPO_PUBLICO, RUTAS, SITIO, UI, VERSION,
+  AUTOR, IMPLEMENTACIONES, INTEGRACIONES, LENGUAS, ORIGEN, OTRA, OTRAS_PIEZAS, PUBLICADO, RAIZ, REPO, REPO_PUBLICO, RUTAS, SITIO, UI, VERSION,
   esc, ficheroHtml, rutaMd, type Clave, type Lengua,
 } from './sitio';
 import { commonsBloque, cargarCommons } from './commons';
@@ -117,6 +117,40 @@ function docsBloque(l: Lengua, e: Record<string, Estado>): Bloque {
   const li = IMPLEMENTACIONES.map((im) => `<li><a href="${RUTAS.docs[l]}/${im.id}"><strong>${esc(im.nombre)}</strong><span><code>${esc(im.instalar)}</code></span><span>${esc(im.nota[l])}</span>${etiquetaEstado(estadoDe(e, im.carpeta), l)}</a></li>`).join('');
   const md = IMPLEMENTACIONES.map((im) => `- [${im.nombre}](${ORIGEN}${rutaMd(`${RUTAS.docs[l]}/${im.id}`)}): \`${im.instalar}\`. ${im.nota[l]}`).join('\n');
   return { html: `<ul class="hojas">${li}</ul>`, md };
+}
+
+function integracionesBloque(l: Lengua): Bloque {
+  const hay = (c: string) => existe(resolve(RAIZ, 'integrations', c, 'README.md'));
+  const lista = INTEGRACIONES.filter((i) => hay(i.carpeta));
+  const html = `<ul class="hojas">${lista.map((i) => `<li><a href="${RUTAS.integraciones[l]}/${i.id}"><strong>${esc(i.nombre[l])}</strong><span>${esc(i.resumen[l])}</span><span class="rotulo">integrations/${i.carpeta}</span></a></li>`).join('')}</ul>`;
+  const md = lista.map((i) => `- [${i.nombre[l]}](${ORIGEN}${rutaMd(`${RUTAS.integraciones[l]}/${i.id}`)}): ${i.resumen[l]}`).join('\n');
+  return { html, md };
+}
+
+/** Cada integración, con su README entero (en inglés) en su propia hoja. */
+function integracionesSubhojas(): void {
+  for (const i of INTEGRACIONES) {
+    const readme = resolve(RAIZ, 'integrations', i.carpeta, 'README.md');
+    if (!existe(readme)) continue;
+    const cuerpo = frontal(leer(readme)).cuerpo.replace(/^#\s+.+\n/, '');
+    for (const l of LENGUAS) {
+      const ruta = `${RUTAS.integraciones[l]}/${i.id}`;
+      const enlace = (href: string): string | null => {
+        if (/^(https?:|mailto:|#|\/)/.test(href)) return href;
+        const otra = /^\.\.\/([\w-]+)\/README\.md(#.*)?$/.exec(href);
+        if (otra) { const j = INTEGRACIONES.find((x) => x.carpeta === otra[1]); if (j) return `${RUTAS.integraciones[l]}/${j.id}${otra[2] ?? ''}`; }
+        if (/^\.\.\/\.\.\/js\/?$/.test(href)) return `${RUTAS.docs[l]}/js`;
+        if (/^\.\.\/\.\.\/python\/?$/.test(href)) return `${RUTAS.docs[l]}/python`;
+        return REPO_PUBLICO ? `${REPO}/tree/main/integrations/${i.carpeta}/${href.replace(/^\.\//, '')}` : null;
+      };
+      hoja({
+        clave: `integracion-${i.id}`, seccion: 'integraciones', l, ruta, alterna: `${RUTAS.integraciones[OTRA[l]]}/${i.id}`,
+        titulo: i.nombre[l], descripcion: i.resumen[l], md: `${l === 'es' ? '*El README de la integración está en inglés, como su código.*\n\n' : ''}${cuerpo}`,
+        fecha: fechaGit([`integrations/${i.carpeta}/README.md`]), miga: [{ texto: UI[l].nav.integraciones, ruta: RUTAS.integraciones[l] }], enlace,
+        ld: [{ '@type': 'SoftwareSourceCode', '@id': `${ORIGEN}${RUTAS.integraciones.en}/${i.id}#codigo`, name: i.nombre.en, description: i.resumen.en, license: ['https://opensource.org/licenses/MIT', 'https://www.apache.org/licenses/LICENSE-2.0'], author: { '@id': ID.autor }, about: { '@id': ID.formato }, url: `${ORIGEN}${ruta}` }],
+      });
+    }
+  }
 }
 
 function citaSpecBloque(l: Lengua): Bloque {
@@ -222,6 +256,8 @@ interface OpcionesHoja {
   md: string;
   /** Bloques que sustituyen a <!-- nombre --> en HTML y en Markdown. */
   bloques?: Record<string, Bloque>;
+  /** Trozos en línea que sustituyen a {{nombre}} (dentro de una lista o de una tabla). */
+  enLinea?: Record<string, Bloque>;
   fecha: string;
   vineta?: Dibujo;
   miga?: { texto: string; ruta: string }[];
@@ -248,8 +284,13 @@ function hoja(o: OpcionesHoja): void {
     mdGemelo = mdGemelo.replace(`<!-- ${nombre} -->`, b.md);
     marcas.push(nombre);
   }
+  for (const [nombre, b] of Object.entries(o.enLinea ?? {})) {
+    md = md.split(`{{${nombre}}}`).join(`@@${nombre}@@`);
+    mdGemelo = mdGemelo.split(`{{${nombre}}}`).join(b.md);
+  }
   const { html: cuerpoHtml0, encabezados } = aHtml(md, { copiar: u.copiar, bcp14: o.bcp14, enlace: o.enlace });
   let cuerpoHtml = cuerpoHtml0;
+  for (const [nombre, b] of Object.entries(o.enLinea ?? {})) cuerpoHtml = cuerpoHtml.split(`@@${nombre}@@`).join(b.html);
   for (const nombre of marcas) cuerpoHtml = cuerpoHtml.replace(new RegExp(`(<p>)?<div data-bloque="${nombre}"></div>(</p>)?`), o.bloques![nombre]!.html);
   const enc: Encabezado[] = [...encabezados];
   for (const nombre of marcas) for (const m of o.bloques![nombre]!.html.matchAll(/<h2 id="([^"]+)">([^<]+)<\/h2>/g)) enc.push({ nivel: 2, id: m[1]!, texto: m[2]! });
@@ -357,19 +398,21 @@ function docsDeLenguaje(e: Record<string, Estado>): void {
         ? `Cómo instalar y usar la implementación de SPDF en ${im.nombre} (${im.paquete}): abrir, validar, buscar y citar. ${im.nota.es}`
         : `How to install and use the ${im.nombre} implementation of SPDF (${im.paquete}): open, validate, search and cite. ${im.nota.en}`;
       const nivel = im.nivel === 1 ? (l === 'es' ? 'primero' : 'first') : (l === 'es' ? 'segundo' : 'second');
-      const cabeza = [
-        `| ${l === 'es' ? 'Paquete' : 'Package'} | \`${im.paquete}\` |`, '| --- | --- |',
-        `| ${l === 'es' ? 'Instalar' : 'Install'} | \`${im.instalar.replace(/\|/g, '\\|')}\` |`,
-        ...(im.registro ? [`| ${l === 'es' ? 'Registro' : 'Registry'} | [${im.registro.nombre}](${im.registro.url}) |`] : []),
-        `| ${l === 'es' ? 'Nivel' : 'Tier'} | ${nivel} |`,
-        `| CI | <!-- ci --> |`,
-        `| ${l === 'es' ? 'Carpeta' : 'Folder'} | \`${im.carpeta}/\` |`,
+      const ficha = [
+        `- **${l === 'es' ? 'Paquete' : 'Package'}**: \`${im.paquete}\``,
+        `- **${l === 'es' ? 'Instalar' : 'Install'}**: \`${im.instalar}\``,
+        ...(im.registro ? [`- **${l === 'es' ? 'Registro' : 'Registry'}**: [${im.registro.nombre}](${im.registro.url})`] : []),
+        `- **${l === 'es' ? 'Nivel' : 'Tier'}**: ${nivel}`,
+        `- **CI**: {{ci}}`,
+        `- **${l === 'es' ? 'Carpeta' : 'Folder'}**: \`${im.carpeta}/\``,
       ].join('\n');
+      const cabeza = ficha;
       let md: string;
       let fecha = HOY;
       if (existe(readme)) {
         const r = frontal(leer(readme)).cuerpo.replace(/^#\s+.+\n/, '');
-        const nota = l === 'es' && !readme.endsWith('.es.md') ? '\n\n*El README de la biblioteca está en inglés, como su código.*\n' : '';
+        const lenguaReadme = readme.endsWith('.es.md') ? 'es' : lenguaDe(r);
+        const nota = lenguaReadme === l ? '' : l === 'es' ? '\n\n*El README de la biblioteca está en inglés.*\n' : '\n\n*The README of this library is written in Spanish.*\n';
         md = `${cabeza}${nota}\n\n${r}`;
         fecha = fechaGit([`${im.carpeta}/README.md`]);
       } else {
@@ -389,7 +432,7 @@ function docsDeLenguaje(e: Record<string, Estado>): void {
       const ci: Bloque = { html: etiquetaEstado(s, l), md: etiquetaEstado(s, l, true) };
       hoja({
         clave: `docs-${im.id}`, seccion: 'docs', l, ruta, alterna: `${RUTAS.docs[OTRA[l]]}/${im.id}`, titulo, descripcion, md, fecha,
-        miga: [{ texto: UI[l].nav.docs, ruta: RUTAS.docs[l] }], bloques: { ci }, enlace,
+        miga: [{ texto: UI[l].nav.docs, ruta: RUTAS.docs[l] }], enLinea: { ci }, enlace,
         ld: [{
           '@type': 'SoftwareSourceCode', '@id': `${ORIGEN}${RUTAS.docs.en}/${im.id}#codigo`, name: `SPDF for ${im.nombre}`, alternateName: im.paquete,
           programmingLanguage: im.nombre, ...(REPO_PUBLICO ? { codeRepository: `${REPO}/tree/main/${im.carpeta}` } : {}),
@@ -405,6 +448,13 @@ function docsDeLenguaje(e: Record<string, Estado>): void {
 // ---------------------------------------------------------------------------
 // Gobernanza (de governance/ si existe) y RFC
 // ---------------------------------------------------------------------------
+
+/** ¿En qué lengua está un texto? Basta con contar palabras vacías de cada una. */
+function lenguaDe(t: string): Lengua {
+  const limpio = t.replace(/```[\s\S]*?```/g, '').toLowerCase();
+  const n = (re: RegExp) => (limpio.match(re) ?? []).length;
+  return n(/\b(el|la|los|las|que|del|con|para|una|por)\b/g) > n(/\b(the|and|with|for|this|that|from|are)\b/g) ? 'es' : 'en';
+}
 
 function tituloDe(f: string): string {
   return /^#\s+(.+)$/m.exec(frontal(leer(f)).cuerpo)?.[1]?.replace(/[`*]/g, '') ?? f.replace(/^.*\//, '');
@@ -587,6 +637,11 @@ ${agente}
   Content-Type: application/json; charset=utf-8
   Access-Control-Allow-Origin: *
 
+/muestras/*.spdf
+  Content-Type: application/vnd.spdf
+  Access-Control-Allow-Origin: *
+  Access-Control-Expose-Headers: Content-Range, Content-Length, Accept-Ranges
+
 /sitemap.xml
   Content-Type: application/xml; charset=utf-8
   Cache-Control: public, max-age=600
@@ -701,7 +756,7 @@ async function principal(): Promise<void> {
     simple('docs', { bloques: { docs: docsBloque(l, e) } });
     simple('citar', { bloques: { 'cita-spec': citaSpecBloque(l) } });
     simple('agentes');
-    simple('integraciones');
+    simple('integraciones', { bloques: { integraciones: integracionesBloque(l) } });
     simple('descargas', { bloques: { descargas: descargasBloque(l, hayLector) } });
     simple('commons', { bloques: { commons: commonsBloque(l, commons) }, ld: commons.ld(l) });
     simple('validador', {
@@ -713,6 +768,7 @@ async function principal(): Promise<void> {
   }
   gobernanza();
   docsDeLenguaje(e);
+  integracionesSubhojas();
 
   const cuerpo404 = `<div class="marco ancho"><article class="doc"><header class="cabeza con-vineta">${vineta(paginaArrancada, 'en')}<p class="rotulo">404 · n. pag.</p><h1>This page is not in the book</h1><p class="entradilla">A leaf is missing here: the address you followed does not exist, or it has moved.</p><p class="entradilla" lang="es">Aquí faltaba una hoja: la dirección que has seguido no existe o ha cambiado de sitio.</p></header><div class="cuerpo"><p><a href="/">SPDF</a> · <a href="/spec">Specification</a> · <a href="/es" lang="es">Inicio en castellano</a> · <a href="/llms.txt">llms.txt</a></p></div></article></div>`;
   escribir('404.html', html({ clave: '404', lengua: 'en', ruta: '/404', alterna: '/404', titulo: 'Not found', descripcion: 'This page does not exist.', fecha: HOY, cuerpo: cuerpo404, sinAlterna: true }));

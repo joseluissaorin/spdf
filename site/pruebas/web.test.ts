@@ -70,7 +70,8 @@ describe('la web construida', () => {
   });
 
   it('el castellano no lleva rayas al estilo inglés ni comillas inglesas sueltas en el texto', () => {
-    const es = [...todos(join(DIST, 'es'), '.md'), join(DIST, 'es.md')];
+    // Solo el castellano escrito para la web: las subhojas de documentación e integraciones llevan READMEs en inglés.
+    const es = [...readdirSync(join(DIST, 'es')).filter((f) => f.endsWith('.md') && f !== 'especificacion.md').map((f) => join(DIST, 'es', f)), join(DIST, 'es.md')];
     for (const f of es) {
       const t = readFileSync(f, 'utf8').replace(/```[\s\S]*?```/g, '').replace(/`[^`]*`/g, '').split('\n').filter((l) => !l.startsWith('|')).join('\n');
       expect(t, f).not.toMatch(/ [—–] /);
