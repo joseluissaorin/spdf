@@ -54,9 +54,10 @@ doc.search_hybrid("ciego jarro", query, space: "embeddinggemma-2@768")  # RRF, k
 ```ruby
 Spdf::AnchorUri.parse("spdf:sha256-3f2a…#p=29&f=21&char=118,301")
 # {"docref" => "sha256-3f2a…", "locator" => {"p" => 29, "f" => "21", "char" => [118, 301]}}
-doc.locate("spdf:sha256-3f2a…#p=29")         # the units an anchor URI points at
+doc.locate("spdf:sha256-3f2a…#p=29")         # {"document", "units", "fragments", "char", "xywh"} (SPEC §5.4)
 File.write("lazarillo.json", doc.csl_json)   # Zotero, Pandoc, citeproc (id = BibTeX key)
-File.write("lazarillo.bib", doc.bibtex)      # @book{la1554, ... (SPEC §19)
+File.write("lazarillo.bib", doc.bibtex)      # @book{lazarillo1554, ... (SPEC §19)
+Spdf::Bibliography.csl_items([meta], anchor, anchor_end)   # adds CSL "label" and "locator"
 ```
 
 ## Validate
@@ -99,8 +100,9 @@ spdf conformance path/to/spdf/conformance
 ```
 
 `spdf conformance` runs every case of the shared suite and prints the report of the
-specification (§11). CI publishes it as the `conformance-ruby` artifact. All kinds are
-claimed, including `roundtrip`.
+specification (§21). CI publishes it as the `conformance-ruby` artifact. All kinds are
+claimed except `export_structure` (ALTO, TEI and IIIF exports are optional and not
+implemented).
 
 ## License
 

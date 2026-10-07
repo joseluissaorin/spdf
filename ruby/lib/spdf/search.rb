@@ -119,7 +119,7 @@ module Spdf
 
     def other_item(target, id, score)
       anchor = target == "unit" ? @doc.unit(id)&.fetch("anchor", nil) : @doc.figures.find { |g| g["id"] == id }&.fetch("anchor", nil)
-      { "target" => target, "id" => id, "score" => score, "via" => ["vector"], "anchor" => anchor,
+      { (target == "unit" ? "unit_id" : "figure_id") => id, "score" => score, "via" => ["vector"], "anchor" => anchor,
         "anchor_uri" => anchor.is_a?(Hash) ? @doc.anchor_uri(anchor) : nil }
     end
   end

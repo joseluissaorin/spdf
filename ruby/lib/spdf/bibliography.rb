@@ -28,34 +28,43 @@ module Spdf
       item.merge("id" => key(item))
     end
 
-    def csl_items(metadatas)
+    # CSL-JSON export (SPEC §19.2); with an anchor and one record, adds "label" and "locator".
+    def csl_items(metadatas, anchor = nil, anchor_end = nil)
       items = metadatas.map { |m| base(m) }
-      items.zip(keys(items)).map { |it, k| it.merge("id" => k) }
+      out = items.zip(keys(items)).map { |it, k| it.merge("id" => k) }
+      if anchor && out.length == 1
+        ll = Cite.csl_locator(anchor, anchor_end)
+        out[0] = out[0].merge("label" => ll[0], "locator" => ll[1]) if ll
+      end
+      out
     end
 
     def ascii_letters(s)
       s.to_s.unicode_normalize(:nfkd).gsub(/\p{Mn}/, "").gsub(/[^A-Za-z]/, "").downcase
     end
 
+    # First year of "issued" in decimal (negative years keep their sign), or nil.
     def year(item)
-      y = item.dig("issued", "date-parts", 0, 0) if item["issued"].is_a?(Hash) && item["issued"]["date-parts"].is_a?(Array) &&
-                                                   item["issued"]["date-parts"][0].is_a?(Array)
+      issued = item["issued"]
+      dp = issued.is_a?(Hash) ? issued["date-parts"] : nil
+      y = dp.is_a?(Array) && dp[0].is_a?(Array) ? dp[0][0] : nil
       return nil if y.nil? || y == true || y == false
-      return y.to_i.to_s if y.is_a?(Integer) || (y.is_a?(Float) && y == y.floor)
+      return y.to_i.to_s if y.is_a?(Numeric)
       return y.strip.to_i.to_s if y.is_a?(String) && y.match?(/\A\s*-?\d+\s*\z/)
 
       nil
     end
 
+    def present(v) = v.nil? || v == "" || v == false ? nil : v
+
+    # Key (SPEC §19.1): first author's family, literal or given name, else the first word
+    # of title-short or title, folded to ASCII letters; "anon" if empty; then the year or "nd".
     def key(item)
       base = ""
       a = item["author"].is_a?(Array) ? item["author"][0] : nil
-      if a.is_a?(Hash)
-        who = [a["family"], a["literal"]].find { |x| x && x != "" } || ""
-        base = ascii_letters(who)
-      end
+      base = ascii_letters(present(a["family"]) || present(a["literal"]) || present(a["given"]) || "") if a.is_a?(Hash)
       if base.empty?
-        w = item["title"].to_s.split.first
+        w = (present(item["title-short"]) || present(item["title"]) || "").to_s.split.first
         base = w ? ascii_letters(w) : ""
       end
       (base.empty? ? "anon" : base) + (year(item) || "nd")

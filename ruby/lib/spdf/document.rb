@@ -243,35 +243,49 @@ module Spdf
 
     def anchor_uri(anchor, anchor_end = nil) = AnchorUri.format(docref, anchor, anchor_end)
 
-    # Units an anchor URI points at (SPEC §5.4); [] if the URI designates another document.
-    def locate(uri)
-      parsed = AnchorUri.parse(uri)
-      ref = parsed["docref"]
+    RULES = %w[p f t sl v ref s sh].freeze
+
+    # Resolves an anchor URI, or the URL of a .spdf with a fragment, against this file
+    # (SPEC §5.4): {"document", "units", "fragments", "char", "xywh"}.
+    def locate(reference)
+      empty = { "document" => false, "units" => [], "fragments" => [], "char" => nil, "xywh" => nil }
       d = document
-      if ref.start_with?("sha256-")
-        return [] if ref[7..] != d["source_sha256"].to_s.downcase
-      elsif ref != d["id"].to_s
-        return []
+      if reference.start_with?("spdf:")
+        parsed = AnchorUri.parse(reference)
+        return empty unless [ "sha256-#{d["source_sha256"]}", d["id"].to_s ].include?(parsed["docref"])
+
+        l = parsed["locator"]
+      else
+        _, hash, frag = reference.partition("#")
+        l = hash.empty? || frag.empty? ? {} : AnchorUri.parse("spdf:x##{frag}")["locator"]
       end
-      l = parsed["locator"]
-      units.select do |u|
-        a = u["anchor"].is_a?(Hash) ? u["anchor"] : {}
-        if l.key?("p")
-          ph = a["physical"]
-          !ph.nil? && l["p"] <= ph && ph <= (l["pe"] || l["p"])
-        elsif l.key?("f") then u["printed"] == l["f"] || a["printed"] == l["f"]
-        elsif l.key?("t")
-          t = l["t"][0]
-          !a["t0"].nil? && !a["t1"].nil? && a["t0"] <= t && t < a["t1"]
-        elsif l.key?("sl") then a["n"] == l["sl"]
-        elsif l.key?("v")
-          from = a["line_from"]
-          !from.nil? && from <= l["v"][0] && l["v"][0] <= (a["line_to"] || from)
-        elsif l.key?("ref") then a["scheme"] == l["ref"]["scheme"] && a["ref"] == l["ref"]["ref"]
-        elsif l.key?("s") then a["path"].is_a?(Array) && a["path"][0, l["s"].length] == l["s"]
-        else false
+      out = { "document" => true, "units" => [], "fragments" => [], "char" => l["char"], "xywh" => l["xywh"] }
+      rule = RULES.find { |r| l.key?(r) }
+      return out unless rule
+
+      us = units
+      hits = us.select { |u| anchor_matches?(rule, l, u["anchor"], rule == "f" ? u["printed"] : nil) }.map { |u| u["id"] }
+      if rule == "t" && hits.empty?
+        timed = us.select { |u| u["anchor"].is_a?(Hash) && u["anchor"]["type"] == "time" }
+        last = timed.last
+        hits = [last["id"]] if last && last["anchor"]["t1"].is_a?(Numeric) && last["anchor"]["t1"] == l["t"][0]
+      end
+      frags = fragments.select { |f| anchor_matches?(rule, l, f["anchor"], nil) }
+      if hits.empty? && !frags.empty?
+        wanted = frags.map { |f| f["unit"] }
+        hits = us.select { |u| wanted.include?(u["id"]) }.map { |u| u["id"] }
+      end
+      if l.key?("char")
+        c, dd = l["char"]
+        frags = frags.select do |f|
+          ch = f["anchor"].is_a?(Hash) ? f["anchor"]["chars"] : nil
+          next false unless hits.include?(f["unit"]) && ch.is_a?(Array) && ch.length == 2
+
+          a, b = ch
+          c < dd ? (a < dd && c < b) : (a <= c && c < b)
         end
       end
+      out.merge("units" => hits, "fragments" => frags.map { |f| f["id"] })
     end
 
     def cite(anchor, anchor_end = nil, locale: "es") = Cite.short(metadata, anchor, anchor_end, locale: locale)
@@ -287,6 +301,41 @@ module Spdf
     def bibtex = Bibliography.bibtex(Bibliography.base(metadata))
 
     private
+
+    def int?(v) = v.is_a?(Integer) || (v.is_a?(Float) && v.finite? && v == v.floor)
+
+    def anchor_matches?(rule, l, a, printed)
+      return false unless a.is_a?(Hash)
+
+      t = a["type"]
+      case rule
+      when "p" then t == "page" && int?(a["physical"]) && l["p"] <= a["physical"] && a["physical"] <= (l["pe"] || l["p"])
+      when "f" then (printed.nil? ? a["printed"] : printed) == l["f"]
+      when "t"
+        x = l["t"][0]
+        t == "time" && a["t0"].is_a?(Numeric) && a["t1"].is_a?(Numeric) && a["t0"] <= x && x < a["t1"]
+      when "sl" then t == "slide" && !a["n"].nil? && a["n"] == l["sl"]
+      when "v"
+        x = l["v"][0]
+        lf = a["line_from"]
+        lt = a["line_to"].nil? ? lf : a["line_to"]
+        t == "verse" && int?(lf) && lf <= x && x <= lt
+      when "ref" then t == "canonical" && a["scheme"] == l["ref"]["scheme"] && a["ref"] == l["ref"]["ref"]
+      when "s"
+        path = a["path"]
+        return false unless %w[section web].include?(t) && path.is_a?(Array)
+        return path == l["s"] && !a["paragraph"].nil? && a["paragraph"] == l["para"] if l.key?("para")
+
+        path[0, l["s"].length] == l["s"]
+      when "sh"
+        return false unless t == "sheet" && a["sheet"] == l["sh"]
+        return true unless l.key?("rows")
+
+        x = l["rows"][0]
+        int?(a["row_from"]) && int?(a["row_to"]) && a["row_from"] <= x && x <= a["row_to"]
+      else false
+      end
+    end
 
     def blob_keys
       @blob_keys ||= begin

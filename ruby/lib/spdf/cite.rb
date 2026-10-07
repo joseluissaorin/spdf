@@ -60,6 +60,41 @@ module Spdf
       "#{-y}#{es ? " a. C." : " BC"}"
     end
 
+    # CSL label and locator of an anchor (SPEC §19.2), or nil.
+    def csl_locator(a, e = nil)
+      t = a["type"]
+      folio = ->(x) { x["printed"].nil? ? nil : (x["source"] == "inferred" ? "[#{x["printed"]}]" : x["printed"].to_s) }
+      if t == "page" || (%w[section web].include?(t) && !a["printed"].nil?)
+        f = folio.call(a)
+        return nil if f.nil?
+
+        label = t == "page" ? { "leaf" => "folio", "column" => "column" }.fetch(a.fetch("foliation", "page"), "page") : "page"
+        return [label, "#{f}-#{folio.call(e)}"] if e && e["type"] == t && !e["printed"].nil? && e["printed"] != a["printed"]
+
+        return [label, f]
+      end
+      case t
+      when "section", "web"
+        return ["paragraph", a["paragraph"].to_s] unless a["paragraph"].nil?
+        return ["section", a["path"].last.to_s] if a["path"].is_a?(Array) && !a["path"].empty?
+
+        nil
+      when "time"
+        s = hms(a["t0"])
+        s += "-#{hms(e["t1"])}" if e && e["type"] == "time"
+        ["timestamp", s]
+      when "verse"
+        from = a["line_from"]
+        to = a["line_to"]
+        ["verse", to.nil? || to == from ? from.to_s : "#{from}-#{to}"]
+      when "canonical" then ["section", a["ref"].to_s]
+      when "sheet"
+        from = a["row_from"]
+        to = a["row_to"]
+        ["line", from == to ? from.to_s : "#{from}-#{to}"]
+      end
+    end
+
     def hms(t)
       s = t.to_f.floor
       h = s / 3600

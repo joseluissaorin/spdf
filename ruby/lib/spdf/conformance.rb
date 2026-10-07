@@ -19,7 +19,13 @@ module Spdf
         id = c["id"] || File.basename(file, ".json")
         begin
           reason = run_case(c)
-          reason.nil? ? report["passed"] << id : report["failed"] << { "id" => id, "reason" => reason }
+          if reason.nil?
+            report["passed"] << id
+          elsif reason == :skip
+            report["skipped"] << { "id" => id, "reason" => "ALTO, TEI and IIIF exports (SPEC §19.4, optional) are not implemented" }
+          else
+            report["failed"] << { "id" => id, "reason" => reason }
+          end
         rescue StandardError, ScriptError => e
           report["failed"] << { "id" => id, "reason" => "#{e.class}: #{e.message}" }
         end
@@ -133,6 +139,28 @@ module Spdf
           compare_results(ex["results"], d.search_hybrid(input["query"], input["query_vector"], space: input["space"], limit: input.fetch("limit", 10)), true)
         end
       when "anchor_uri" then anchor_uri_case(input, ex)
+      when "locate"
+        got = Document.open(path(input["file"])) do |d|
+          d.locate(input["reference"])
+        rescue Error
+          { "document" => false, "units" => [], "fragments" => [], "char" => nil, "xywh" => nil }
+        end
+        self.class.compare(ex, got, "locate")
+      when "export_csl"
+        metas = input["files"].map { |f| Document.open(path(f), &:metadata) }
+        self.class.compare(ex["items"], Bibliography.csl_items(metas, input["anchor"], input["anchor_end"]), "items")
+      when "export_bibtex"
+        metas = input["files"].map { |f| Document.open(path(f), &:metadata) }
+        lines = ->(t) { t.to_s.split(/\r?\n/).map(&:strip).reject(&:empty?) }
+        want = lines.call(ex["text"])
+        got = lines.call(Bibliography.bibtex_all(metas))
+        diff = want.each_index.find { |i| want[i] != got[i] }
+        return "line #{diff + 1}: expected #{want[diff]}, got #{got[diff]}" if diff
+        return "expected #{want.length} lines, got #{got.length}" if want.length != got.length
+
+        nil
+      when "export_structure"
+        :skip
       when "quantize"
         hex = begin
           Vectors.encode(input["values"], input["dtype"]).unpack1("H*")
@@ -183,12 +211,13 @@ module Spdf
 
     def compare_results(want, got, via)
       if want.length != got.length
-        return "results: expected #{want.length} (#{want.map { |w| w["fragment_id"] }.join(",")}), " \
-               "got #{got.length} (#{got.map { |g| g["fragment_id"] }.join(",")})"
+        return "results: expected #{want.length}, got #{got.length}"
       end
       want.each_with_index do |w, i|
         g = got[i]
-        return "results[#{i}].fragment_id: expected #{w["fragment_id"]}, got #{g["fragment_id"]}" if w["fragment_id"] != g["fragment_id"]
+        %w[fragment_id unit_id figure_id].each do |k|
+          return "results[#{i}].#{k}: expected #{w[k]}, got #{g[k]}" if w.key?(k) && w[k] != g[k]
+        end
         return "results[#{i}].score: expected #{w["score"]}, got #{g["score"]}" if (w["score"] - g["score"]).abs > TOLERANCE
         return "results[#{i}].anchor_uri: expected #{w["anchor_uri"]}, got #{g["anchor_uri"]}" if w["anchor_uri"] != g["anchor_uri"]
         return "results[#{i}].via: expected #{w["via"]}, got #{g["via"]}" if via && w.key?("via") && w["via"] != g["via"]

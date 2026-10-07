@@ -56,8 +56,8 @@ class TestDocument < Minitest::Test
     Spdf::Document.open(@file) do |d|
       assert_equal "(Lazarillo de Tormes, 1554, p. 3)", d.cite_fragment("f1")
       assert_equal "(Lazarillo de Tormes, 1554, p. [4])", d.cite_fragment("f2", locale: "en")
-      assert_equal "la1554", JSON.parse(d.csl_json)[0]["id"]
-      assert d.bibtex.start_with?("@book{la1554,\n  title = {{La} vida de {Lazarillo} de {Tormes:}")
+      assert_equal "lazarillo1554", JSON.parse(d.csl_json)[0]["id"]
+      assert d.bibtex.start_with?("@book{lazarillo1554,\n  title = {{La} vida de {Lazarillo} de {Tormes:}")
     end
   end
 

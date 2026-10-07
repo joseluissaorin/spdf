@@ -40,8 +40,9 @@ module Spdf
       when "i8"
         values.map do |v|
           y = v.to_f * 127
-          q = (y.abs + 0.5).floor * (y >= 0 ? 1 : -1)
-          q.clamp(-127, 127)
+          next(y.positive? ? 127 : -127) if y.abs >= 127 # also catches v * 127 overflowing to infinity
+
+          ((y.abs + 0.5).floor * (y >= 0 ? 1 : -1)).clamp(-127, 127)
         end.pack("c*")
       else raise Error.new("E032", "unknown dtype #{dtype}")
       end
