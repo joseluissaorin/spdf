@@ -1,0 +1,15 @@
+.DS_Store
+node_modules/
+target/
+__pycache__/
+*.pyc
+.venv/
+dist/
+build/
+.gradle/
+*.gguf
+*.onnx
+*.onnx_data
+*.litertlm
+models/cache/
+.env
