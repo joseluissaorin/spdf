@@ -297,3 +297,48 @@ def media_fragments(units: list[Unit], doc_id: str) -> list[Fragment]:
         out.append(Fragment(id=f"{doc_id}:f{len(out) + 1}", ord=len(out) + 1, unit=u.ord, text=u.text,
                             anchor=copy.deepcopy(u.anchor), tokens=count_tokens(u.text)))
     return out
+
+
+def _body_of(text: str) -> str:
+    """The literal part of a fragment: without its heading lines and the footnotes appended at the end."""
+    parts = [p for p in text.split("\n\n") if not p.startswith("## ") and not re.match(r"^\[\^[^\]]+\]:", p)]
+    return "\n\n".join(parts).strip()
+
+
+def _find_once(hay: str, needle: str) -> int:
+    i = hay.find(needle)
+    if i < 0 or hay.find(needle, i + 1) >= 0:
+        return -1
+    return i
+
+
+def add_char_ranges(frags: list[Fragment], units: list[Unit]) -> int:
+    """Best effort: `chars` [start, end) of each fragment in the NFC text of its start (and end) unit.
+    Only when the beginning and the end are found exactly once; otherwise the anchor stays without `chars`."""
+    import unicodedata
+
+    by_ord = {u.ord: unicodedata.normalize("NFC", u.text or "") for u in units}
+    done = 0
+    for f in frags:
+        body = unicodedata.normalize("NFC", _body_of(f.text))
+        if len(body) < 40:
+            continue
+        head, tail = body[:40], body[-40:]
+        u0 = by_ord.get(f.unit, "")
+        s = _find_once(u0, head)
+        if s < 0:
+            continue
+        if not f.unit_end or f.unit_end == f.unit:
+            e = u0.find(tail, s)
+            if e < 0 or u0.find(tail, e + 1) >= 0:
+                continue
+            f.anchor["chars"] = [s, e + len(tail)]
+        else:
+            u1 = by_ord.get(f.unit_end, "")
+            e = _find_once(u1, tail)
+            if e < 0 or f.anchor_end is None:
+                continue
+            f.anchor["chars"] = [s, len(u0)]
+            f.anchor_end["chars"] = [0, e + len(tail)]
+        done += 1
+    return done

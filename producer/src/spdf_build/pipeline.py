@@ -29,7 +29,7 @@ from .engines.base import space_row
 from .model import Built, Figure, FigureRead, Fragment, Provenance, Source, Unit
 from .steps import context as ctx
 from .steps.folios import deduce_folios, pages_from_units
-from .steps.fragments import chunk, media_fragments
+from .steps.fragments import add_char_ranges, chunk, media_fragments
 from .steps.metadata import build_metadata
 from .steps.normalize import document_epoch, language_of, search_text
 from .steps.structure import remove_running_heads, step_structure
@@ -442,11 +442,12 @@ def build(inputs: list[str], out: str, engines: Engines, opts: Options) -> Repor
         frags = media_fragments(units, doc_id)
     else:
         frags = chunk(units, sections, doc_id)
+    located = add_char_ranges(frags, units) if src.kind not in ("audio", "video") else 0
     lap("fragments", t)
     toks = sorted(f.tokens for f in frags)
     prov.append(Provenance("fragments", provider="spdf-build/chunker", detail={
         "fragments": len(frags), "tokens_median": toks[len(toks) // 2] if toks else 0, "tokens_max": toks[-1] if toks else 0,
-        "cross_unit": sum(1 for f in frags if f.anchor_end)}))
+        "cross_unit": sum(1 for f in frags if f.anchor_end), "with_chars": located}))
 
     # modernized layer
     t = time.time()
@@ -503,7 +504,7 @@ def build(inputs: list[str], out: str, engines: Engines, opts: Options) -> Repor
         ship = (opts.page_images == "all" and (u.image or src.render)) or (opts.page_images == "scans" and (u.needs_vision or u.kind in ("slide", "time", "image")) and (u.image or (src.render and u.needs_vision)))
         if ship:
             img = u.image or src.render(u.ord, opts.image_side)  # type: ignore[misc]
-            small = _resize(img, opts.shipped_side, 72)
+            small = _resize(img, opts.shipped_side, 65)
             key = f"u{u.ord}.jpg"
             blobs[key] = ("image/jpeg", small)
             u.extra["image_key"] = key
