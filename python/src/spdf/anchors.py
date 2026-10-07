@@ -34,6 +34,7 @@ __all__ = [
     "format_uri",
     "locator_to_anchor",
     "make_uri",
+    "parse_params",
     "parse_uri",
 ]
 
@@ -454,6 +455,15 @@ def parse_uri(uri: str) -> dict[str, Any]:
     if not docref_raw:
         raise InvalidAnchorError("anchor URI without document reference")
     docref = _dec(docref_raw)
+    return {"docref": docref, "locator": parse_params(frag)}
+
+
+def parse_params(frag: str) -> dict[str, Any]:
+    """Parse the parameters of an anchor URI fragment (``p=5&f=1r``) into a locator.
+
+    The same rules as :func:`parse_uri`; also valid for the fragment of an
+    ``application/vnd.spdf`` URL (``https://example.org/quijote.spdf#p=5&f=1r``, SPEC §24).
+    """
     loc: dict[str, Any] = {}
     for item in frag.split("&") if frag else []:
         if not item:
@@ -508,7 +518,7 @@ def parse_uri(uri: str) -> dict[str, Any]:
                 raise InvalidAnchorError("bad 'xywh'")
             loc["xywh"] = [_round6(float(x) / 100) for x in nums]
         # Unknown parameters are ignored.
-    return {"docref": docref, "locator": loc}
+    return loc
 
 
 def locator_to_anchor(locator: Mapping[str, Any]) -> dict[str, Any]:

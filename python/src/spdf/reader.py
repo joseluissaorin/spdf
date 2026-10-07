@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from . import _sqlite
-from .anchors import Anchor, docref_for, locator_to_anchor, make_uri, parse_uri
+from .anchors import Anchor, docref_for, locator_to_anchor, make_uri, parse_params, parse_uri
 from .canonical import canonical_dumps, round_floats
 from .cite import cite as _cite
 from .container import (
@@ -664,25 +664,38 @@ class SpdfFile:
         if item is None:
             return _cite(None, self.document.metadata, locale)
         if isinstance(item, str):
-            loc = parse_uri(item)["locator"]
+            loc = self._locator(item)
+            if loc is None:
+                raise SpdfError("the anchor URI designates another document")
             return _cite(locator_to_anchor(loc), self.document.metadata, locale)
         anchor, end = _anchor_of(item, end)
         return _cite(anchor, self.document.metadata, locale, end)
+
+    def _locator(self, target: str) -> dict[str, Any] | None:
+        """Locator of an anchor URI for this document, of a URL with an anchor fragment
+        (``https://…/x.spdf#p=5``, SPEC §24) or of a bare fragment; ``None`` if the URI
+        designates another document."""
+        if target.startswith("spdf:"):
+            parsed = parse_uri(target)
+            doc = self.document
+            ref = parsed["docref"]
+            if ref.startswith("sha256-"):
+                if ref[7:] != (doc.source_sha256 or "").lower():
+                    return None
+            elif ref != doc.id:
+                return None
+            return dict(parsed["locator"])
+        frag = target.split("#", 1)[1] if "#" in target else target
+        return parse_params(frag)
 
     def locate(self, uri: str) -> list[Unit]:
         """Units an anchor URI points at (by physical page, printed folio, time, slide…).
 
         Returns ``[]`` when the URI designates another document (SPEC §5.4).
         """
-        parsed = parse_uri(uri)
-        doc = self.document
-        ref = parsed["docref"]
-        if ref.startswith("sha256-"):
-            if ref[7:] != (doc.source_sha256 or "").lower():
-                return []
-        elif ref != doc.id:
+        loc = self._locator(uri)
+        if loc is None:
             return []
-        loc = parsed["locator"]
         out: list[Unit] = []
         for u in self.iter_units():
             a = u.anchor

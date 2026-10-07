@@ -47,6 +47,8 @@ def test_read_document_and_records(quijote: Path) -> None:
         assert f.locate(f"spdf:{f.docref}#f=24")[0].id == "u3"
         assert f.locate("spdf:sha256-" + "0" * 64 + "#p=2") == []
         assert f.locate("spdf:quijote#p=2")[0].id == "u2"
+        assert f.locate("https://example.org/quijote.spdf#p=3&f=24")[0].id == "u3"
+        assert f.cite("https://example.org/quijote.spdf#p=3&f=24") == "(Cervantes Saavedra, 1605, p. 24)"
 
 
 def test_dump_shape(quijote: Path) -> None:
@@ -343,6 +345,14 @@ def test_validation_codes(mutate: Callable[..., Path], statements: list[str], co
 def test_validation_newer_minor(mutate: Callable[..., Path]) -> None:
     r = spdf.validate(mutate("PRAGMA user_version = 510"))
     assert r.valid and "W105" in r.codes and r.version == "5.1"
+    # Forward compatibility: new anchor types and dtypes of a later minor are warnings.
+    newer = mutate(
+        "PRAGMA user_version = 510",
+        'UPDATE figures SET anchor = \'{"type":"hologram"}\'',
+        "UPDATE spaces SET dtype = 'bf16' WHERE id = 'test@4:f16'",
+    )
+    r2 = spdf.validate(newer)
+    assert r2.valid and {i.code for i in r2.warnings} == {"W105", "E041", "E032"}
 
 
 def test_integrity_codes(tmp_path: Path, mutate: Callable[..., Path]) -> None:

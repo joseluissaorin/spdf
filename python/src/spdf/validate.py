@@ -41,8 +41,13 @@ class _Collector:
     def __init__(self, result: ValidationResult) -> None:
         self.r = result
         self.counts: dict[str, int] = {}
+        # Codes reported as warnings (newer minor versions may define them, SPEC §22.1 step 4).
+        self.lenient: frozenset[str] = frozenset()
 
     def error(self, code: str, message: str, where: str | None = None) -> None:
+        if code in self.lenient:
+            self._add(self.r.warnings, code, message, where)
+            return
         self._add(self.r.errors, code, message, where)
 
     def warn(self, code: str, message: str, where: str | None = None) -> None:
@@ -109,6 +114,8 @@ def _validate_open(c: Container, col: _Collector, *, check_fts: bool) -> None:
 
     if c.user_version != 500:
         col.warn("W105", f"file is SPDF {c.version}; this reader implements 5.0")
+        # Forward compatibility: a later minor version may define new anchor types and dtypes.
+        col.lenient = frozenset({"E041", "E032"})
 
     # E020 triggers / views
     for kind, name in forbidden_objects(c):
