@@ -279,7 +279,7 @@ final class Document
     public function meta(): array
     {
         $out = [];
-        foreach ($this->rows('spdf_meta') as $r) {
+        foreach ($this->rows('spdf_meta', 'ORDER BY {key}') as $r) {
             $out[(string) $r['key']] = $r['value'];
         }
         return $out;

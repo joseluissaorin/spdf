@@ -1,0 +1,13 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=utf-8\n"
+"Language: es\n"
+
+msgid "plugins.generic.spdfViewer.name"
+msgstr "Visor SPDF"
+
+msgid "plugins.generic.spdfViewer.description"
+msgstr "Muestra las galeradas SPDF como texto buscable con citas exactas."
+
+msgid "plugins.generic.spdfViewer.search"
+msgstr "Buscar"
