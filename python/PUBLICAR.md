@@ -78,9 +78,8 @@ nombre **`pypi`**. Conviene protegerlo:
 
 - Una versión publicada en PyPI no se puede volver a subir con el mismo número: si algo
   sale mal, se corrige y se publica la siguiente versión de parche.
-- La acción de publicación genera atestaciones de procedencia (PEP 740). Si el repositorio
-  sigue siendo privado y ese paso fallara, se puede publicar con `attestations: false` en
-  el paso `pypa/gh-action-pypi-publish` o esperar a que el repositorio sea público.
+- La acción de publicación genera atestaciones de procedencia (PEP 740), que PyPI muestra
+  junto a cada fichero; el repositorio ya es público, así que no hace falta tocar nada.
 - Para un ensayo en TestPyPI haría falta un segundo publicador pendiente en
   <https://test.pypi.org/manage/account/publishing/> (mismo owner, repo y workflow, entorno
   `testpypi`) y un trabajo gemelo con `repository-url: https://test.pypi.org/legacy/`; no
