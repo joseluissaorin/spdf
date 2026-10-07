@@ -65,6 +65,9 @@ export class Embedder implements Embed {
     const repo = entry.source.replace("https://huggingface.co/", "");
     let device = opts.device ?? "auto";
     if (device === "auto") device = (await webgpuAvailable()) ? "webgpu" : "wasm";
+    const dtypeName = entry.dtype ?? "q4";
+    if (device !== "webgpu" && ["q8", "q4", "q4f16"].includes(dtypeName))
+      throw new Error(`${id} needs WebGPU: its quantized graphs use GatherBlockQuantized, which onnxruntime's WASM backend lacks. Use embeddinggemma-2-onnx-fp16 without WebGPU.`);
     const mods = (opts.modalities ?? (entry.modalities as Modality[])).filter((m) => entry.modalities.includes(m));
     const config = await T.AutoConfig.from_pretrained(repo, { revision: entry.revision });
     const cfg = config as unknown as Record<string, unknown>;

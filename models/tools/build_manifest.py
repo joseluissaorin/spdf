@@ -126,6 +126,13 @@ ENTRIES = [
     dict(id="gemma-4-e4b-it-web", name="Gemma 4 E4B instruct · LiteRT web (.task)", family="gemma-4-e4b",
          kinds=["generate"], engine="mediapipe", format="task", repo="litert-community/gemma-4-E4B-it-litert-lm",
          files=[("task", "gemma-4-E4B-it-web.task")], modalities=["text"], platforms=["web"], min_memory_mb=6000),
+    dict(id="gemma-4-e2b-it-onnx-q4f16", name="Gemma 4 E2B instruct · ONNX q4f16 (transformers.js, juez web por logits)",
+         family="gemma-4-e2b", kinds=["judge"], engine="transformers.js", format="onnx", repo="onnx-community/gemma-4-E2B-it-ONNX",
+         files=[(r, r) for r in ("config.json", "generation_config.json", "tokenizer.json", "tokenizer_config.json", "chat_template.jinja")]
+               + [("onnx", "onnx/decoder_model_merged_q4f16.onnx"), ("onnx_data", "onnx/decoder_model_merged_q4f16.onnx_data"),
+                  ("onnx", "onnx/embed_tokens_q4f16.onnx"), ("onnx_data", "onnx/embed_tokens_q4f16.onnx_data")],
+         modalities=["text"], platforms=["web"], min_memory_mb=6000, dtype="q4f16",
+         judge_calibration={"choice": {"temperature": 6.947, "prior_correction": False}, "noul": {"temperature": 5.837, "prior_correction": False}}),
     dict(id="gemma-4-e2b-it-litert-lm", name="Gemma 4 E2B instruct · LiteRT-LM (Android CPU/GPU)", family="gemma-4-e2b",
          kinds=["generate"], engine="litert-lm", format="litertlm", repo="litert-community/gemma-4-E2B-it-litert-lm",
          files=[("model", "gemma-4-E2B-it.litertlm")], modalities=["text"], platforms=["android"], min_memory_mb=4000,
@@ -252,6 +259,7 @@ def build() -> dict:
         }
         if "dtype" in e:
             entry["dtype"] = e["dtype"]
+        entry["published"] = True
         out.append(entry)
         print(f"  {e['id']:40s} {entry['bytes'] / 1e6:9.1f} MB  {len(fes)} files", file=sys.stderr)
     cache_p.write_text(json.dumps({"\t".join(k): list(v) for k, v in cache.items()}, indent=0))
@@ -260,19 +268,20 @@ def build() -> dict:
 
 
 RECOMMENDATIONS = {
-    # first entry that fits in half the device memory wins (ModelManager::recommend)
+    # first entry that is published, runs in this build and fits in half the device memory wins
+    # (ModelManager::recommend). Valen is the better judge (models/INFORME.md) once published.
     "macos": {"embed": ["embeddinggemma-2-gguf-q8_0"], "generate": ["gemma-4-e4b-it-gguf-q4_k_m", "gemma-4-e2b-it-gguf-q4_k_m"],
-              "judge": ["gemma-4-e4b-it-gguf-q4_k_m", "gemma-4-e2b-it-gguf-q4_k_m"]},
+              "judge": ["valen-0.8b-onnx-int8", "gemma-4-e4b-it-gguf-q4_k_m", "gemma-4-e2b-it-gguf-q4_k_m"]},
     "windows": {"embed": ["embeddinggemma-2-gguf-q8_0"], "generate": ["gemma-4-e4b-it-gguf-q4_k_m", "gemma-4-e2b-it-gguf-q4_k_m"],
-                "judge": ["gemma-4-e4b-it-gguf-q4_k_m", "gemma-4-e2b-it-gguf-q4_k_m"]},
+                "judge": ["valen-0.8b-onnx-int8", "gemma-4-e4b-it-gguf-q4_k_m", "gemma-4-e2b-it-gguf-q4_k_m"]},
     "linux": {"embed": ["embeddinggemma-2-gguf-q8_0"], "generate": ["gemma-4-e4b-it-gguf-q4_k_m", "gemma-4-e2b-it-gguf-q4_k_m"],
-              "judge": ["gemma-4-e4b-it-gguf-q4_k_m", "gemma-4-e2b-it-gguf-q4_k_m"]},
+              "judge": ["valen-0.8b-onnx-int8", "gemma-4-e4b-it-gguf-q4_k_m", "gemma-4-e2b-it-gguf-q4_k_m"]},
     "ios": {"embed": ["embeddinggemma-2-gguf-q8_0", "embeddinggemma-2-gguf-q8_0-text"], "generate": ["gemma-4-e2b-it-gguf-q4_k_m"],
             "judge": ["gemma-4-e2b-it-gguf-q4_k_m"]},
     "android": {"embed": ["embeddinggemma-2-gguf-q8_0", "embeddinggemma-2-gguf-q8_0-text"], "generate": ["gemma-4-e2b-it-gguf-q4_k_m"],
                 "judge": ["gemma-4-e2b-it-gguf-q4_k_m"]},
     "web": {"embed": ["embeddinggemma-2-onnx-q8", "embeddinggemma-2-onnx-q8-text"], "generate": ["gemma-4-e2b-it-web"],
-            "judge": ["gemma-4-e2b-it-web"]},
+            "judge": ["valen-0.8b-onnx-static1024-q4", "gemma-4-e2b-it-onnx-q4f16"]},
 }
 
 

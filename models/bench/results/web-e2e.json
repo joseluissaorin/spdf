@@ -1,0 +1,161 @@
+{
+ "ok": true,
+ "seconds": 89.7,
+ "peak_mb": 7004.1,
+ "chrome": "Google Chrome 154.0.8037.98",
+ "steps": [
+  {
+   "webgpu": true,
+   "opfs": true
+  },
+  {
+   "step": "download embeddinggemma-2-onnx-q8",
+   "ms": 13095.764999985695,
+   "downloaded": true,
+   "bytes": 882100267
+  },
+  {
+   "step": "Embedder.load",
+   "ms": 8818.769999980927
+  },
+  {
+   "step": "embed text",
+   "ms": 0.21000003814697266,
+   "dims": 768,
+   "scores": [
+    0.8639519514205083,
+    0.5346784664134274
+   ],
+   "space": {
+    "id": "embeddinggemma-2@768",
+    "provider": "google",
+    "model": "embeddinggemma-2",
+    "version": "914f7f89",
+    "dims": 768,
+    "dtype": "f32",
+    "normalized": true,
+    "truncated_from": null,
+    "modalities": [
+     "text",
+     "image",
+     "audio"
+    ],
+    "task_prefixes": {
+     "document": "title: {title} | text: ",
+     "query": "task: search result | query: "
+    }
+   },
+   "compatible": true
+  },
+  {
+   "step": "embed image",
+   "ms": 445.4499999284744,
+   "vec_dims": 768
+  },
+  {
+   "step": "embed audio",
+   "ms": 128.73500001430511,
+   "vec_dims": 768
+  },
+  {
+   "step": "MRL 256",
+   "ms": 0.04500007629394531,
+   "dims": 256,
+   "space": {
+    "id": "embeddinggemma-2@256",
+    "provider": "google",
+    "model": "embeddinggemma-2",
+    "version": "914f7f89",
+    "dims": 256,
+    "dtype": "f32",
+    "normalized": true,
+    "truncated_from": 768,
+    "modalities": [
+     "text",
+     "image",
+     "audio"
+    ],
+    "task_prefixes": {
+     "document": "title: {title} | text: ",
+     "query": "task: search result | query: "
+    }
+   }
+  },
+  {
+   "step": "download gemma-4-e2b-it-web",
+   "ms": 28520.009999990463,
+   "downloaded": true,
+   "bytes": 2003697664
+  },
+  {
+   "step": "Generator.load",
+   "ms": 2286.875
+  },
+  {
+   "step": "generate",
+   "ms": 637.3100000619888,
+   "text": "El Quijote fue escrito por Miguel de Cervantes Saavedra.",
+   "promptTokens": 22,
+   "generatedTokens": 14,
+   "promptMs": 414.875,
+   "genMs": 218.93499994277954,
+   "tokensPerS": 63.945920038637105,
+   "stopReason": "eog",
+   "chunks": 6
+  },
+  {
+   "step": "download valen-0.8b-onnx-static1024-q4",
+   "ms": 8818.680000066757,
+   "downloaded": true,
+   "bytes": 531477176
+  },
+  {
+   "step": "Judge.load",
+   "ms": 24513.299999952316
+  },
+  {
+   "step": "judge support",
+   "ms": 814.7350000143051,
+   "label": "CONTEXTO",
+   "probs": [
+    [
+     "APOYO_DIRECTO",
+     0.15054788721242784
+    ],
+    [
+     "APLICACION_DE_MARCO",
+     0.1344671496606645
+    ],
+    [
+     "CONTEXTO",
+     0.24550054923588482
+    ],
+    [
+     "CONTRADICCION",
+     0.1041489406570062
+    ],
+    [
+     "IMPOSIBLE_TEMPORAL",
+     0.0902880266785521
+    ],
+    [
+     "OPINION_REFERIDA",
+     0.18512179706660717
+    ],
+    [
+     "AFIRMACION_NEGATIVA",
+     0.08992564948885745
+    ]
+   ],
+   "supported": 0.3692524963596742
+  },
+  {
+   "step": "judge relevance",
+   "ms": 716.9299999475479,
+   "relevance": 0.13871658445675009
+  },
+  {
+   "done": true
+  }
+ ]
+}

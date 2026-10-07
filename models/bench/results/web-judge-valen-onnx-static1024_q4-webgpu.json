@@ -1,0 +1,7 @@
+{
+ "engine": "valen-onnx-static1024_q4-webgpu",
+ "pairs": 205,
+ "peak_mb": 5431.0,
+ "load_s": 25.70297500002384,
+ "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36"
+}

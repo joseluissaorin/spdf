@@ -22,6 +22,10 @@ unsafe extern "C" fn quiet_log(level: sys::ggml_log_level, text: *const std::os:
     }
 }
 
+/// The iOS simulator's emulated Metal returns wrong results for these models (measured: cosine
+/// 0.80 instead of 0.86 on a reference pair), so the GPU is never used there; devices use Metal.
+pub const GPU_USABLE: bool = !cfg!(any(target_abi = "sim", all(target_os = "ios", target_arch = "x86_64")));
+
 /// Initialises the llama.cpp backends once per process.
 pub fn backend_init() {
     INIT.call_once(|| unsafe {
@@ -50,7 +54,7 @@ impl Model {
         backend_init();
         let c = CString::new(path.to_string_lossy().as_bytes()).map_err(|_| Error::msg("path has NUL"))?;
         let mut p = unsafe { sys::llama_model_default_params() };
-        p.n_gpu_layers = if gpu { -1 } else { 0 };
+        p.n_gpu_layers = if gpu && GPU_USABLE { -1 } else { 0 };
         let ptr = unsafe { sys::llama_model_load_from_file(c.as_ptr(), p) };
         NonNull::new(ptr)
             .map(|ptr| Arc::new(Self { ptr }))

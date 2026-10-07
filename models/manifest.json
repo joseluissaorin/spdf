@@ -48,7 +48,8 @@
    "min_memory_mb": 1400,
    "space_version": "914f7f89",
    "judge_calibration": null,
-   "notes": null
+   "notes": null,
+   "published": true
   },
   {
    "id": "embeddinggemma-2-gguf-q8_0-text",
@@ -87,7 +88,8 @@
    "min_memory_mb": 500,
    "space_version": "914f7f89",
    "judge_calibration": null,
-   "notes": null
+   "notes": null,
+   "published": true
   },
   {
    "id": "embeddinggemma-2-gguf-bf16",
@@ -133,7 +135,8 @@
    "min_memory_mb": 2200,
    "space_version": "914f7f89",
    "judge_calibration": null,
-   "notes": null
+   "notes": null,
+   "published": true
   },
   {
    "id": "embeddinggemma-2-onnx-q8",
@@ -248,7 +251,8 @@
    "space_version": "914f7f89",
    "judge_calibration": null,
    "notes": null,
-   "dtype": "q8"
+   "dtype": "q8",
+   "published": true
   },
   {
    "id": "embeddinggemma-2-onnx-q8-text",
@@ -333,7 +337,8 @@
    "space_version": "914f7f89",
    "judge_calibration": null,
    "notes": null,
-   "dtype": "q8"
+   "dtype": "q8",
+   "published": true
   },
   {
    "id": "embeddinggemma-2-onnx-fp16",
@@ -448,7 +453,8 @@
    "space_version": "914f7f89",
    "judge_calibration": null,
    "notes": null,
-   "dtype": "fp16"
+   "dtype": "fp16",
+   "published": true
   },
   {
    "id": "embeddinggemma-2-onnx-q4",
@@ -563,7 +569,8 @@
    "space_version": "914f7f89+q4",
    "judge_calibration": null,
    "notes": null,
-   "dtype": "q4"
+   "dtype": "q4",
+   "published": true
   },
   {
    "id": "embeddinggemma-2-onnx-q4f16",
@@ -678,7 +685,8 @@
    "space_version": "914f7f89+q4",
    "judge_calibration": null,
    "notes": null,
-   "dtype": "q4f16"
+   "dtype": "q4f16",
+   "published": true
   },
   {
    "id": "embeddinggemma-2-onnx-q4f16-text",
@@ -763,7 +771,8 @@
    "space_version": "914f7f89+q4",
    "judge_calibration": null,
    "notes": null,
-   "dtype": "q4f16"
+   "dtype": "q4f16",
+   "published": true
   },
   {
    "id": "embeddinggemma-2-mlx-8bit",
@@ -891,7 +900,8 @@
    "min_memory_mb": 1800,
    "space_version": "914f7f89",
    "judge_calibration": null,
-   "notes": null
+   "notes": null,
+   "published": true
   },
   {
    "id": "embeddinggemma-2-litert-text-270m",
@@ -926,7 +936,8 @@
    "min_memory_mb": 400,
    "space_version": null,
    "judge_calibration": null,
-   "notes": "Sin medir: LiteRT-LM no corre en macOS en este banco. Variantes NPU: _Google_Tensor_G5/G6, _Qualcomm_SM8550…SM8850, _MediaTek_MT6991/MT6993."
+   "notes": "Sin medir: LiteRT-LM no corre en macOS en este banco. Variantes NPU: _Google_Tensor_G5/G6, _Qualcomm_SM8550…SM8850, _MediaTek_MT6991/MT6993.",
+   "published": true
   },
   {
    "id": "embeddinggemma-2-st-reference",
@@ -1050,7 +1061,8 @@
    "min_memory_mb": 4000,
    "space_version": "914f7f89",
    "judge_calibration": null,
-   "notes": null
+   "notes": null,
+   "published": true
   },
   {
    "id": "gemma-4-e2b-it-gguf-q4_k_m",
@@ -1089,8 +1101,18 @@
    ],
    "min_memory_mb": 4000,
    "space_version": null,
-   "judge_calibration": null,
-   "notes": null
+   "judge_calibration": {
+    "choice": {
+     "temperature": 3.669,
+     "prior_correction": false
+    },
+    "noul": {
+     "temperature": 3.888,
+     "prior_correction": false
+    }
+   },
+   "notes": null,
+   "published": true
   },
   {
    "id": "gemma-4-e4b-it-gguf-q4_k_m",
@@ -1129,8 +1151,18 @@
    ],
    "min_memory_mb": 6500,
    "space_version": null,
-   "judge_calibration": null,
-   "notes": null
+   "judge_calibration": {
+    "choice": {
+     "temperature": 4.12,
+     "prior_correction": false
+    },
+    "noul": {
+     "temperature": 3.669,
+     "prior_correction": false
+    }
+   },
+   "notes": null,
+   "published": true
   },
   {
    "id": "gemma-4-e2b-it-web",
@@ -1165,7 +1197,8 @@
    "min_memory_mb": 4000,
    "space_version": null,
    "judge_calibration": null,
-   "notes": null
+   "notes": null,
+   "published": true
   },
   {
    "id": "gemma-4-e4b-it-web",
@@ -1200,7 +1233,110 @@
    "min_memory_mb": 6000,
    "space_version": null,
    "judge_calibration": null,
-   "notes": null
+   "notes": null,
+   "published": true
+  },
+  {
+   "id": "gemma-4-e2b-it-onnx-q4f16",
+   "name": "Gemma 4 E2B instruct · ONNX q4f16 (transformers.js, juez web por logits)",
+   "family": "gemma-4-e2b",
+   "kind": "judge",
+   "kinds": [
+    "judge"
+   ],
+   "engine": "transformers.js",
+   "format": "onnx",
+   "license": "Apache-2.0",
+   "license_url": "https://www.apache.org/licenses/LICENSE-2.0",
+   "source": "https://huggingface.co/onnx-community/gemma-4-E2B-it-ONNX",
+   "revision": "9f4bef82ea6e296bc69f8a2f5939f73af81b07a6",
+   "bytes": 3130549798,
+   "files": [
+    {
+     "role": "config.json",
+     "path": "config.json",
+     "url": "https://huggingface.co/onnx-community/gemma-4-E2B-it-ONNX/resolve/9f4bef82ea6e296bc69f8a2f5939f73af81b07a6/config.json",
+     "bytes": 5549,
+     "sha256": "5494e6677d9e150ea20ba3101ae8a32b0f141004626f052725d8bf48991b9faa"
+    },
+    {
+     "role": "generation_config.json",
+     "path": "generation_config.json",
+     "url": "https://huggingface.co/onnx-community/gemma-4-E2B-it-ONNX/resolve/9f4bef82ea6e296bc69f8a2f5939f73af81b07a6/generation_config.json",
+     "bytes": 238,
+     "sha256": "e6a0b50de21a511f15ac4857b7f227f68ee60ecb1f11255d07b75e0bdc60e155"
+    },
+    {
+     "role": "tokenizer.json",
+     "path": "tokenizer.json",
+     "url": "https://huggingface.co/onnx-community/gemma-4-E2B-it-ONNX/resolve/9f4bef82ea6e296bc69f8a2f5939f73af81b07a6/tokenizer.json",
+     "bytes": 19439251,
+     "sha256": "47bd35616c7c782aaca6ccf48c75f3461d5877170984b8836b375107d0a9f566"
+    },
+    {
+     "role": "tokenizer_config.json",
+     "path": "tokenizer_config.json",
+     "url": "https://huggingface.co/onnx-community/gemma-4-E2B-it-ONNX/resolve/9f4bef82ea6e296bc69f8a2f5939f73af81b07a6/tokenizer_config.json",
+     "bytes": 18807,
+     "sha256": "06afbf54e228050cba79c4a0afd83543cc89070a2d62b8337d0aa8b4cdc348c3"
+    },
+    {
+     "role": "chat_template.jinja",
+     "path": "chat_template.jinja",
+     "url": "https://huggingface.co/onnx-community/gemma-4-E2B-it-ONNX/resolve/9f4bef82ea6e296bc69f8a2f5939f73af81b07a6/chat_template.jinja",
+     "bytes": 16317,
+     "sha256": "781d10940fbc44be40064b5d43a056fc486c84ceaa55538226368b57314132bf"
+    },
+    {
+     "role": "onnx",
+     "path": "onnx/decoder_model_merged_q4f16.onnx",
+     "url": "https://huggingface.co/onnx-community/gemma-4-E2B-it-ONNX/resolve/9f4bef82ea6e296bc69f8a2f5939f73af81b07a6/onnx/decoder_model_merged_q4f16.onnx",
+     "bytes": 673231,
+     "sha256": "73c0f1fe04f9a3a048fb3319c0671b6cf0346bf33a3a8624c853bcffe01c24a4"
+    },
+    {
+     "role": "onnx_data",
+     "path": "onnx/decoder_model_merged_q4f16.onnx_data",
+     "url": "https://huggingface.co/onnx-community/gemma-4-E2B-it-ONNX/resolve/9f4bef82ea6e296bc69f8a2f5939f73af81b07a6/onnx/decoder_model_merged_q4f16.onnx_data",
+     "bytes": 1519700992,
+     "sha256": "3b27245a7396cb7039a4e4118bd2a8aa35106bae381522edf7c4867b5f22bb10"
+    },
+    {
+     "role": "onnx",
+     "path": "onnx/embed_tokens_q4f16.onnx",
+     "url": "https://huggingface.co/onnx-community/gemma-4-E2B-it-ONNX/resolve/9f4bef82ea6e296bc69f8a2f5939f73af81b07a6/onnx/embed_tokens_q4f16.onnx",
+     "bytes": 5621,
+     "sha256": "d7ca53f6a169471b5699b2f57ee4c7aa2c73732b0152f3909e64b71384444825"
+    },
+    {
+     "role": "onnx_data",
+     "path": "onnx/embed_tokens_q4f16.onnx_data",
+     "url": "https://huggingface.co/onnx-community/gemma-4-E2B-it-ONNX/resolve/9f4bef82ea6e296bc69f8a2f5939f73af81b07a6/onnx/embed_tokens_q4f16.onnx_data",
+     "bytes": 1590689792,
+     "sha256": "024b199e6358ed42970f807686add5f9430d7e254ca7ce22fc9c83f015b9c517"
+    }
+   ],
+   "modalities": [
+    "text"
+   ],
+   "platforms": [
+    "web"
+   ],
+   "min_memory_mb": 6000,
+   "space_version": null,
+   "judge_calibration": {
+    "choice": {
+     "temperature": 6.947,
+     "prior_correction": false
+    },
+    "noul": {
+     "temperature": 5.837,
+     "prior_correction": false
+    }
+   },
+   "notes": null,
+   "dtype": "q4f16",
+   "published": true
   },
   {
    "id": "gemma-4-e2b-it-litert-lm",
@@ -1235,7 +1371,8 @@
    "min_memory_mb": 4000,
    "space_version": null,
    "judge_calibration": null,
-   "notes": "Variantes NPU en el repo: _Google_Tensor_G5/G6, _qualcomm_sm8750, _qualcomm_qcs8275, _intel_LNL/PTL."
+   "notes": "Variantes NPU en el repo: _Google_Tensor_G5/G6, _qualcomm_sm8750, _qualcomm_qcs8275, _intel_LNL/PTL.",
+   "published": true
   },
   {
    "id": "gemma-4-e2b-it-mlx-4bit",
@@ -1319,7 +1456,8 @@
    "min_memory_mb": 5500,
    "space_version": null,
    "judge_calibration": null,
-   "notes": null
+   "notes": null,
+   "published": true
   },
   {
    "id": "gemma-4-e4b-it-mlx-4bit",
@@ -1410,7 +1548,8 @@
    "min_memory_mb": 8000,
    "space_version": null,
    "judge_calibration": null,
-   "notes": null
+   "notes": null,
+   "published": true
   },
   {
    "id": "valen-0.8b-server",
@@ -1575,7 +1714,172 @@
    "min_memory_mb": 6000,
    "space_version": null,
    "judge_calibration": null,
-   "notes": "models/valen/server.py; trust_remote_code (código del repo, fijado por revisión)."
+   "notes": "models/valen/server.py; trust_remote_code (código del repo, fijado por revisión).",
+   "published": true
+  },
+  {
+   "id": "valen-0.8b-onnx-int8",
+   "name": "Valen 0.8B · ONNX int8 (onnxruntime nativo)",
+   "family": "valen-0.8b",
+   "kind": "judge",
+   "kinds": [
+    "judge"
+   ],
+   "engine": "onnxruntime",
+   "format": "onnx",
+   "license": "Apache-2.0",
+   "license_url": "https://www.apache.org/licenses/LICENSE-2.0",
+   "source": "https://huggingface.co/spdf-format/valen-0.8b-onnx",
+   "revision": "main",
+   "bytes": 781946172,
+   "files": [
+    {
+     "role": "onnx",
+     "path": "valen_backbone_int8.onnx",
+     "url": "https://huggingface.co/spdf-format/valen-0.8b-onnx/resolve/main/valen_backbone_int8.onnx",
+     "bytes": 1013137,
+     "sha256": "cf23656a4c0e6ef769862e2ec823f2399068126ec5c5380898029bfb51e4707a"
+    },
+    {
+     "role": "onnx_data",
+     "path": "valen_backbone_int8.onnx.data",
+     "url": "https://huggingface.co/spdf-format/valen-0.8b-onnx/resolve/main/valen_backbone_int8.onnx.data",
+     "bytes": 755646464,
+     "sha256": "069af8624a785f7868675ccc385cea227cf7e70d0a0b565e9fe6ac408912f850"
+    },
+    {
+     "role": "head",
+     "path": "valen_head.onnx",
+     "url": "https://huggingface.co/spdf-format/valen-0.8b-onnx/resolve/main/valen_head.onnx",
+     "bytes": 5292756,
+     "sha256": "e7624dd82b1c674229c4b336df6ce04c5b1dd85cade9dde04186c0a40c8b1df1"
+    },
+    {
+     "role": "tokenizer",
+     "path": "tokenizer.json",
+     "url": "https://huggingface.co/spdf-format/valen-0.8b-onnx/resolve/main/tokenizer.json",
+     "bytes": 19989343,
+     "sha256": "87a7830d63fcf43bf241c3c5242e96e62dd3fdc29224ca26fed8ea333db72de4"
+    },
+    {
+     "role": "tokenizer_config",
+     "path": "tokenizer_config.json",
+     "url": "https://huggingface.co/spdf-format/valen-0.8b-onnx/resolve/main/tokenizer_config.json",
+     "bytes": 1139,
+     "sha256": "e98f1901ac6f0adff67b1d540bfa0c36ac1a0cf59eb72ed78146ef89aafa1182"
+    },
+    {
+     "role": "config",
+     "path": "config.json",
+     "url": "https://huggingface.co/spdf-format/valen-0.8b-onnx/resolve/main/config.json",
+     "bytes": 3333,
+     "sha256": "8a6a766acfe35a6eb3d373e90c43af0f08dbd44301251df71e18b1b5b5381c08"
+    }
+   ],
+   "modalities": [
+    "text"
+   ],
+   "platforms": [
+    "macos",
+    "windows",
+    "linux"
+   ],
+   "min_memory_mb": 2500,
+   "space_version": null,
+   "judge_calibration": {
+    "choice": {
+     "temperature": 1.0,
+     "prior_correction": false
+    },
+    "noul": {
+     "temperature": 1.0,
+     "prior_correction": false
+    }
+   },
+   "notes": "Exportación propia de Valen-Team/Valen-0.8B (rev. 4c858f2e) sobre el grafo de onnx-community/Qwen3.5-0.8B-ONNX; sin publicar todavía: constrúyela con models/valen y regístrala con ModelManager::import_local.",
+   "published": false,
+   "dtype": "int8"
+  },
+  {
+   "id": "valen-0.8b-onnx-static1024-q4",
+   "name": "Valen 0.8B · ONNX q4 estático (1024 tokens, WebGPU)",
+   "family": "valen-0.8b",
+   "kind": "judge",
+   "kinds": [
+    "judge"
+   ],
+   "engine": "onnxruntime-web",
+   "format": "onnx",
+   "license": "Apache-2.0",
+   "license_url": "https://www.apache.org/licenses/LICENSE-2.0",
+   "source": "https://huggingface.co/spdf-format/valen-0.8b-onnx",
+   "revision": "main",
+   "bytes": 531477176,
+   "files": [
+    {
+     "role": "onnx",
+     "path": "valen_backbone_static1024_q4.onnx",
+     "url": "https://huggingface.co/spdf-format/valen-0.8b-onnx/resolve/main/valen_backbone_static1024_q4.onnx",
+     "bytes": 30669581,
+     "sha256": "d23f71b38194d72f1592bc8137473425c420f11a5de528b7cb11b38412da4cda"
+    },
+    {
+     "role": "onnx_data",
+     "path": "valen_backbone_static1024_q4.onnx.data",
+     "url": "https://huggingface.co/spdf-format/valen-0.8b-onnx/resolve/main/valen_backbone_static1024_q4.onnx.data",
+     "bytes": 475521024,
+     "sha256": "ce0b92017c3c7ba99493f6db6d3e54aedce9795436b7a09df6799eaa0f37319d"
+    },
+    {
+     "role": "head",
+     "path": "valen_head.onnx",
+     "url": "https://huggingface.co/spdf-format/valen-0.8b-onnx/resolve/main/valen_head.onnx",
+     "bytes": 5292756,
+     "sha256": "e7624dd82b1c674229c4b336df6ce04c5b1dd85cade9dde04186c0a40c8b1df1"
+    },
+    {
+     "role": "tokenizer",
+     "path": "tokenizer.json",
+     "url": "https://huggingface.co/spdf-format/valen-0.8b-onnx/resolve/main/tokenizer.json",
+     "bytes": 19989343,
+     "sha256": "87a7830d63fcf43bf241c3c5242e96e62dd3fdc29224ca26fed8ea333db72de4"
+    },
+    {
+     "role": "tokenizer_config",
+     "path": "tokenizer_config.json",
+     "url": "https://huggingface.co/spdf-format/valen-0.8b-onnx/resolve/main/tokenizer_config.json",
+     "bytes": 1139,
+     "sha256": "e98f1901ac6f0adff67b1d540bfa0c36ac1a0cf59eb72ed78146ef89aafa1182"
+    },
+    {
+     "role": "config",
+     "path": "config.json",
+     "url": "https://huggingface.co/spdf-format/valen-0.8b-onnx/resolve/main/config.json",
+     "bytes": 3333,
+     "sha256": "8a6a766acfe35a6eb3d373e90c43af0f08dbd44301251df71e18b1b5b5381c08"
+    }
+   ],
+   "modalities": [
+    "text"
+   ],
+   "platforms": [
+    "web"
+   ],
+   "min_memory_mb": 3000,
+   "space_version": null,
+   "judge_calibration": {
+    "choice": {
+     "temperature": 1.0,
+     "prior_correction": false
+    },
+    "noul": {
+     "temperature": 1.0,
+     "prior_correction": false
+    }
+   },
+   "notes": "Exportación propia de Valen-Team/Valen-0.8B (rev. 4c858f2e) sobre el grafo de onnx-community/Qwen3.5-0.8B-ONNX; sin publicar todavía: constrúyela con models/valen y regístrala con ModelManager::import_local.",
+   "published": false,
+   "dtype": "static1024_q4"
   }
  ],
  "recommendations": {
@@ -1588,6 +1892,7 @@
     "gemma-4-e2b-it-gguf-q4_k_m"
    ],
    "judge": [
+    "valen-0.8b-onnx-int8",
     "gemma-4-e4b-it-gguf-q4_k_m",
     "gemma-4-e2b-it-gguf-q4_k_m"
    ]
@@ -1601,6 +1906,7 @@
     "gemma-4-e2b-it-gguf-q4_k_m"
    ],
    "judge": [
+    "valen-0.8b-onnx-int8",
     "gemma-4-e4b-it-gguf-q4_k_m",
     "gemma-4-e2b-it-gguf-q4_k_m"
    ]
@@ -1614,6 +1920,7 @@
     "gemma-4-e2b-it-gguf-q4_k_m"
    ],
    "judge": [
+    "valen-0.8b-onnx-int8",
     "gemma-4-e4b-it-gguf-q4_k_m",
     "gemma-4-e2b-it-gguf-q4_k_m"
    ]
@@ -1651,7 +1958,8 @@
     "gemma-4-e2b-it-web"
    ],
    "judge": [
-    "gemma-4-e2b-it-web"
+    "valen-0.8b-onnx-static1024-q4",
+    "gemma-4-e2b-it-onnx-q4f16"
    ]
   }
  }

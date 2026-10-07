@@ -291,7 +291,8 @@ export class Judge {
       const head = await ort.InferenceSession.create(await file("head"), { executionProviders: ["wasm"] });
       useManagerCache(T, mm);
       const tokenizer = (await T.AutoTokenizer.from_pretrained(e.source.replace("https://huggingface.co/", ""), { revision: e.revision })) as unknown as ValenSessions["tokenizer"];
-      return new Judge(new ValenEngine({ ort: ort as never, backbone, head, tokenizer }, choice, noul), e);
+      const staticLength = Number(/static(\d+)/.exec(e.dtype ?? "")?.[1] ?? 0) || undefined;
+      return new Judge(new ValenEngine({ ort: ort as never, backbone, head, tokenizer, staticLength }, choice, noul), e);
     }
     if (e.engine === "transformers.js") {
       const T = opts.transformers ?? (await import("@huggingface/transformers"));

@@ -96,7 +96,9 @@ fn main() {
             cfg.define("CMAKE_OSX_SYSROOT", "iphoneos");
         }
         cfg.define("CMAKE_OSX_ARCHITECTURES", if target.starts_with("x86_64") { "x86_64" } else { "arm64" });
-        cfg.define("CMAKE_OSX_DEPLOYMENT_TARGET", "16.4");
+        // keep llama.cpp and the final Rust link on the same minimum iOS (Tauri sets IPHONEOS_DEPLOYMENT_TARGET)
+        println!("cargo:rerun-if-env-changed=IPHONEOS_DEPLOYMENT_TARGET");
+        cfg.define("CMAKE_OSX_DEPLOYMENT_TARGET", env::var("IPHONEOS_DEPLOYMENT_TARGET").unwrap_or_else(|_| "16.4".into()));
     }
     if android {
         let ndk = env::var("ANDROID_NDK_HOME").or_else(|_| env::var("ANDROID_NDK_ROOT")).or_else(|_| env::var("NDK_HOME"))
@@ -170,11 +172,9 @@ fn main() {
         }
     }
     if apple {
-        for fw in ["Foundation", "Metal", "MetalKit"] {
+        // Accelerate (vDSP) is used by ggml-cpu on every Apple platform, iOS included
+        for fw in ["Foundation", "Metal", "MetalKit", "Accelerate"] {
             println!("cargo:rustc-link-lib=framework={fw}");
-        }
-        if !ios {
-            println!("cargo:rustc-link-lib=framework=Accelerate");
         }
         println!("cargo:rustc-link-lib=dylib=c++");
     } else if android {
@@ -185,8 +185,16 @@ fn main() {
             "x86_64" => "x86_64-linux-android",
             _ => "i686-linux-android",
         };
+        // only the two C++ runtime archives: the generic sysroot dir also holds a static libc.a,
+        // which the linker would prefer over the API-level libc.so (and the binary then crashes)
         if let Some(host) = std::fs::read_dir(PathBuf::from(&ndk).join("toolchains/llvm/prebuilt")).ok().and_then(|mut d| d.next()).and_then(|e| e.ok()) {
-            println!("cargo:rustc-link-search=native={}", host.path().join("sysroot/usr/lib").join(triple).display());
+            let src = host.path().join("sysroot/usr/lib").join(triple);
+            let dir = PathBuf::from(env::var("OUT_DIR").unwrap()).join("ndk-cxx");
+            std::fs::create_dir_all(&dir).unwrap();
+            for lib in ["libc++_static.a", "libc++abi.a"] {
+                std::fs::copy(src.join(lib), dir.join(lib)).expect("copy NDK C++ runtime");
+            }
+            println!("cargo:rustc-link-search=native={}", dir.display());
         }
         println!("cargo:rustc-link-lib=static=c++_static");
         println!("cargo:rustc-link-lib=static=c++abi");

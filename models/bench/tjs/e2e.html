@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><title>spdf-infer-web end to end</title>
+<script type="importmap">
+{ "imports": {
+  "@huggingface/transformers": "/tjs/transformers.js",
+  "onnxruntime-web/webgpu": "/ort/ort.webgpu.bundle.min.mjs",
+  "onnxruntime-web": "/ort/ort.webgpu.bundle.min.mjs",
+  "@noble/hashes/sha2.js": "/noble/sha2.js",
+  "@noble/hashes/utils.js": "/noble/utils.js",
+  "@mediapipe/tasks-genai": "/mp/genai_bundle.mjs",
+  "spdf-infer-web": "/web/index.js"
+} }
+</script>
+</head>
+<body>
+<pre id="log"></pre>
+<script type="module">
+import * as T from "@huggingface/transformers";
+import { ModelManager, Embedder, Generator, Judge, isCompatible, webgpuAvailable } from "spdf-infer-web";
+const log = (msg) => { document.getElementById("log").textContent += msg + "\n"; fetch("/log", { method: "POST", body: JSON.stringify({ msg }) }); };
+const post = (r) => fetch("/result", { method: "POST", body: JSON.stringify(r) });
+const step = async (name, f) => { const t = performance.now(); const r = await f(); const ms = performance.now() - t; log(`${name}: ${ms.toFixed(0)} ms`); const plain = r && Object.getPrototypeOf(r) === Object.prototype; await post({ step: name, ms, ...(plain ? r : {}) }); return r; };
+try {
+  const cfg = await (await fetch("/config.json")).json();
+  T.env.backends.onnx.wasm.wasmPaths = "/ort/";
+  const mm = new ModelManager({ store: "opfs", mirror: location.origin + "/hf" });
+  await post({ webgpu: await webgpuAvailable(), opfs: !!navigator.storage?.getDirectory });
+  const dl = async (id) => step(`download ${id}`, async () => {
+    let last = 0;
+    await mm.download(id, (p) => { if (p.overallDone - last > 200e6) { last = p.overallDone; log(`  ${id} ${(p.overallDone / 1e6).toFixed(0)}/${(p.overallTotal / 1e6).toFixed(0)} MB`); } });
+    return { downloaded: await mm.isDownloaded(id), bytes: mm.entry(id).bytes };
+  });
+  // embeddings
+  await dl(cfg.embed);
+  const e = await step("Embedder.load", () => Embedder.load(cfg.embed, { manager: mm, transformers: T }));
+  const [q] = await e.embed(["¿Quién es Dulcinea del Toboso?"], { task: "query" });
+  const docs = await e.embed(["Dulcinea del Toboso es la dama imaginaria de don Quijote.", "La fotosíntesis transforma la luz en energía química."], { task: "document" });
+  const dot = (a, b) => a.reduce((s, x, i) => s + x * b[i], 0);
+  await step("embed text", async () => ({ dims: q.length, scores: docs.map((d) => dot(q, d)), space: e.space(), compatible: isCompatible(e.space(), e.space()) }));
+  const img = await (await fetch("/media/images/" + cfg.image)).blob();
+  const iv = await step("embed image", async () => ({ v: Array.from(await e.embedImage(img)) }));
+  const wav = new Uint8Array(await (await fetch("/media/audio/" + cfg.audio)).arrayBuffer());
+  const dv = new DataView(wav.buffer); const pcm = new Float32Array((wav.length - 44) / 2); for (let i = 0; i < pcm.length; i++) pcm[i] = dv.getInt16(44 + 2 * i, true) / 32768;
+  await step("embed audio", async () => ({ v: Array.from(await e.embedAudio(pcm)) }));
+  const [q256] = await e.embed(["¿Quién es Dulcinea del Toboso?"], { task: "query", dims: 256 });
+  await step("MRL 256", async () => ({ dims: q256.length, space: e.space(256) }));
+  await e.dispose();
+  // generation
+  await dl(cfg.gen);
+  const g = await step("Generator.load", () => Generator.load(cfg.gen, { manager: mm, wasmBase: "/mp/wasm", temperature: 0, topK: 1 }));
+  let streamed = 0;
+  await step("generate", async () => { const s = await g.generate("¿Quién escribió el Quijote? Responde en una frase.", { maxTokens: 60 }, () => { streamed++; }); return { ...s, chunks: streamed }; });
+  g.close();
+  // judge
+  await dl(cfg.judge);
+  const j = await step("Judge.load", () => Judge.load(cfg.judge, { manager: mm, transformers: T }));
+  await step("judge support", () => j.support("Cervantes llama Rocinante al caballo de don Quijote.", "…y así, después de muchos nombres que formó, borró y quitó, al fin le vino a llamar Rocinante, nombre a su parecer alto, sonoro y significativo."));
+  await step("judge relevance", async () => ({ relevance: await j.relevance("el caballo de don Quijote", "…al fin le vino a llamar Rocinante…") }));
+  await j.dispose();
+  await post({ done: true });
+} catch (err) {
+  log("ERROR " + (err?.stack ?? err));
+  await post({ error: String(err?.stack ?? err) });
+}
+</script>
+</body>
+</html>

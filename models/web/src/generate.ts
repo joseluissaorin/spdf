@@ -28,6 +28,10 @@ export interface GeneratorOptions {
   wasmBase?: string;
   /** Context window (prompt + answer) in tokens. */
   maxTokens?: number;
+  /** Sampling is fixed when the model loads (MediaPipe cannot change it without reloading). */
+  temperature?: number;
+  topK?: number;
+  seed?: number;
 }
 
 type LlmInference = {
@@ -54,43 +58,52 @@ export class Generator {
     const llm = (await genai.LlmInference.createFromOptions(fileset, {
       baseOptions: { modelAssetBuffer: reader },
       maxTokens: opts.maxTokens ?? 4096,
-      topK: 64,
-      temperature: 1.0,
-      randomSeed: 0xc0ffee,
+      topK: opts.topK ?? 64,
+      temperature: opts.temperature ?? 1.0,
+      randomSeed: opts.seed ?? 0xc0ffee,
     } as never)) as unknown as LlmInference;
     return new Generator(llm, id);
   }
 
   async chat(messages: Message[], params: GenParams = {}, onToken?: (t: string) => boolean | void): Promise<GenStats> {
-    const prompt = formatGemma4(messages, true);
-    await this.llm.setOptions({ topK: params.topK ?? 64, temperature: params.temperature ?? 1.0, randomSeed: params.seed ?? 0xc0ffee,
-      maxTokens: params.maxTokens ? this.llm.sizeInTokens(prompt) + params.maxTokens : undefined });
+    // MediaPipe adds <bos> itself; temperature/topK/seed were fixed at load (GeneratorOptions)
+    const prompt = formatGemma4(messages, true).replace(/^<bos>/, "");
     const promptTokens = this.llm.sizeInTokens(prompt);
     const t0 = performance.now();
     let first = 0;
     let text = "";
     let stopReason: GenStats["stopReason"] = "eog";
     const stops = params.stop ?? [];
+    let pieces = 0;
+    // never call back into MediaPipe from inside its progress callback (it is not reentrant):
+    // cancellation is deferred to a task
+    const cancel = () => setTimeout(() => this.llm.cancelProcessing?.(), 0);
     await this.llm.generateResponse(prompt, (partial) => {
       if (!first) first = performance.now();
       if (stopReason !== "eog") return;
       text += partial;
+      pieces++;
       const cut = stops.map((s) => text.indexOf(s)).filter((i) => i >= 0);
       if (cut.length) {
         text = text.slice(0, Math.min(...cut));
         stopReason = "stop";
-        this.llm.cancelProcessing?.();
+        cancel();
         return;
       }
       if (onToken && onToken(partial) === false) {
         stopReason = "callback";
-        this.llm.cancelProcessing?.();
+        cancel();
+        return;
+      }
+      // streamed pieces are about one token each; the exact count is taken after generation
+      if (params.maxTokens && pieces >= params.maxTokens) {
+        stopReason = "max_tokens";
+        cancel();
       }
     });
     const end = performance.now();
     const generatedTokens = this.llm.sizeInTokens(text);
     const genMs = end - (first || end);
-    if (params.maxTokens && generatedTokens >= params.maxTokens) stopReason = "max_tokens";
     return { text, promptTokens, generatedTokens, promptMs: (first || end) - t0, genMs, tokensPerS: genMs > 0 ? generatedTokens / (genMs / 1000) : 0, stopReason };
   }
 

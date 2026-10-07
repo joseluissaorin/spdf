@@ -35,6 +35,8 @@ export interface CatalogEntry {
   dtype?: string;
   judge_calibration?: { choice: { temperature: number; prior_correction: boolean }; noul: { temperature: number; prior_correction: boolean } } | null;
   notes?: string | null;
+  /** false: not on the server yet (see notes). */
+  published?: boolean;
 }
 
 export interface Manifest {
@@ -211,7 +213,7 @@ export class ModelManager {
     let last: CatalogEntry | undefined;
     for (const id of prefs) {
       const e = this.entry(id);
-      if (!e) continue;
+      if (!e || e.published === false || !WEB_ENGINES.includes(e.engine)) continue;
       if (e.min_memory_mb <= (mem * 1024) / 2) return e;
       last = e;
     }
@@ -251,6 +253,7 @@ export class ModelManager {
   async download(id: string, onProgress?: (p: Progress) => void): Promise<void> {
     const e = this.entry(id);
     if (!e) throw new Error(`model not in the catalog: ${id}`);
+    if (e.published === false && !this.mirror) throw new Error(`${id} is not published yet (${e.notes ?? "see the manifest notes"})`);
     const overallTotal = e.files.reduce((s, f) => s + f.bytes, 0);
     let before = 0;
     for (const f of e.files) {

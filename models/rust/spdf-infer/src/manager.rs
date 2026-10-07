@@ -261,6 +261,14 @@ impl ModelManager {
         let mut last = None;
         for id in prefs {
             if let Some(e) = self.entry(id) {
+                let runnable = match e.engine.as_str() {
+                    "llama.cpp" => true,
+                    "onnxruntime" => cfg!(feature = "valen-onnx"),
+                    _ => false,
+                };
+                if !e.published || !runnable {
+                    continue;
+                }
                 if e.min_memory_mb <= budget_mb {
                     return Some(e.clone());
                 }

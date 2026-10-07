@@ -34,7 +34,7 @@ impl Mtmd {
         backend_init();
         let c = CString::new(path.to_string_lossy().as_bytes()).map_err(|_| Error::msg("path has NUL"))?;
         let mut p = unsafe { sys::mtmd_context_params_default() };
-        p.use_gpu = gpu;
+        p.use_gpu = gpu && crate::llama::GPU_USABLE;
         p.print_timings = false;
         p.warmup = false;
         if image_max_tokens > 0 {
