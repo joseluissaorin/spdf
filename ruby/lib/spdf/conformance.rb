@@ -160,6 +160,10 @@ module Spdf
         return "expected #{want.length} lines, got #{got.length}" if want.length != got.length
 
         nil
+      when "cite_passage"
+        Document.open(path(input["file"])) do |d|
+          self.class.compare(ex, d.cite_passage(input["fragment"], input["quote"], locale: input.fetch("locale", "en")), "cite_passage")
+        end
       when "export_structure"
         Document.open(path(input["file"])) { |d| self.class.compare(ex["pages"], pages(d, input["format"]), "pages") }
       when "quantize"

@@ -55,6 +55,7 @@ doc.search_hybrid("ciego jarro", query, space: "embeddinggemma-2@768")  # RRF, k
 Spdf::AnchorUri.parse("spdf:sha256-3f2a…#p=29&f=21&char=118,301")
 # {"docref" => "sha256-3f2a…", "locator" => {"p" => 29, "f" => "21", "char" => [118, 301]}}
 doc.locate("spdf:sha256-3f2a…#p=29")         # {"document", "units", "fragments", "char", "xywh"} (SPEC §5.4)
+doc.cite_passage("f12", "molinos de viento")  # {"text", "uri"}: cites the unit the quote lies in (§18.2)
 File.write("lazarillo.json", doc.csl_json)   # Zotero, Pandoc, citeproc (id = BibTeX key)
 File.write("lazarillo.bib", doc.bibtex)      # @book{lazarillo1554, ... (SPEC §19)
 Spdf::Bibliography.csl_items([meta], anchor, anchor_end)   # adds CSL "label" and "locator"

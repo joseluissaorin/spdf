@@ -270,22 +270,101 @@ module Spdf
         last = timed.last
         hits = [last["id"]] if last && last["anchor"]["t1"].is_a?(Numeric) && last["anchor"]["t1"] == l["t"][0]
       end
-      frags = fragments.select { |f| anchor_matches?(rule, l, f["anchor"], nil) }
+      frags = fragments.select do |f|
+        anchor_matches?(rule, l, f["anchor"], nil) || (f["anchor_end"].is_a?(Hash) && anchor_matches?(rule, l, f["anchor_end"], nil))
+      end
       if hits.empty? && !frags.empty?
         wanted = frags.map { |f| f["unit"] }
         hits = us.select { |u| wanted.include?(u["id"]) }.map { |u| u["id"] }
       end
       if l.key?("char")
         c, dd = l["char"]
-        frags = frags.select do |f|
-          ch = f["anchor"].is_a?(Hash) ? f["anchor"]["chars"] : nil
-          next false unless hits.include?(f["unit"]) && ch.is_a?(Array) && ch.length == 2
+        first = hits.first # char refers to the text of the first unit
+        overlaps = lambda do |x|
+          ch = x.is_a?(Hash) ? x["chars"] : nil
+          next false unless ch.is_a?(Array) && ch.length == 2
 
           a, b = ch
           c < dd ? (a < dd && c < b) : (a <= c && c < b)
         end
+        frags = frags.select do |f|
+          next true if f["unit"] == first && overlaps.call(f["anchor"])
+
+          eu = Document.end_unit(us, f["unit"], f["anchor_end"])
+          !eu.nil? && eu["id"] == first && overlaps.call(f["anchor_end"])
+        end
       end
       out.merge("units" => hits, "fragments" => frags.map { |f| f["id"] })
+    end
+
+    # Anchor without chars and region: the identity used to find end units (§4.4).
+    def self.identity(a) = a.is_a?(Hash) ? a.except("chars", "region") : a
+
+    # The unit where a fragment ends: the first unit after its start unit whose anchor
+    # equals anchor_end once chars and region are removed (SPEC §4.4).
+    def self.end_unit(units, start_id, anchor_end)
+      return nil unless anchor_end.is_a?(Hash)
+
+      want = identity(anchor_end)
+      after = false
+      units.each do |u|
+        if u["id"] == start_id
+          after = true
+          next
+        end
+        return u if after && json_equal?(identity(u["anchor"]), want)
+      end
+      nil
+    end
+
+    # JSON equality (10 == 10.0, but "1" != 1).
+    def self.json_equal?(a, b)
+      return a.keys.sort == b.keys.sort && a.all? { |k, v| json_equal?(v, b[k]) } if a.is_a?(Hash) && b.is_a?(Hash)
+      return a.length == b.length && a.each_index.all? { |i| json_equal?(a[i], b[i]) } if a.is_a?(Array) && b.is_a?(Array)
+      return a == b if a.is_a?(Numeric) && b.is_a?(Numeric) && a != true && b != true
+
+      a.eql?(b) || (a.nil? && b.nil?)
+    end
+
+    def self.matter_of(a)
+      m = a.is_a?(Hash) ? a["matter"] : nil
+      m.is_a?(String) ? m : "body"
+    end
+
+    # Cites a quotation taken from a fragment by the unit(s) it lies in (SPEC §18.2): {"text", "uri"}.
+    def cite_passage(fragment_id, quote, locale: "es")
+      us = units
+      by_id = us.to_h { |u| [u["id"], u] }
+      f = fragment(fragment_id) or raise Error.new("E040", "unknown fragment #{fragment_id}")
+      q = Text.nfc(quote)
+      u1 = by_id[f["unit"]] or raise Error.new("E040", "fragment #{fragment_id} has no unit")
+      a = f["anchor"].is_a?(Hash) ? f["anchor"] : {}
+      c1 = a["chars"] || [0, u1["text"].to_s.length]
+      seg1 = u1["text"].to_s[c1[0]...c1[1]].to_s
+      u2 = Document.end_unit(us, u1["id"], f["anchor_end"])
+      seg2 = ""
+      c2 = nil
+      if u2
+        c2 = f["anchor_end"]["chars"] || [0, u2["text"].to_s.length]
+        seg2 = u2["text"].to_s[c2[0]...c2[1]].to_s
+      end
+      strip = ->(x) { x.except("chars", "region") }
+      if (pos = seg1.index(q))
+        i = pos + c1[0]
+        anchor = strip.call(u1["anchor"]).merge("chars" => [i, i + q.length])
+        fin = nil
+      elsif u2 && (pos = seg2.index(q))
+        i = pos + c2[0]
+        anchor = strip.call(u2["anchor"]).merge("chars" => [i, i + q.length])
+        fin = nil
+      elsif u2 && f["text"].to_s.include?(q)
+        anchor = strip.call(u1["anchor"])
+        fin = strip.call(u2["anchor"])
+      else
+        raise Error.new("E040", "the quote is not in the fragment")
+      end
+      { "text" => Cite.short(metadata, anchor, fin, locale: locale),
+        "uri" => AnchorUri.format("sha256-#{document["source_sha256"]}", anchor, fin) }
     end
 
     def cite(anchor, anchor_end = nil, locale: "es") = Cite.short(metadata, anchor, anchor_end, locale: locale)

@@ -110,15 +110,18 @@ module Spdf
       a["source"] == "inferred" ? "[#{p}]" : p.to_s
     end
 
+    # An end without a printed folio never takes part in a range (SPEC §18.1).
     def page_locator(a, e, es, one, many)
-      la = label(a)
-      return(es ? "s. p." : "n. pag.") if la.nil?
+      ends = [a]
+      ends << e if e && e["type"] == a["type"]
+      with_folio = ends.reject { |x| x["printed"].nil? }
+      return(es ? "s. p." : "n. pag.") if with_folio.empty?
 
-      if e && e["type"] == a["type"]
-        lb = label(e)
-        return "#{many} #{la}-#{lb}" if lb && e["printed"] != a["printed"]
-      end
-      "#{one} #{la}"
+      first = with_folio.first
+      last = with_folio.last
+      return "#{many} #{label(first)}-#{label(last)}" if with_folio.length > 1 && last["printed"] != first["printed"]
+
+      "#{one} #{label(first)}"
     end
 
     def locator(a, e, es)

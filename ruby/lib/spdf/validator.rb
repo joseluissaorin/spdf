@@ -63,6 +63,8 @@ module Spdf
            end
       return ["E040", "#{t} anchor misses or mistypes a required member"] unless ok
 
+      return ["E040", "matter must be a string"] if a.key?("matter") && !a["matter"].is_a?(String)
+
       if a.key?("region")
         r = a["region"]
         return ["E040", "bad region"] unless r.is_a?(Hash) && %w[x y w h].all? { |k| num[r[k]] }
@@ -223,6 +225,27 @@ module Spdf
           err("E081", "content_sha256 does not match the canonical dump", "spdf_meta.content_sha256")
         elsif meta.key?("signature")
           check_signature(meta)
+        end
+      end
+
+      # W103: fragments that cross matter, or between a page with a folio and one without (§4.4).
+      if ok.call("units", "id", "ord", "anchor") && ok.call("fragments", "id", "unit", "anchor", "anchor_end")
+        us = db.execute("SELECT id, anchor FROM units ORDER BY ord, id").map do |id, a|
+          { "id" => id, "anchor" => (JSON.parse(a.to_s) rescue nil) }
+        end
+        by_id = us.to_h { |u| [u["id"], u] }
+        db.execute("SELECT id, unit, anchor_end FROM fragments WHERE anchor_end IS NOT NULL ORDER BY n").each do |fid, unit, aend|
+          u1 = by_id[unit]
+          end_anchor = (JSON.parse(aend.to_s) rescue nil)
+          u2 = u1 ? Document.end_unit(us, unit, end_anchor) : nil
+          next unless u1 && u2 && u1["anchor"].is_a?(Hash) && u2["anchor"].is_a?(Hash)
+
+          a1 = u1["anchor"]
+          a2 = u2["anchor"]
+          folio_change = a1["type"] == "page" && a2["type"] == "page" && a1["printed"].nil? != a2["printed"].nil?
+          if Document.matter_of(a1) != Document.matter_of(a2) || folio_change
+            warn("W103", "fragment crosses matter, or between a page with a folio and one without", "fragments/#{fid}")
+          end
         end
       end
 
