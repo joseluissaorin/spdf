@@ -1,0 +1,6 @@
+{
+  "antiguo": {"title": "Sala de mugeres", "family": "Torres Villarroel", "year": 1737, "place": "Salamanca", "language": "es", "type": ["book"]},
+  "nist": {"title": "Digital Identity Guidelines", "family": "Temoshok", "year": 2025, "publisher": "National Institute of Standards and Technology", "language": "en", "type": ["report", "standard"], "DOI": "10.6028/nist.sp.800-63b-4"},
+  "librivox": {"title": "Dos cenas", "family": "Pardo Bazán", "language": "es", "container": "Cuentos de Navidad y Reyes", "speaker": "Eva Folch"},
+  "gutenberg": {"title": "La tía Tula", "family": "Unamuno", "year": 1921, "publisher": "Renacimiento", "place": "Madrid", "language": "es", "type": ["book"]}
+}

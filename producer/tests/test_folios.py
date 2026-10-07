@@ -18,7 +18,7 @@ def book(romans=6, body=60, seed=1, read=0.6, ocr_errors=0.0, plates_after=(), c
         phys += 1
         f = int_to_roman(i, upper)
         p = {"physical": phys, "text": TEXT}
-        if i > 1 and rnd.random() < read:
+        if i == romans // 2 + 1 or (i > 1 and rnd.random() < read):  # at least one roman is seen
             p[where] = f
         pages.append(p)
         truth.append(f)
@@ -82,6 +82,15 @@ def test_running_head_numbers():
 def test_upper_romans_stay_upper():
     _, r = accuracy(*book(upper=True, seed=7, read=0.9))
     assert any(p.printed == "IV" for p in r.pages)
+
+
+def test_unread_preliminaries_get_no_folio():
+    pages, truth = book(romans=4, seed=2, read=0.9)
+    for p in pages[1:5]:
+        p.pop("footer", None)  # no roman is seen
+    r = deduce_folios(pages)
+    assert [p.printed for p in r.pages[1:5]] == [None] * 4
+    assert r.pages[5].printed == "1"
 
 
 def test_no_reading_invents_nothing():

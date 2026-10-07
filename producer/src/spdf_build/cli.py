@@ -39,6 +39,8 @@ def _add_build_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--dtype", choices=["f32", "f16", "i8"], default="f32")
     p.add_argument("--embed-source", action="store_true", help="ship the original bytes inside the file (blob:source)")
     p.add_argument("--max-units", type=int, help="only the first N units (tests, previews)")
+    p.add_argument("--save-reading", help="write what the page readers saw to this JSON (to replay later steps)")
+    p.add_argument("--reuse-reading", help="take the pages from such a JSON instead of calling the vision engine")
     p.add_argument("--concurrency", type=int, default=6)
     p.add_argument("--json", action="store_true", help="print the build report as JSON")
     p.add_argument("-q", "--quiet", action="store_true")
@@ -100,7 +102,8 @@ def cmd_build(args) -> int:
     opts = Options(offline=args.offline, use_labels=not args.no_labels, language=args.language, metadata=user, rights=rights,
                    context=not args.no_context, figures=not args.no_figures, page_images=args.page_images,
                    image_vectors=args.image_vectors, dtype=args.dtype, embed_source=args.embed_source, max_units=args.max_units,
-                   force_vision=args.force_vision, concurrency=args.concurrency, log=log)
+                   force_vision=args.force_vision, concurrency=args.concurrency, save_reading=args.save_reading,
+                   reuse_reading=args.reuse_reading, log=log)
     out = args.output
     if not out:
         first = args.inputs[0]

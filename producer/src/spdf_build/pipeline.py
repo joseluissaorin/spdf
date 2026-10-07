@@ -75,6 +75,8 @@ class Options:
     embed_source: bool = False
     max_units: Optional[int] = None
     force_vision: bool = False
+    save_reading: Optional[str] = None  # write what the readers saw (JSON) to replay later steps
+    reuse_reading: Optional[str] = None  # skip the vision engine: take the pages from such a JSON
     log: Callable[[str], None] = lambda m: None
 
 
@@ -331,8 +333,35 @@ def build(inputs: list[str], out: str, engines: Engines, opts: Options) -> Repor
 
     hint = src.hints.get("title") or ""
     t = time.time()
-    vstats = read_with_vision(src, engines, opts, hint)
+    if opts.reuse_reading:
+        import json as _json
+
+        saved = {p["ord"]: p for p in _json.loads(Path(opts.reuse_reading).read_text("utf-8"))["units"]}
+        for u in src.units:
+            p = saved.get(u.ord)
+            if p and u.needs_vision:
+                for k in ("text", "notes", "header", "footer", "folio_seen", "empty", "reader", "confidence", "language"):
+                    setattr(u, k, p.get(k))
+                u.titles = [tuple(x) for x in p.get("titles") or []]
+                u.figures = [FigureRead(caption=f.get("caption") or "", description=f.get("description") or "", region=f.get("region"))
+                             for f in p.get("figures") or []]
+                u.extra["reused"] = True
+        prov.append(Provenance("read", provider="spdf-build/reuse", detail={"from": Path(opts.reuse_reading).name,
+                                                                            "pages": sum(1 for u in src.units if u.extra.get("reused"))}))
+    vstats = read_with_vision(src, engines, opts, hint) if not opts.reuse_reading else {"pages": 0}
+    if opts.save_reading:
+        import json as _json
+
+        Path(opts.save_reading).write_text(_json.dumps({"source_sha256": src.sha256, "units": [
+            {"ord": u.ord, "text": u.text, "notes": u.notes, "header": u.header, "footer": u.footer, "folio_seen": u.folio_seen,
+             "titles": [list(t) for t in u.titles], "figures": [{"caption": f.caption, "description": f.description, "region": f.region}
+                                                                for f in u.figures if f.region],
+             "empty": u.empty, "reader": u.reader, "confidence": u.confidence, "language": u.language}
+            for u in src.units if u.needs_vision]}, ensure_ascii=False), "utf-8")
     lap("vision", t)
+    seen = [[u.ord, u.folio_seen] for u in src.units if u.folio_seen]
+    if seen:
+        vstats["folio_seen"] = seen  # what the readers saw printed, before the folio deduction
     if vstats["pages"]:
         prov.append(Provenance("read", provider=getattr(engines.vision, "name", "none") if engines.vision else "none",
                                model=getattr(engines.vision, "model", None), detail=vstats, ms=int(timings["vision"] * 1000)))

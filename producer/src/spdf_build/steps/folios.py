@@ -633,6 +633,18 @@ def _assemble(prep: _Prep, seq: SequenceResult) -> FolioResult:
         warnings.append("Only one folio reading and it is weak: not used.")
         anchors = []
 
+    # A roman zone needs two readings or a strong one: a lone «i» at the edge of the body text is
+    # OCR noise far more often than a preliminary page (Tesseract on a 1737 title page).
+    rom = [a for a in anchors if a[1].roman]
+    if len(rom) == 1 and rom[0][1].weight < 0.85 and rom[0][1].source != "judge":
+        anchors = [a for a in anchors if not a[1].roman]
+        warnings.append("A single weak roman reading was ignored.")
+        if not anchors:
+            warnings.append("No reliable folio reading: pages stay without a printed number.")
+            out = [PageFolio(p["physical"], None, False, "none", 0.0, "body", cands[i]) for i, p in enumerate(pages)]
+            return FolioResult(out, "none", prep.layout, prep.foliation, None, pages[0]["physical"] if pages else 1,
+                               "sequence", 0, warnings)
+
     texts = {i + 1: (p.get("text") or "")[:300] for i, p in enumerate(pages)}
     confs = {i + 1: p["confidence"] for i, p in enumerate(pages) if isinstance(p.get("confidence"), (int, float))}
     markers = detect_markers(texts, strict=True)
@@ -686,10 +698,11 @@ def _assemble(prep: _Prep, seq: SequenceResult) -> FolioResult:
         if hi < lo:
             return
         if not zone:
-            for i in range(lo, hi + 1):
-                value[i] = (i - lo) * step + 1
-                conf[i] = 0.4
-                origin[i] = "inferred"
+            # A zone without a single reading (unnumbered preliminaries before the first «Pag. 1») gets no
+            # folio: Scholaris/v3 counted them as i, ii, iii…, but a citation only prints what has been seen.
+            if hi >= lo:
+                warnings.append(f"Physical pages {pages[lo]['physical']}-{pages[hi]['physical']}: {'roman' if is_roman else 'arabic'} "
+                                f"zone without any reading, left without folio.")
             return
         in_range = [a for a in zone if lo <= a[0] <= hi]
         if not in_range:

@@ -215,6 +215,8 @@ class Record:
         self.prov: dict[str, dict] = {}
 
     def put(self, key: str, value: Any, source: str, confidence: float, force: bool = False):
+        if isinstance(value, str):
+            value = re.sub(r"\s+", " ", value).strip()
         if value in (None, "", [], {}):
             return
         cur = self.prov.get(key)
@@ -411,6 +413,7 @@ def build_metadata(source, units, kind: str, language: Optional[str], llm=None, 
         rec.prov["title"] = {"source": "filename", "confidence": 0.3}
     sub = rec.fields.get("_subtitle")
     if sub and fold(sub) not in fold(title):
+        title = title.rstrip(" :.;")
         item["title"] = f"{title}: {sub}"
         item["title-short"] = title
     else:
