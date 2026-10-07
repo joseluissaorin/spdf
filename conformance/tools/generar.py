@@ -40,7 +40,7 @@ import spdfref as R  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 CONF = HERE.parent
-SUITE_VERSION = "0.2.0"
+SUITE_VERSION = "0.3.0"
 # Public test key. NEVER use it for anything but this suite.
 TEST_SECRET = hashlib.sha256(b"SPDF conformance test key: public, never use it for real signatures").digest()
 SIGNED = {"quijote"}
@@ -226,6 +226,9 @@ def build_invalid(out: Path, sources: dict) -> list[tuple[str, dict]]:
     expect("W102-unit-count", warnings=["W102"])
     _mutate(fresh("W105-newer-minor"), "PRAGMA user_version = 510")
     expect("W105-newer-minor", warnings=["W105"], version="5.1")
+    _mutate(fresh("W105-newer-minor-new-anchor-type"), "PRAGMA user_version = 510",
+            "UPDATE units SET anchor = '{\"n\":2,\"type\":\"stanza\"}' WHERE id = 'u2'")
+    expect("W105-newer-minor-new-anchor-type", warnings=["E041", "W105"], version="5.1")
     return made
 
 

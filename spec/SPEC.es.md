@@ -1359,7 +1359,9 @@ validación:
    `unidades`, `fragmentos` y `fragmentos_fts` (E010 por cada una) y que no hay ningún
    disparador ni vista aparte de los tres disparadores tolerados (E020); *fin*.
 4. Un fichero 5.x envuelto en gzip: E003 en los avisos. Una versión menor superior a 0:
-   W105.
+   W105; en ese fichero, los tipos de ancla desconocidos (E041) y los dtype desconocidos
+   (E032) se notifican en los avisos en lugar de en los errores, porque una versión menor
+   posterior puede definirlos.
 5. Disparadores, vistas y tablas virtuales ajenas: E020 por cada uno.
 6. Tablas obligatorias (E010 por cada una) y columnas obligatorias (E011 por cada una).
 7. Claves de `spdf_meta` (E012 por cada una).
@@ -1432,8 +1434,10 @@ la versión. `user_version` la codifica ([§2.1](#container)).
 - Una versión **menor** (5.1, 5.2…) solo añade cosas OPCIONALES: tablas, columnas, claves
   de `spdf_meta`, miembros o tipos de ancla, miembros de metadatos, avisos o errores de
   validación para cosas que ya estaban prohibidas. Un lector 5.0 lee todos los ficheros
-  5.x e ignora lo que no conoce; PUEDE emitir un aviso (W105). Un escritor 5.x que no usa
-  nada nuevo DEBERÍA escribir `user_version` 500.
+  5.x e ignora lo que no conoce; PUEDE emitir un aviso (W105). Los validadores notifican
+  los tipos de ancla y los dtype de una versión menor más reciente como avisos, no como
+  errores ([§22.1](#validation)). Un escritor 5.x que no usa nada nuevo DEBERÍA escribir
+  `user_version` 500.
 - Una versión **mayor** (6.0) puede cambiar o eliminar cosas. Los lectores DEBEN
   rechazar las versiones mayores que no conocen (E002) y DEBERÍAN seguir leyendo las
   versiones mayores anteriores (como la 5.0 lee la 4.x).
@@ -1454,6 +1458,10 @@ Los cambios se proponen y se deciden mediante el proceso de RFC de `spec/rfcs/` 
 - Tipo de medio: `application/vnd.spdf` (registro ante la IANA en preparación; plantilla
   en `governance/drafts/`). Parámetro OPCIONAL `version` (`"5.0"`). Codificación:
   binaria.
+- Identificadores de fragmento: en un recurso de tipo `application/vnd.spdf`, el
+  identificador de fragmento es la regla `params` del [§5.1](#anchor-uri), con el
+  significado que tiene en una URI de ancla para el documento de ese recurso:
+  `https://example.org/quijote.spdf#p=5&f=1r`.
 - Extensión: `.spdf`. Ficheros auxiliares: `.spdfa.json` y `.spdfl.json`, servidos como
   `application/json` (o `application/ld+json` para las anotaciones).
 - Números mágicos: los bytes 0–15 son `53 51 4C 69 74 65 20 66 6F 72 6D 61 74 20 33 00`

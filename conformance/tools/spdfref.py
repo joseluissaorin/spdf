@@ -1384,6 +1384,10 @@ def validate_file(path: Path) -> dict:
             warn("E003", "SPDF 5.0 should not be gzip-wrapped")
         if version != "5.0":
             warn("W105", f"newer minor version {version}")
+            hard_err = err
+
+            def err(code, msg, where=""):  # noqa: F811 - a later minor may define these
+                (warn if code in ("E041", "E032") else hard_err)(code, msg, where)
         for name, typ in con.execute("SELECT name, type FROM sqlite_master WHERE type IN ('trigger', 'view')"):
             err("E020", f"{typ} {name} present", name)
         for name, sql in con.execute("SELECT name, sql FROM sqlite_master WHERE type = 'table' AND sql LIKE 'CREATE VIRTUAL TABLE%'"):

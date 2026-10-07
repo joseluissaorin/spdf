@@ -2,6 +2,14 @@
 
 Newest first. Implementers: read this before updating your runner.
 
+## 0.3.0 (2026-10-07)
+
+- `invalid/W105-newer-minor-new-anchor-type.spdf`: in a file of a newer minor version
+  (5.1), an anchor type the validator does not know is reported as a warning (E041 in
+  `warnings`), not as an error; the same holds for unknown dtypes (E032). SPEC §22.1
+  step 4 and §23.
+- 229 cases.
+
 ## 0.2.0 (2026-10-07)
 
 - New kind `quantize` (6 cases): writer-side encoding of f32, f16 and i8 values, with

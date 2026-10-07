@@ -1249,7 +1249,9 @@ A validator checks a file in this order; a step marked *stop* ends validation:
    For 4.x, report W110 and check only: the tables `spdf`, `documentos`, `unidades`,
    `fragmentos`, `fragmentos_fts` exist (E010 each) and there is no trigger or view other
    than the three tolerated triggers (E020); *stop*.
-4. A gzip-wrapped 5.x file: E003 in the warnings. A minor version above 0: W105.
+4. A gzip-wrapped 5.x file: E003 in the warnings. A minor version above 0: W105; for
+   such a file, unknown anchor types (E041) and unknown dtypes (E032) are reported in
+   the warnings instead of the errors, because a later minor version may define them.
 5. Triggers, views and foreign virtual tables: E020 for each.
 6. Required tables (E010 each) and required columns (E011 each).
 7. `spdf_meta` keys (E012 each).
@@ -1321,8 +1323,9 @@ version. `user_version` encodes it ([§2.1](#container)).
 - A **minor** version (5.1, 5.2…) only adds OPTIONAL things: tables, columns, `spdf_meta`
   keys, anchor members or types, metadata members, validation warnings or errors for
   things that were already forbidden. A 5.0 reader reads every 5.x file, ignoring what it
-  does not know; it MAY warn (W105). A 5.x writer that uses nothing new SHOULD write
-  `user_version` 500.
+  does not know; it MAY warn (W105). Validators report the anchor types and dtypes of a
+  newer minor version as warnings, not errors ([§22.1](#validation)). A 5.x writer that
+  uses nothing new SHOULD write `user_version` 500.
 - A **major** version (6.0) may change or remove things. Readers MUST refuse majors they
   do not know (E002) and SHOULD keep reading older majors (as 5.0 reads 4.x).
 - **Deprecation**: a feature is deprecated in a minor version, with the reason and the
@@ -1340,6 +1343,10 @@ Changes are proposed and decided through the RFC process in `spec/rfcs/` and
 
 - Media type: `application/vnd.spdf` (registration with IANA in preparation; template in
   `governance/drafts/`). OPTIONAL parameter `version` (`"5.0"`). Encoding: binary.
+- Fragment identifiers: for a resource of type `application/vnd.spdf`, the fragment
+  identifier is the `params` rule of [§5.1](#anchor-uri), with the meaning it has in an
+  anchor URI for the document in that resource:
+  `https://example.org/quijote.spdf#p=5&f=1r`.
 - Extension: `.spdf`. Sidecars: `.spdfa.json` and `.spdfl.json`, served as
   `application/json` (or `application/ld+json` for annotations).
 - Magic numbers: bytes 0–15 are `53 51 4C 69 74 65 20 66 6F 72 6D 61 74 20 33 00`

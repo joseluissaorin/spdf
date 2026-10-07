@@ -9,12 +9,12 @@
     "search_hybrid": 2,
     "search_lexical": 39,
     "search_vector": 5,
-    "validate": 41
+    "validate": 42
   },
-  "cases": 228,
-  "cases_sha256": "2d28cb5169e426ce26fec1df6c7481e2e5a3b208f0f14f66411e51043aa442c3",
+  "cases": 229,
+  "cases_sha256": "b8af7a461336c568549c22a2026a748f12de92c190ad885e437d771d881685ac",
   "spdf_version": "5.0",
   "suite": "spdf-conformance",
-  "suite_version": "0.2.0",
+  "suite_version": "0.3.0",
   "test_public_key": "ed25519:zTT6Bhc+ydufqk04cT9bPz9jDlHiRgXyOJ/VBgKzpv4="
 }

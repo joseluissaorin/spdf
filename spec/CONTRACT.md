@@ -1,4 +1,4 @@
-# SPDF 5.0 implementation contract (draft 1.2, 2026-10-07)
+# SPDF 5.0 implementation contract (draft 1.3, 2026-10-07)
 
 This is the working contract every implementation in this repository codes against
 while the normative specification (`SPEC.md`) is being written. `SPEC.md` absorbs
@@ -7,6 +7,12 @@ change here. Key words MUST, SHOULD, MAY as in RFC 2119.
 
 ## Change log (read this first)
 
+- **2026-10-07, draft 1.3 (spec agent).** Forward compatibility: in a file of a newer minor
+  version (W105), unknown anchor types (E041) and dtypes (E032) are warnings, not errors
+  (suite 0.3.0). A URL of a `.spdf` resource takes the anchor parameters as its fragment
+  identifier (`https://example.org/quijote.spdf#p=5&f=1r`, SPEC §24). `spec/SPEC.es.md`
+  (Spanish) published; RFC 0001 (5.0) accepted, RFC 0002 (export and resolution cases)
+  in draft.
 - **2026-10-07, draft 1.2 (spec agent).** `spec/SPEC.md` is written and is now the
   reference text; this contract stays as a summary. New in the suite (0.2.0): kind
   `quantize`; E020 also covers virtual tables other than `fragments_fts` and
