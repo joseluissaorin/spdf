@@ -1,0 +1,121 @@
+{
+  "name": "spdf-format",
+  "version": "0.1.0",
+  "description": "SPDF (Semantic Processed Document Format) for JavaScript and TypeScript: open, validate, search, cite and write SPDF 5.0 files (and read legacy 4.x) in Node, Bun and the browser.",
+  "keywords": [
+    "spdf",
+    "sqlite",
+    "citation",
+    "csl-json",
+    "bibtex",
+    "full-text-search",
+    "embeddings",
+    "documents"
+  ],
+  "license": "MIT OR Apache-2.0",
+  "author": "José Luis Saorín Ferrer <jl@joseluissaorin.com> (https://joseluissaorin.com)",
+  "homepage": "https://spdf.joseluissaorin.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joseluissaorin/spdf.git",
+    "directory": "js"
+  },
+  "bugs": {
+    "url": "https://github.com/joseluissaorin/spdf/issues"
+  },
+  "type": "module",
+  "sideEffects": [
+    "./dist/entry/*.js"
+  ],
+  "engines": {
+    "node": ">=22.5"
+  },
+  "main": "./dist/entry/node.js",
+  "types": "./dist/entry/node.d.ts",
+  "exports": {
+    ".": {
+      "bun": {
+        "types": "./dist/entry/bun.d.ts",
+        "default": "./dist/entry/bun.js"
+      },
+      "node": {
+        "types": "./dist/entry/node.d.ts",
+        "default": "./dist/entry/node.js"
+      },
+      "browser": {
+        "types": "./dist/entry/browser.d.ts",
+        "default": "./dist/entry/browser.js"
+      },
+      "worker": {
+        "types": "./dist/entry/browser.d.ts",
+        "default": "./dist/entry/browser.js"
+      },
+      "default": {
+        "types": "./dist/entry/browser.d.ts",
+        "default": "./dist/entry/browser.js"
+      }
+    },
+    "./core": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/entry/node.d.ts",
+      "default": "./dist/entry/node.js"
+    },
+    "./bun": {
+      "types": "./dist/entry/bun.d.ts",
+      "default": "./dist/entry/bun.js"
+    },
+    "./browser": {
+      "types": "./dist/entry/browser.d.ts",
+      "default": "./dist/entry/browser.js"
+    },
+    "./wasm": {
+      "types": "./dist/adapters/wasm.d.ts",
+      "default": "./dist/adapters/wasm.js"
+    },
+    "./cli": {
+      "types": "./dist/cli/index.d.ts",
+      "default": "./dist/cli/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "spdf-format": "./dist/cli/main.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE-MIT",
+    "LICENSE-APACHE"
+  ],
+  "scripts": {
+    "build": "node scripts/clean.mjs && tsc -p tsconfig.build.json && node scripts/postbuild.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:bun": "bun test/bun/smoke.ts",
+    "test:browser": "npm run build && node test/browser/run.mjs",
+    "conformance": "node dist/cli/main.js conformance ../conformance",
+    "prepublishOnly": "npm run typecheck && npm run build && npm test"
+  },
+  "peerDependencies": {
+    "@sqlite.org/sqlite-wasm": ">=3.50.0-build1"
+  },
+  "peerDependenciesMeta": {
+    "@sqlite.org/sqlite-wasm": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@sqlite.org/sqlite-wasm": "3.53.4-build2",
+    "@types/node": "^26.6.4",
+    "playwright-core": "1.63.0",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.3"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}
