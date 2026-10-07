@@ -1,0 +1,17 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Deterministic>true</Deterministic>
+    <Authors>José Luis Saorín Ferrer and the SPDF contributors</Authors>
+    <Copyright>Copyright (c) 2026 José Luis Saorín Ferrer and the SPDF contributors</Copyright>
+    <Version>0.1.0</Version>
+    <RepositoryUrl>https://github.com/joseluissaorin/spdf</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+</Project>
