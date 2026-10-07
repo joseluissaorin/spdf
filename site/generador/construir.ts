@@ -28,7 +28,7 @@ import { paginaArrancada } from '../dibujo/dibujos/pagina-arrancada';
 import { aHtml, frontal, textoPlano, type Encabezado } from './md';
 import { bilingue } from './notas';
 import { html, indice, fechaLegible, ID, type Hoja } from './plantilla';
-import { portadaHtml, portadaMd, TEXTOS as PORTADA } from './portada';
+import { portadaHtml, portadaMd, TEXTOS as PORTADA, type EjemploAncla } from './portada';
 import { estados, estadoDe, etiquetaEstado, type Estado } from './estado';
 import {
   AUTOR, IMPLEMENTACIONES, INTEGRACIONES, LENGUAS, ORIGEN, OTRA, OTRAS_PIEZAS, PUBLICADO, RAIZ, REPO, REPO_PUBLICO, RUTAS, SITIO, UI, VERSION,
@@ -825,6 +825,26 @@ async function validarPublicados(): Promise<number> {
   return todos.length;
 }
 
+/** El ejemplo real de la portada: una obra de Commons con folio distinto de la página física, o la muestra. */
+async function ejemploAncla(commons: ReturnType<typeof cargarCommons>): Promise<EjemploAncla> {
+  const { parseAnchorUri, openSpdf } = await import('spdf-format');
+  for (const o of commons.items) {
+    if (!o.ejemplo) continue;
+    const loc = parseAnchorUri(o.ejemplo.uri).locator;
+    if (loc.p !== undefined && loc.f !== undefined && String(loc.p) !== loc.f) {
+      return { uri: o.ejemplo.uri, cita: o.ejemplo.cita, p: loc.p, f: loc.f, char: loc.char, obra: o.title, inspeccionar: { en: `/validator#url=/commons/files/${encodeURIComponent(o.fichero)}`, es: `/es/validador#url=/commons/files/${encodeURIComponent(o.fichero)}` } };
+    }
+  }
+  const d = await openSpdf(resolve(SITIO, 'public/muestras/spdf-in-five-pages.spdf'));
+  try {
+    const f = (await d.fragments())[0]!;
+    const loc = parseAnchorUri(f.anchor_uri).locator;
+    return { uri: f.anchor_uri, cita: d.cite(f.anchor, 'en'), p: loc.p, f: loc.f, char: loc.char, obra: 'SPDF in five pages', inspeccionar: { en: '/validator#url=/muestras/spdf-in-five-pages.spdf', es: '/es/validador#url=/muestras/spdf-in-five-pages.spdf' } };
+  } finally {
+    await d.close();
+  }
+}
+
 async function principal(): Promise<void> {
   const validados = await validarPublicados();
   rmSync(DIST, { recursive: true, force: true });
@@ -836,6 +856,7 @@ async function principal(): Promise<void> {
   const hayLector = lector();
   if (!hayLector) lectorProvisional();
   const commons = cargarCommons();
+  const ejemplo = await ejemploAncla(commons);
 
   for (const l of LENGUAS) {
     const ruta = RUTAS.inicio[l];
@@ -843,9 +864,9 @@ async function principal(): Promise<void> {
     const fecha = fechaGit(['site/generador/portada.ts']);
     escribir(ficheroHtml(ruta), html({
       clave: 'inicio', lengua: l, ruta, alterna: RUTAS.inicio[OTRA[l]], titulo: t.titulo, tituloPestana: t.titulo, descripcion: t.descripcion,
-      fecha, cuerpo: portadaHtml(l, e), tipoOg: 'website',
+      fecha, cuerpo: portadaHtml(l, e, ejemplo), tipoOg: 'website',
     }));
-    const md = portadaMd(l, e);
+    const md = portadaMd(l, e, ejemplo);
     escribir(rutaMd(ruta).slice(1), markdownDe({ titulo: t.titulo, descripcion: t.descripcion, ruta, alterna: RUTAS.inicio[OTRA[l]], lengua: l, fecha }, md.replace(/^# .*\n/, '')));
     PUBLICADAS.push({ ruta, alterna: RUTAS.inicio[OTRA[l]], lengua: l, titulo: t.titulo, descripcion: t.descripcion, md: enlacesParaMd(md), fecha, clave: 'inicio' });
   }

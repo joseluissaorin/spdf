@@ -9,11 +9,45 @@ import { folio } from '../dibujo/dibujos/folio';
 import { IMPLEMENTACIONES, type Lengua, RUTAS, esc, ORIGEN, rutaMd } from './sitio';
 import { estadoDe, etiquetaEstado, type Estado } from './estado';
 
-const EJEMPLO = {
-  uri: 'spdf:sha256-3f2a9c…#p=29&f=21&char=118,301',
-  uriHtml: 'spdf:sha256-3f2a9c…#<b>p=29</b>&amp;<b>f=21</b>&amp;char=118,301',
-  cita: '(Darwin, 1859, p. 21)',
-};
+/**
+ * El ejemplo de la línea del ancla: siempre real. Sale de un fichero publicado
+ * (una obra de SPDF Commons o, si aún no hay, la muestra del validador) y se
+ * puede abrir en el validador; la cita la calcula spdf-format.
+ */
+export interface EjemploAncla {
+  uri: string;
+  cita: string;
+  /** Página física, folio impreso y tramo de caracteres, para explicarla. */
+  p?: number;
+  f?: string;
+  char?: [number, number];
+  /** De qué obra sale (título y autor) y dónde inspeccionarla. */
+  obra: string;
+  inspeccionar: Record<Lengua, string>;
+}
+
+function uriHtml(uri: string): string {
+  const [base, frag = ''] = uri.split('#');
+  const corta = base!.replace(/^(spdf:sha256-[0-9a-f]{6})[0-9a-f]+$/, '$1…');
+  return `${esc(corta)}#${frag.split('&').map((x) => (/^(p|f)=/.test(x) ? `<b>${esc(x)}</b>` : esc(x))).join('&amp;')}`;
+}
+
+function explicacion(e: EjemploAncla, l: Lengua): string {
+  const partes: string[] = [];
+  if (l === 'es') {
+    if (e.p !== undefined) partes.push(`página física ${e.p} del fichero`);
+    if (e.f !== undefined) partes.push(`folio impreso ${e.f}`);
+    if (e.char) partes.push(`caracteres ${e.char[0]} a ${e.char[1]} de esa página`);
+    const frase = partes.join(', ');
+    return `${frase.charAt(0).toUpperCase()}${frase.slice(1)}, en <cite>${esc(e.obra)}</cite>. La cita se calcula a partir del ancla guardada al leer; no se adivina nada. <a href="${e.inspeccionar.es}">Ábrelo en el validador</a>.`;
+  }
+  if (e.p !== undefined) partes.push(`physical page ${e.p} of the file`);
+  if (e.f !== undefined) partes.push(`printed folio ${e.f}`);
+  if (e.char) partes.push(`characters ${e.char[0]} to ${e.char[1]} of that page`);
+  const frase = partes.join(', ');
+  return `${frase.charAt(0).toUpperCase()}${frase.slice(1)}, in <cite>${esc(e.obra)}</cite>. The citation is computed from the anchor stored at reading time; nothing is guessed. <a href="${e.inspeccionar.en}">Open it in the validator</a>.`;
+}
+
 
 export const TEXTOS = {
   en: {
@@ -26,7 +60,6 @@ export const TEXTOS = {
     botones: [['spec', 'Read the specification'], ['validador', 'Validate a file'], ['lector', 'Open the reader']] as const,
     canto: 'SQLite 3 · application_id 0x53504446 · user_version 500',
     anclaRotulo: 'Anchor URI',
-    anclaTexto: 'Physical page 29 of the file, printed folio 21, characters 118 to 301 of that page. The citation is computed from the anchor stored at reading time; nothing is guessed.',
     porQue: 'Why a format',
     porQueTexto: 'Reading a document well is slow and expensive: OCR, transcription, finding the printed folios, sectioning, embeddings. SPDF stores the result so that nobody has to do it twice, and so that whatever cites from it can be checked.',
     principios: [
@@ -82,7 +115,6 @@ export const TEXTOS = {
     botones: [['spec', 'Leer la especificación'], ['validador', 'Validar un fichero'], ['lector', 'Abrir el lector']] as const,
     canto: 'SQLite 3 · application_id 0x53504446 · user_version 500',
     anclaRotulo: 'URI de ancla',
-    anclaTexto: 'Página física 29 del fichero, folio impreso 21, caracteres 118 a 301 de esa página. La cita se calcula a partir del ancla guardada al leer; no se adivina nada.',
     porQue: 'Por qué un formato',
     porQueTexto: 'Leer bien un documento es lento y caro: reconocer el texto, transcribir, encontrar los folios impresos, dividir en secciones, calcular vectores. SPDF guarda el resultado para que nadie tenga que hacerlo dos veces, y para que todo lo que se cite a partir de él se pueda comprobar.',
     principios: [
@@ -142,7 +174,7 @@ function ruta(c: string, l: Lengua): string {
   return RUTAS[c as keyof typeof RUTAS][l];
 }
 
-export function portadaHtml(l: Lengua, estados: Record<string, Estado>): string {
+export function portadaHtml(l: Lengua, estados: Record<string, Estado>, ej: EjemploAncla): string {
   const t = TEXTOS[l];
   const botones = t.botones.map(([c, txt], i) => `<a class="boton ${i === 0 ? 'tinta' : 'papel'}" href="${ruta(c, l)}">${txt}${i === 0 ? ' <span class="flecha" aria-hidden="true">→</span>' : ''}</a>`).join('');
   const lenguajes = IMPLEMENTACIONES.map((im) => {
@@ -166,9 +198,9 @@ ${aSvg(folio, { lengua: l, espera: 0.25 })}
 </section>
 <section class="ancla-demo" aria-label="${t.anclaRotulo}">
 <span class="rotulo">${t.anclaRotulo}</span>
-<code>${EJEMPLO.uriHtml}</code>
-<span class="cita">${EJEMPLO.cita}</span>
-<p>${t.anclaTexto}</p>
+<code>${uriHtml(ej.uri)}</code>
+<span class="cita">${esc(ej.cita)}</span>
+<p>${explicacion(ej, l)}</p>
 </section>
 <section class="capitulos" aria-labelledby="por-que">
 <header><h2 id="por-que">${t.porQue}</h2><p>${t.porQueTexto}</p></header>
@@ -200,12 +232,12 @@ ${t.caminos.map(([h, p, c, mas]) => `<div class="camino"><h3>${h}</h3><p>${p}</p
 }
 
 /** El gemelo Markdown de la portada. */
-export function portadaMd(l: Lengua, estados: Record<string, Estado>): string {
+export function portadaMd(l: Lengua, estados: Record<string, Estado>, ej: EjemploAncla): string {
   const t = TEXTOS[l];
   const P: string[] = [];
   P.push(`# ${t.titularMd}`, '');
   P.push(t.botones.map(([c, txt]) => `[${txt}](${ORIGEN}${c === 'lector' ? '/reader/' : rutaMd(ruta(c, l))})`).join(' · '), '');
-  P.push(`${t.anclaRotulo}: \`${EJEMPLO.uri}\` → ${EJEMPLO.cita}`, '', t.anclaTexto, '');
+  P.push(`${t.anclaRotulo}: \`${ej.uri}\` → ${ej.cita}`, '', explicacion(ej, l).replace(/<a href="([^"]+)">([^<]+)<\/a>/, `[$2](${ORIGEN}$1)`).replace(/<\/?cite>/g, '*'), '');
   P.push(`## ${t.porQue}`, '', t.porQueTexto, '');
   t.principios.forEach(([h, p, d], i) => P.push(`### ${['I', 'II', 'III', 'IV', 'V'][i]}. ${h}`, '', p, '', `\`${d}\``, ''));
   P.push(`## ${t.dentro}`, '', t.dentroTexto, '', `| ${l === 'es' ? 'Tabla' : 'Table'} | ${l === 'es' ? 'Qué guarda' : 'What it holds'} |`, '| --- | --- |');
