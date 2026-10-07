@@ -191,7 +191,13 @@ def cmd_cite(args: argparse.Namespace) -> int:
                 raise SystemExit(f"no unit {args.unit!r}")
         elif args.uri:
             item = args.uri
-        _out(f.cite(item, locale=args.locale))
+        if args.quote:
+            if not args.fragment:
+                raise SystemExit("--quote needs --fragment (the fragment the quotation comes from)")
+            passage = f.cite_passage(args.fragment, args.quote, locale=args.locale)
+            _out(f"{passage.text}\n{passage.uri}")
+        else:
+            _out(f.cite(item, locale=args.locale))
         if args.bibtex:
             _out(f.to_bibtex())
     return 0
@@ -324,6 +330,7 @@ def build_parser() -> argparse.ArgumentParser:
     g.add_argument("--unit")
     g.add_argument("--uri")
     s.add_argument("--locale", default="es")
+    s.add_argument("--quote", help="cite this quotation from --fragment by the unit it lies in (SPEC §18.2)")
     s.add_argument("--bibtex", action="store_true", help="also print the BibTeX entry")
     s.set_defaults(func=cmd_cite)
 

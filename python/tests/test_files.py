@@ -764,3 +764,73 @@ def test_annotations_and_library(quijote: Path, tmp_path: Path) -> None:
     assert len(item["file_sha256"]) == 64
     lp = sidecars.write_library(tmp_path / "b.spdfl.json", lib)
     assert sidecars.read_library(lp)["name"] == "Fuentes"
+
+
+# -- matter, crossing fragments and passages (SPEC §4.4, §18.2) -----------------------------
+
+
+def _crossing_file(path: Path) -> Path:
+    """A plate between two numbered pages, and fragments that cross into and out of it."""
+    pages = [
+        ("u1", {"type": "page", "physical": 1, "printed": "210"}, "Primera página del texto. Sigue en la lámina"),
+        ("u2", {"type": "page", "physical": 2, "printed": None, "matter": "plate"}, "Lámina XXXIV. Leyenda."),
+        ("u3", {"type": "page", "physical": 3, "printed": "211"}, "y continúa aquí el texto de la obra."),
+    ]
+    with spdf.Writer(path) as w:
+        w.add_document(
+            {
+                "id": "hooke",
+                "kind": "pdf",
+                "metadata": {
+                    "type": "book",
+                    "title": "Micrographia",
+                    "author": [{"family": "Hooke"}],
+                    "issued": {"date-parts": [[1665]]},
+                },
+                "source_sha256": "c" * 64,
+                "mime": "application/pdf",
+                "bytes": 1,
+            }
+        )
+        for i, (uid, a, text) in enumerate(pages, start=1):
+            w.add_unit({"id": uid, "ord": i, "anchor": a, "text": text, "reader": "test"})
+        t1, t2 = pages[1][2], pages[2][2]
+        w.add_fragment(
+            {
+                "id": "m1",
+                "unit": "u2",
+                "ord": 1,
+                "text": t1 + "\n" + t2,
+                "anchor": {**pages[1][1], "chars": [0, len(t1)]},
+                "anchor_end": {**pages[2][1], "chars": [0, len(t2)]},
+            }
+        )
+        w.add_fragment(
+            {"id": "m0", "unit": "u1", "ord": 0, "text": pages[0][2], "anchor": {**pages[0][1], "chars": [0, 44]}}
+        )
+    return path
+
+
+def test_crossing_fragments_and_passages(tmp_path: Path) -> None:
+    p = _crossing_file(tmp_path / "cross.spdf")
+    r = spdf.validate(p)
+    assert r.valid and {i.code for i in r.warnings} == {"W103"}
+    with spdf.open(p) as f:
+        assert f.units()[1].anchor.matter_kind == "plate" and f.units()[0].anchor.matter_kind == "body"
+        frag = f.fragment("m1")
+        assert frag is not None and f.end_unit(frag).id == "u3"  # type: ignore[union-attr]
+        # The whole fragment: the plate end has no folio, so it is not a range.
+        assert f.cite(frag) == "(Hooke, 1665, p. 211)"
+        # A quotation on the numbered page is cited by that page, not by the plate.
+        c = f.cite_passage(frag, "continúa aquí")
+        assert c.text == "(Hooke, 1665, p. 211)" and c.uri.endswith("#p=3&f=211&char=2,15")
+        c2 = f.cite_passage(frag, "Lámina XXXIV")
+        assert c2.text == "(Hooke, 1665, s. p.)" and c2.uri.endswith("#p=2&char=0,12")
+        c3 = f.cite_passage("m1", "Leyenda.\ny continúa", locale="en")
+        assert c3.text == "(Hooke, 1665, p. 211)" and c3.uri.endswith("#p=2&pe=3&fe=211")
+        with pytest.raises(spdf.SpdfError):
+            f.cite_passage(frag, "no está")
+        # locate finds the fragment by its end anchor too.
+        assert f.locate(f"spdf:{f.docref}#p=3").fragments == ["m1"]
+        assert f.locate(f"spdf:{f.docref}#p=3&char=0,5").fragments == ["m1"]
+        assert f.locate(f"spdf:{f.docref}#p=3&char=40,45").fragments == []

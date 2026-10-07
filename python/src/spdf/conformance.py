@@ -236,6 +236,14 @@ def _case_quantize(case: Mapping[str, Any], root: Path) -> None:
     _check(got == e["hex"], f"quantize gave {got} != {e['hex']}")
 
 
+def _case_cite_passage(case: Mapping[str, Any], root: Path) -> None:
+    i, e = case["input"], case["expect"]
+    with open_spdf(root / i["file"]) as f:
+        got = f.cite_passage(i["fragment"], i["quote"], locale=i.get("locale", "es"))
+    _check(got.text == e["text"], f"citation {got.text!r} != {e['text']!r}")
+    _check(got.uri == e["uri"], f"uri {got.uri} != {e['uri']}")
+
+
 def _case_locate(case: Mapping[str, Any], root: Path) -> None:
     i, e = case["input"], case["expect"]
     with open_spdf(root / i["file"]) as f:
@@ -320,6 +328,7 @@ HANDLERS: dict[str, Callable[[Mapping[str, Any], Path], None]] = {
     "cite": _case_cite,
     "quantize": _case_quantize,
     "locate": _case_locate,
+    "cite_passage": _case_cite_passage,
     "export_csl": _case_export_csl,
     "export_bibtex": _case_export_bibtex,
     "export_structure": _case_export_structure,

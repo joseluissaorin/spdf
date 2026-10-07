@@ -16,6 +16,7 @@ __all__ = [
     "Issue",
     "LexicalSearch",
     "Location",
+    "PassageCitation",
     "Provenance",
     "SearchResult",
     "Section",
@@ -246,6 +247,23 @@ class SearchResult:
             "anchor": self.anchor.to_dict(),
             "anchor_uri": self.anchor_uri,
         }
+
+
+@dataclass(frozen=True)
+class PassageCitation:
+    """Citation of a quotation taken from a fragment (SPEC §18.2).
+
+    ``anchor`` (and ``anchor_end`` for a quotation that spans two units) is the anchor of
+    the unit or units the passage actually lies in, with ``chars`` when it lies in one.
+    """
+
+    text: str
+    uri: str
+    anchor: dict[str, Any]
+    anchor_end: dict[str, Any] | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"text": self.text, "uri": self.uri}
 
 
 @dataclass(frozen=True)

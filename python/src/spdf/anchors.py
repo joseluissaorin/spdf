@@ -26,19 +26,39 @@ from .errors import InvalidAnchorError
 from .schema import ANCHOR_TYPES
 
 __all__ = [
+    "MATTERS",
     "Anchor",
     "Region",
+    "anchor_identity",
     "anchor_problem",
     "anchor_to_locator",
     "docref_for",
     "format_uri",
     "locator_to_anchor",
     "make_uri",
+    "matter_of",
     "parse_params",
     "parse_uri",
 ]
 
 _HEX64 = re.compile(r"^[0-9a-f]{64}$")
+
+MATTERS = frozenset({"body", "front", "back", "plate", "cover", "library", "blank"})
+
+
+def matter_of(anchor: Any) -> str:
+    """The ``matter`` of an anchor object (SPEC §4.1): ``body`` when absent or unknown."""
+    m = anchor.get("matter") if isinstance(anchor, Mapping) else None
+    return m if isinstance(m, str) and m in MATTERS else "body"
+
+
+def anchor_identity(anchor: Any) -> Any:
+    """An anchor without ``chars`` and ``region`` (how start and end units are matched, SPEC §4.4)."""
+    if isinstance(anchor, Anchor):
+        anchor = anchor.to_dict()
+    if not isinstance(anchor, Mapping):
+        return anchor
+    return {k: v for k, v in anchor.items() if k not in ("chars", "region")}
 
 
 @dataclass(frozen=True)
@@ -113,6 +133,7 @@ class Anchor:
     scheme: str | None = None
     ref: str | None = None
     # any type
+    matter: str | None = None
     region: Region | None = None
     chars: tuple[int, int] | None = None
     raw: dict[str, Any] = field(default_factory=dict, compare=False, repr=False)
@@ -163,6 +184,7 @@ class Anchor:
             line_to=_int(data.get("line_to")),
             scheme=_str(data.get("scheme")),
             ref=_str(data.get("ref")),
+            matter=_str(data.get("matter")),
             region=region,
             chars=chars,
             raw=dict(data),
@@ -194,6 +216,7 @@ class Anchor:
             "line_to",
             "scheme",
             "ref",
+            "matter",
         ):
             value = getattr(self, name)
             if value is not None:
@@ -205,6 +228,11 @@ class Anchor:
         if self.chars is not None:
             out["chars"] = list(self.chars)
         return out
+
+    @property
+    def matter_kind(self) -> str:
+        """The unit's kind of matter (SPEC §4.1): ``body`` when absent or unknown."""
+        return self.matter if self.matter in MATTERS else "body"
 
     def get(self, key: str, default: Any = None) -> Any:
         """Read any member of the original object (also unknown/extension members)."""

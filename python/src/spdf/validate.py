@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from . import _sqlite
-from .anchors import anchor_problem
+from .anchors import anchor_identity, anchor_problem, matter_of
 from .container import (
     DEFAULT_MAX_BLOB_SIZE,
     DEFAULT_MAX_DECOMPRESSED_SIZE,
@@ -254,6 +254,10 @@ def _validate_open(c: Container, col: _Collector, *, check_fts: bool) -> None:
         elif "signature" in meta and not verify_hash(actual, meta["signature"], meta.get("signer", "")):
             col.error("E082", "signature does not verify", "spdf_meta.signature")
 
+    # W103 fragments that cross matter, or from a page with a folio to one without (SPEC §4.4)
+    if ok("units", "id", "ord", "anchor") and ok("fragments", "id", "unit", "anchor_end"):
+        _check_crossings(conn, col)
+
     # Profile warnings
     profile = set(col.r.profile)
     if "semantic" in profile and vector_count == 0:
@@ -271,6 +275,40 @@ def _validate_open(c: Container, col: _Collector, *, check_fts: bool) -> None:
         if not has_time:
             col.warn("W101", "profile 'media' declared but no unit has a time anchor")
     _ = units_count
+
+
+def _check_crossings(conn: sqlite3.Connection, col: _Collector) -> None:
+    units: list[tuple[str, Any]] = []
+    for uid, raw in conn.execute("SELECT id, anchor FROM units ORDER BY ord, id"):
+        try:
+            units.append((str(uid), loads_json(raw)))
+        except (ValueError, TypeError):
+            units.append((str(uid), None))
+    index = {uid: i for i, (uid, _) in enumerate(units)}
+    for fid, unit, raw_end in conn.execute(
+        "SELECT id, unit, anchor_end FROM fragments WHERE anchor_end IS NOT NULL ORDER BY n"
+    ):
+        start = index.get(str(unit))
+        if start is None:
+            continue
+        try:
+            end = anchor_identity(loads_json(raw_end))
+        except (ValueError, TypeError):
+            continue
+        a1 = units[start][1]
+        a2 = next((a for _, a in units[start + 1 :] if anchor_identity(a) == end), None)
+        if not isinstance(a1, Mapping) or not isinstance(a2, Mapping):
+            continue
+        folio_change = a1.get("type") == a2.get("type") == "page" and (a1.get("printed") is None) != (
+            a2.get("printed") is None
+        )
+        if matter_of(a1) != matter_of(a2) or folio_change:
+            col.warn(
+                "W103",
+                f"fragment crosses from {matter_of(a1)} to {matter_of(a2)} matter, "
+                "or between a page with a folio and one without",
+                f"fragments/{fid}",
+            )
 
 
 def _check_anchor(col: _Collector, raw: Any, text_length: int | None, where: str) -> None:

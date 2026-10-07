@@ -146,20 +146,18 @@ def _folio(a: Mapping[str, Any]) -> str:
 
 
 def _page_label(a: Mapping[str, Any], e: Mapping[str, Any] | None, locale: str, page_only: bool = False) -> str:
+    """Page locator; ends without a printed folio never contribute to a range (SPEC §18)."""
     words = _l10n(locale)
-    if a.get("printed") is None:
-        return words["np"]
     foliation = "page" if page_only else (a.get("foliation") or "page")
     single, plural = {"leaf": ("fol.", "fols."), "column": ("col.", "cols.")}.get(foliation, ("p.", "pp."))
-    start = _folio(a)
-    if (
-        e is not None
-        and e.get("type") == a.get("type")
-        and e.get("printed") is not None
-        and e.get("printed") != a.get("printed")
-    ):
-        return f"{plural} {start}-{_folio(e)}"
-    return f"{single} {start}"
+    ends = [a] + ([e] if e is not None and e.get("type") == a.get("type") else [])
+    with_folio = [x for x in ends if x.get("printed") is not None]
+    if not with_folio:
+        return words["np"]
+    first, last = with_folio[0], with_folio[-1]
+    if last is not first and last.get("printed") != first.get("printed"):
+        return f"{plural} {_folio(first)}-{_folio(last)}"
+    return f"{single} {_folio(first)}"
 
 
 def locator_label(

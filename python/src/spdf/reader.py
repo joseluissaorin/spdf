@@ -12,12 +12,13 @@ import hashlib
 import json
 import os
 import sqlite3
+import unicodedata
 from collections.abc import Iterator, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
 from . import _sqlite
-from .anchors import Anchor, docref_for, locator_to_anchor, make_uri, parse_params, parse_uri
+from .anchors import Anchor, anchor_identity, docref_for, locator_to_anchor, make_uri, parse_params, parse_uri
 from .canonical import canonical_dumps, round_floats
 from .cite import cite as _cite
 from .container import (
@@ -37,6 +38,7 @@ from .model import (
     Fragment,
     LexicalSearch,
     Location,
+    PassageCitation,
     Provenance,
     SearchResult,
     Section,
@@ -714,23 +716,82 @@ class SpdfFile:
             timed = [u for u in units if u.anchor.type == "time"]
             if timed and timed[-1].anchor.t1 is not None and timed[-1].anchor.t1 == loc["t"][0]:
                 unit_ids = [timed[-1].id]
-        frags = [fr for fr in self.iter_fragments() if _anchor_matches(rule, loc, fr.anchor.to_dict(), None)]
+        frags = [
+            fr
+            for fr in self.iter_fragments()
+            if any(x is not None and _anchor_matches(rule, loc, x.to_dict(), None) for x in (fr.anchor, fr.anchor_end))
+        ]
         if not unit_ids and frags:
             order = {u.id: u.ord for u in units}
             unit_ids = sorted({fr.unit for fr in frags}, key=lambda i: order.get(i, 0))
         if char is not None:
             c, d = int(char[0]), int(char[1])
-            selected = set(unit_ids)
+            first = unit_ids[0] if unit_ids else None  # `char` refers to the text of the first unit
 
-            def keep(fr: Fragment) -> bool:
-                ch = fr.anchor.chars
-                if fr.unit not in selected or ch is None:
+            def overlaps(x: Anchor | None) -> bool:
+                ch = x.chars if x is not None else None
+                if ch is None:
                     return False
                 a, b = ch
                 return (a < d and c < b) if c < d else (a <= c < b)
 
+            def keep(fr: Fragment) -> bool:
+                if fr.unit == first and overlaps(fr.anchor):
+                    return True
+                eu = _end_unit(units, fr.unit, fr.anchor_end)
+                return eu is not None and eu.id == first and overlaps(fr.anchor_end)
+
             frags = [fr for fr in frags if keep(fr)]
         return Location(document=True, units=unit_ids, fragments=[fr.id for fr in frags], char=char, xywh=xywh)
+
+    def end_unit(self, fragment: Fragment) -> Unit | None:
+        """The unit where a crossing fragment ends (SPEC §4.4), or ``None``."""
+        if fragment.anchor_end is None:
+            return None
+        return _end_unit(list(self.iter_units()), fragment.unit, fragment.anchor_end)
+
+    def cite_passage(self, fragment: Fragment | str, quote: str, *, locale: str = "es") -> PassageCitation:
+        """Cite a quotation taken from a fragment by the unit it lies in (SPEC §18.2).
+
+        The quotation is looked up in the part of the fragment in its start unit, then in
+        the part in its end unit; a quotation that spans both is cited as a range. The
+        start anchor of the fragment is never used for a passage that is not in it.
+        Raises :class:`~spdf.errors.SpdfError` if the quotation is not in the fragment.
+        """
+        fr = self.fragment(fragment) if isinstance(fragment, str) else fragment
+        if fr is None:
+            raise SpdfError(f"no fragment {fragment!r}")
+        q = unicodedata.normalize("NFC", quote)
+        units = list(self.iter_units())
+        byid = {u.id: u for u in units}
+        u1 = byid.get(fr.unit)
+        if u1 is None:
+            raise SpdfError(f"fragment {fr.id!r} points at a missing unit {fr.unit!r}")
+        c1 = fr.anchor.chars or (0, len(u1.text))
+        seg1 = u1.text[c1[0] : c1[1]]
+        u2 = _end_unit(units, u1.id, fr.anchor_end) if fr.anchor_end is not None else None
+        seg2, c2 = "", (0, 0)
+        if u2 is not None and fr.anchor_end is not None:
+            c2 = fr.anchor_end.chars or (0, len(u2.text))
+            seg2 = u2.text[c2[0] : c2[1]]
+        anchor: dict[str, Any]
+        end: dict[str, Any] | None = None
+        if q and q in seg1:
+            i = seg1.find(q) + c1[0]
+            anchor = {**anchor_identity(u1.anchor), "chars": [i, i + len(q)]}
+        elif u2 is not None and q and q in seg2:
+            i = seg2.find(q) + c2[0]
+            anchor = {**anchor_identity(u2.anchor), "chars": [i, i + len(q)]}
+        elif u2 is not None and q and q in fr.text:
+            anchor, end = anchor_identity(u1.anchor), anchor_identity(u2.anchor)
+        else:
+            raise SpdfError(f"the quotation is not in fragment {fr.id!r}")
+        return PassageCitation(
+            text=_cite(anchor, self.document.metadata, locale, end),
+            uri=make_uri(self.docref, anchor, end),
+            anchor=anchor,
+            anchor_end=end,
+        )
 
     # -- search --------------------------------------------------------------------------
 
@@ -1040,6 +1101,22 @@ class SpdfFile:
 
 
 _RULE_ORDER = ("p", "f", "t", "sl", "v", "ref", "s", "sh")
+
+
+def _end_unit(units: Sequence[Unit], start_id: str, anchor_end: Anchor | Mapping[str, Any] | None) -> Unit | None:
+    """First unit after the start unit (in ord order) whose anchor equals ``anchor_end``
+    without ``chars`` and ``region`` (SPEC §4.4)."""
+    if anchor_end is None:
+        return None
+    target = anchor_identity(anchor_end)
+    after = False
+    for u in units:
+        if u.id == start_id:
+            after = True
+            continue
+        if after and anchor_identity(u.anchor) == target:
+            return u
+    return None
 
 
 def _is_int(v: Any) -> bool:

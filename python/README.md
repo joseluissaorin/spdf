@@ -14,7 +14,7 @@ and 4.1 formats. It is installed as `spdf-format` and imported as `spdf`.
 - Python 3.10 or newer, **standard library only** (`sqlite3`).
 - Optional extras: `numpy` (fast vector search), `crypto` (Ed25519 through
   `cryptography`; a pure-Python fallback is included), `pandas`, `arrow`.
-- Passes the whole SPDF conformance suite (0.4.0, 309 cases): reader, semantic reader, writer and validator,
+- Passes the whole SPDF conformance suite (0.4.1, 341 cases): reader, semantic reader, writer and validator,
   profiles `core`, `semantic` and `media`.
 
 ```sh
@@ -71,7 +71,10 @@ missing table or column, `E012` missing metadata key, `E013` not exactly one doc
 `E020` trigger, view or foreign virtual table, `E030`–`E032` vectors and spaces,
 `E040`–`E042` anchors, `E050`/`E051` metadata, `E060` unknown required extension, `E070`
 FTS index out of sync, `E080` blob hash, `E081`/`E082` content hash and signature, `E090`
-unit order, and the warnings `W100`–`W110`.
+unit order, and the warnings `W100`–`W110` (`W103`: a fragment crosses from one kind of
+`matter` to another, such as body text into a plate, or from a page with a printed folio
+to one without; writers should set `matter` on the units of paged documents and not let
+fragments cross).
 
 ## Write
 
@@ -123,6 +126,16 @@ fragment, against the file (SPEC §5.4):
 ```python
 f.locate("https://example.org/quijote.spdf#p=5&pe=6&char=101,278").to_dict()
 # {"document": True, "units": ["p5", "p6"], "fragments": ["q4"], "char": [101, 278], "xywh": None}
+```
+
+A quotation is cited by the unit it lies in, never by the start of the fragment that
+contains it (SPEC §18.2), so a passage on page 211 of a fragment that begins on an
+unnumbered plate cites page 211:
+
+```python
+c = f.cite_passage("m4", "tube N N", locale="es")
+c.text   # '(Hooke, 1665, p. 211)'
+c.uri    # 'spdf:sha256-…#p=321&f=211&char=0,8'
 ```
 
 Citations print only what the anchor says: inferred folios in brackets (`p. [21]`),
@@ -178,7 +191,7 @@ spdf validate FILE… [--json]          exit status 1 if a file is invalid
 spdf dump FILE [--pretty]             canonical dump (RFC 8785)
 spdf info FILE | --env                summary; --env shows the SQLite and FTS5 in use
 spdf search FILE QUERY [--vector JSON --space ID] [--mode lexical|vector|hybrid] [--json]
-spdf cite FILE [--fragment ID | --unit ID | --uri URI] [--locale es|en] [--bibtex]
+spdf cite FILE [--fragment ID [--quote TEXT] | --unit ID | --uri URI] [--locale es|en] [--bibtex]
 spdf export FILE -f csl|bibtex|alto|tei|iiif|jsonl
 spdf convert OLD.spdf NEW.spdf        legacy 4.x to 5.0
 spdf sign FILE --key KEY / spdf verify FILE [--public-key ed25519:…]
@@ -226,8 +239,8 @@ spdf conformance path/to/conformance        # prints {"impl", "version", "passed
 
 This implementation claims every kind of case: `dump`, `legacy_dump`, `roundtrip`,
 `validate`, `search_lexical`, `search_vector`, `search_hybrid`, `anchor_uri`, `cite`,
-`quantize`, `locate`, `export_csl`, `export_bibtex` and `export_structure` (checked on
-its own ALTO, TEI and IIIF output). CI publishes its report as the `conformance-python` artifact.
+`quantize`, `locate`, `cite_passage`, `export_csl`, `export_bibtex` and
+`export_structure` (checked on its own ALTO, TEI and IIIF output). CI publishes its report as the `conformance-python` artifact.
 
 ## Development
 
