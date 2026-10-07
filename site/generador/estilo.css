@@ -99,6 +99,8 @@ p, li { text-wrap: pretty; }
 .heroe {
   position: relative; max-width: var(--ancho); margin: 0 auto; padding: clamp(2rem, 6vw, 4.5rem) var(--canal) 2rem;
   display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 1.2rem; align-items: start;
+  /* El sol se corta en el filete de la línea del ancla, no la tapa. */
+  overflow-x: visible; overflow-y: clip;
 }
 /* La retícula se ve: doce columnas a lápiz detrás del titular. */
 .heroe::before {
@@ -343,7 +345,7 @@ p, li { text-wrap: pretty; }
   .ancla-demo { grid-template-columns: minmax(0, 1fr); }
   .heroe h1 { font-size: 14.5vw; }
   .heroe .lamina { margin: 1.5rem 0 0; }
-  .heroe .sol { width: 62vw; right: -20vw; bottom: -20%; }
+  .heroe .sol { width: 62vw; right: -20vw; bottom: -50%; }
   .lenguajes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ancla-demo .rotulo { display: none; }
   .tablas li { grid-template-columns: minmax(0, 1fr); gap: 0.1rem; }
