@@ -82,7 +82,7 @@ SQL;
     private bool $trigram = false;
     private bool $finished = false;
 
-    private function __construct(private readonly string $path, private readonly array $meta)
+    private function __construct(private readonly string $path, private readonly array $meta, private readonly bool $exact = false)
     {
         $dir = dirname($path);
         $this->tmp = $dir . DIRECTORY_SEPARATOR . '.' . basename($path) . '.' . bin2hex(random_bytes(4)) . '.tmp';
@@ -114,6 +114,69 @@ SQL;
             'generator' => $generator,
         ];
         return new self($path, $meta);
+    }
+
+    /**
+     * Writes a file from a *source* (a canonical dump plus vector values under
+     * `vectors.<space>.items[{target, id, values}]` and blob bytes in
+     * `blobs[].data_base64`), exactly as given: the format of the conformance suite.
+     * i8 values are the stored integers (-127..127); f16/f32 values are exact.
+     */
+    public static function fromSource(array $source, string $path): string
+    {
+        $w = new self($path, array_map('strval', is_array($source['meta'] ?? null) ? $source['meta'] : []), true);
+        try {
+            $w->withTrigram((bool) ($source['fts']['trigram'] ?? false));
+            $w->document($source['document']);
+            foreach ($source['units'] ?? [] as $u) {
+                $w->insert('units', self::pick($u + ['document' => $w->documentId], Document::COLUMNS['units'], ['anchor', 'notes', 'words']));
+            }
+            foreach ($source['sections'] ?? [] as $x) {
+                $w->section($x);
+            }
+            foreach ($source['fragments'] ?? [] as $f) {
+                $w->insert('fragments', self::pick($f + ['document' => $w->documentId], Document::COLUMNS['fragments'], ['section', 'anchor', 'anchor_end']));
+            }
+            foreach ($source['figures'] ?? [] as $g) {
+                $w->figure($g);
+            }
+            foreach ($source['spaces'] ?? [] as $sp) {
+                $w->space($sp);
+            }
+            $vectors = $source['vectors'] ?? [];
+            foreach (is_array($vectors) ? $vectors : [] as $space => $v) {
+                $dtype = (string) ($w->spaces[$space]['dtype'] ?? 'f32');
+                foreach ($v['items'] ?? [] as $it) {
+                    $vals = $it['values'];
+                    $bytes = match ($dtype) {
+                        'i8' => pack('c*', ...array_map('intval', $vals)),
+                        'f16' => pack('v*', ...array_map([Vectors::class, 'floatToHalf'], $vals)),
+                        default => pack('g*', ...array_map('floatval', $vals)),
+                    };
+                    $w->insert('vectors', [
+                        'target' => (string) $it['target'], 'id' => (string) $it['id'], 'space' => (string) $space,
+                        'document' => $w->documentId, 'data' => new Blob($bytes),
+                    ]);
+                }
+            }
+            foreach ($source['blobs'] ?? [] as $b) {
+                $data = base64_decode((string) ($b['data_base64'] ?? ''), true);
+                $w->insert('blobs', [
+                    'key' => $b['key'], 'mime' => $b['mime'],
+                    'sha256' => $b['sha256'] ?? hash('sha256', (string) $data), 'data' => new Blob((string) $data),
+                ]);
+            }
+            foreach ($source['provenance'] ?? [] as $p) {
+                $w->provenance($p);
+            }
+            foreach ($source['extensions'] ?? [] as $e) {
+                $w->extension((string) $e['name'], (string) $e['version'], (bool) $e['required']);
+            }
+            return $w->finish();
+        } catch (\Throwable $e) {
+            $w->abort();
+            throw $e;
+        }
     }
 
     /** Also build the optional trigram index (CJK). */
@@ -180,7 +243,8 @@ SQL;
         $this->documentId = (string) $d['id'];
         $m = is_array($d['metadata'] ?? null) ? $d['metadata'] : [];
         $defaults = [
-            'created' => $this->meta['created'], 'updated' => $this->meta['created'],
+            'created' => $this->meta['created'] ?? gmdate('Y-m-d\\TH:i:s\\Z'),
+            'updated' => $d['created'] ?? $this->meta['created'] ?? gmdate('Y-m-d\\TH:i:s\\Z'),
             'title' => $m['title'] ?? null,
             'year' => $m['issued']['date-parts'][0][0] ?? null,
             'language' => $m['language'] ?? null,
@@ -293,7 +357,7 @@ SQL;
             return $this->path;
         }
         $meta = $this->meta;
-        if ($this->documentId !== null && !isset($meta['document_id'])) {
+        if (!$this->exact && $this->documentId !== null && !isset($meta['document_id'])) {
             $meta['document_id'] = $this->documentId;
         }
         foreach ($meta as $k => $v) {

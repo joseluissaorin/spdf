@@ -97,6 +97,9 @@ final class Search
         if ($sp === null) {
             throw new SpdfException('E031', "Unknown vector space: {$space}");
         }
+        if (count($query) !== (int) $sp['dims']) {
+            throw new SpdfException('E030', 'The query vector has ' . count($query) . " components; space {$space} has {$sp['dims']}.");
+        }
         $normalized = (int) ($sp['normalized'] ?? 1) === 1;
         $q = array_map('floatval', array_values($query));
         $scored = [];

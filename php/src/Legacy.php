@@ -138,8 +138,8 @@ final class Legacy
 
     /** Field names of MetadatosDocumento that map one-to-one onto CSL variables. */
     private const META_SIMPLE = [
-        'tituloOriginal' => 'original-title', 'editorial' => 'publisher', 'lugar' => 'publisher-place',
-        'revista' => 'container-title', 'coleccion' => 'collection-title', 'volumen' => 'volume',
+        'editorial' => 'publisher', 'lugar' => 'publisher-place',
+        'coleccion' => 'collection-title', 'volumen' => 'volume',
         'numero' => 'issue', 'paginas' => 'page', 'edicion' => 'edition', 'doi' => 'DOI', 'isbn' => 'ISBN',
         'url' => 'URL', 'idioma' => 'language', 'resumen' => 'abstract',
     ];
@@ -182,41 +182,81 @@ final class Legacy
         return $value;
     }
 
-    private static function present(mixed $v): bool
+    /** Legacy modality names. */
+    public const MODALITIES = ['texto' => 'text', 'imagen' => 'image'];
+
+    /** Legacy MetadatosDocumento field => CSL variable (spdf.* = extension member). */
+    public const FIELDS = [
+        'titulo' => 'title', 'subtitulo' => 'spdf.subtitle', 'tituloOriginal' => 'original-title', 'autores' => 'author',
+        'editores' => 'editor', 'traductores' => 'translator', 'entrevistadores' => 'interviewer', 'anio' => 'issued',
+        'anioOriginal' => 'original-date', 'editorial' => 'publisher', 'lugar' => 'publisher-place',
+        'revista' => 'container-title', 'contenedor' => 'container-title', 'coleccion' => 'collection-title',
+        'volumen' => 'volume', 'numero' => 'issue', 'paginas' => 'page', 'edicion' => 'edition', 'doi' => 'DOI',
+        'isbn' => 'ISBN', 'url' => 'URL', 'idioma' => 'language', 'tipoCSL' => 'type', 'resumen' => 'abstract',
+        'idiomaOriginal' => 'spdf.original_language', 'fecha' => 'issued', 'sinFecha' => 'spdf.undated',
+    ];
+
+    /** Legacy provenance sources (fuente) => 5.0 names. */
+    public const PROVENANCE_SOURCES = [
+        'lectura' => 'reading', 'usuario' => 'user', 'colofon' => 'colophon', 'impresores' => 'printers',
+    ];
+
+    /** @param mixed $list decoded JSON modalities */
+    public static function modalities(mixed $list): mixed
     {
-        return $v !== null && $v !== '' && $v !== [] && !($v instanceof \stdClass && get_object_vars($v) === []);
+        if (!is_array($list) || !array_is_list($list)) {
+            return $list;
+        }
+        return array_map(fn ($x) => is_string($x) ? (self::MODALITIES[$x] ?? $x) : $x, $list);
+    }
+
+    /** Present = not null, not '' and not []. */
+    private static function has(array $m, string $k): bool
+    {
+        if (!array_key_exists($k, $m)) {
+            return false;
+        }
+        $v = $m[$k];
+        return $v !== null && $v !== '' && $v !== [];
+    }
+
+    private static function truthy(mixed $v): bool
+    {
+        return !($v === null || $v === false || $v === '' || $v === 0 || $v === 0.0 || $v === []);
     }
 
     /** @return list<array<string,string>> */
-    private static function people(mixed $list, array &$orcid): array
+    private static function people(mixed $list): array
     {
-        if (!is_array($list) || !array_is_list($list)) {
-            return [];
-        }
         $out = [];
-        foreach ($list as $p) {
+        foreach (is_array($list) && array_is_list($list) ? $list : [] as $p) {
             if (!is_array($p)) {
                 continue;
             }
-            $person = [];
-            if (isset($p['apellidos']) && is_string($p['apellidos']) && $p['apellidos'] !== '') {
-                $person['family'] = $p['apellidos'];
+            $n = [];
+            if (self::truthy($p['apellidos'] ?? null)) {
+                $n['family'] = $p['apellidos'];
             }
-            if (isset($p['nombre']) && is_string($p['nombre']) && $p['nombre'] !== '') {
-                $person['given'] = $p['nombre'];
+            if (self::truthy($p['nombre'] ?? null)) {
+                $n['given'] = $p['nombre'];
             }
-            if ($person === []) {
-                continue;
+            if ($n !== []) {
+                $out[] = $n;
             }
-            if (isset($p['orcid']) && is_string($p['orcid']) && $p['orcid'] !== '') {
-                $label = isset($person['family'], $person['given'])
-                    ? $person['family'] . ', ' . $person['given']
-                    : ($person['family'] ?? $person['given']);
-                $orcid[$label] = $p['orcid'];
-            }
-            $out[] = $person;
         }
         return $out;
+    }
+
+    /** CSL type when tipoCSL is absent: revista -> article-journal, then by kind, else book. */
+    public static function defaultType(?string $tipo, array $m): string
+    {
+        if (self::truthy($m['tipoCSL'] ?? null)) {
+            return (string) $m['tipoCSL'];
+        }
+        if (self::truthy($m['revista'] ?? null)) {
+            return 'article-journal';
+        }
+        return self::TYPE_BY_KIND[$tipo ?? ''] ?? 'book';
     }
 
     /**
@@ -225,104 +265,103 @@ final class Legacy
      */
     public static function metadata(mixed $m, ?string $tipo = null): mixed
     {
-        if (!is_array($m) || array_is_list($m)) {
+        if (!is_array($m) || (array_is_list($m) && $m !== [])) {
             return $m;
         }
-        $csl = [];
+        $item = ['type' => self::defaultType($tipo, $m)];
         $ext = [];
-        $title = isset($m['titulo']) && is_string($m['titulo']) && $m['titulo'] !== '' ? $m['titulo'] : null;
-        $subtitle = isset($m['subtitulo']) && is_string($m['subtitulo']) && $m['subtitulo'] !== '' ? $m['subtitulo'] : null;
-        if ($title !== null) {
-            $csl['title'] = $subtitle !== null ? "{$title}: {$subtitle}" : $title;
-            if ($subtitle !== null) {
-                $csl['title-short'] = $title;
-            }
-        } elseif ($subtitle !== null) {
-            $csl['title'] = $subtitle;
+        $title = self::truthy($m['titulo'] ?? null) ? (string) $m['titulo'] : '';
+        if (self::has($m, 'subtitulo')) {
+            $item['title'] = "{$title}: {$m['subtitulo']}";
+            $item['title-short'] = $title;
+            $ext['subtitle'] = $m['subtitulo'];
+        } else {
+            $item['title'] = $title;
         }
-        if ($subtitle !== null) {
-            $ext['subtitle'] = $subtitle;
+        if (self::has($m, 'tituloOriginal')) {
+            $item['original-title'] = $m['tituloOriginal'];
         }
         $orcid = [];
-        foreach (self::META_PEOPLE as $old => $new) {
-            $people = self::people($m[$old] ?? null, $orcid);
-            if ($people !== []) {
-                $csl[$new] = $people;
+        foreach (self::META_PEOPLE as $src => $dst) {
+            $names = self::people($m[$src] ?? null);
+            if ($names !== []) {
+                $item[$dst] = $names;
+            }
+            foreach (is_array($m[$src] ?? null) ? $m[$src] : [] as $a) {
+                if (is_array($a) && self::truthy($a['orcid'] ?? null)) {
+                    $key = (string) ($a['apellidos'] ?? '') . (self::truthy($a['nombre'] ?? null) ? ', ' . $a['nombre'] : '');
+                    $orcid[$key] = $a['orcid'];
+                }
             }
         }
-        $anio = isset($m['anio']) && is_numeric($m['anio']) ? (int) $m['anio'] : null;
         $fecha = null;
-        if (isset($m['fecha']) && is_string($m['fecha'])
-            && preg_match('/^(-?\d{1,4})(?:-(\d{1,2}))?(?:-(\d{1,2}))?/', $m['fecha'], $mm)) {
+        if (self::has($m, 'fecha') && is_string($m['fecha'])
+            && preg_match('/^(-?\d{1,4})(?:-(\d{1,2})(?:-(\d{1,2}))?)?/', trim($m['fecha']), $mm)) {
             $fecha = [(int) $mm[1]];
             if (isset($mm[2]) && $mm[2] !== '') {
                 $fecha[] = (int) $mm[2];
-                if (isset($mm[3]) && $mm[3] !== '') {
-                    $fecha[] = (int) $mm[3];
-                }
+            }
+            if (isset($mm[3]) && $mm[3] !== '') {
+                $fecha[] = (int) $mm[3];
             }
         }
-        if ($fecha !== null && ($anio === null || $fecha[0] === $anio)) {
-            $csl['issued'] = ['date-parts' => [$fecha]];
-        } elseif ($anio !== null) {
-            $csl['issued'] = ['date-parts' => [[$anio]]];
+        if ($fecha !== null && (!self::has($m, 'anio') || $fecha[0] == $m['anio'])) {
+            $item['issued'] = ['date-parts' => [$fecha]];
+        } elseif (self::has($m, 'anio')) {
+            $item['issued'] = ['date-parts' => [[$m['anio']]]];
         }
-        if (isset($m['anioOriginal']) && is_numeric($m['anioOriginal'])) {
-            $csl['original-date'] = ['date-parts' => [[(int) $m['anioOriginal']]]];
+        if (self::has($m, 'anioOriginal')) {
+            $item['original-date'] = ['date-parts' => [[$m['anioOriginal']]]];
         }
-        foreach (self::META_SIMPLE as $old => $new) {
-            if (isset($m[$old]) && self::present($m[$old])) {
-                $csl[$new] = $m[$old];
+        foreach (self::META_SIMPLE as $src => $dst) {
+            if (self::has($m, $src)) {
+                $item[$dst] = $m[$src];
             }
         }
-        if (!isset($csl['container-title']) && isset($m['contenedor']) && self::present($m['contenedor'])) {
-            $csl['container-title'] = $m['contenedor'];
+        if (self::has($m, 'revista')) {
+            $item['container-title'] = $m['revista'];
+        } elseif (self::has($m, 'contenedor')) {
+            $item['container-title'] = $m['contenedor'];
         }
-        if (isset($m['tipoCSL']) && is_string($m['tipoCSL']) && $m['tipoCSL'] !== '') {
-            $csl['type'] = $m['tipoCSL'];
-        } elseif ($tipo !== null && isset(self::TYPE_BY_KIND[$tipo])) {
-            $csl['type'] = self::TYPE_BY_KIND[$tipo];
-        } elseif (isset($m['revista']) && self::present($m['revista'])) {
-            $csl['type'] = 'article-journal';
-        } else {
-            $csl['type'] = 'book';
-        }
-        if (isset($m['idiomaOriginal']) && self::present($m['idiomaOriginal'])) {
+        if (self::has($m, 'idiomaOriginal')) {
             $ext['original_language'] = $m['idiomaOriginal'];
         }
-        if (isset($m['sinFecha']) && is_array($m['sinFecha'])) {
+        if (self::has($m, 'sinFecha') && is_array($m['sinFecha'])) {
+            $sf = $m['sinFecha'];
             $u = [];
-            foreach (['desde' => 'from', 'hasta' => 'to', 'fundamento' => 'basis'] as $old => $new) {
-                if (isset($m['sinFecha'][$old]) && self::present($m['sinFecha'][$old])) {
-                    $u[$new] = $m['sinFecha'][$old];
-                }
+            if (($sf['desde'] ?? null) !== null) {
+                $u['from'] = $sf['desde'];
             }
-            if ($u !== []) {
-                $ext['undated'] = $u;
+            if (($sf['hasta'] ?? null) !== null) {
+                $u['to'] = $sf['hasta'];
             }
+            if (self::truthy($sf['fundamento'] ?? null)) {
+                $u['basis'] = $sf['fundamento'];
+            }
+            $ext['undated'] = $u === [] ? new \stdClass() : $u;
         }
-        if (isset($m['procedencia']) && is_array($m['procedencia']) && !array_is_list($m['procedencia'])) {
+        if (self::has($m, 'procedencia') && is_array($m['procedencia'])) {
             $prov = [];
-            foreach ($m['procedencia'] as $field => $p) {
-                if (!is_array($p)) {
-                    continue;
+            foreach ($m['procedencia'] as $campo => $v) {
+                $key = self::FIELDS[(string) $campo] ?? (string) $campo;
+                if (str_starts_with($key, 'spdf.')) {
+                    $key = substr($key, 5);
                 }
-                $entry = [];
-                foreach ($p as $k => $v) {
-                    $entry[match ($k) { 'fuente' => 'source', 'confianza' => 'confidence', default => $k }] = $v;
-                }
-                $prov[(string) $field] = $entry === [] ? new \stdClass() : $entry;
+                $v = is_array($v) ? $v : [];
+                $fuente = $v['fuente'] ?? null;
+                $prov[$key] = [
+                    'source' => is_string($fuente) ? (self::PROVENANCE_SOURCES[$fuente] ?? $fuente) : $fuente,
+                    'confidence' => $v['confianza'] ?? null,
+                ];
             }
-            if ($prov !== []) {
-                $ext['provenance'] = $prov;
-            }
+            $ext['provenance'] = $prov === [] ? new \stdClass() : $prov;
         }
         if ($orcid !== []) {
             $ext['orcid'] = $orcid;
         }
         if ($ext !== []) {
-            $csl['spdf'] = $ext;
+            $item['spdf'] = $ext;
         }
-        return $csl;
+        return $item;
     }
 }

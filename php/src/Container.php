@@ -132,36 +132,34 @@ final class Container
     private function detectVersion(): void
     {
         $has = fn (string $t): bool => in_array($t, $this->tables, true);
-        if ($has('spdf_meta') && $this->applicationId === self::APPLICATION_ID && $this->userVersion === self::USER_VERSION) {
-            $v = $this->pdo->query("SELECT value FROM spdf_meta WHERE key = 'spdf_version'")->fetchColumn();
-            $this->version = is_string($v) && $v !== '' ? $v : '5.0';
-            return;
-        }
-        if ($has('spdf') && $has('documentos')) {
-            $this->legacy = true;
+        $uv = $this->userVersion;
+        if ($this->applicationId === self::APPLICATION_ID) {
+            if ($uv >= 500 && $uv <= 599) {
+                $this->version = intdiv($uv, 100) . '.' . intdiv($uv % 100, 10);
+                return;
+            }
+        } elseif ($has('spdf') && $has('documentos')) {
             $v = null;
             try {
                 $v = $this->pdo->query("SELECT valor FROM spdf WHERE clave = 'spdf_version'")->fetchColumn();
             } catch (\PDOException) {
                 $v = null;
             }
-            if (!is_string($v) || $v === '') {
-                $v = match ($this->userVersion) {
-                    400 => '4.0',
-                    410 => '4.1',
-                    default => '4.1',
-                };
+            if (is_scalar($v) && str_starts_with((string) $v, '4.')) {
+                $this->legacy = true;
+                $this->version = (string) $v;
+                return;
             }
-            if (!str_starts_with($v, '4')) {
-                throw new SpdfException('E002', "Unknown legacy SPDF version: {$v}");
+            if ($uv === 400 || $uv === 410) {
+                $this->legacy = true;
+                $this->version = intdiv($uv, 100) . '.' . intdiv($uv % 100, 10);
+                return;
             }
-            $this->version = $v;
-            return;
         }
         throw new SpdfException('E002', sprintf(
-            'Not a SPDF file (application_id %d, user_version %d).',
+            'Unknown application_id or user_version (%d, %d).',
             $this->applicationId,
-            $this->userVersion,
+            $uv,
         ));
     }
 

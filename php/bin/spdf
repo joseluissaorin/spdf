@@ -1,0 +1,124 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+// Command-line tool of the PHP implementation of SPDF.
+
+foreach ([__DIR__ . '/../vendor/autoload.php', __DIR__ . '/../../../autoload.php'] as $autoload) {
+    if (is_file($autoload)) {
+        require $autoload;
+        break;
+    }
+}
+if (!class_exists(Spdf\Document::class)) {
+    spl_autoload_register(function (string $class): void {
+        if (str_starts_with($class, 'Spdf\\')) {
+            $file = __DIR__ . '/../src/' . str_replace('\\', '/', substr($class, 5)) . '.php';
+            if (is_file($file)) {
+                require $file;
+            }
+        }
+    });
+}
+
+use Spdf\AnchorUri;
+use Spdf\Conformance\Runner;
+use Spdf\Document;
+use Spdf\Json;
+use Spdf\SpdfException;
+use Spdf\Validator;
+
+$usage = <<<'TXT'
+spdf (PHP) - read, validate, search and cite SPDF files
+
+  spdf validate FILE                 validation report (JSON)
+  spdf dump FILE                     canonical dump (RFC 8785 JSON)
+  spdf info FILE                     title, version and counts
+  spdf search FILE QUERY [LIMIT]     reference lexical search
+  spdf cite FILE FRAGMENT_ID [LOCALE]  short citation of a fragment (es|en)
+  spdf uri FILE FRAGMENT_ID          anchor URI of a fragment
+  spdf parse-uri URI                 parse an anchor URI into its locator
+  spdf csl FILE                      CSL-JSON
+  spdf bibtex FILE                   BibTeX
+  spdf conformance [DIR]             run the conformance suite (default ../conformance)
+
+TXT;
+
+$args = array_slice($argv, 1);
+$cmd = $args[0] ?? 'help';
+$out = fn (string $s) => fwrite(STDOUT, $s . (str_ends_with($s, "\n") ? '' : "\n"));
+
+try {
+    switch ($cmd) {
+        case 'validate':
+            $r = Validator::validate($args[1] ?? throw new InvalidArgumentException('FILE missing'));
+            $out(Json::encode($r, true));
+            exit($r['valid'] ? 0 : 1);
+        case 'dump':
+            $out(Document::open($args[1] ?? throw new InvalidArgumentException('FILE missing'))->dumpJson());
+            break;
+        case 'info':
+            $d = Document::open($args[1] ?? throw new InvalidArgumentException('FILE missing'));
+            $out(Json::encode([
+                'version' => $d->version(),
+                'legacy' => $d->isLegacy(),
+                'title' => $d->title(),
+                'citation' => $d->cite(['type' => 'image'], null, 'es'),
+                'units' => count($d->units()),
+                'fragments' => count($d->fragments()),
+                'spaces' => array_map(fn ($s) => $s['id'], $d->spaces()),
+            ], true));
+            break;
+        case 'search':
+            $d = Document::open($args[1] ?? throw new InvalidArgumentException('FILE missing'));
+            $out(Json::encode($d->searchLexical($args[2] ?? '', (int) ($args[3] ?? 10)), true));
+            break;
+        case 'cite':
+            $d = Document::open($args[1] ?? throw new InvalidArgumentException('FILE missing'));
+            $out($d->citeFragment($args[2] ?? throw new InvalidArgumentException('FRAGMENT_ID missing'), $args[3] ?? 'es'));
+            break;
+        case 'uri':
+            $d = Document::open($args[1] ?? throw new InvalidArgumentException('FILE missing'));
+            $f = $d->fragment($args[2] ?? '') ?? throw new InvalidArgumentException('Unknown fragment');
+            $out($d->anchorUri($f['anchor'], is_array($f['anchor_end']) ? $f['anchor_end'] : null));
+            break;
+        case 'parse-uri':
+            $out(Json::encode(AnchorUri::parse($args[1] ?? ''), true));
+            break;
+        case 'csl':
+            $out(Document::open($args[1] ?? throw new InvalidArgumentException('FILE missing'))->cslJson());
+            break;
+        case 'bibtex':
+            $out(Document::open($args[1] ?? throw new InvalidArgumentException('FILE missing'))->bibtex());
+            break;
+        case 'eval':
+            // Test protocol: one JSON request per stdin line, one JSON answer per line.
+            while (($line = fgets(STDIN)) !== false) {
+                if (trim($line) === '') {
+                    continue;
+                }
+                try {
+                    $res = ['ok' => Spdf\Conformance\Runner::evaluate(Json::decode($line))];
+                } catch (Throwable $e) {
+                    $res = ['error' => ($e instanceof SpdfException ? $e->spdfCode . ' ' : '') . $e->getMessage()];
+                }
+                fwrite(STDOUT, Json::encode($res) . "\n");
+            }
+            break;
+        case 'conformance':
+            $dir = $args[1] ?? __DIR__ . '/../../conformance';
+            $report = (new Runner($dir))->run();
+            $out(Json::encode($report, true));
+            exit($report['failed'] === [] ? 0 : 1);
+        default:
+            fwrite(STDOUT, $usage);
+            exit($cmd === 'help' || $cmd === '--help' || $cmd === '-h' ? 0 : 2);
+    }
+} catch (SpdfException $e) {
+    fwrite(STDERR, $e->getMessage() . "\n");
+    exit(1);
+} catch (Throwable $e) {
+    fwrite(STDERR, get_class($e) . ': ' . $e->getMessage() . "\n");
+    exit(2);
+}

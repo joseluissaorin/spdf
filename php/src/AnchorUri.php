@@ -29,68 +29,64 @@ final class AnchorUri
     {
         $l = [];
         $type = $a['type'] ?? null;
-        $printed = self::str($a['printed'] ?? null);
+        $endType = $end['type'] ?? null;
         switch ($type) {
             case 'page':
-                if (isset($a['physical']) && is_numeric($a['physical'])) {
-                    $l['p'] = (int) $a['physical'];
-                    if (($end['type'] ?? null) === 'page' && isset($end['physical']) && (int) $end['physical'] !== $l['p']) {
-                        $l['pe'] = (int) $end['physical'];
+                $l['p'] = $a['physical'] ?? null;
+                if (($a['printed'] ?? null) !== null) {
+                    $l['f'] = (string) $a['printed'];
+                }
+                if ($end !== null && $endType === 'page') {
+                    if (($end['physical'] ?? null) !== null && $end['physical'] != ($a['physical'] ?? null)) {
+                        $l['pe'] = $end['physical'];
+                    }
+                    if (($end['printed'] ?? null) !== null && $end['printed'] !== ($a['printed'] ?? null)) {
+                        $l['fe'] = (string) $end['printed'];
                     }
                 }
                 break;
             case 'time':
-                if (isset($a['t0']) && is_numeric($a['t0'])) {
-                    $t1 = (($end['type'] ?? null) === 'time' && isset($end['t1'])) ? $end['t1'] : ($a['t1'] ?? null);
-                    $l['t'] = $t1 !== null && is_numeric($t1) ? [$a['t0'] + 0, $t1 + 0] : [$a['t0'] + 0];
-                }
+                $t1 = ($end !== null && $endType === 'time') ? ($end['t1'] ?? null) : ($a['t1'] ?? null);
+                $l['t'] = $t1 === null ? [$a['t0'] ?? 0] : [$a['t0'] ?? 0, $t1];
                 break;
             case 'section':
             case 'web':
                 if (isset($a['path']) && is_array($a['path']) && $a['path'] !== []) {
                     $l['s'] = array_map('strval', array_values($a['path']));
                 }
-                if (isset($a['paragraph']) && is_numeric($a['paragraph'])) {
-                    $l['para'] = (int) $a['paragraph'];
+                if (($a['paragraph'] ?? null) !== null) {
+                    $l['para'] = $a['paragraph'];
+                }
+                if (($a['printed'] ?? null) !== null) {
+                    $l['f'] = (string) $a['printed'];
+                    if ($end !== null && ($end['printed'] ?? null) !== null && $end['printed'] !== $a['printed']) {
+                        $l['fe'] = (string) $end['printed'];
+                    }
                 }
                 break;
             case 'slide':
-                if (isset($a['n']) && is_numeric($a['n'])) {
-                    $l['sl'] = (int) $a['n'];
-                }
+                $l['sl'] = $a['n'] ?? null;
                 break;
             case 'sheet':
-                if (isset($a['sheet'])) {
-                    $l['sh'] = (string) $a['sheet'];
-                }
-                if (isset($a['row_from']) && is_numeric($a['row_from'])) {
-                    $l['rows'] = [(int) $a['row_from'], (int) ($a['row_to'] ?? $a['row_from'])];
-                }
+                $l['sh'] = (string) ($a['sheet'] ?? '');
+                $l['rows'] = [$a['row_from'] ?? null, $a['row_to'] ?? null];
                 break;
             case 'verse':
-                if (isset($a['line_from']) && is_numeric($a['line_from'])) {
-                    $from = (int) $a['line_from'];
-                    $to = isset($a['line_to']) && is_numeric($a['line_to']) ? (int) $a['line_to'] : null;
-                    $l['v'] = $to === null || $to === $from ? [$from] : [$from, $to];
+                $from = $a['line_from'] ?? null;
+                $to = $a['line_to'] ?? null;
+                $l['v'] = $to === null || $to == $from ? [$from] : [$from, $to];
+                if (($a['printed'] ?? null) !== null) {
+                    $l['f'] = (string) $a['printed'];
                 }
                 break;
             case 'canonical':
-                if (isset($a['scheme'], $a['ref'])) {
-                    $l['ref'] = ['scheme' => (string) $a['scheme'], 'ref' => (string) $a['ref']];
-                }
+                $l['ref'] = ['scheme' => (string) ($a['scheme'] ?? ''), 'ref' => (string) ($a['ref'] ?? '')];
                 break;
         }
-        if ($printed !== null && in_array($type, ['page', 'section', 'verse'], true)) {
-            $l['f'] = $printed;
+        if (($a['chars'] ?? null) !== null && is_array($a['chars'])) {
+            $l['char'] = array_values($a['chars']);
         }
-        $endPrinted = self::str($end['printed'] ?? null);
-        if ($end !== null && $endPrinted !== null && $endPrinted !== $printed) {
-            $l['fe'] = $endPrinted;
-        }
-        if (isset($a['chars']) && is_array($a['chars']) && count($a['chars']) === 2) {
-            $l['char'] = [(int) $a['chars'][0], (int) $a['chars'][1]];
-        }
-        if (isset($a['region']) && is_array($a['region'])) {
+        if (($a['region'] ?? null) !== null && is_array($a['region'])) {
             $r = $a['region'];
             $l['xywh'] = [$r['x'] ?? 0, $r['y'] ?? 0, $r['w'] ?? 0, $r['h'] ?? 0];
         }
@@ -101,108 +97,185 @@ final class AnchorUri
     public static function format(string $docref, array $locator): string
     {
         $parts = [];
+        $int = fn ($x) => is_float($x) && floor($x) == $x ? (string) (int) $x : (string) $x;
         foreach (self::ORDER as $k) {
-            if (!array_key_exists($k, $locator) || $locator[$k] === null) {
+            if (!array_key_exists($k, $locator)) {
                 continue;
             }
             $v = $locator[$k];
             $parts[] = $k . '=' . match ($k) {
-                'p', 'pe', 'para', 'sl' => (string) (int) $v,
+                'p', 'pe', 'para', 'sl' => $int($v),
                 'f', 'fe', 'sh' => rawurlencode((string) $v),
                 't' => implode(',', array_map(fn ($x) => Json::number((float) $x), (array) $v)),
                 's' => implode('/', array_map(fn ($x) => rawurlencode((string) $x), (array) $v)),
-                'rows', 'v' => implode('-', array_map(fn ($x) => (string) (int) $x, (array) $v)),
+                'rows' => $int($v[0] ?? '') . '-' . $int($v[1] ?? ''),
+                'v' => implode('-', array_map($int, (array) $v)),
                 'ref' => rawurlencode((string) ($v['scheme'] ?? '')) . ':' . rawurlencode((string) ($v['ref'] ?? '')),
-                'char' => implode(',', array_map(fn ($x) => (string) (int) $x, (array) $v)),
+                'char' => $int($v[0] ?? '') . ',' . $int($v[1] ?? ''),
                 'xywh' => 'percent:' . implode(',', array_map(
-                    fn ($x) => Json::ecma((float) sprintf('%.4F', ((float) $x) * 100)),
+                    fn ($x) => Json::number((float) sprintf('%.4F', ((float) $x) * 100)),
                     (array) $v,
                 )),
             };
         }
-        $uri = 'spdf:' . rawurlencode($docref);
+        $ref = preg_match('/^sha256-[0-9a-f]{64}$/', $docref) ? $docref : rawurlencode($docref);
+        $uri = 'spdf:' . $ref;
         return $parts === [] ? $uri : $uri . '#' . implode('&', $parts);
     }
 
     /**
-     * Parses an anchor URI (leniently).
+     * Parses an anchor URI. Throws SpdfException (E040) on malformed input.
      *
      * @return array{docref:string, locator:array}
      */
     public static function parse(string $uri): array
     {
+        $bad = fn (string $why) => new SpdfException('E040', "Bad anchor URI ({$why}): {$uri}");
         if (!str_starts_with($uri, 'spdf:')) {
-            throw new SpdfException('E040', "Not a SPDF anchor URI: {$uri}");
+            throw $bad('not an spdf: URI');
         }
         $rest = substr($uri, 5);
         $hash = strpos($rest, '#');
-        $docref = rawurldecode($hash === false ? $rest : substr($rest, 0, $hash));
+        $docrefRaw = $hash === false ? $rest : substr($rest, 0, $hash);
         $frag = $hash === false ? '' : substr($rest, $hash + 1);
-        if ($docref === '') {
-            throw new SpdfException('E040', "Anchor URI without a document reference: {$uri}");
+        if ($docrefRaw === '') {
+            throw $bad('empty document reference');
         }
+        $docref = self::dec($docrefRaw, $bad);
         $l = [];
-        foreach ($frag === '' ? [] : explode('&', $frag) as $pair) {
-            $eq = strpos($pair, '=');
-            if ($eq === false) {
+        foreach ($frag === '' ? [] : explode('&', $frag) as $part) {
+            if ($part === '') {
                 continue;
             }
-            $k = rawurldecode(substr($pair, 0, $eq));
-            $v = substr($pair, $eq + 1);
+            $eq = strpos($part, '=');
+            if ($eq === false) {
+                throw $bad("parameter without value: {$part}");
+            }
+            $k = substr($part, 0, $eq);
+            $v = substr($part, $eq + 1);
+            if (array_key_exists($k, $l)) {
+                throw $bad("duplicate parameter {$k}");
+            }
             switch ($k) {
                 case 'p':
                 case 'pe':
                 case 'para':
                 case 'sl':
-                    if (preg_match('/^-?\d+$/', rawurldecode($v))) {
-                        $l[$k] = (int) rawurldecode($v);
+                    $l[$k] = self::int($v, $bad);
+                    if ($k !== 'para' && $l[$k] < 1) {
+                        throw $bad("{$k} starts at 1");
                     }
                     break;
                 case 'f':
                 case 'fe':
                 case 'sh':
-                    $l[$k] = rawurldecode($v);
+                    $l[$k] = self::dec($v, $bad);
                     break;
                 case 't':
-                    $l['t'] = array_map(fn ($x) => self::number(rawurldecode($x)), explode(',', $v));
+                    if (str_starts_with($v, 'npt:')) {
+                        $v = substr($v, 4);
+                    }
+                    $xs = array_map(fn ($x) => self::npt($x, $bad), explode(',', $v));
+                    if (count($xs) > 2 || (count($xs) === 2 && $xs[1] < $xs[0])) {
+                        throw $bad('bad t');
+                    }
+                    $l['t'] = $xs;
                     break;
                 case 's':
-                    $l['s'] = array_map('rawurldecode', explode('/', $v));
+                    $l['s'] = array_map(fn ($e) => self::dec($e, $bad), explode('/', $v));
                     break;
                 case 'rows':
+                    $dash = strpos($v, '-');
+                    if ($dash === false) {
+                        throw $bad('rows needs a-b');
+                    }
+                    $l['rows'] = [self::int(substr($v, 0, $dash), $bad), self::int(substr($v, $dash + 1), $bad)];
+                    break;
                 case 'v':
-                    $l[$k] = array_map(fn ($x) => (int) rawurldecode($x), explode('-', rawurldecode($v)));
+                    $xs = array_map(fn ($x) => self::int($x, $bad), explode('-', $v));
+                    if (count($xs) > 2) {
+                        throw $bad('bad v');
+                    }
+                    $l['v'] = $xs;
                     break;
                 case 'ref':
                     $colon = strpos($v, ':');
-                    if ($colon === false) {
-                        $colon = strpos($v, '%3A');
-                        $l['ref'] = $colon === false
-                            ? ['scheme' => '', 'ref' => rawurldecode($v)]
-                            : ['scheme' => rawurldecode(substr($v, 0, $colon)), 'ref' => rawurldecode(substr($v, $colon + 3))];
-                    } else {
-                        $l['ref'] = ['scheme' => rawurldecode(substr($v, 0, $colon)), 'ref' => rawurldecode(substr($v, $colon + 1))];
+                    if ($colon === false || $colon === 0) {
+                        throw $bad('ref needs scheme:ref');
                     }
+                    $l['ref'] = ['scheme' => self::dec(substr($v, 0, $colon), $bad), 'ref' => self::dec(substr($v, $colon + 1), $bad)];
                     break;
                 case 'char':
-                    $l['char'] = array_map(fn ($x) => (int) $x, explode(',', rawurldecode($v)));
+                    $xs = explode(',', $v);
+                    if (count($xs) !== 2) {
+                        throw $bad('char needs start,end');
+                    }
+                    $a = self::int($xs[0], $bad);
+                    $b = self::int($xs[1], $bad);
+                    if ($b < $a) {
+                        throw $bad('char end before start');
+                    }
+                    $l['char'] = [$a, $b];
                     break;
                 case 'xywh':
-                    $raw = rawurldecode($v);
-                    $percent = str_starts_with($raw, 'percent:');
-                    if ($percent) {
-                        $raw = substr($raw, 8);
-                    } elseif (str_starts_with($raw, 'pixel:')) {
-                        break;
+                    if (!str_starts_with($v, 'percent:')) {
+                        throw $bad('xywh must use percent:');
                     }
-                    $l['xywh'] = array_map(
-                        fn ($x) => self::number((string) Json::round6(((float) $x) / ($percent ? 100 : 1))),
-                        explode(',', $raw),
-                    );
+                    $xs = explode(',', substr($v, 8));
+                    if (count($xs) !== 4) {
+                        throw $bad('bad xywh');
+                    }
+                    foreach ($xs as $x) {
+                        if (!preg_match('/^[0-9]+(\.[0-9]+)?$/', $x)) {
+                            throw $bad('bad xywh');
+                        }
+                    }
+                    $l['xywh'] = array_map(fn ($x) => self::canonNumber(Json::round6(((float) $x) / 100)), $xs);
                     break;
+                default:
+                    // unknown keys are ignored
             }
         }
         return ['docref' => $docref, 'locator' => $l];
+    }
+
+    private static function dec(string $s, \Closure $bad): string
+    {
+        if (preg_match('/%(?![0-9A-Fa-f]{2})/', $s)) {
+            throw $bad('bad percent-encoding');
+        }
+        $d = rawurldecode($s);
+        if (!mb_check_encoding($d, 'UTF-8')) {
+            throw $bad('percent-encoding is not UTF-8');
+        }
+        return $d;
+    }
+
+    private static function int(string $s, \Closure $bad): int
+    {
+        if (!preg_match('/^(0|[1-9][0-9]*)$/', $s)) {
+            throw $bad("not an integer: {$s}");
+        }
+        return (int) $s;
+    }
+
+    private static function npt(string $s, \Closure $bad): int|float
+    {
+        if (preg_match('/^[0-9]+(\.[0-9]+)?$/', $s)) {
+            return self::canonNumber((float) $s);
+        }
+        if (!preg_match('/^(?:([0-9]+):)?([0-5]?[0-9]):([0-5][0-9](?:\.[0-9]+)?)$/', $s, $m)) {
+            throw $bad("bad time: {$s}");
+        }
+        $h = $m[1] === '' ? 0 : (int) $m[1];
+        return self::canonNumber(Json::round6($h * 3600 + (int) $m[2] * 60 + (float) $m[3]));
+    }
+
+    /** Integral floats as int (as the canonical form does). */
+    private static function canonNumber(float $f): int|float
+    {
+        $r = Json::round6($f);
+        return floor($r) == $r && abs($r) < 2 ** 53 ? (int) $r : $r;
     }
 
     /** An anchor rebuilt from a locator (best effort; inverse of locator()). */
@@ -249,19 +322,5 @@ final class AnchorUri
             $a['region'] = ['x' => $x, 'y' => $y, 'w' => $w, 'h' => $h];
         }
         return $a;
-    }
-
-    private static function str(mixed $v): ?string
-    {
-        if ($v === null || $v === '') {
-            return null;
-        }
-        return is_scalar($v) ? (string) $v : null;
-    }
-
-    private static function number(string $s): int|float
-    {
-        $f = (float) $s;
-        return (preg_match('/^-?\d+$/', $s) && abs($f) < 2 ** 53) ? (int) $s : $f;
     }
 }

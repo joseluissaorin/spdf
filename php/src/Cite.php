@@ -12,7 +12,7 @@ final class Cite
 {
     public static function short(array $metadata, ?array $anchor, ?array $anchorEnd = null, string $locale = 'es'): string
     {
-        $es = strtolower(substr($locale, 0, 2)) === 'es';
+        $es = strtolower(explode('-', str_replace('_', '-', $locale))[0]) === 'es';
         $parts = [self::names($metadata, $es), self::year($metadata, $es)];
         $loc = $anchor === null ? null : self::locator($anchor, $anchorEnd, $es);
         if ($loc !== null && $loc !== '') {
@@ -64,22 +64,23 @@ final class Cite
             return $m['title-short'];
         }
         $title = isset($m['title']) && is_string($m['title']) ? $m['title'] : '';
-        $colon = strpos($title, ':');
-        return trim($colon === false ? $title : substr($title, 0, $colon));
+        return trim(explode(':', $title)[0]);
     }
 
     /** Spanish "y" becomes "e" before the sound /i/: i, í, hi, hí not followed by a vowel. */
     private static function startsWithI(string $s): bool
     {
-        $l = mb_strtolower(Text::nfc($s), 'UTF-8');
-        if (str_starts_with($l, 'h')) {
-            $l = substr($l, 1);
-        }
-        if (!(str_starts_with($l, 'i') || str_starts_with($l, 'í'))) {
+        $l = mb_strtolower($s, 'UTF-8');
+        $two = mb_substr($l, 0, 2, 'UTF-8');
+        $one = mb_substr($l, 0, 1, 'UTF-8');
+        if ($two === 'hi' || $two === 'hí') {
+            $rest = mb_substr($l, 2, null, 'UTF-8');
+        } elseif ($one === 'i' || $one === 'í') {
+            $rest = mb_substr($l, 1, null, 'UTF-8');
+        } else {
             return false;
         }
-        $next = mb_substr($l, 1, 1, 'UTF-8');
-        return !preg_match('/^[aeiouáéíóúü]$/u', $next);
+        return !($rest !== '' && in_array(mb_substr($rest, 0, 1, 'UTF-8'), ['a', 'e', 'i', 'o', 'u', 'á', 'é', 'í', 'ó', 'ú', 'ü'], true));
     }
 
     public static function year(array $m, bool $es): string
@@ -94,8 +95,8 @@ final class Cite
         if (!is_int($y)) {
             return $es ? 's. f.' : 'n.d.';
         }
-        if ($y < 0) {
-            return abs($y) . ($es ? ' a. C.' : ' BC');
+        if ($y <= 0) {
+            return (-$y) . ($es ? ' a. C.' : ' BC');
         }
         return (string) $y;
     }
@@ -105,83 +106,72 @@ final class Cite
         $type = $a['type'] ?? null;
         switch ($type) {
             case 'page':
-                return self::pageLocator($a, ($end['type'] ?? null) === 'page' ? $end : null, $es);
-            case 'section':
-            case 'web':
-                if (self::printed($a) !== null) {
-                    $e = $end !== null && self::printed($end) !== null ? $end : null;
-                    return self::pageLocator($a, $e, $es);
-                }
-                $path = isset($a['path']) && is_array($a['path']) ? array_values($a['path']) : [];
-                $para = isset($a['paragraph']) && is_numeric($a['paragraph']) ? (int) $a['paragraph'] : null;
-                $paraText = $para === null ? null : ($es ? 'párr. ' : 'para. ') . $para;
-                if ($path === []) {
-                    return $paraText;
-                }
-                $s = '§ ' . $path[count($path) - 1];
-                return $paraText === null ? $s : "{$s}, {$paraText}";
+                [$one, $many] = match ($a['foliation'] ?? 'page') {
+                    'leaf' => ['fol.', 'fols.'],
+                    'column' => ['col.', 'cols.'],
+                    default => ['p.', 'pp.'],
+                };
+                return self::pageLocator($a, $end, $es, $one, $many);
             case 'time':
-                $t0 = isset($a['t0']) && is_numeric($a['t0']) ? (float) $a['t0'] : 0.0;
-                $s = self::clock($t0);
-                if (($end['type'] ?? null) === 'time' && isset($end['t1']) && is_numeric($end['t1'])) {
-                    $s .= '-' . self::clock((float) $end['t1']);
+                $s = self::clock((float) ($a['t0'] ?? 0));
+                if ($end !== null && ($end['type'] ?? null) === 'time') {
+                    $s .= '-' . self::clock((float) ($end['t1'] ?? 0));
                 }
                 return $s;
+            case 'section':
+            case 'web':
+                if (($a['printed'] ?? null) !== null) {
+                    return self::pageLocator($a, $end, $es, 'p.', 'pp.');
+                }
+                $parts = [];
+                if (isset($a['path']) && is_array($a['path']) && $a['path'] !== []) {
+                    $parts[] = '§ ' . $a['path'][count($a['path']) - 1];
+                }
+                if (($a['paragraph'] ?? null) !== null) {
+                    $parts[] = ($es ? 'párr. ' : 'para. ') . $a['paragraph'];
+                }
+                return $parts === [] ? null : implode(', ', $parts);
             case 'slide':
                 return ($es ? 'diap. ' : 'slide ') . ($a['n'] ?? '');
             case 'sheet':
                 $from = $a['row_from'] ?? null;
-                $to = $a['row_to'] ?? $from;
-                $s = (string) ($a['sheet'] ?? '');
-                if ($from === null) {
-                    return $s;
+                $to = $a['row_to'] ?? null;
+                if ($from == $to) {
+                    return ($a['sheet'] ?? '') . ', ' . ($es ? 'fila ' : 'row ') . $from;
                 }
-                return $s . ', ' . ($es ? 'filas ' : 'rows ') . $from . '-' . $to;
+                return ($a['sheet'] ?? '') . ', ' . ($es ? 'filas ' : 'rows ') . $from . '-' . $to;
             case 'verse':
                 $from = $a['line_from'] ?? null;
                 $to = $a['line_to'] ?? null;
-                if ($to === null || $to == $from) {
-                    return 'v. ' . $from;
-                }
-                return "vv. {$from}-{$to}";
+                return $to === null || $to == $from ? "v. {$from}" : "vv. {$from}-{$to}";
             case 'canonical':
                 return isset($a['ref']) ? (string) $a['ref'] : null;
-            case 'image':
-                return null;
         }
         return null;
     }
 
-    private static function printed(?array $a): ?string
+    private static function label(array $a): ?string
     {
-        if ($a === null || !isset($a['printed']) || $a['printed'] === '' || !is_scalar($a['printed'])) {
+        $p = $a['printed'] ?? null;
+        if ($p === null) {
             return null;
         }
-        return (string) $a['printed'];
+        return ($a['source'] ?? null) === 'inferred' ? "[{$p}]" : (string) $p;
     }
 
-    private static function folio(array $a): string
+    private static function pageLocator(array $a, ?array $end, bool $es, string $one, string $many): string
     {
-        $p = self::printed($a) ?? '';
-        return ($a['source'] ?? null) === 'inferred' ? "[{$p}]" : $p;
-    }
-
-    private static function pageLocator(array $a, ?array $end, bool $es): string
-    {
-        $printed = self::printed($a);
-        if ($printed === null) {
+        $la = self::label($a);
+        if ($la === null) {
             return $es ? 's. p.' : 'n. pag.';
         }
-        [$one, $many] = match ($a['foliation'] ?? 'page') {
-            'leaf' => ['fol.', 'fols.'],
-            'column' => ['col.', 'cols.'],
-            default => ['p.', 'pp.'],
-        };
-        $endPrinted = self::printed($end);
-        if ($end !== null && $endPrinted !== null && $endPrinted !== $printed) {
-            return "{$many} " . self::folio($a) . '-' . self::folio($end);
+        if ($end !== null && ($end['type'] ?? null) === ($a['type'] ?? null)) {
+            $lb = self::label($end);
+            if ($lb !== null && ($end['printed'] ?? null) !== ($a['printed'] ?? null)) {
+                return "{$many} {$la}-{$lb}";
+            }
         }
-        return "{$one} " . self::folio($a);
+        return "{$one} {$la}";
     }
 
     /** `h:mm:ss` from one hour, else `m:ss`; seconds floored. */

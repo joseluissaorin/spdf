@@ -241,6 +241,11 @@ final class Document
                     $r['anchor'] = Legacy::anchor($r['anchor']);
                 }
                 break;
+            case 'spaces':
+                if (array_key_exists('modalities', $r)) {
+                    $r['modalities'] = Legacy::modalities($r['modalities']);
+                }
+                break;
             case 'vectors':
                 if (isset($r['target'])) {
                     $r['target'] = Legacy::target((string) $r['target']);
@@ -284,9 +289,9 @@ final class Document
     public function document(): array
     {
         if ($this->documentRow === null) {
-            $rows = $this->rows('documents', 'LIMIT 1');
-            if ($rows === []) {
-                throw new SpdfException('E013', 'The file holds no document.');
+            $rows = $this->rows('documents', 'ORDER BY {id} LIMIT 2');
+            if (count($rows) !== 1) {
+                throw new SpdfException('E013', 'documents must hold exactly one row.');
             }
             $this->documentRow = $rows[0];
         }
@@ -492,7 +497,7 @@ final class Document
         };
         $meta = $this->meta();
         $out = [
-            'spdf_version' => $this->c->legacy ? $this->c->version : (string) ($meta['spdf_version'] ?? $this->c->version),
+            'spdf_version' => $this->c->legacy ? ($meta['spdf_version'] ?? $this->c->version) : ($meta['spdf_version'] ?? null),
             'meta' => $meta === [] ? new \stdClass() : $meta,
             'fts' => $this->fts(),
             'document' => $document,
