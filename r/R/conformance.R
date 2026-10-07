@@ -173,7 +173,9 @@ conf_case <- function(dir, c) {
     return(NULL)
   }
   if (kind == "export_structure") {
-    return(structure("ALTO, TEI and IIIF exports (SPEC 19.4, optional) are not implemented", class = "conf_skip"))
+    doc <- spdf_open(p(input$file))
+    on.exit(spdf_close(doc))
+    return(conf_compare(ex$pages, export_pages(doc, input$format), "pages"))
   }
   if (kind == "quantize") {
     hex <- tryCatch(paste(as.character(spdf_vector_encode(unlist(input$values), input$dtype)), collapse = ""), spdf_error = function(e) NULL)
@@ -239,4 +241,47 @@ spdf_eval <- function(q) {
     },
     stop("unknown op ", q$op)
   )
+}
+
+xml_attr <- function(tag, name) {
+  m <- regmatches(tag, regexec(paste0("\\s", name, "=\"([^\"]*)\""), tag))[[1]]
+  if (length(m) < 2) return(NULL)
+  v <- m[2]
+  for (e in list(c("&lt;", "<"), c("&gt;", ">"), c("&quot;", "\""), c("&#39;", "'"), c("&amp;", "&"))) v <- gsub(e[1], e[2], v, fixed = TRUE)
+  v
+}
+
+# Page sequence of an ALTO, TEI or IIIF export, read back from the exported document.
+export_pages <- function(doc, format) {
+  if (format == "alto") {
+    tags <- regmatches(spdf_alto(doc), gregexpr("<Page\\s[^>]*>", spdf_alto(doc)))[[1]]
+    return(lapply(tags, function(t) {
+      out <- list(physical = as.integer(xml_attr(t, "PHYSICAL_IMG_NR")), printed = xml_attr(t, "PRINTED_IMG_NR"))
+      if (is.null(out$printed)) out["printed"] <- list(NULL)
+      out
+    }))
+  }
+  if (format == "tei") {
+    xml <- spdf_tei(doc)
+    body <- substring(xml, regexpr("<body>", xml, fixed = TRUE))
+    tags <- regmatches(body, gregexpr("<pb(\\s[^>]*)?/>", body))[[1]]
+    return(lapply(tags, function(t) {
+      n <- xml_attr(t, "n")
+      if (is.null(n)) list(n = NULL)[1] else list(n = n)
+    }))
+  }
+  if (format == "iiif") {
+    base <- "https://example.org/iiif"
+    manifest <- json_parse(json_text(spdf_iiif(doc, base)))
+    page_canvases <- unlist(lapply(doc_units(doc), function(u) if (json_is_object(u$anchor) && identical(u$anchor$type, "page")) paste0(base, "/canvas/", u$ord)))
+    out <- list()
+    for (c in manifest$items) {
+      if (c$id %in% page_canvases) {
+        lab <- if (is.null(c$label)) NULL else c$label[[1]][[1]]
+        out[[length(out) + 1]] <- if (is.null(lab)) list(label = NULL)[1] else list(label = lab)
+      }
+    }
+    return(out)
+  }
+  spdf_abort("E000", paste("unknown format", format))
 }

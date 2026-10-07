@@ -43,6 +43,14 @@ Vector and hybrid search take a query vector computed with the same model as the
 `spdf_search_vector(doc, v, "embeddinggemma-2@768")`,
 `spdf_search_hybrid(doc, "ciego jarro", v, "embeddinggemma-2@768")`.
 
+## ALTO, TEI and IIIF
+
+```r
+writeLines(spdf_alto(doc), "quijote.alto.xml")    # ALTO 4, one Page per page unit
+writeLines(spdf_tei(doc), "quijote.tei.xml")      # TEI P5: pb, p, lg/l, u, note
+writeLines(spdf_iiif_json(doc, "https://example.org/iiif/quijote"), "manifest.json")
+```
+
 ## Corpora
 
 ```r
@@ -74,8 +82,8 @@ gzip inflation, and copies WAL-mode files before opening them.
 
 `spdf_conformance("path/to/spdf/conformance")` runs the shared suite of the
 specification; `Rscript inst/scripts/conformance.R ../conformance` prints the JSON
-report. CI publishes it as the `conformance-r` artifact. All kinds are claimed except
-`export_structure` (ALTO, TEI and IIIF exports are optional and not implemented).
+report. CI publishes it as the `conformance-r` artifact. All kinds are claimed,
+`export_structure` included.
 
 ## License
 

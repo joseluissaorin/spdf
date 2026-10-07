@@ -59,3 +59,13 @@ test_that("corpus helpers count terms by work", {
   expect_equal(nrow(counts), 6)
   expect_true(all(c("title", "year", "term", "fragments", "occurrences") %in% names(counts)))
 })
+
+test_that("exports ALTO, TEI and IIIF", {
+  doc <- spdf_open(extdata("quijote.spdf"))
+  on.exit(spdf_close(doc))
+  expect_match(spdf_alto(doc), "<Page ID=\"P2\" PHYSICAL_IMG_NR=\"2\" PRINTED_IMG_NR=\"ii\"", fixed = TRUE)
+  expect_match(spdf_tei(doc), "<pb n=\"[iv]\"", fixed = TRUE)
+  m <- spdf_iiif(doc, "https://example.org/iiif/quijote")
+  expect_equal(m$type, "Manifest")
+  expect_null(m$items[[1]]$label)
+})
