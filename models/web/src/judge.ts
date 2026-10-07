@@ -201,6 +201,32 @@ class ValenEngine implements Engine {
   }
 }
 
+// ------------------------------------------------------------------ remote (models/valen/server.py)
+
+class RemoteEngine implements Engine {
+  constructor(private base: string, private token?: string) {}
+  private async post(path: string, body: unknown) {
+    const r = await fetch(this.base.replace(/\/$/, "") + path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}) },
+      body: JSON.stringify(body),
+    });
+    if (!r.ok) throw new Error(`judge server: HTTP ${r.status}`);
+    return r.json();
+  }
+  async classify(task: string, content: string, labels: Label[]): Promise<number[]> {
+    const r = await this.post("/judge/classify", { instruction: task, content, labels });
+    return (r.probs as [string, number][]).map(([, p]) => p);
+  }
+  async support(claim: string, passage: string, source?: SourceInfo): Promise<Support> {
+    return (await this.post("/judge/support", { claim, passage, source })) as Support;
+  }
+  async relevance(query: string, passage: string): Promise<number> {
+    return (await this.post("/judge/relevance", { query, passage })).relevance;
+  }
+  async dispose() {}
+}
+
 // ------------------------------------------------------------------ public API
 
 export interface JudgeOptions {
@@ -216,6 +242,28 @@ export class Judge {
     const c = entry.judge_calibration;
     this.calibration = c ? { temperature: c.choice.temperature, priorCorrection: c.choice.prior_correction } : { temperature: 1, priorCorrection: false };
     this.supportCalibration = c ? { temperature: c.noul.temperature, priorCorrection: c.noul.prior_correction } : { temperature: 1, priorCorrection: false };
+  }
+
+  /**
+   * A Gemma judge on a transformers.js model the caller has already configured access to
+   * (env.localModelPath, a custom cache…). `repo` is the model id or local path.
+   */
+  static async fromTransformers(T: typeof TJS, repo: string, opts: { device?: "webgpu" | "wasm"; dtype?: string; revision?: string } = {}): Promise<Judge> {
+    const tok = await T.AutoTokenizer.from_pretrained(repo, opts.revision ? { revision: opts.revision } : {});
+    const model = await T.AutoModelForCausalLM.from_pretrained(repo, {
+      ...(opts.revision ? { revision: opts.revision } : {}),
+      device: (opts.device ?? "webgpu") as TJS.DeviceType,
+      dtype: (opts.dtype ?? "q4f16") as TJS.DataType,
+    });
+    const letters = Array.from({ length: 26 }, (_, i) => tok.encode(String.fromCharCode(65 + i), { add_special_tokens: false })[0]);
+    const cal = { temperature: 1, priorCorrection: false };
+    return new Judge(new GemmaEngine(T, tok, model, letters, cal, cal), { id: repo, engine: "transformers.js" } as CatalogEntry);
+  }
+
+  /** A judge served over HTTP with the same contract (models/valen/server.py). */
+  static remote(baseUrl: string, token?: string): Judge {
+    const entry = { id: "remote", engine: "server" } as CatalogEntry;
+    return new Judge(new RemoteEngine(baseUrl, token), entry);
   }
 
   static async load(id: string, opts: JudgeOptions = {}): Promise<Judge> {

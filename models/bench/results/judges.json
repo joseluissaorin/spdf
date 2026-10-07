@@ -1,0 +1,201 @@
+[
+ {
+  "engine": "gemma-4-e2b-q4_k_m",
+  "n_support": 105,
+  "n_relevance": 400,
+  "ms_median": 248.8,
+  "support_yesno_raw": {
+   "auc": 0.721,
+   "acc@0.5": 0.8,
+   "brier": 0.1733,
+   "ece": 0.1661,
+   "nll": 0.8559
+  },
+  "support_yesno_loco_T": {
+   "auc": 0.7108,
+   "acc@0.5": 0.8,
+   "brier": 0.1563,
+   "ece": 0.1248,
+   "nll": 0.48
+  },
+  "support_relation_raw": {
+   "auc": 0.7965,
+   "acc@0.5": 0.6571,
+   "brier": 0.2634,
+   "ece": 0.2841,
+   "nll": 0.8574
+  },
+  "support_relation_loco_T": {
+   "auc": 0.7858,
+   "acc@0.5": 0.7619,
+   "brier": 0.1521,
+   "ece": 0.0707,
+   "nll": 0.4606
+  },
+  "support_yesno_prior_loco_T": {
+   "auc": 0.7108,
+   "acc@0.5": 0.5143,
+   "brier": 0.2463,
+   "ece": 0.3005,
+   "nll": 0.6845
+  },
+  "support_relation_prior_loco_T": {
+   "auc": 0.7921,
+   "acc@0.5": 0.781,
+   "brier": 0.1552,
+   "ece": 0.0837,
+   "nll": 0.4806
+  },
+  "temperature_yesno": 3.888,
+  "temperature_relation": 3.669,
+  "relation_on_gold": {
+   "APOYO_DIRECTO": 21,
+   "APLICACION_DE_MARCO": 1,
+   "CONTEXTO": 1,
+   "CONTRADICCION": 3,
+   "IMPOSIBLE_TEMPORAL": 0,
+   "OPINION_REFERIDA": 0,
+   "AFIRMACION_NEGATIVA": 0
+  },
+  "relation_on_negative": {
+   "APOYO_DIRECTO": 35,
+   "APLICACION_DE_MARCO": 2,
+   "CONTEXTO": 6,
+   "CONTRADICCION": 35,
+   "IMPOSIBLE_TEMPORAL": 0,
+   "OPINION_REFERIDA": 0,
+   "AFIRMACION_NEGATIVA": 1
+  },
+  "relevance_spearman": 0.5525,
+  "relevance_auc_ge2": 0.7724,
+  "relevance_pairwise_acc": 0.6956
+ },
+ {
+  "engine": "gemma-4-e4b-q4_k_m",
+  "n_support": 105,
+  "n_relevance": 400,
+  "ms_median": 495.5,
+  "support_yesno_raw": {
+   "auc": 0.8116,
+   "acc@0.5": 0.8286,
+   "brier": 0.1496,
+   "ece": 0.1594,
+   "nll": 0.8527
+  },
+  "support_yesno_loco_T": {
+   "auc": 0.7707,
+   "acc@0.5": 0.8286,
+   "brier": 0.1339,
+   "ece": 0.0932,
+   "nll": 0.4353
+  },
+  "support_relation_raw": {
+   "auc": 0.798,
+   "acc@0.5": 0.8476,
+   "brier": 0.1474,
+   "ece": 0.1488,
+   "nll": 0.9566
+  },
+  "support_relation_loco_T": {
+   "auc": 0.7868,
+   "acc@0.5": 0.819,
+   "brier": 0.1382,
+   "ece": 0.0936,
+   "nll": 0.4614
+  },
+  "support_yesno_prior_loco_T": {
+   "auc": 0.7683,
+   "acc@0.5": 0.8381,
+   "brier": 0.1405,
+   "ece": 0.0906,
+   "nll": 0.4499
+  },
+  "support_relation_prior_loco_T": {
+   "auc": 0.6933,
+   "acc@0.5": 0.7524,
+   "brier": 0.1975,
+   "ece": 0.1341,
+   "nll": 0.6019
+  },
+  "temperature_yesno": 3.669,
+  "temperature_relation": 4.12,
+  "relation_on_gold": {
+   "APOYO_DIRECTO": 11,
+   "APLICACION_DE_MARCO": 0,
+   "CONTEXTO": 13,
+   "CONTRADICCION": 0,
+   "IMPOSIBLE_TEMPORAL": 0,
+   "OPINION_REFERIDA": 2,
+   "AFIRMACION_NEGATIVA": 0
+  },
+  "relation_on_negative": {
+   "APOYO_DIRECTO": 1,
+   "APLICACION_DE_MARCO": 1,
+   "CONTEXTO": 67,
+   "CONTRADICCION": 6,
+   "IMPOSIBLE_TEMPORAL": 0,
+   "OPINION_REFERIDA": 4,
+   "AFIRMACION_NEGATIVA": 0
+  },
+  "relevance_spearman": 0.584,
+  "relevance_auc_ge2": 0.8058,
+  "relevance_pairwise_acc": 0.708
+ },
+ {
+  "engine": "valen-torch-mps",
+  "n_support": 105,
+  "n_relevance": 400,
+  "ms_median": 650.1,
+  "support_yesno_raw": {
+   "auc": 0.8048,
+   "acc@0.5": 0.7238,
+   "brier": 0.1769,
+   "ece": 0.1772,
+   "nll": 0.523
+  },
+  "support_yesno_loco_T": {
+   "auc": 0.7994,
+   "acc@0.5": 0.7238,
+   "brier": 0.1808,
+   "ece": 0.1799,
+   "nll": 0.5361
+  },
+  "support_relation_raw": {
+   "auc": 0.8462,
+   "acc@0.5": 0.8381,
+   "brier": 0.125,
+   "ece": 0.0762,
+   "nll": 0.4031
+  },
+  "support_relation_loco_T": {
+   "auc": 0.8413,
+   "acc@0.5": 0.8381,
+   "brier": 0.1268,
+   "ece": 0.0743,
+   "nll": 0.4121
+  },
+  "temperature_yesno": 1.023,
+  "temperature_relation": 0.811,
+  "relation_on_gold": {
+   "APOYO_DIRECTO": 20,
+   "APLICACION_DE_MARCO": 0,
+   "CONTEXTO": 5,
+   "CONTRADICCION": 1,
+   "IMPOSIBLE_TEMPORAL": 0,
+   "OPINION_REFERIDA": 0,
+   "AFIRMACION_NEGATIVA": 0
+  },
+  "relation_on_negative": {
+   "APOYO_DIRECTO": 19,
+   "APLICACION_DE_MARCO": 0,
+   "CONTEXTO": 42,
+   "CONTRADICCION": 14,
+   "IMPOSIBLE_TEMPORAL": 1,
+   "OPINION_REFERIDA": 2,
+   "AFIRMACION_NEGATIVA": 1
+  },
+  "relevance_spearman": 0.5467,
+  "relevance_auc_ge2": 0.7827,
+  "relevance_pairwise_acc": 0.6956
+ }
+]

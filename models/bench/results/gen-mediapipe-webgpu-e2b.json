@@ -1,0 +1,41 @@
+{
+ "engine": "mediapipe-webgpu-e2b",
+ "machine": {
+  "chip": "Apple M4 Max",
+  "memory_gb": 36,
+  "os": "macOS-26.5-arm64-arm-64bit"
+ },
+ "date": "2026-10-07",
+ "prompt_tokens_target": 512,
+ "gen_tokens_target": 256,
+ "runs": [
+  {
+   "prompt_tokens": 459,
+   "generated_tokens": 1099,
+   "ttft_ms": 22380.474999904633,
+   "pp_tok_s": 20.508948089884417,
+   "tg_tok_s": 26.917152116311854
+  },
+  {
+   "prompt_tokens": 459,
+   "generated_tokens": 1145,
+   "ttft_ms": 122.36000001430511,
+   "pp_tok_s": 3751.2258903754355,
+   "tg_tok_s": 26.584719173061828
+  },
+  {
+   "prompt_tokens": 459,
+   "generated_tokens": 1130,
+   "ttft_ms": 120.25,
+   "pp_tok_s": 3817.0478170478173,
+   "tg_tok_s": 26.22676262413034
+  }
+ ],
+ "load_s": 2.142424999952316,
+ "note": "time to first token taken as prompt processing; tokens counted with sizeInTokens()",
+ "pp_tok_s": 3751.2,
+ "tg_tok_s": 26.6,
+ "peak_mb": 4154.6,
+ "task": "gemma-4-E2B-it-web.task",
+ "chrome": "Google Chrome 154.0.8037.98"
+}

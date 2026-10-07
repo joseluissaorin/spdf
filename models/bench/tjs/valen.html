@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><title>SPDF models bench (Valen on onnxruntime-web)</title>
+<script type="importmap">
+{ "imports": {
+  "@huggingface/transformers": "/tjs/transformers.js",
+  "onnxruntime-web/webgpu": "/ort/ort.webgpu.bundle.min.mjs",
+  "onnxruntime-web": "/ort/ort.webgpu.bundle.min.mjs",
+  "@noble/hashes/sha2.js": "/noble/sha2.js",
+  "@noble/hashes/utils.js": "/noble/utils.js",
+  "@mediapipe/tasks-genai": "/mp/genai_bundle.mjs",
+  "spdf-infer-web": "/web/index.js"
+} }
+</script>
+</head>
+<body>
+<pre id="log"></pre>
+<script type="module">
+import * as ort from "onnxruntime-web/webgpu";
+import * as T from "@huggingface/transformers";
+import { predict, RELATION_DESCRIPTIONS, RELEVANCE_LABELS } from "spdf-infer-web";
+
+const log = (msg) => { document.getElementById("log").textContent += msg + "\n"; fetch("/log", { method: "POST", body: JSON.stringify({ msg }) }); };
+const post = (r) => fetch("/result", { method: "POST", body: JSON.stringify(r) });
+const SUPPORT_Q = "Does the passage support the claim, so that a skeptical reader checking the citation would agree the source says it?";
+
+function requestFor(p) {
+  if (p.kind === "support") {
+    const s = p.source ?? {};
+    const src = [s.author, s.title, s.year].filter((x) => x != null && x !== "").join(", ");
+    return { state: (src ? `Source: ${src}\n` : "") + `Claim: ${p.claim}\nPassage: ${p.passage}`, questions: {
+      support: { type: "noul", instructions: SUPPORT_Q },
+      relation: { type: "choice", instructions: "How does the passage relate to the claim?", criteria: { ...RELATION_DESCRIPTIONS } } } };
+  }
+  return { state: `Query: ${p.query}\nPassage: ${p.passage}`, questions: {
+    relevance: { type: "score", instructions: "How well does the passage answer the search query?", criteria: RELEVANCE_LABELS.map((l) => l.description) } } };
+}
+
+try {
+  const cfg = await (await fetch("/config.json")).json();
+  ort.env.wasm.wasmPaths = "/ort/";
+  T.env.localModelPath = "/models/";
+  T.env.allowLocalModels = true;
+  T.env.allowRemoteModels = false;
+  T.env.useBrowserCache = false;
+  const v = cfg.variant;
+  const t0 = performance.now();
+  const backbone = await ort.InferenceSession.create(`/models/valen-onnx/valen_backbone_${v}.onnx`, {
+    executionProviders: cfg.device === "webgpu" ? ["webgpu", "wasm"] : ["wasm"],
+    externalData: [{ path: `valen_backbone_${v}.onnx.data`, data: `/models/valen-onnx/valen_backbone_${v}.onnx.data` }],
+  });
+  const head = await ort.InferenceSession.create("/models/valen-onnx/valen_head.onnx", { executionProviders: ["wasm"] });
+  const tokenizer = await T.AutoTokenizer.from_pretrained("valen-onnx");
+  const loadS = (performance.now() - t0) / 1000;
+  log(`loaded in ${loadS.toFixed(1)} s`);
+  if (cfg.smoke) {
+    const req = { state: "A cat is on the sofa.", questions: { animal: { type: "choice", instructions: "Which animal is present?", criteria: { cat: "A cat", dog: "A dog" } }, on_sofa: { type: "noul", instructions: "The cat is on the sofa." } } };
+    const s0 = { ort, backbone, head, tokenizer };
+    const times = [];
+    let last;
+    for (let i = 0; i < 6; i++) { const t = performance.now(); last = await predict(s0, req); times.push(performance.now() - t); }
+    await post({ meta: { smoke_ms: times, answers: last.answers, tokens: last.tokens, load_s: loadS } });
+    await post({ done: true });
+  }
+  let pairs = (await (await fetch("/judges/pairs.jsonl")).text()).trim().split("\n").map((l) => JSON.parse(l));
+  const rel = pairs.filter((p) => p.kind === "relevance");
+  pairs = [...pairs.filter((p) => p.kind === "support"), ...rel.filter((_, i) => i % cfg.every === 0)];
+  if (cfg.limit) pairs = pairs.slice(0, cfg.limit);
+  const s = { ort, backbone, head, tokenizer };
+  await predict(s, requestFor(pairs[0]));  // warm-up (shader compilation)
+  let buf = [];
+  for (const p of pairs) {
+    const t = performance.now();
+    const { answers, tokens } = await predict(s, requestFor(p));
+    const ms = performance.now() - t;
+    const row = { id: p.id, ms, tokens };
+    if (answers.support) { row.supported = answers.support.noul; row.relation = answers.relation.probabilities; }
+    if (answers.relevance) { row.relevance = answers.relevance.score / 3; }
+    buf.push(row);
+    if (buf.length >= 10) { await post(buf); buf = []; }
+  }
+  if (buf.length) await post(buf);
+  await post({ meta: { load_s: loadS, ua: navigator.userAgent } });
+  await post({ done: true });
+} catch (e) {
+  log("ERROR " + (e?.stack ?? e));
+  await post({ error: String(e?.stack ?? e) });
+}
+</script>
+</body>
+</html>

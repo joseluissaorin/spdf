@@ -31,12 +31,19 @@ try {
   if (cfg.limit) [texts, images, audio] = [texts.slice(0, cfg.limit), images.slice(0, cfg.limit), audio.slice(0, cfg.limit)];
   const items = [
     ...texts.map((t) => ({ mod: "text", id: t.id, cls: "text_" + t.length, text: (t.kind === "query" ? QUERY : DOC) + t.text })),
-    ...images.map((im) => ({ mod: "image", id: im.id, cls: "image", image: () => T.RawImage.fromURL("/media/images/" + im.file) })),
+    ...images.map((im) => ({ mod: "image", id: im.id, cls: "image", image: async () => {
+      const raw = await T.RawImage.fromURL("/media/images/" + im.file);
+      if (cfg.preprocess !== "spdf") return raw;
+      const { preprocessImage } = await import("/web/image.js");
+      const r = raw.rgb();
+      const p = preprocessImage({ width: r.width, height: r.height, data: r.data }, 280);
+      return new T.RawImage(p.data, p.width, p.height, 3);  // and the processor's do_resize is off (see embed_core)
+    } })),
     ...audio.map((a) => ({ mod: "audio", id: a.id, cls: "audio_10s", audio: async () => wavToFloat32(new Uint8Array(await (await fetch("/media/audio/" + a.file)).arrayBuffer())) })),
   ];
   let buf = [];
   const { loadMs } = await runBench(T, {
-    modelId: "onnx-community/embeddinggemma-2-ONNX", device: cfg.device, dtype: cfg.dtype, items, log,
+    modelId: "onnx-community/embeddinggemma-2-ONNX", device: cfg.device, dtype: cfg.dtype, items, log, noResize: cfg.preprocess === "spdf",
     emit: (r) => { buf.push(r); if (buf.length >= 20) { post(buf); buf = []; } },
   });
   if (buf.length) await post(buf);

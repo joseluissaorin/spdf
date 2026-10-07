@@ -1,0 +1,112 @@
+name: models
+
+on:
+  push:
+    branches: [main]
+    paths: ["models/**", ".github/workflows/models.yml"]
+  pull_request:
+    paths: ["models/**", ".github/workflows/models.yml"]
+  schedule:
+    - cron: "17 5 * * 1" # weekly: the published model files may change upstream
+  workflow_dispatch:
+
+concurrency:
+  group: models-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  CARGO_TERM_COLOR: always
+  SPDF_LLAMA_CPP_CACHE: ${{ github.workspace }}/.llama-cpp-src
+
+jobs:
+  rust:
+    name: spdf-infer (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        working-directory: models/rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.SPDF_LLAMA_CPP_CACHE }}
+            models/rust/target
+            ~/.cargo/registry
+          key: rust-${{ matrix.os }}-${{ hashFiles('models/rust/Cargo.lock', 'models/rust/spdf-llama-sys/build.rs') }}
+      - name: Linux build tools
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libclang-dev cmake
+      - run: cargo test --release -p spdf-infer
+      - run: cargo build --release -p spdf-infer --features gemini
+      - name: Valen engine (onnxruntime)
+        if: runner.os != 'Windows'
+        run: cargo build --release -p spdf-infer --features valen-onnx
+
+  mobile:
+    name: spdf-infer cross builds (${{ matrix.target }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-latest, target: aarch64-apple-ios }
+          - { os: macos-latest, target: aarch64-apple-ios-sim }
+          - { os: ubuntu-latest, target: aarch64-linux-android }
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: models/rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.SPDF_LLAMA_CPP_CACHE }}
+            models/rust/target
+          key: mobile-${{ matrix.target }}-${{ hashFiles('models/rust/Cargo.lock', 'models/rust/spdf-llama-sys/build.rs') }}
+      - name: Android NDK linker
+        if: contains(matrix.target, 'android')
+        run: |
+          sudo apt-get update && sudo apt-get install -y libclang-dev
+          echo "ANDROID_NDK_HOME=$ANDROID_NDK_LATEST_HOME" >> "$GITHUB_ENV"
+          TC="$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          echo "CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=$TC/aarch64-linux-android28-clang" >> "$GITHUB_ENV"
+          echo "CC_aarch64_linux_android=$TC/aarch64-linux-android28-clang" >> "$GITHUB_ENV"
+          echo "CXX_aarch64_linux_android=$TC/aarch64-linux-android28-clang++" >> "$GITHUB_ENV"
+          echo "AR_aarch64_linux_android=$TC/llvm-ar" >> "$GITHUB_ENV"
+      - run: cargo build --release -p spdf-infer --lib --target ${{ matrix.target }}
+
+  web:
+    name: spdf-infer-web
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: models/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run check-manifest
+      - run: npx tsc -p tsconfig.json
+      - run: npx vitest run
+
+  manifest:
+    name: manifest still matches Hugging Face
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -I models/tools/build_manifest.py --check

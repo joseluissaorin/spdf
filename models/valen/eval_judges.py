@@ -68,8 +68,13 @@ def main():
     ap.add_argument("--variant", default="")
     ap.add_argument("--parity", action="store_true")
     ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--relevance-every", type=int, default=1, help="keep every n-th relevance pair (all support pairs)")
+    ap.add_argument("--suffix", default="")
     a = ap.parse_args()
     pairs = [json.loads(l) for l in PAIRS.read_text().splitlines() if l.strip()]
+    if a.relevance_every > 1:
+        rel = [p for p in pairs if p["kind"] == "relevance"]
+        pairs = [p for p in pairs if p["kind"] == "support"] + rel[:: a.relevance_every]
     if a.limit:
         pairs = pairs[: a.limit]
     OUT.mkdir(parents=True, exist_ok=True)
@@ -83,13 +88,13 @@ def main():
         if a.engine == "torch":
             torch_model = torch_model.to(a.device)
     if a.engine == "torch":
-        name = f"valen-torch-{a.device}"
+        name = f"valen-torch-{a.device}{a.suffix}"
         run = lambda req: torch_model.predict(req, execution="shared_state")  # noqa: E731
     else:
         from valen_onnx import ValenOnnx, compile_request, compiled_from_valen
 
         v = ValenOnnx(a.variant)
-        name = f"valen-onnx-{a.variant or 'fp32'}-cpu"
+        name = f"valen-onnx-{a.variant or 'fp32'}-cpu{a.suffix}"
         run = v.predict
         if a.parity:
             bad = 0

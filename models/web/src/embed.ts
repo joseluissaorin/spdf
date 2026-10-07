@@ -119,8 +119,17 @@ export class Embedder implements Embed {
     }
     const pre = preprocessImage(rgb, this.imageTokens);
     const ri = new T.RawImage(pre.data, pre.width, pre.height, 3);
-    const inputs = await (this.processor as unknown as (t: null, i: unknown) => Promise<Record<string, unknown>>)(null, [[ri]]);
-    return mrl((await this.run(inputs))[0], opts.dims);
+    // the size formula is not idempotent (843x422 -> 1104x528 -> 1152x528): the image is already at the
+    // reference size, so transformers.js must not resize it again
+    const ip = (this.processor as unknown as { image_processor: { do_resize: boolean } }).image_processor;
+    const prev = ip.do_resize;
+    ip.do_resize = false;
+    try {
+      const inputs = await (this.processor as unknown as (t: null, i: unknown) => Promise<Record<string, unknown>>)(null, [[ri]]);
+      return mrl((await this.run(inputs))[0], opts.dims);
+    } finally {
+      ip.do_resize = prev;
+    }
   }
 
   /** Mono PCM at 16 kHz. */

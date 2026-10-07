@@ -3,7 +3,7 @@
 
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex } from "@noble/hashes/utils.js";
-import manifestJson from "./manifest.json";
+import manifestJson from "./manifest.js";
 import type { Kind, Platform } from "./core.js";
 
 export interface FileEntry {

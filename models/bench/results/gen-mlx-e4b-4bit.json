@@ -1,0 +1,42 @@
+{
+ "engine": "mlx-e4b-4bit",
+ "machine": {
+  "chip": "Apple M4 Max",
+  "memory_gb": 36,
+  "os": "macOS-26.5-arm64-arm-64bit"
+ },
+ "date": "2026-10-07",
+ "prompt_tokens_target": 512,
+ "gen_tokens_target": 256,
+ "load_s": 2.9,
+ "runs": [
+  {
+   "prompt_tokens": 516,
+   "generated_tokens": 256,
+   "pp_tok_s": 1300.104247561712,
+   "tg_tok_s": 37.012366592188194,
+   "peak_gb": 6.47385837
+  },
+  {
+   "prompt_tokens": 516,
+   "generated_tokens": 256,
+   "pp_tok_s": 1602.6476783687024,
+   "tg_tok_s": 37.08546065353142,
+   "peak_gb": 6.47385837
+  },
+  {
+   "prompt_tokens": 516,
+   "generated_tokens": 256,
+   "pp_tok_s": 1604.9261281512574,
+   "tg_tok_s": 37.02492996490004,
+   "peak_gb": 6.47385837
+  }
+ ],
+ "pp_tok_s": 1602.6,
+ "tg_tok_s": 37.0,
+ "peak_mb": 7101.5,
+ "mlx_peak_mb": 6629.2,
+ "baseline_mb": 326.9,
+ "mlx_lm": "0.32.0",
+ "weights": "lmstudio-community/gemma-4-E4B-it-MLX-4bit"
+}

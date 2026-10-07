@@ -132,11 +132,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
 
 def run_browser(a):
-    engine = f"tjs-chrome-{a.dtype}-{a.device}"
+    engine = f"tjs-chrome-{a.dtype}-{a.device}" + ("-spdfresize" if a.preprocess == "spdf" else "")
     Handler.routes = {"/models/": CACHE, "/media/": CACHE / "bench-corpus", "/corpus/": CORPUS,
+                      "/web/": HERE.parent / "web" / "dist",
                       "/tjs/": TJS / "node_modules" / "@huggingface" / "transformers" / "dist",
                       "/ort/": TJS / "node_modules" / "onnxruntime-web" / "dist", "/": TJS}
-    Handler.cfg = {"dtype": a.dtype, "device": a.device, "limit": a.limit}
+    Handler.cfg = {"dtype": a.dtype, "device": a.device, "limit": a.limit, "preprocess": a.preprocess}
     srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
     port = srv.server_address[1]
     threading.Thread(target=srv.serve_forever, daemon=True).start()
@@ -172,6 +173,8 @@ def main():
     ap.add_argument("--device", default="")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--timeout", type=int, default=3600)
+    ap.add_argument("--preprocess", default="tjs", choices=["tjs", "spdf"],
+                    help="spdf: resize images with spdf-infer-web's Pillow-exact preprocessing first")
     a = ap.parse_args()
     if a.runtime == "node":
         a.device = a.device or "cpu"

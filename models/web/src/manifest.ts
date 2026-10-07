@@ -1,4 +1,5 @@
-{
+// Generated from models/manifest.json by scripts/sync-manifest.mjs. Do not edit.
+export default {
  "spdf_models": 1,
  "updated": "2026-10-07",
  "models": [
@@ -1655,4 +1656,4 @@
    ]
   }
  }
-}
+};

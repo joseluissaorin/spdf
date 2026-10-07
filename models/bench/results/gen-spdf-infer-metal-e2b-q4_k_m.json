@@ -1,0 +1,49 @@
+{
+ "engine": "spdf-infer-metal-e2b-q4_k_m",
+ "machine": {
+  "chip": "Apple M4 Max",
+  "memory_gb": 36,
+  "os": "macOS-26.5-arm64-arm-64bit"
+ },
+ "date": "2026-10-07",
+ "prompt_tokens_target": 512,
+ "gen_tokens_target": 256,
+ "load_s": 4.11,
+ "runs": [
+  {
+   "run": 0,
+   "prompt_tokens": 509,
+   "generated_tokens": 256,
+   "prompt_ms": 461.30008300000003,
+   "gen_ms": 2358.4287919999997,
+   "pp_tok_s": 1103.403226571715,
+   "tg_tok_s": 108.54684307975495,
+   "stop": "max_tokens"
+  },
+  {
+   "run": 1,
+   "prompt_tokens": 509,
+   "generated_tokens": 256,
+   "prompt_ms": 7.74225,
+   "gen_ms": 2215.261375,
+   "pp_tok_s": 65743.16251735606,
+   "tg_tok_s": 115.56198419249738,
+   "stop": "max_tokens"
+  },
+  {
+   "run": 2,
+   "prompt_tokens": 509,
+   "generated_tokens": 256,
+   "prompt_ms": 5.021375,
+   "gen_ms": 2266.049333,
+   "pp_tok_s": 101366.65753902069,
+   "tg_tok_s": 112.97194472861904,
+   "stop": "max_tokens"
+  }
+ ],
+ "pp_tok_s": 65743.2,
+ "tg_tok_s": 113.0,
+ "peak_mb": 429.6,
+ "gguf": "gemma-4-E2B-it-Q4_K_M.gguf",
+ "note": "in-process llama.cpp (spdf-infer), Metal, n_ctx 4096, greedy"
+}

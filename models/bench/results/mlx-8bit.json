@@ -8,40 +8,58 @@
  "date": "2026-10-07",
  "latency": {
   "text_short": {
-   "n": 3,
-   "median_ms": 29.83,
-   "p90_ms": 93.55,
-   "mean_ms": 45.8
+   "n": 79,
+   "median_ms": 14.01,
+   "p90_ms": 45.97,
+   "mean_ms": 21.02
+  },
+  "text_medium": {
+   "n": 114,
+   "median_ms": 20.5,
+   "p90_ms": 29.14,
+   "mean_ms": 26.5
+  },
+  "text_long": {
+   "n": 97,
+   "median_ms": 34.9,
+   "p90_ms": 63.53,
+   "mean_ms": 50.13
+  },
+  "text_query": {
+   "n": 40,
+   "median_ms": 13.35,
+   "p90_ms": 20.72,
+   "mean_ms": 15.05
   },
   "image": {
-   "n": 3,
-   "median_ms": 231.24,
-   "p90_ms": 363.13,
-   "mean_ms": 270.81
+   "n": 54,
+   "median_ms": 186.74,
+   "p90_ms": 191.96,
+   "mean_ms": 186.7
   },
   "audio_10s": {
-   "n": 3,
-   "median_ms": 77.97,
-   "p90_ms": 81.71,
-   "mean_ms": 76.98
+   "n": 24,
+   "median_ms": 70.87,
+   "p90_ms": 73.82,
+   "mean_ms": 71.75
   }
  },
  "memory": {
-  "baseline_mb": 349.0,
-  "after_load_mb": 1823.0,
-  "peak_mb": 4028.3,
-  "model_mb": 1474.0
+  "baseline_mb": 350.4,
+  "after_load_mb": 1822.5,
+  "peak_mb": 12272.8,
+  "model_mb": 1472.1
  },
  "meta": {
-  "load_s": 2.19,
+  "load_s": 1.51,
   "mlx": "0.32.3",
   "mlx_vlm": "0.7.4 @3d87e884",
   "weights": "mlx-community/embeddinggemma-2-8bit",
   "note": "latency excludes preprocessing (reference processor)"
  },
  "counts": {
-  "text": 3,
-  "image": 3,
-  "audio": 3
+  "text": 330,
+  "image": 54,
+  "audio": 24
  }
 }

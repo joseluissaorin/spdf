@@ -31,6 +31,8 @@ pub use embed::{Embed, Embedder, EmbedderOptions, FakeEmbedder, Space, Task};
 pub use generate::{GenOptions, GenParams, GenStats, Generator, Message, Role};
 pub use judge::{Calibration, Judge, Label, Relation, Support};
 pub use manager::{CatalogEntry, FileEntry, Kind, Manifest, ModelManager, Platform, Progress};
+#[cfg(feature = "gemini")]
+pub use gemini::{GeminiEmbedder, GeminiGenerator};
 
 /// Revision of `google/embeddinggemma-2` all EmbeddingGemma 2 artefacts were converted from.
 /// It is the `version` of the EmbeddingGemma 2 spaces (see models/COMPATIBILIDAD.md).

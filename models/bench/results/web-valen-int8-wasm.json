@@ -1,0 +1,7 @@
+{
+ "engine": "valen-onnx-int8-wasm",
+ "pairs": 2,
+ "peak_mb": 2469.8,
+ "load_s": 1.809,
+ "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36"
+}

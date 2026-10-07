@@ -177,7 +177,12 @@ export interface ValenSessions {
   head: InferenceSession;
   tokenizer: ValenTokenizer;
   hidden?: number;
+  /** Fixed input length of a static export (valen_backbone_static<L>); inferred from its metadata. */
+  staticLength?: number;
 }
+
+/** Token used to right-pad static inputs (any id works: every layer is causal). */
+const PAD_ID = 248044;
 
 /** Runs one decision request (shared state: one backbone pass for all questions). */
 export async function predict(s: ValenSessions, req: DecisionRequest, temperature = 1): Promise<{ answers: Record<string, Answer>; tokens: number }> {
@@ -185,6 +190,17 @@ export async function predict(s: ValenSessions, req: DecisionRequest, temperatur
   const { ids, readouts } = compileRequest(s.tokenizer, req);
   const n = ids.length;
   const T = s.ort.Tensor;
+  if (s.backbone.inputNames.length === 1) {
+    // static export: one input, fixed length, right padding
+    const meta = (s.backbone as unknown as { inputMetadata?: { shape?: (number | string)[] }[] }).inputMetadata?.[0];
+    const L = s.staticLength ?? (typeof meta?.shape?.[1] === "number" ? (meta.shape[1] as number) : 0);
+    if (!L) throw new Error("static Valen export: pass staticLength");
+    if (n > L) throw new Error(`input of ${n} tokens exceeds the static length ${L}`);
+    const padded = BigInt64Array.from({ length: L }, (_, i) => BigInt(i < n ? ids[i] : PAD_ID));
+    const out = await s.backbone.run({ input_ids: new T("int64", padded, [1, L]) }, ["hidden_states"]);
+    const h = ((await out.hidden_states.getData()) as Float32Array).subarray(0, n * hidden);
+    return headAnswers(s, h, hidden, readouts, n, temperature);
+  }
   const feeds: Record<string, OrtTensor> = {
     input_ids: new T("int64", BigInt64Array.from(ids, (x) => BigInt(x)), [1, n]),
     attention_mask: new T("int64", new BigInt64Array(n).fill(1n), [1, n]),
@@ -200,6 +216,11 @@ export async function predict(s: ValenSessions, req: DecisionRequest, temperatur
   }
   const out = await s.backbone.run(feeds, ["hidden_states"]);
   const h = (await out.hidden_states.getData()) as Float32Array;
+  return headAnswers(s, h, hidden, readouts, n, temperature);
+}
+
+async function headAnswers(s: ValenSessions, h: Float32Array, hidden: number, readouts: Readout[], n: number, temperature: number) {
+  const T = s.ort.Tensor;
   const answers: Record<string, Answer> = {};
   for (const r of readouts) {
     const f = features(h, hidden, r);

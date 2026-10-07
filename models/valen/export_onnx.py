@@ -156,26 +156,26 @@ def build_head(out: Path) -> Path:
     return dest
 
 
-def quantize(src: Path, kind: str) -> Path:
+def quantize(src: Path, kind: str, dest: Path | None = None) -> Path:
     if kind == "int8":
         from onnxruntime.quantization import QuantType, quantize_dynamic
 
-        dest = src.with_name("valen_backbone_int8.onnx")
+        dest = dest or src.with_name("valen_backbone_int8.onnx")
         quantize_dynamic(str(src), str(dest), weight_type=QuantType.QInt8, op_types_to_quantize=["MatMul", "Gather"],
                          use_external_data_format=True, extra_options={"MatMulConstBOnly": True})
         return dest
     if kind == "q4":
         from onnxruntime.quantization.matmul_nbits_quantizer import DefaultWeightOnlyQuantConfig, MatMulNBitsQuantizer
 
-        dest = src.with_name("valen_backbone_q4.onnx")
+        dest = dest or src.with_name("valen_backbone_q4.onnx")
         model = onnx.load(str(src))
         cfg = DefaultWeightOnlyQuantConfig(block_size=32, is_symmetric=True, accuracy_level=4,
                                            op_types_to_quantize=("MatMul", "Gather"), quant_axes=(("MatMul", 0), ("Gather", 1)))
         q = MatMulNBitsQuantizer(model, block_size=32, is_symmetric=True, accuracy_level=4, algo_config=cfg)
         q.process()
-        data = dest.with_name(dest.name + "_data")
-        if data.exists():
-            data.unlink()
+        for sfx in (".data", "_data"):
+            if dest.with_name(dest.name + sfx).exists():
+                dest.with_name(dest.name + sfx).unlink()
         q.model.save_model_to_file(str(dest), use_external_data_format=True)
         return dest
     raise ValueError(kind)
@@ -206,7 +206,7 @@ def main():
         t = time.time()
         p = quantize(bb, q)
         print(f"{q}: {p} ({time.time() - t:.0f} s)")
-        files += [p] + ([p.with_name(p.name + "_data")] if p.with_name(p.name + "_data").exists() else [])
+        files += [p] + [p.with_name(p.name + sfx) for sfx in (".data", "_data") if p.with_name(p.name + sfx).exists()]
     for f in ("tokenizer.json", "tokenizer_config.json", "config.json", "chat_template.jinja"):
         shutil.copy(VALEN / f, out / f)
     manifest = json.loads((VALEN / "export_manifest.json").read_text())

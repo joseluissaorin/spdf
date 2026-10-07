@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>SPDF models bench (MediaPipe GenAI)</title></head>
+<body>
+<pre id="log"></pre>
+<script type="module">
+import { FilesetResolver, LlmInference } from "/mp/genai_bundle.mjs";
+
+const log = (msg) => { document.getElementById("log").textContent += msg + "\n"; fetch("/log", { method: "POST", body: JSON.stringify({ msg }) }); };
+const post = (r) => fetch("/result", { method: "POST", body: JSON.stringify(r) });
+// Gemma 4 chat format (MediaPipe adds no template of its own)
+const fmt = (u) => `<|turn>user\n${u}<turn|>\n<|turn>model\n`;
+
+try {
+  const cfg = await (await fetch("/config.json")).json();
+  const fileset = await FilesetResolver.forGenAiTasks("/mp/wasm");
+  const t0 = performance.now();
+  const llm = await LlmInference.createFromOptions(fileset, {
+    baseOptions: { modelAssetPath: cfg.task },
+    maxTokens: 2048, topK: 1, temperature: 0, randomSeed: 1,
+  });
+  const loadS = (performance.now() - t0) / 1000;
+  log(`loaded in ${loadS.toFixed(1)} s`);
+  // prompt of ~n_prompt tokens
+  let text = "";
+  while (llm.sizeInTokens(fmt(text + cfg.prompt.slice(0, 200))) < cfg.n_prompt - 30) text += cfg.prompt.slice(0, 200);
+  const runs = [];
+  for (let run = 0; run < 3; run++) {
+    const prompt = fmt(`${text}\n\nWrite a long, detailed essay in English about the passage above. (run ${run})`);
+    const promptTokens = llm.sizeInTokens(prompt);
+    let first = 0, out = "";
+    const start = performance.now();
+    await llm.generateResponse(prompt, (partial, done) => {
+      if (!first) first = performance.now();
+      out += partial;
+    });
+    const end = performance.now();
+    const gen = llm.sizeInTokens(out);
+    runs.push({ prompt_tokens: promptTokens, generated_tokens: gen, ttft_ms: first - start,
+                pp_tok_s: promptTokens / ((first - start) / 1000), tg_tok_s: gen / ((end - first) / 1000) });
+    log(JSON.stringify(runs[runs.length - 1]));
+  }
+  await post({ runs, load_s: loadS, note: "time to first token taken as prompt processing; tokens counted with sizeInTokens()" });
+  await post({ done: true });
+} catch (e) {
+  log("ERROR " + (e?.stack ?? e));
+  await post({ error: String(e?.stack ?? e) });
+  await post({ done: true });
+}
+</script>
+</body>
+</html>

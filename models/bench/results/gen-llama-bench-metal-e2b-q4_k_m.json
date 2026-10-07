@@ -1,0 +1,15 @@
+{
+ "engine": "llama-bench-metal-e2b-q4_k_m",
+ "machine": {
+  "chip": "Apple M4 Max",
+  "memory_gb": 36,
+  "os": "macOS-26.5-arm64-arm-64bit"
+ },
+ "date": "2026-10-07",
+ "prompt_tokens_target": 512,
+ "gen_tokens_target": 256,
+ "pp_tok_s": 1915.2,
+ "tg_tok_s": 45.8,
+ "build": "36a73916e",
+ "gguf": "gemma-4-E2B-it-Q4_K_M.gguf"
+}

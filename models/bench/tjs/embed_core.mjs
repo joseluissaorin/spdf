@@ -1,10 +1,11 @@
 // Shared transformers.js embedding loop, used by the Node bench and by the browser page.
 // emit(record) receives {mod, id, cls, ms, ms_model, vec}.
 
-export async function runBench(T, { modelId, device, dtype, items, emit, log = () => {} }) {
+export async function runBench(T, { modelId, device, dtype, items, emit, log = () => {}, noResize = false }) {
   const { AutoProcessor, AutoModel } = T;
   const t0 = performance.now();
   const processor = await AutoProcessor.from_pretrained(modelId);
+  if (noResize) processor.image_processor.do_resize = false; // images arrive pre-resized (spdf-infer-web)
   const model = await AutoModel.from_pretrained(modelId, { device, dtype });
   const loadMs = performance.now() - t0;
   log(`loaded in ${loadMs.toFixed(0)} ms`);

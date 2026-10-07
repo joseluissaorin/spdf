@@ -18,3 +18,4 @@ export {
 } from "./judge.js";
 export { compileRequest, features, answer, predict, candidates, type DecisionRequest, type Question, type Answer } from "./valen.js";
 export { targetSize, resizeBicubic, preprocessImage, type RGBImage } from "./image.js";
+export { GeminiEmbedder, GeminiGenerator } from "./gemini.js";

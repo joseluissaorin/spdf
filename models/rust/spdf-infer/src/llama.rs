@@ -243,6 +243,8 @@ impl Context {
             }
             i = end;
         }
+        // decode only enqueues GPU work: wait for it, so timings and the next read are honest
+        unsafe { sys::llama_synchronize(self.ptr.as_ptr()) };
         Ok(())
     }
 

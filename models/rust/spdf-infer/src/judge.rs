@@ -148,6 +148,8 @@ enum Engine {
     /// Valen, a native decision model (onnxruntime).
     #[cfg(feature = "valen-onnx")]
     Valen(crate::valen::ValenOnnx),
+    /// A judge server with the same contract (models/valen/server.py).
+    Remote { base: String, token: Option<String>, agent: ureq::Agent },
 }
 
 /// Valen reads plain questions: drop the "Checking academic citations." style framing.
@@ -218,12 +220,33 @@ impl Judge {
         Self { engine: Engine::Valen(v), calibration: Calibration::default(), support_calibration: Calibration::default(), priors: Mutex::new(HashMap::new()) }
     }
 
-    /// The generator behind a Gemma judge (None for Valen).
+    /// A judge served over HTTP by models/valen/server.py (or anything with its contract).
+    pub fn remote(base_url: impl Into<String>, token: Option<String>) -> Self {
+        let agent: ureq::Agent = ureq::Agent::config_builder().timeout_global(Some(std::time::Duration::from_secs(120))).build().into();
+        Self {
+            engine: Engine::Remote { base: base_url.into().trim_end_matches('/').to_string(), token, agent },
+            calibration: Calibration::default(),
+            support_calibration: Calibration::default(),
+            priors: Mutex::new(HashMap::new()),
+        }
+    }
+
+    fn post(&self, path: &str, body: serde_json::Value) -> Result<serde_json::Value> {
+        let Engine::Remote { base, token, agent } = &self.engine else { unreachable!() };
+        let mut req = agent.post(&format!("{base}{path}")).header("Content-Type", "application/json");
+        if let Some(t) = token {
+            req = req.header("Authorization", format!("Bearer {t}"));
+        }
+        let mut resp = req.send(body.to_string()).map_err(|e| Error::Inference(format!("judge server: {e}")))?;
+        let text = resp.body_mut().read_to_string().map_err(|e| Error::Inference(format!("judge server: {e}")))?;
+        Ok(serde_json::from_str(&text)?)
+    }
+
+    /// The generator behind a Gemma judge (None for other engines).
     pub fn generator(&self) -> Option<&Arc<Generator>> {
         match &self.engine {
             Engine::Gemma { gen, .. } => Some(gen),
-            #[cfg(feature = "valen-onnx")]
-            Engine::Valen(_) => None,
+            _ => None,
         }
     }
 
@@ -232,6 +255,7 @@ impl Judge {
             Engine::Gemma { .. } => "gemma-logits",
             #[cfg(feature = "valen-onnx")]
             Engine::Valen(_) => "valen",
+            Engine::Remote { .. } => "remote",
         }
     }
 
@@ -268,6 +292,12 @@ impl Judge {
                 let msgs = [Message::system(SYSTEM), Message::user(Self::prompt(task, content, labels))];
                 let logits = gen.next_token_logits(&msgs, "")?;
                 Ok(labels.iter().enumerate().map(|(i, _)| logits[letters[i] as usize]).collect())
+            }
+            Engine::Remote { .. } => {
+                let labels_json: Vec<serde_json::Value> = labels.iter().map(|l| serde_json::json!({"name": l.name, "description": l.description})).collect();
+                let r = self.post("/judge/classify", serde_json::json!({"instruction": task, "content": content, "labels": labels_json}))?;
+                let probs = r["probs"].as_array().ok_or_else(|| Error::Inference("judge server: no probs".into()))?;
+                Ok(probs.iter().map(|p| (p[1].as_f64().unwrap_or(0.0) as f32).max(1e-12).ln()).collect())
             }
             #[cfg(feature = "valen-onnx")]
             Engine::Valen(v) => {
@@ -362,6 +392,13 @@ impl Judge {
     }
 
     pub fn support_with(&self, claim: &str, passage: &str, source: Option<&SourceInfo>) -> Result<Support> {
+        if let Engine::Remote { .. } = &self.engine {
+            let r = self.post("/judge/support", serde_json::json!({"claim": claim, "passage": passage, "source": source}))?;
+            let probs: Vec<(Relation, f32)> = r["probs"].as_array().unwrap_or(&vec![]).iter()
+                .filter_map(|p| Some((Relation::from_name(p[0].as_str()?)?, p[1].as_f64()? as f32))).collect();
+            let label = probs.iter().max_by(|a, b| a.1.total_cmp(&b.1)).map(|x| x.0).unwrap_or(Relation::CONTEXTO);
+            return Ok(Support { label, probs, supported: r["supported"].as_f64().unwrap_or(0.0) as f32 });
+        }
         let content = Self::pair_content(claim, passage, source);
         let supported = self.yes_no(SUPPORT_TASK, &content, SUPPORT_YES, SUPPORT_NO)?;
         let p = self.calibrated(RELATION_TASK, &content, &relation_labels(), &self.calibration)?;
@@ -376,6 +413,10 @@ impl Judge {
 
     /// Relevance of a passage to a search query in [0, 1] (expected grade of a 0–3 rubric / 3).
     pub fn relevance(&self, query: &str, passage: &str) -> Result<f32> {
+        if let Engine::Remote { .. } = &self.engine {
+            let r = self.post("/judge/relevance", serde_json::json!({"query": query, "passage": passage}))?;
+            return Ok(r["relevance"].as_f64().unwrap_or(0.0) as f32);
+        }
         #[cfg(feature = "valen-onnx")]
         if let Engine::Valen(v) = &self.engine {
             use crate::valen::{Criteria, Question, QuestionType, Request};

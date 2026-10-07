@@ -118,7 +118,9 @@ class ValenOnnx:
         so = ort.SessionOptions()
         if threads:
             so.intra_op_num_threads = threads
-        name = "valen_backbone.onnx" if not variant else f"valen_backbone_{variant}.onnx"
+        name = "valen_backbone.onnx" if variant in ("", "fp32") else f"valen_backbone_{variant}.onnx"
+        if variant.startswith("static") and not variant[len("static"):].split("_")[0].isdigit():
+            raise ValueError(variant)
         self.bb = ort.InferenceSession(str(onnx_dir / name), so, providers=list(providers))
         self.head = ort.InferenceSession(str(onnx_dir / "valen_head.onnx"), so, providers=["CPUExecutionProvider"])
         self.tok = Tok(onnx_dir / "tokenizer.json")
@@ -129,6 +131,14 @@ class ValenOnnx:
 
     def hidden(self, ids: list[int]) -> np.ndarray:
         n = len(ids)
+        ins = self.bb.get_inputs()
+        if len(ins) == 1:  # static export: fixed length, right padding (every layer is causal)
+            L = ins[0].shape[1]
+            if n > L:
+                raise ValueError(f"input of {n} tokens exceeds the static length {L}")
+            x = np.full((1, L), 248044, dtype=np.int64)
+            x[0, :n] = ids
+            return self.bb.run(["hidden_states"], {"input_ids": x})[0][0][:n]
         feeds = {"input_ids": np.asarray([ids], dtype=np.int64), "attention_mask": np.ones((1, n), dtype=np.int64),
                  "position_ids": np.broadcast_to(np.arange(n, dtype=np.int64), (3, 1, n)).copy()}
         for i in self.state_inputs:

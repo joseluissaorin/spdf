@@ -1,0 +1,65 @@
+{
+ "engine": "mlx-4bit",
+ "machine": {
+  "chip": "Apple M4 Max",
+  "memory_gb": 36,
+  "os": "macOS-26.5-arm64-arm-64bit"
+ },
+ "date": "2026-10-07",
+ "latency": {
+  "text_short": {
+   "n": 79,
+   "median_ms": 12.81,
+   "p90_ms": 14.43,
+   "mean_ms": 12.91
+  },
+  "text_medium": {
+   "n": 114,
+   "median_ms": 18.62,
+   "p90_ms": 23.06,
+   "mean_ms": 19.24
+  },
+  "text_long": {
+   "n": 97,
+   "median_ms": 32.44,
+   "p90_ms": 43.58,
+   "mean_ms": 42.06
+  },
+  "text_query": {
+   "n": 40,
+   "median_ms": 62.29,
+   "p90_ms": 84.99,
+   "mean_ms": 54.85
+  },
+  "image": {
+   "n": 54,
+   "median_ms": 184.07,
+   "p90_ms": 190.39,
+   "mean_ms": 185.32
+  },
+  "audio_10s": {
+   "n": 24,
+   "median_ms": 73.47,
+   "p90_ms": 76.27,
+   "mean_ms": 74.13
+  }
+ },
+ "memory": {
+  "baseline_mb": 349.1,
+  "after_load_mb": 1692.5,
+  "peak_mb": 12113.4,
+  "model_mb": 1343.4
+ },
+ "meta": {
+  "load_s": 1.32,
+  "mlx": "0.32.3",
+  "mlx_vlm": "0.7.4 @3d87e884",
+  "weights": "mlx-community/embeddinggemma-2-4bit",
+  "note": "latency excludes preprocessing (reference processor)"
+ },
+ "counts": {
+  "text": 330,
+  "image": 54,
+  "audio": 24
+ }
+}
