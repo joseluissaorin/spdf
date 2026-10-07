@@ -13,33 +13,37 @@ function ascii_letters(s)
     lowercase(filter(c -> isascii(c) && isletter(c), d))
 end
 
+"First year of `issued` in decimal (negative years keep their sign), or `nothing`."
 function bib_year(item)
     issued = get(item, "issued", nothing)
     dp = issued isa AbstractDict ? get(issued, "date-parts", nothing) : nothing
     (dp isa AbstractVector && !isempty(dp) && dp[1] isa AbstractVector && !isempty(dp[1])) || return nothing
     y = dp[1][1]
     y isa Bool && return nothing
-    y isa Real && isinteger(y) && return string(Int(y))
+    y isa Real && return string(trunc(Int, y))
     y isa AbstractString && occursin(r"^\s*-?\d+\s*$", y) && return string(parse(Int, strip(y)))
     return nothing
 end
 
+nz(x) = x === nothing || x == "" || x === false ? nothing : x
+
 """
     bibtex_key(item) -> String
 
-First author's family name (or the first word of the title) folded to ASCII letters and
-lowercased, followed by the year (or `nd`): `cervantessaavedra1605`, `lazarillo1554`.
+SPEC §19.1: the first author's family, literal or given name, else the first word of
+`title-short` or `title`, folded to ASCII letters and lowercased; `anon` if nothing is
+left; then the first year of `issued`, or `nd`.
 """
 function bibtex_key(item::AbstractDict)
     base = ""
     authors = get(item, "author", nothing)
     if authors isa AbstractVector && !isempty(authors) && authors[1] isa AbstractDict
         a = authors[1]
-        v = something(get(a, "family", nothing), get(a, "literal", nothing), "")
-        base = ascii_letters(v == "" ? "" : v)
+        base = ascii_letters(something(nz(get(a, "family", nothing)), nz(get(a, "literal", nothing)), nz(get(a, "given", nothing)), ""))
     end
     if isempty(base)
-        ws = split(string(something(get(item, "title", nothing), "")))
+        t = something(nz(get(item, "title-short", nothing)), nz(get(item, "title", nothing)), "")
+        ws = split(string(t))
         base = isempty(ws) ? "" : ascii_letters(ws[1])
     end
     return (isempty(base) ? "anon" : base) * something(bib_year(item), "nd")
@@ -84,13 +88,62 @@ function csl_item(doc::Document)
     return item
 end
 
-"CSL-JSON array of one or several documents (Zotero, Pandoc, citeproc)."
-function csl_json(docs::Document...; pretty = true)
-    items = [csl_base(metadata(d)) for d in docs]
+"""
+    csl_export(metadatas; anchor = nothing, anchor_end = nothing) -> Vector{Dict}
+
+CSL-JSON export (SPEC §19.2); with an anchor and a single record, the item carries the
+CSL `label` and `locator` of the citation.
+"""
+function csl_export(metas::AbstractVector; anchor = nothing, anchor_end = nothing)
+    items = [csl_base(m) for m in metas]
     for (it, k) in zip(items, bibtex_keys(items))
         it["id"] = k
     end
-    return json_text(items; pretty)
+    if anchor isa AbstractDict && length(items) == 1
+        ll = csl_label_locator(anchor, anchor_end)
+        if ll !== nothing
+            items[1]["label"], items[1]["locator"] = ll
+        end
+    end
+    return items
+end
+
+"CSL-JSON array of one or several documents (Zotero, Pandoc, citeproc)."
+csl_json(docs::Document...; pretty = true) = json_text(csl_export([metadata(d) for d in docs]); pretty)
+
+"CSL label and locator of an anchor (SPEC §19.2), or `nothing`."
+function csl_label_locator(a::AbstractDict, e = nothing)
+    t = get(a, "type", nothing)
+    folio(x) = get(x, "printed", nothing) === nothing ? nothing :
+               (get(x, "source", nothing) == "inferred" ? "[" * string(x["printed"]) * "]" : string(x["printed"]))
+    if t == "page" || (t in ("section", "web") && get(a, "printed", nothing) !== nothing)
+        f = folio(a)
+        f === nothing && return nothing
+        fol = get(a, "foliation", "page")
+        label = t == "page" ? (fol == "leaf" ? "folio" : fol == "column" ? "column" : "page") : "page"
+        if e isa AbstractDict && get(e, "type", nothing) == t && get(e, "printed", nothing) !== nothing && e["printed"] != a["printed"]
+            return (label, f * "-" * folio(e))
+        end
+        return (label, f)
+    elseif t in ("section", "web")
+        get(a, "paragraph", nothing) !== nothing && return ("paragraph", string(a["paragraph"]))
+        p = get(a, "path", nothing)
+        p isa AbstractVector && !isempty(p) && return ("section", string(p[end]))
+        return nothing
+    elseif t == "time"
+        s = hms(a["t0"])
+        e isa AbstractDict && get(e, "type", nothing) == "time" && (s *= "-" * hms(e["t1"]))
+        return ("timestamp", s)
+    elseif t == "verse"
+        from, to = a["line_from"], get(a, "line_to", nothing)
+        return ("verse", to === nothing || to == from ? string(from) : "$from-$to")
+    elseif t == "canonical"
+        return ("section", string(a["ref"]))
+    elseif t == "sheet"
+        from, to = a["row_from"], a["row_to"]
+        return ("line", from == to ? string(from) : "$from-$to")
+    end
+    return nothing
 end
 
 bibescape(s) = join(c == '\\' ? "\\textbackslash{}" : c == '{' ? "\\{" : c == '}' ? "\\}" : string(c) for c in string(s))
@@ -148,7 +201,10 @@ function bibtex(item::AbstractDict, key::AbstractString = bibtex_key(item))
 end
 
 "BibTeX of one or several documents (keys disambiguated with a, b, c…)."
-function bibtex(docs::Document...)
-    items = [csl_base(metadata(d)) for d in docs]
+bibtex(docs::Document...) = bibtex_export([metadata(d) for d in docs])
+
+"BibTeX export of several metadata records, separated by one empty line (SPEC §19.3)."
+function bibtex_export(metas::AbstractVector)
+    items = [csl_base(m) for m in metas]
     return join((bibtex(it, k) for (it, k) in zip(items, bibtex_keys(items))), "\n")
 end

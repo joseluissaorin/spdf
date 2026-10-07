@@ -38,6 +38,7 @@ function quantize(values, dtype::AbstractString = "f32")
     elseif dtype == "i8"
         q = map(v) do x
             y = x * 127
+            abs(y) >= 127 && return Int8(y > 0 ? 127 : -127)   # also catches v * 127 overflowing
             r = floor(abs(y) + 0.5) * (y >= 0 ? 1 : -1)
             Int8(clamp(r, -127, 127))
         end

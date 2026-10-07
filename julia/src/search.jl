@@ -1,6 +1,6 @@
 # Reference search algorithms (specification section 8).
 
-"A search result."
+"A search result (`fragment_id` holds the unit or figure id for those targets)."
 struct Hit
     fragment_id::String
     score::Float64
@@ -100,7 +100,9 @@ function vector_hits(doc::Document, q::AbstractVector, space_id::AbstractString,
             h = fragment_hit(doc, tie[id], s, ["vector"])
             h === nothing || push!(out, h)
         else
-            push!(out, Hit(id, s, ["vector"], nothing, nothing, 0))
+            rs = rows(doc, target == "unit" ? "units" : "figures", "WHERE {id} = ?", (id,); only = ["id", "anchor"])
+            a = isempty(rs) ? nothing : rs[1]["anchor"]
+            push!(out, Hit(id, s, ["vector"], a, a isa AbstractDict ? anchor_uri(doc, a) : nothing, 0))
         end
     end
     return out

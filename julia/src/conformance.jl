@@ -32,11 +32,11 @@ function conf_compare(want, got, path = "\$")
 end
 
 function conf_results(want, got::Vector{Hit}, via::Bool)
-    length(want) == length(got) ||
-        return "results: expected $(length(want)) ($(join([w["fragment_id"] for w in want], ","))), got $(length(got)) ($(join([g.fragment_id for g in got], ",")))"
+    length(want) == length(got) || return "results: expected $(length(want)), got $(length(got))"
     for (i, w) in enumerate(want)
         g = got[i]
-        w["fragment_id"] == g.fragment_id || return "results[$(i-1)].fragment_id: expected $(w["fragment_id"]), got $(g.fragment_id)"
+        wid = something(get(w, "fragment_id", nothing), get(w, "unit_id", nothing), get(w, "figure_id", nothing))
+        wid == g.fragment_id || return "results[$(i-1)]: expected $wid, got $(g.fragment_id)"
         abs(w["score"] - g.score) <= 1e-6 || return "results[$(i-1)].score: expected $(w["score"]), got $(g.score)"
         w["anchor_uri"] == g.anchor_uri || return "results[$(i-1)].anchor_uri: expected $(w["anchor_uri"]), got $(g.anchor_uri)"
         via && haskey(w, "via") && w["via"] != g.via && return "results[$(i-1)].via: expected $(w["via"]), got $(g.via)"
@@ -122,6 +122,29 @@ function conf_case(dir, c)
         text = cite(something(get(input, "metadata", nothing), Dict{String,Any}()), input["anchor"], get(input, "anchor_end", nothing);
             locale = get(input, "locale", "en"))
         return text == ex["text"] ? nothing : "expected $(ex["text"]), got $text"
+    elseif kind == "locate"
+        got = open(p(input["file"])) do doc
+            try
+                locate(doc, input["reference"])
+            catch e
+                e isa SpdfError || rethrow()
+                Dict{String,Any}("document" => false, "units" => Any[], "fragments" => Any[], "char" => nothing, "xywh" => nothing)
+            end
+        end
+        return conf_compare(ex, got, "locate")
+    elseif kind in ("export_csl", "export_bibtex")
+        metas = [open(metadata, p(f)) for f in input["files"]]
+        if kind == "export_csl"
+            return conf_compare(ex["items"], csl_export(metas; anchor = get(input, "anchor", nothing), anchor_end = get(input, "anchor_end", nothing)), "items")
+        end
+        lines(t) = [strip(x) for x in split(replace(t, "\r\n" => "\n"), "\n") if !isempty(strip(x))]
+        want, got = lines(ex["text"]), lines(bibtex_export(metas))
+        for i in eachindex(want)
+            (i <= length(got) && want[i] == got[i]) || return "line $i: expected $(want[i]), got $(i <= length(got) ? got[i] : "(nothing)")"
+        end
+        return length(want) == length(got) ? nothing : "expected $(length(want)) lines, got $(length(got))"
+    elseif kind == "export_structure"
+        return :skip
     elseif kind == "quantize"
         hex = try
             bytes2hex(quantize(input["values"], input["dtype"]))
@@ -145,6 +168,7 @@ specification: `impl`, `version`, `passed`, `failed` (`id`, `reason`) and `skipp
 function conformance(dir::AbstractString)
     passed = String[]
     failed = Any[]
+    skipped = Any[]
     files = sort(filter(f -> endswith(f, ".json"), readdir(joinpath(dir, "cases"); join = true)))
     for f in files
         c = json_parse(read(f, String))
@@ -154,9 +178,15 @@ function conformance(dir::AbstractString)
         catch e
             sprint(showerror, e)
         end
-        reason === nothing ? push!(passed, id) : push!(failed, Dict{String,Any}("id" => id, "reason" => reason))
+        if reason === nothing
+            push!(passed, id)
+        elseif reason === :skip
+            push!(skipped, Dict{String,Any}("id" => id, "reason" => "ALTO, TEI and IIIF exports (SPEC §19.4, optional) are not implemented"))
+        else
+            push!(failed, Dict{String,Any}("id" => id, "reason" => reason))
+        end
     end
-    return Dict{String,Any}("impl" => "SPDF.jl", "version" => "0.1.0", "passed" => passed, "failed" => failed, "skipped" => Any[])
+    return Dict{String,Any}("impl" => "SPDF.jl", "version" => "0.1.0", "passed" => passed, "failed" => failed, "skipped" => skipped)
 end
 
 hitdict(h::Hit) = Dict{String,Any}("fragment_id" => h.fragment_id, "score" => h.score, "via" => h.via, "anchor" => h.anchor,

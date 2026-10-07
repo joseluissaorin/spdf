@@ -281,43 +281,89 @@ function content_sha256(doc::Document)
     return bytes2hex(sha256(canonical_json(d)))
 end
 
-"""
-    locate(doc, uri) -> Vector{Dict}
+const LOCATE_RULES = ("p", "f", "t", "sl", "v", "ref", "s", "sh")
 
-Units an anchor URI points at (SPEC §5.4): by physical page (and end page), else printed
-folio, time, slide, verse, canonical reference or section path. Returns an empty vector
-when the URI designates another document.
 """
-function locate(doc::Document, uri::AbstractString)
-    parsed = parse_uri(uri)
-    ref = parsed["docref"]
+    locate(doc, reference) -> Dict
+
+Resolves an anchor URI, or the URL of a `.spdf` with a fragment, against the file
+(SPEC §5.4): `document`, `units` (ids in `ord` order), `fragments` (ids in `n` order),
+`char` and `xywh`.
+"""
+function locate(doc::Document, reference::AbstractString)
+    empty = Dict{String,Any}("document" => false, "units" => Any[], "fragments" => Any[], "char" => nothing, "xywh" => nothing)
     d = document(doc)
-    if startswith(ref, "sha256-")
-        ref[8:end] == lowercase(string(something(d["source_sha256"], ""))) || return Dict{String,Any}[]
-    elseif ref != string(d["id"])
-        return Dict{String,Any}[]
+    if startswith(reference, "spdf:")
+        parsed = parse_uri(reference)
+        parsed["docref"] in ("sha256-" * string(d["source_sha256"]), string(d["id"])) || return empty
+        l = parsed["locator"]
+    else
+        i = findfirst('#', reference)
+        frag = i === nothing ? "" : reference[nextind(reference, i):end]
+        l = isempty(frag) ? Dict{String,Any}() : parse_uri("spdf:x#" * frag)["locator"]
     end
-    l = parsed["locator"]
-    return filter(units(doc)) do u
-        a = u["anchor"] isa AbstractDict ? u["anchor"] : Dict{String,Any}()
-        g(k) = get(a, k, nothing)
-        if haskey(l, "p")
-            g("physical") !== nothing && l["p"] <= g("physical") <= get(l, "pe", l["p"])
-        elseif haskey(l, "f")
-            get(u, "printed", nothing) == l["f"] || g("printed") == l["f"]
-        elseif haskey(l, "t")
-            t = l["t"][1]
-            g("t0") !== nothing && g("t1") !== nothing && g("t0") <= t < g("t1")
-        elseif haskey(l, "sl")
-            g("n") == l["sl"]
-        elseif haskey(l, "v")
-            g("line_from") !== nothing && g("line_from") <= l["v"][1] <= something(g("line_to"), g("line_from"))
-        elseif haskey(l, "ref")
-            g("scheme") == l["ref"]["scheme"] && g("ref") == l["ref"]["ref"]
-        elseif haskey(l, "s")
-            g("path") isa AbstractVector && length(g("path")) >= length(l["s"]) && g("path")[1:length(l["s"])] == l["s"]
-        else
-            false
+    out = Dict{String,Any}("document" => true, "units" => Any[], "fragments" => Any[],
+        "char" => get(l, "char", nothing), "xywh" => get(l, "xywh", nothing))
+    ri = findfirst(r -> haskey(l, r), LOCATE_RULES)
+    ri === nothing && return out
+    rule = LOCATE_RULES[ri]
+    us = units(doc)
+    hits = Any[u["id"] for u in us if locate_match(rule, l, u["anchor"], rule == "f" ? get(u, "printed", nothing) : nothing)]
+    if rule == "t" && isempty(hits)
+        timed = [u for u in us if u["anchor"] isa AbstractDict && get(u["anchor"], "type", nothing) == "time"]
+        if !isempty(timed) && get(timed[end]["anchor"], "t1", nothing) isa Real && timed[end]["anchor"]["t1"] == l["t"][1]
+            hits = Any[timed[end]["id"]]
         end
     end
+    frags = [f for f in fragments(doc) if locate_match(rule, l, f["anchor"], nothing)]
+    if isempty(hits) && !isempty(frags)
+        wanted = Set(f["unit"] for f in frags)
+        hits = Any[u["id"] for u in us if u["id"] in wanted]
+    end
+    if haskey(l, "char")
+        c, dd = l["char"][1], l["char"][2]
+        frags = filter(frags) do f
+            ch = f["anchor"] isa AbstractDict ? get(f["anchor"], "chars", nothing) : nothing
+            (f["unit"] in hits && ch isa AbstractVector && length(ch) == 2) || return false
+            a, b = ch[1], ch[2]
+            c < dd ? (a < dd && c < b) : (a <= c < b)
+        end
+    end
+    out["units"] = hits
+    out["fragments"] = Any[f["id"] for f in frags]
+    return out
+end
+
+function locate_match(rule, l, a, printed)
+    a isa AbstractDict || return false
+    t = get(a, "type", nothing)
+    g(k) = get(a, k, nothing)
+    if rule == "p"
+        return t == "page" && isint(g("physical")) && l["p"] <= g("physical") <= get(l, "pe", l["p"])
+    elseif rule == "f"
+        return something(printed, g("printed"), missing) === missing ? false : something(printed, g("printed")) == l["f"]
+    elseif rule == "t"
+        x = l["t"][1]
+        return t == "time" && g("t0") isa Real && g("t1") isa Real && g("t0") <= x < g("t1")
+    elseif rule == "sl"
+        return t == "slide" && g("n") !== nothing && g("n") == l["sl"]
+    elseif rule == "v"
+        x = l["v"][1]
+        lf = g("line_from")
+        lt = g("line_to") === nothing ? lf : g("line_to")
+        return t == "verse" && isint(lf) && lf <= x <= lt
+    elseif rule == "ref"
+        return t == "canonical" && g("scheme") == l["ref"]["scheme"] && g("ref") == l["ref"]["ref"]
+    elseif rule == "s"
+        path = g("path")
+        (t in ("section", "web") && path isa AbstractVector) || return false
+        haskey(l, "para") && return path == l["s"] && g("paragraph") !== nothing && g("paragraph") == l["para"]
+        return length(path) >= length(l["s"]) && path[1:length(l["s"])] == l["s"]
+    elseif rule == "sh"
+        (t == "sheet" && g("sheet") == l["sh"]) || return false
+        haskey(l, "rows") || return true
+        x = l["rows"][1]
+        return isint(g("row_from")) && isint(g("row_to")) && g("row_from") <= x <= g("row_to")
+    end
+    return false
 end

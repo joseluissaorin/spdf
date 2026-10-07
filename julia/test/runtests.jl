@@ -57,8 +57,8 @@ end
             h = search_hybrid(doc, "Tejares", [1.0, 0.0, 0.0], "toy@3:i8"; limit = 2)
             @test h[1].fragment_id == "f2" && h[1].via == ["lexical", "vector"]
             @test cite(doc, fragments(doc)[2]["anchor"]; locale = "es") == "(Lazarillo de Tormes, 1554, p. [4])"
-            @test startswith(bibtex(doc), "@book{la1554,")
-            @test csl_item(doc)["id"] == "la1554"
+            @test startswith(bibtex(doc), "@book{lazarillo1554,")
+            @test csl_item(doc)["id"] == "lazarillo1554"
         end
     end
 
