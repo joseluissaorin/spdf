@@ -4,7 +4,7 @@ The English booklet is already in the references as saorin2026, so the citation 
 
 The Spanish booklet is in the bibliography file as cinco (Saorín Ferrer 2026a, 2).
 
-An entry already carries the filter’s own key, so it is not added twice (Cervantes Saavedra 1605, fol. 1r).
+An entry already carries the filter’s own key, so it is not added twice (Cervantes Saavedra 1605, fol. Ir).
 
 References
 

@@ -1,2 +1,11 @@
+[WARNING] spdf: [@spdf:sha256-HASH_QUIJOTE#p=13]: physical page 13 of quijote.spdf has no printed folio; cited as unnumbered (n. pag.)
+[WARNING] spdf: [@spdf:sha256-HASH_QUIJOTE#p=13&pe=14]: physical pages 13 and 14 of quijote.spdf have no printed folio; cited as unnumbered (n. pag.)
+[WARNING] spdf: [@spdf:sha256-HASH_QUIJOTE#p=14&pe=29]: physical page 14 of quijote.spdf has no printed folio and is left out of the range
+[WARNING] spdf: [@spdf:sha256-HASH_APOLLO#t=380000]: t=380000 is not inside any time unit of apolo11.spdf; the citation is left unresolved
+[WARNING] spdf: [@spdf:sha256-HASH_LUNYU#s=%E5%AD%B8%E8%80%8C%E7%AC%AC%E4%B8%80&para=3]: paragraph 3 of section s=學而第一 is not anchored in lunyu.spdf; the citation is left unresolved
+[WARNING] spdf: [@spdf:sha256-HASH_LUNYU#ref=analects:9.9]: the canonical reference analects:9.9 is not in lunyu.spdf; the citation is left unresolved
 [WARNING] spdf: [@spdf:sha256-b74f52c7fbbf58aac689f9b78a79891bbf6b7b316a278bd16f857e21921fb214#v=40]: verse v=40 is not in mixed.spdf; the citation is left unresolved
+[WARNING] Citeproc: citation spdf:sha256-HASH_LUNYU#ref=analects:9.9 not found
+[WARNING] Citeproc: citation spdf:sha256-HASH_LUNYU#s=%E5%AD%B8%E8%80%8C%E7%AC%AC%E4%B8%80&para=3 not found
 [WARNING] Citeproc: citation spdf:sha256-b74f52c7fbbf58aac689f9b78a79891bbf6b7b316a278bd16f857e21921fb214#v=40 not found
+[WARNING] Citeproc: citation spdf:sha256-HASH_APOLLO#t=380000 not found

@@ -25,7 +25,7 @@ references:
   issued:
     date-parts:
     - [2026]
-- id: spdf-fa38e514734b
+- id: spdf-HASH_QUIJOTE_12
   type: book
   title: Don Quijote (an entry written by hand under the filter's own key)
   author:
@@ -46,6 +46,6 @@ The Spanish booklet is in the bibliography file as `cinco`
 [@spdf:sha256-HASH_ES#p=3].
 
 An entry already carries the filter's own key, so it is not added twice
-[@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=5].
+[@spdf:sha256-HASH_QUIJOTE#p=29].
 
 # References

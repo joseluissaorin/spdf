@@ -8,9 +8,12 @@
 #
 # Each case is cases/NAME.md, with optional cases/NAME.args (extra pandoc
 # arguments, one per line) and cases/NAME.exit (expected exit code, default 0).
-# The shared booklets in integrations/fixtures are rebuilt by the website and
-# their source_sha256 changes with every build, so cases write HASH_EN and
-# HASH_ES for them and the outputs are compared with the hashes put back.
+# The shared booklets (integrations/fixtures) and the conformance documents
+# (conformance/files, conformance/legacy) are rebuilt by other parts of the
+# repository and their source_sha256 may change, so cases name them with
+# placeholders (HASH_EN, HASH_QUIJOTE…, and HASH_EN_12… for the 12-digit
+# prefix of the citekey) and the outputs are compared with the placeholders
+# put back. The table is below, in HASHED.
 # For each case the runner checks three outputs against expected/:
 #   NAME.txt     pandoc --lua-filter spdf.lua --citeproc -t plain --wrap=none
 #   NAME.err     the warnings on stderr (the Lua source position is removed)
@@ -25,7 +28,7 @@ cases=()
 for a in "$@"; do
   case "$a" in
     --update) update=1 ;;
-    -h|--help) sed -n '2,19p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,22p' "$0"; exit 0 ;;
     *) cases+=("${a%.md}") ;;
   esac
 done
@@ -52,22 +55,54 @@ for sql in fixtures/*.sql; do
   fi
 done
 
-# The current hashes of the shared booklets.
+# Placeholder, file. No placeholder may contain another one.
+HASHED="
+HASH_EN ../../fixtures/spdf-in-five-pages.spdf
+HASH_ES ../../fixtures/spdf-en-cinco-paginas.spdf
+HASH_QUIJOTE ../../../conformance/files/quijote.spdf
+HASH_APOLLO ../../../conformance/files/apolo11.spdf
+HASH_LUNYU ../../../conformance/files/lunyu.spdf
+HASH_MINIMO ../../../conformance/files/minimo.spdf
+HASH_GARCILASO ../../../conformance/legacy/garcilaso-4.1.spdf
+HASH_KENNEDY ../../../conformance/legacy/kennedy-4.0.spdf
+HASH_LEGACY_APOLLO ../../../conformance/legacy/apolo11-4.1.spdf
+"
+
+# The current source_sha256 of a file (legacy 4.x files: gzip, column huella).
 hash_of() {
-  sqlite3 -readonly "$1" "SELECT source_sha256 FROM documents" 2> /dev/null
+  if [ "$(head -c 2 "$1" | od -An -tx1 | tr -d ' \n')" = "1f8b" ]; then
+    gzip -dc "$1" > "$tmp/hash.sqlite" 2> /dev/null || return 1
+    sqlite3 -readonly "$tmp/hash.sqlite" "SELECT huella FROM documentos" 2> /dev/null
+  else
+    sqlite3 -readonly "$1" "SELECT source_sha256 FROM documents" 2> /dev/null
+  fi
 }
-HASH_EN="$(hash_of ../../fixtures/spdf-in-five-pages.spdf)"
-HASH_ES="$(hash_of ../../fixtures/spdf-en-cinco-paginas.spdf)"
-if [ ${#HASH_EN} -ne 64 ] || [ ${#HASH_ES} -ne 64 ]; then
-  echo "run.sh: cannot read the source_sha256 of the fixtures in integrations/fixtures" >&2
-  exit 2
-fi
+
+: > "$tmp/fill-short.sed"
+: > "$tmp/fill-full.sed"
+: > "$tmp/blank-full.sed"
+: > "$tmp/blank-short.sed"
+while read -r name path; do
+  [ -n "$name" ] || continue
+  h="$(hash_of "$path")"
+  if [ ${#h} -ne 64 ]; then
+    echo "run.sh: cannot read the source_sha256 of $path" >&2
+    exit 2
+  fi
+  echo "s/${name}_12/${h:0:12}/g" >> "$tmp/fill-short.sed"
+  echo "s/${name}/${h}/g" >> "$tmp/fill-full.sed"
+  echo "s/${h}/${name}/g" >> "$tmp/blank-full.sed"
+  echo "s/${h:0:12}/${name}_12/g" >> "$tmp/blank-short.sed"
+done <<EOF
+$HASHED
+EOF
+cat "$tmp/fill-short.sed" "$tmp/fill-full.sed" > "$tmp/fill.sed"
+cat "$tmp/blank-full.sed" "$tmp/blank-short.sed" > "$tmp/blank.sed"
 fill_hashes() {
-  sed -e "s/HASH_EN/$HASH_EN/g" -e "s/HASH_ES/$HASH_ES/g"
+  sed -f "$tmp/fill.sed"
 }
 blank_hashes() {
-  sed -e "s/$HASH_EN/HASH_EN/g" -e "s/$HASH_ES/HASH_ES/g" \
-    -e "s/${HASH_EN:0:12}/HASH_EN_12/g" -e "s/${HASH_ES:0:12}/HASH_ES_12/g"
+  sed -f "$tmp/blank.sed"
 }
 mkdir -p "$tmp/cases"
 

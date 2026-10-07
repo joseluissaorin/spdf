@@ -1,121 +1,124 @@
 [ Plain
     [ Cite
         [ Citation
-            { citationId = "spdf-9f47b3f77732"
+            { citationId = "spdf-HASH_GARCILASO_12"
             , citationPrefix = []
             , citationSuffix =
-                [ Str ","
-                , Space
-                , Str "{},"
-                , Space
-                , Str "n.\160pag."
-                ]
+                [ Str "," , Space , Str "{p." , Space , Str "[7]}" ]
             , citationMode = NormalCitation
             , citationNoteNum = 1
             , citationHash = 0
             }
         ]
         [ Str
-            "[@spdf:sha256-9f47b3f777324459aa6ee013085c85bf06b02aff716220c5766c0311dc20f5a6#p=1]"
+            "[@spdf:sha256-HASH_GARCILASO#p=9]"
         ]
     ]
 , Plain
     [ Cite
         [ Citation
-            { citationId = "spdf-9f47b3f77732"
+            { citationId = "spdf-HASH_GARCILASO_12"
             , citationPrefix = []
             , citationSuffix =
-                [ Str "," , Space , Str "{p." , Space , Str "ix}" ]
+                [ Str "," , Space , Str "{p." , Space , Str "159}" ]
             , citationMode = NormalCitation
             , citationNoteNum = 2
             , citationHash = 0
             }
         ]
         [ Str
-            "[@spdf:sha256-9f47b3f777324459aa6ee013085c85bf06b02aff716220c5766c0311dc20f5a6#p=2]"
+            "[@spdf:sha256-HASH_GARCILASO#p=161]"
         ]
     ]
 , Plain
     [ Cite
         [ Citation
-            { citationId = "spdf-9f47b3f77732"
+            { citationId = "spdf-HASH_GARCILASO_12"
             , citationPrefix = []
             , citationSuffix =
-                [ Str "," , Space , Str "{p." , Space , Str "[x]}" ]
+                [ Str "," , Space , Str "{p." , Space , Str "159}" ]
             , citationMode = NormalCitation
             , citationNoteNum = 3
             , citationHash = 0
             }
         ]
-        [ Str
-            "[@spdf:sha256-9f47b3f777324459aa6ee013085c85bf06b02aff716220c5766c0311dc20f5a6#p=3]"
-        ]
+        [ Str "[@spdf:garcilaso#f=159]" ]
     ]
 , Plain
     [ Cite
         [ Citation
-            { citationId = "spdf-9f47b3f77732"
+            { citationId = "spdf-HASH_GARCILASO_12"
             , citationPrefix = []
             , citationSuffix =
-                [ Str "," , Space , Str "{p." , Space , Str "ix}" ]
+                [ Str "," , Space , Str "{p." , Space , Str "[7]-159}" ]
             , citationMode = NormalCitation
             , citationNoteNum = 4
             , citationHash = 0
             }
         ]
-        [ Str "[@spdf:garcilaso#f=ix]" ]
+        [ Str "[@spdf:garcilaso#p=9&pe=161]" ]
     ]
 , Plain
     [ Cite
         [ Citation
-            { citationId = "spdf-9f47b3f77732"
+            { citationId = "spdf:garcilaso#p=10"
             , citationPrefix = []
-            , citationSuffix =
-                [ Str "," , Space , Str "{p." , Space , Str "ix-[x]}" ]
+            , citationSuffix = []
             , citationMode = NormalCitation
             , citationNoteNum = 5
             , citationHash = 0
             }
         ]
-        [ Str "[@spdf:garcilaso#p=2&pe=3]" ]
+        [ Str "[@spdf:garcilaso#p=10]" ]
     ]
 , Plain
     [ Cite
         [ Citation
-            { citationId = "spdf-546afd0cb0d0"
-            , citationPrefix = []
-            , citationSuffix =
-                [ Str "," , Space , Str "{}," , Space , Str "0:12" ]
-            , citationMode = NormalCitation
-            , citationNoteNum = 6
-            , citationHash = 0
-            }
-        ]
-        [ Str "[@spdf:kennedy-rice#t=12]" ]
-    ]
-, Plain
-    [ Cite
-        [ Citation
-            { citationId = "spdf-546afd0cb0d0"
+            { citationId = "spdf-HASH_KENNEDY_12"
             , citationPrefix = []
             , citationSuffix =
                 [ Str ","
                 , Space
                 , Str "{},"
                 , Space
-                , Str "0:09-0:41"
+                , Str "para."
+                , Space
+                , Str "15"
+                ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 6
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_KENNEDY#para=15]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_KENNEDY_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str ","
+                , Space
+                , Str "{},"
+                , Space
+                , Str "para."
+                , Space
+                , Str "16"
                 ]
             , citationMode = NormalCitation
             , citationNoteNum = 7
             , citationHash = 0
             }
         ]
-        [ Str "[@spdf:kennedy-rice#t=9.5,41]" ]
+        [ Str "[@spdf:kennedy-rice#para=16]" ]
     ]
 , Plain
     [ Cite
         [ Citation
-            { citationId = "spdf:kennedy-rice#t=99"
+            { citationId = "spdf:kennedy-rice#para=40"
             , citationPrefix = []
             , citationSuffix = []
             , citationMode = NormalCitation
@@ -123,22 +126,81 @@
             , citationHash = 0
             }
         ]
-        [ Str "[@spdf:kennedy-rice#t=99]" ]
+        [ Str "[@spdf:kennedy-rice#para=40]" ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_LEGACY_APOLLO_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str ","
+                , Space
+                , Str "{},"
+                , Space
+                , Str "102:46:16"
+                ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 9
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_LEGACY_APOLLO#t=369976]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_LEGACY_APOLLO_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str ","
+                , Space
+                , Str "{},"
+                , Space
+                , Str "102:46:18-102:46:23"
+                ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 10
+            , citationHash = 0
+            }
+        ]
+        [ Str "[@spdf:apolo11-tierra#t=369978,369983]" ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf:apolo11-tierra#t=99"
+            , citationPrefix = []
+            , citationSuffix = []
+            , citationMode = NormalCitation
+            , citationNoteNum = 11
+            , citationHash = 0
+            }
+        ]
+        [ Str "[@spdf:apolo11-tierra#t=99]" ]
     ]
 , Plain
     [ Str "reference:"
     , Space
-    , Str "spdf-9f47b3f77732"
+    , Str "spdf-HASH_GARCILASO_12"
     , Space
-    , Str
-        "Obras de Garcilaso de la Vega: con anotaciones de Fernando de Herrera"
+    , Str "Poes\237as"
     ]
 , Plain
     [ Str "reference:"
     , Space
-    , Str "spdf-546afd0cb0d0"
+    , Str "spdf-HASH_KENNEDY_12"
     , Space
     , Str
-        "Address at Rice University on the Nation\8217s Space Effort"
+        "Address at Rice University in Houston on the Nation\8217s Space Effort"
+    ]
+, Plain
+    [ Str "reference:"
+    , Space
+    , Str "spdf-HASH_LEGACY_APOLLO_12"
+    , Space
+    , Str "Apollo 11 air-to-ground voice communications"
     ]
 ]

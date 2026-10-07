@@ -1,3 +1,6 @@
-[WARNING] spdf: [@spdf:sha256-9f47b3f777324459aa6ee013085c85bf06b02aff716220c5766c0311dc20f5a6#p=1]: physical page 1 of garcilaso-4.1.spdf has no printed folio; cited as unnumbered (n. pag.)
-[WARNING] spdf: [@spdf:kennedy-rice#t=99]: t=99 is not inside any time unit of kennedy-4.0.spdf; the citation is left unresolved
-[WARNING] Citeproc: citation spdf:kennedy-rice#t=99 not found
+[WARNING] spdf: [@spdf:garcilaso#p=10]: page p=10 is not in garcilaso-4.1.spdf; the citation is left unresolved
+[WARNING] spdf: [@spdf:kennedy-rice#para=40]: paragraph para=40 is not anchored in kennedy-4.0.spdf; the citation is left unresolved
+[WARNING] spdf: [@spdf:apolo11-tierra#t=99]: t=99 is not inside any time unit of apolo11-4.1.spdf; the citation is left unresolved
+[WARNING] Citeproc: citation spdf:apolo11-tierra#t=99 not found
+[WARNING] Citeproc: citation spdf:garcilaso#p=10 not found
+[WARNING] Citeproc: citation spdf:kennedy-rice#para=40 not found

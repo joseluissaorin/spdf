@@ -856,6 +856,40 @@ local function load_units(doc)
   return doc.units
 end
 
+-- Every anchor that can locate a verse, a section, a slide, a sheet or a
+-- canonical reference: those of the units and those of the fragments (start
+-- and end), as resolution asks (SPEC §5.4). Fragments are read only when a
+-- citation needs them.
+local function lookup_anchors(doc)
+  if doc.all_anchors then
+    return doc.all_anchors
+  end
+  local list = {}
+  for _, u in ipairs(load_units(doc)) do
+    list[#list + 1] = u.anchor
+  end
+  local sql = doc.legacy and "SELECT ancla AS anchor, ancla_fin AS anchor_end FROM fragmentos"
+    or "SELECT anchor, anchor_end FROM fragments"
+  local rows, err = sqlite_rows(doc.db, sql)
+  if not rows then
+    warn(string.format("cannot read the fragments of %s: %s", doc.name, err))
+    rows = {}
+  end
+  for _, r in ipairs(rows) do
+    for _, col in ipairs({ "anchor", "anchor_end" }) do
+      local a = type(r[col]) == "string" and json_decode(r[col]) or nil
+      if doc.legacy then
+        a = legacy_anchor(a)
+      end
+      if type(a) == "table" and type(a.type) == "string" then
+        list[#list + 1] = a
+      end
+    end
+  end
+  doc.all_anchors = list
+  return list
+end
+
 -- ---------------------------------------------------------------------------
 -- Options and the library
 -- ---------------------------------------------------------------------------
@@ -1163,8 +1197,7 @@ local function resolve_locator(doc, L, where)
   if L.v then
     local a, b = L.v[1], L.v[2]
     local found = false
-    for _, u in ipairs(units) do
-      local an = u.anchor
+    for _, an in ipairs(lookup_anchors(doc)) do
       if an.type == "verse" then
         local from, to = int(an.line_from), int(an.line_to) or int(an.line_from)
         if from and a >= from and a <= (to or from) then
@@ -1244,18 +1277,38 @@ local function resolve_locator(doc, L, where)
         canon.fe = str(e.printed)
       end
     end
-    local label = FOLIATION_LABEL[a.foliation or "page"] or "page"
-    local sa = folio_text(a)
-    if not sa then
-      warn(string.format("%s: physical page %s of %s has no printed folio; cited as unnumbered (%s)",
-        where, str(a.physical) or "?", doc.name, T.unnumbered))
+    -- SPEC §18.1: an end without a printed folio never takes part in a range;
+    -- the other end is cited alone, and the page is unnumbered only when
+    -- neither end has a folio.
+    local ends = { start }
+    if finish and finish ~= start then
+      ends[2] = finish
+    end
+    local with_folio, without = {}, {}
+    for _, u in ipairs(ends) do
+      if folio_text(u.anchor) then
+        with_folio[#with_folio + 1] = u
+      else
+        without[#without + 1] = str(u.anchor.physical) or u.id
+      end
+    end
+    if #with_folio == 0 then
+      warn(string.format("%s: %s of %s %s no printed folio; cited as unnumbered (%s)",
+        where, (#without > 1 and "physical pages " or "physical page ") .. table.concat(without, " and "),
+        doc.name, #without > 1 and "have" or "has", T.unnumbered))
       return { text = T.unnumbered }, canon
     end
-    if finish then
-      local sb = folio_text(finish.anchor)
-      if sb and str(finish.anchor.printed) ~= str(a.printed) then
-        return { label = label, text = sa .. "-" .. sb }, canon
-      end
+    if #without > 0 then
+      warn(string.format("%s: physical page %s of %s has no printed folio and is left out of the range",
+        where, without[1], doc.name))
+    end
+    local first, last = with_folio[1], with_folio[#with_folio]
+    -- The label follows the folio that is printed (a leaf "Ir" is "fol. Ir"
+    -- even when the range started on an unnumbered page).
+    local label = FOLIATION_LABEL[first.anchor.foliation or "page"] or "page"
+    local sa = folio_text(first.anchor)
+    if last ~= first and str(last.anchor.printed) ~= str(first.anchor.printed) then
+      return { label = label, text = sa .. "-" .. folio_text(last.anchor) }, canon
     end
     return { label = label, text = sa }, canon
   end
@@ -1288,17 +1341,23 @@ local function resolve_locator(doc, L, where)
   end
 
   if L.s or L.para then
-    if L.s then
-      local found = false
-      for _, u in ipairs(units) do
-        if (u.anchor.type == "section" or u.anchor.type == "web") and same_path(u.anchor.path, L.s) then
-          found = true
-          break
-        end
+    -- The file must anchor that section (and that paragraph, when one is given).
+    local found = false
+    for _, an in ipairs(lookup_anchors(doc)) do
+      if (an.type == "section" or an.type == "web")
+        and (not L.s or same_path(an.path, L.s))
+        and (not L.para or int(an.paragraph) == L.para) then
+        found = true
+        break
       end
-      if not found then
+    end
+    if not found then
+      if L.s and L.para then
+        return fail("paragraph %d of section s=%s is not anchored in %s", L.para, table.concat(L.s, "/"), doc.name)
+      elseif L.s then
         return fail("section s=%s is not in %s", table.concat(L.s, "/"), doc.name)
       end
+      return fail("paragraph para=%d is not anchored in %s", L.para, doc.name)
     end
     local parts = {}
     if L.s and #L.s > 0 and L.s[#L.s] ~= "" then
@@ -1314,8 +1373,8 @@ local function resolve_locator(doc, L, where)
   end
 
   if L.sl then
-    for _, u in ipairs(units) do
-      if u.anchor.type == "slide" and int(u.anchor.n) == L.sl then
+    for _, an in ipairs(lookup_anchors(doc)) do
+      if an.type == "slide" and int(an.n) == L.sl then
         return { text = T.slide .. " " .. L.sl }
       end
     end
@@ -1324,8 +1383,8 @@ local function resolve_locator(doc, L, where)
 
   if L.sh then
     local found = false
-    for _, u in ipairs(units) do
-      if u.anchor.type == "sheet" and u.anchor.sheet == L.sh then
+    for _, an in ipairs(lookup_anchors(doc)) do
+      if an.type == "sheet" and an.sheet == L.sh then
         found = true
         break
       end
@@ -1344,8 +1403,7 @@ local function resolve_locator(doc, L, where)
   end
 
   if L.ref then
-    for _, u in ipairs(units) do
-      local an = u.anchor
+    for _, an in ipairs(lookup_anchors(doc)) do
       if an.type == "canonical" and an.scheme == L.ref.scheme and an.ref == L.ref.ref then
         return { text = L.ref.ref }
       end

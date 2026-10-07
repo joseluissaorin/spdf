@@ -1,78 +1,88 @@
 [ Plain
     [ Cite
         [ Citation
-            { citationId = "spdf-fa38e514734b"
+            { citationId = "spdf-HASH_QUIJOTE_12"
             , citationPrefix = []
             , citationSuffix =
-                [ Str "," , Space , Str "{p." , Space , Str "ii}" ]
+                [ Str ","
+                , Space
+                , Str "{},"
+                , Space
+                , Str "n.\160pag."
+                ]
             , citationMode = NormalCitation
             , citationNoteNum = 1
             , citationHash = 0
             }
         ]
         [ Str
-            "[@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=2]"
+            "[@spdf:sha256-HASH_QUIJOTE#p=13]"
         ]
     ]
 , Plain
     [ Cite
         [ Citation
-            { citationId = "spdf-fa38e514734b"
+            { citationId = "spdf-HASH_QUIJOTE_12"
             , citationPrefix = []
             , citationSuffix =
-                [ Str "," , Space , Str "{p." , Space , Str "[iv]}" ]
+                [ Str ","
+                , Space
+                , Str "{},"
+                , Space
+                , Str "n.\160pag."
+                ]
             , citationMode = NormalCitation
             , citationNoteNum = 2
             , citationHash = 0
             }
         ]
         [ Str
-            "[@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=4]"
+            "[@spdf:sha256-HASH_QUIJOTE#p=13&pe=14]"
         ]
     ]
 , Plain
     [ Cite
         [ Citation
-            { citationId = "spdf-fa38e514734b"
+            { citationId = "spdf-HASH_QUIJOTE_12"
             , citationPrefix = []
             , citationSuffix =
-                [ Str "," , Space , Str "{fol." , Space , Str "1r}" ]
+                [ Str "," , Space , Str "{fol." , Space , Str "Ir}" ]
             , citationMode = NormalCitation
             , citationNoteNum = 3
             , citationHash = 0
             }
         ]
         [ Str
-            "[@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=5]"
+            "[@spdf:sha256-HASH_QUIJOTE#p=29]"
         ]
     ]
 , Plain
     [ Cite
         [ Citation
-            { citationId = "spdf-fa38e514734b"
+            { citationId = "spdf-HASH_QUIJOTE_12"
             , citationPrefix = []
             , citationSuffix =
-                [ Str "," , Space , Str "{fol." , Space , Str "[1v]}" ]
+                [ Str "," , Space , Str "{fol." , Space , Str "[Iv]}" ]
             , citationMode = NormalCitation
             , citationNoteNum = 4
             , citationHash = 0
             }
         ]
         [ Str
-            "[@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=6]"
+            "[@spdf:sha256-HASH_QUIJOTE#p=30]"
         ]
     ]
 , Plain
     [ Cite
         [ Citation
-            { citationId = "spdf-fa38e514734b"
+            { citationId = "spdf-HASH_QUIJOTE_12"
             , citationPrefix = []
             , citationSuffix =
                 [ Str ","
                 , Space
                 , Str "{fol."
                 , Space
-                , Str "1r-[1v]}"
+                , Str "Ir-[Iv]}"
                 ]
             , citationMode = NormalCitation
             , citationNoteNum = 5
@@ -80,98 +90,166 @@
             }
         ]
         [ Str
-            "[@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=5&pe=6]"
+            "[@spdf:sha256-HASH_QUIJOTE#p=29&pe=30]"
         ]
     ]
 , Plain
     [ Cite
         [ Citation
-            { citationId = "spdf-fa38e514734b"
+            { citationId = "spdf-HASH_QUIJOTE_12"
             , citationPrefix = []
             , citationSuffix =
-                [ Str "," , Space , Str "{fol." , Space , Str "2r}" ]
+                [ Str ","
+                , Space
+                , Str "{fol."
+                , Space
+                , Str "[Iv]-2r}"
+                ]
             , citationMode = NormalCitation
             , citationNoteNum = 6
             , citationHash = 0
             }
         ]
         [ Str
-            "[@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#f=2r]"
+            "[@spdf:sha256-HASH_QUIJOTE#p=30&pe=31]"
         ]
     ]
 , Plain
     [ Cite
         [ Citation
-            { citationId = "spdf-704f8c86caec"
+            { citationId = "spdf-HASH_QUIJOTE_12"
             , citationPrefix = []
             , citationSuffix =
-                [ Str "," , Space , Str "{}," , Space , Str "1:09:20" ]
+                [ Str "," , Space , Str "{fol." , Space , Str "2r}" ]
             , citationMode = NormalCitation
             , citationNoteNum = 7
             , citationHash = 0
             }
         ]
         [ Str
-            "[@spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=4160]"
+            "[@spdf:sha256-HASH_QUIJOTE#f=2r]"
         ]
     ]
 , Plain
     [ Cite
         [ Citation
-            { citationId = "spdf-704f8c86caec"
+            { citationId = "spdf-HASH_QUIJOTE_12"
             , citationPrefix = []
             , citationSuffix =
-                [ Str ","
-                , Space
-                , Str "{},"
-                , Space
-                , Str "0:12-0:24"
-                ]
+                [ Str "," , Space , Str "{fol." , Space , Str "Ir}" ]
             , citationMode = NormalCitation
             , citationNoteNum = 8
             , citationHash = 0
             }
         ]
         [ Str
-            "[@spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=12,24.5]"
+            "[@spdf:sha256-HASH_QUIJOTE#p=14&pe=29]"
         ]
     ]
 , Plain
     [ Cite
         [ Citation
-            { citationId = "spdf-704f8c86caec"
+            { citationId = "spdf-HASH_APOLLO_12"
             , citationPrefix = []
             , citationSuffix =
-                [ Str "," , Space , Str "{}," , Space , Str "1:09:20" ]
+                [ Str ","
+                , Space
+                , Str "{},"
+                , Space
+                , Str "102:45:59"
+                ]
             , citationMode = NormalCitation
             , citationNoteNum = 9
             , citationHash = 0
             }
         ]
         [ Str
-            "[@spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=4160,4160.5]"
+            "[@spdf:sha256-HASH_APOLLO#t=369959]"
         ]
     ]
 , Plain
     [ Cite
         [ Citation
-            { citationId = "spdf-704f8c86caec"
+            { citationId = "spdf-HASH_APOLLO_12"
             , citationPrefix = []
             , citationSuffix =
-                [ Str "," , Space , Str "{}," , Space , Str "1:09:20" ]
+                [ Str ","
+                , Space
+                , Str "{},"
+                , Space
+                , Str "102:46:06-102:46:16"
+                ]
             , citationMode = NormalCitation
             , citationNoteNum = 10
             , citationHash = 0
             }
         ]
         [ Str
-            "[@spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=1:09:20]"
+            "[@spdf:sha256-HASH_APOLLO#t=369966,369976]"
         ]
     ]
 , Plain
     [ Cite
         [ Citation
-            { citationId = "spdf-c5fbea8e0b34"
+            { citationId = "spdf-HASH_APOLLO_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str ","
+                , Space
+                , Str "{},"
+                , Space
+                , Str "109:43:16"
+                ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 11
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_APOLLO#t=394996,394996.5]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_APOLLO_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str ","
+                , Space
+                , Str "{},"
+                , Space
+                , Str "102:45:59"
+                ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 12
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_APOLLO#t=102:45:59]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId =
+                "spdf:sha256-HASH_APOLLO#t=380000"
+            , citationPrefix = []
+            , citationSuffix = []
+            , citationMode = NormalCitation
+            , citationNoteNum = 13
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_APOLLO#t=380000]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_LUNYU_12"
             , citationPrefix = []
             , citationSuffix =
                 [ Str ","
@@ -187,18 +265,18 @@
                 , Str "1"
                 ]
             , citationMode = NormalCitation
-            , citationNoteNum = 11
+            , citationNoteNum = 14
             , citationHash = 0
             }
         ]
         [ Str
-            "[@spdf:sha256-c5fbea8e0b34b1011a7002b2d8a69fcec184055902fbcbc4b0c08b1813c70e4f#s=%E5%AD%B8%E8%80%8C%E7%AC%AC%E4%B8%80&para=1]"
+            "[@spdf:sha256-HASH_LUNYU#s=%E5%AD%B8%E8%80%8C%E7%AC%AC%E4%B8%80&para=1]"
         ]
     ]
 , Plain
     [ Cite
         [ Citation
-            { citationId = "spdf-c5fbea8e0b34"
+            { citationId = "spdf-HASH_LUNYU_12"
             , citationPrefix = []
             , citationSuffix =
                 [ Str ","
@@ -207,15 +285,95 @@
                 , Space
                 , Str "\167"
                 , Space
-                , Str "\28858\25919\31532\20108"
+                , Str "\29234\25919\31532\20108"
                 ]
             , citationMode = NormalCitation
-            , citationNoteNum = 12
+            , citationNoteNum = 15
             , citationHash = 0
             }
         ]
         [ Str
-            "[@{spdf:sha256-c5fbea8e0b34b1011a7002b2d8a69fcec184055902fbcbc4b0c08b1813c70e4f#s=\28858\25919\31532\20108}]"
+            "[@{spdf:sha256-HASH_LUNYU#s=\29234\25919\31532\20108}]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId =
+                "spdf:sha256-HASH_LUNYU#s=%E5%AD%B8%E8%80%8C%E7%AC%AC%E4%B8%80&para=3"
+            , citationPrefix = []
+            , citationSuffix = []
+            , citationMode = NormalCitation
+            , citationNoteNum = 16
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_LUNYU#s=%E5%AD%B8%E8%80%8C%E7%AC%AC%E4%B8%80&para=3]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_MINIMO_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{p." , Space , Str "159}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 17
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_MINIMO#s=XXI&para=1&f=159]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_LUNYU_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{}," , Space , Str "1.2" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 18
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_LUNYU#ref=analects:1.2]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId =
+                "spdf:sha256-HASH_LUNYU#ref=analects:9.9"
+            , citationPrefix = []
+            , citationSuffix = []
+            , citationMode = NormalCitation
+            , citationNoteNum = 19
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_LUNYU#ref=analects:9.9]"
+        ]
+    ]
+, Plain
+    [ Cite
+        [ Citation
+            { citationId = "spdf-HASH_MINIMO_12"
+            , citationPrefix = []
+            , citationSuffix =
+                [ Str "," , Space , Str "{v." , Space , Str "2-3}" ]
+            , citationMode = NormalCitation
+            , citationNoteNum = 20
+            , citationHash = 0
+            }
+        ]
+        [ Str
+            "[@spdf:sha256-HASH_MINIMO#v=2-3]"
         ]
     ]
 , Plain
@@ -226,7 +384,7 @@
             , citationSuffix =
                 [ Str "," , Space , Str "{v." , Space , Str "2}" ]
             , citationMode = NormalCitation
-            , citationNoteNum = 13
+            , citationNoteNum = 21
             , citationHash = 0
             }
         ]
@@ -242,7 +400,7 @@
             , citationSuffix =
                 [ Str "," , Space , Str "{v." , Space , Str "1-3}" ]
             , citationMode = NormalCitation
-            , citationNoteNum = 14
+            , citationNoteNum = 22
             , citationHash = 0
             }
         ]
@@ -258,7 +416,7 @@
             , citationPrefix = []
             , citationSuffix = []
             , citationMode = NormalCitation
-            , citationNoteNum = 15
+            , citationNoteNum = 23
             , citationHash = 0
             }
         ]
@@ -281,7 +439,7 @@
                 , Str "2"
                 ]
             , citationMode = NormalCitation
-            , citationNoteNum = 16
+            , citationNoteNum = 24
             , citationHash = 0
             }
         ]
@@ -306,7 +464,7 @@
                 , Str "4-9"
                 ]
             , citationMode = NormalCitation
-            , citationNoteNum = 17
+            , citationNoteNum = 25
             , citationHash = 0
             }
         ]
@@ -331,7 +489,7 @@
                 , Str "4"
                 ]
             , citationMode = NormalCitation
-            , citationNoteNum = 18
+            , citationNoteNum = 26
             , citationHash = 0
             }
         ]
@@ -347,7 +505,7 @@
             , citationSuffix =
                 [ Str "," , Space , Str "{}," , Space , Str "514a" ]
             , citationMode = NormalCitation
-            , citationNoteNum = 19
+            , citationNoteNum = 27
             , citationHash = 0
             }
         ]
@@ -358,40 +516,46 @@
 , Plain
     [ Cite
         [ Citation
-            { citationId = "spdf-fa38e514734b"
+            { citationId = "spdf-HASH_QUIJOTE_12"
             , citationPrefix = []
             , citationSuffix =
-                [ Str "," , Space , Str "{fol." , Space , Str "1r}" ]
+                [ Str "," , Space , Str "{fol." , Space , Str "Ir}" ]
             , citationMode = NormalCitation
-            , citationNoteNum = 20
+            , citationNoteNum = 28
             , citationHash = 0
             }
         ]
         [ Str
-            "[@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=5&char=0,12&xywh=percent:10,20,30,40]"
+            "[@spdf:sha256-HASH_QUIJOTE#p=29&char=0,12&xywh=percent:10,20,30,40]"
         ]
     ]
 , Plain
     [ Str "reference:"
     , Space
-    , Str "spdf-fa38e514734b"
+    , Str "spdf-HASH_QUIJOTE_12"
     , Space
-    , Str "El ingenioso hidalgo don Quijote de la Mancha"
+    , Str "El ingenioso hidalgo Don Quixote de la Mancha"
     ]
 , Plain
     [ Str "reference:"
     , Space
-    , Str "spdf-704f8c86caec"
+    , Str "spdf-HASH_APOLLO_12"
     , Space
-    , Str
-        "Apollo 11 air-to-ground voice transmissions (excerpts)"
+    , Str "Apollo 11 air-to-ground voice communications"
     ]
 , Plain
     [ Str "reference:"
     , Space
-    , Str "spdf-c5fbea8e0b34"
+    , Str "spdf-HASH_LUNYU_12"
     , Space
     , Str "\35542\35486"
+    ]
+, Plain
+    [ Str "reference:"
+    , Space
+    , Str "spdf-HASH_MINIMO_12"
+    , Space
+    , Str "Rimas"
     ]
 , Plain
     [ Str "reference:"

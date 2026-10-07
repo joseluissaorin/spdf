@@ -177,28 +177,35 @@ The rules are those of the specification ([SPEC §18](../../spec/SPEC.md#citatio
 | page without folio | `#p=1` | `(Saorín Ferrer 2026, n. pag.)` and a warning; `s. p.` in Spanish |
 | folio given directly | `#f=3` | `(Saorín Ferrer 2026, [3])`: checked against the units, bracketed if inferred |
 | range | `#p=3&pe=4`, `#f=4&fe=5` | `(Saorín Ferrer 2026, 2–[3])`, `(Saorín Ferrer 2026, 4–5)` |
-| roman folio | `#p=2` in a book | `(Cervantes Saavedra 1605, ii)` |
-| leaf (`foliation: leaf`) | `#p=5`, `#p=6`, `#p=5&pe=6` | `fol. 1r`, `fol. [1v]`, `fols. 1r–[1v]` |
-| time | `#t=4160`, `#t=12,24.5` | `1:09:20`, `0:12-0:24` |
+| range from an unnumbered page | `#p=14&pe=29` in the 1608 *Quixote* | `fol. Ir` and a warning: the unnumbered end is left out |
+| leaf (`foliation: leaf`), roman | `#p=29`, `#p=30`, `#p=29&pe=30` | `(Cervantes Saavedra [1605] 1608, fol. Ir)`, `fol. [Iv]`, `fols. Ir–[Iv]` |
+| time (ground elapsed time) | `#t=369959`, `#t=369966,369976` | `102:45:59`, `102:46:06-102:46:16` |
 | section | `#s=學而第一&para=1` | `(孔子, n.d., § 學而第一, para. 1)` |
+| section with a printed page | `#s=XXI&para=1&f=159` | `(Bécquer [1871] 1885, 159)` |
 | verse | `#v=2`, `#v=1-3` | `v. 2`, `vv. 1–3` |
 | slide | `#sl=2` | `slide 2` (`diap. 2` in Spanish) |
 | sheet | `#sh=Data&rows=4-9` | `Data, rows 4-9` |
-| canonical | `#ref=stephanus:514a` | `514a` |
+| canonical | `#ref=stephanus:514a`, `#ref=analects:1.2` | `514a`, `(孔子, n.d., 1.2)` |
 | whole document | no parameters | `(Saorín Ferrer 2026)` |
 
 When both `p` and `f` are given, `p` decides and a disagreeing `f` is reported. A folio
 printed on several pages (`f=1` in front matter and body) takes the first and warns; add
 `p=` to choose. A page without a printed folio is **never** cited by its position in the
-file: that number does not exist on paper.
+file: that number does not exist on paper. An end without a printed folio never takes part
+in a range ([SPEC §18.1](../../spec/SPEC.md#citation)): the folio of the other end is cited
+alone, and the page is unnumbered only when neither end has a folio. Verses, sections,
+paragraphs, slides, sheets and canonical references are looked up in the anchors of the
+units and of the fragments ([SPEC §5.4](../../spec/SPEC.md#anchor-uri)), so a reference
+kept on a fragment (`analects:1.2`, a line of a poem) is found, and one the file does not
+anchor is reported.
 
 Pandoc only reads a locator label in the terms of the locale citeproc is using, with no
 English fallback: a German document needs `S.` for a page, a Spanish one `f.` for a folio.
 The filter asks citeproc for those terms itself, once per run, so labels work in every
 CSL locale. With the test style [`test/styles/labels.csl`](test/styles/labels.csl), which
 prints the label citeproc recognised, a document with `lang: de-DE` gives
-`(Saorín Ferrer, 2026, [page] S. 1)` and `(Cervantes Saavedra, 1605, [folio] Fol. [1v])`,
-and one with `lang: es-ES` gives `[page] p. 1` and `[folio] f. [1v]`. Locators that CSL
+`(Saorín Ferrer, 2026, [page] S. 1)` and `(Cervantes Saavedra, 1608, [folio] Fol. [Iv])`,
+and one with `lang: es-ES` gives `[page] p. 1` and `[folio] f. [Iv]`. Locators that CSL
 has no label for (an unnumbered page, a time, a slide, a sheet, a canonical reference, a
 section) are written after an empty locator, `{}, 1:09:20`, so that citeproc does not
 mistake `1:09:20` or `514a` for a page number.
@@ -336,9 +343,11 @@ anchor members (`fisica`, `impresa`, `origen: deducido`…) and the `MetadatosDo
 object, mapped to CSL (title and subtitle, authors, editors, dates, publisher, place…).
 
 ```text
-Garcilaso, an unnumbered page (Garcilaso de la Vega [1543] 1580, n. pag.), a roman folio (Garcilaso de la Vega [1543] 1580, ix), an inferred roman folio (Garcilaso de la Vega [1543] 1580, [x]), by document id and folio (Garcilaso de la Vega [1543] 1580, ix), and a range (Garcilaso de la Vega [1543] 1580, ix–[x]).
+Garcilaso, a folio inferred from its neighbours (Garcilaso de la Vega [1543] 1919, [7]), a folio read on the page (Garcilaso de la Vega [1543] 1919, 159), by document id and folio (Garcilaso de la Vega [1543] 1919, 159), a range (Garcilaso de la Vega [1543] 1919, [7]–159), and a page the file does not have (spdf:garcilaso#p=10?).
 
-Kennedy, a moment (Kennedy 1962, 0:12), a span (Kennedy 1962, 0:09-0:41), and a time after the end of the recording (spdf:kennedy-rice#t=99?).
+Kennedy, by paragraph (Kennedy 1962, para. 15) (Kennedy 1962, para. 16), and a paragraph the excerpt does not have (spdf:kennedy-rice#para=40?).
+
+Apollo 11, a recording in ground elapsed time: a moment (National Aeronautics and Space Administration 1969, 102:46:16), a span (National Aeronautics and Space Administration 1969, 102:46:18-102:46:23), and a time outside the excerpt (spdf:apolo11-tierra#t=99?).
 ```
 
 ## Security
@@ -376,8 +385,11 @@ may crash the filter), legacy gzip files, and a missing `sqlite3`.
 They read the shared fixtures in [`integrations/fixtures/`](../fixtures/) and some files of
 the conformance suite (`conformance/files`, `conformance/legacy`, `conformance/invalid`),
 and build `test/build/mixed.spdf` from [`test/fixtures/mixed.sql`](test/fixtures/mixed.sql)
-for the anchor types those lack. `test/run.sh --update` rewrites the expected outputs;
-read the diff before keeping it.
+for the anchor types those lack. Those files are rebuilt by other parts of the repository,
+so the cases name them by placeholders (`HASH_EN`, `HASH_QUIJOTE`, `HASH_EN_12` for the
+citekey…) that the runner fills with each file's current `source_sha256` and puts back in
+the outputs; the table is `HASHED` in `test/run.sh`. `test/run.sh --update` rewrites the
+expected outputs; read the diff before keeping it.
 
 ## Limitations
 

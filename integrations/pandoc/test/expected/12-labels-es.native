@@ -33,33 +33,33 @@
 , Plain
     [ Cite
         [ Citation
-            { citationId = "spdf-fa38e514734b"
+            { citationId = "spdf-HASH_QUIJOTE_12"
             , citationPrefix = []
             , citationSuffix =
-                [ Str "," , Space , Str "{f." , Space , Str "[1v]}" ]
+                [ Str "," , Space , Str "{f." , Space , Str "[Iv]}" ]
             , citationMode = NormalCitation
             , citationNoteNum = 3
             , citationHash = 0
             }
         ]
         [ Str
-            "[@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=6]"
+            "[@spdf:sha256-HASH_QUIJOTE#p=30]"
         ]
     ]
 , Plain
     [ Cite
         [ Citation
-            { citationId = "spdf-fa38e514734b"
+            { citationId = "spdf-HASH_QUIJOTE_12"
             , citationPrefix = []
             , citationSuffix =
-                [ Str "," , Space , Str "{f." , Space , Str "1r-[1v]}" ]
+                [ Str "," , Space , Str "{f." , Space , Str "Ir-[Iv]}" ]
             , citationMode = NormalCitation
             , citationNoteNum = 4
             , citationHash = 0
             }
         ]
         [ Str
-            "[@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=5&pe=6]"
+            "[@spdf:sha256-HASH_QUIJOTE#p=29&pe=30]"
         ]
     ]
 , Plain
@@ -127,9 +127,9 @@
 , Plain
     [ Str "reference:"
     , Space
-    , Str "spdf-fa38e514734b"
+    , Str "spdf-HASH_QUIJOTE_12"
     , Space
-    , Str "El ingenioso hidalgo don Quijote de la Mancha"
+    , Str "El ingenioso hidalgo Don Quixote de la Mancha"
     ]
 , Plain
     [ Str "reference:"

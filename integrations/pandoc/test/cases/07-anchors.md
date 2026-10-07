@@ -4,29 +4,44 @@ spdf-library:
 - ../../../conformance/files/quijote.spdf
 - ../../../conformance/files/apolo11.spdf
 - ../../../conformance/files/lunyu.spdf
+- ../../../conformance/files/minimo.spdf
 - build/mixed.spdf
 ---
 
-Roman folios [@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=2] and an inferred one [@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=4].
+Front matter without a folio [@spdf:sha256-HASH_QUIJOTE#p=13], and two such pages
+[@spdf:sha256-HASH_QUIJOTE#p=13&pe=14].
 
-Leaves: a recto [@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=5], an inferred verso [@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=6], a
-range of leaves [@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=5&pe=6], and a leaf by folio [@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#f=2r].
+Leaves numbered in roman: a recto [@spdf:sha256-HASH_QUIJOTE#p=29], an inferred verso
+[@spdf:sha256-HASH_QUIJOTE#p=30], a range of leaves [@spdf:sha256-HASH_QUIJOTE#p=29&pe=30],
+a range across the change of numbering [@spdf:sha256-HASH_QUIJOTE#p=30&pe=31], and a
+leaf by folio [@spdf:sha256-HASH_QUIJOTE#f=2r].
 
-Time: one moment [@spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=4160], a span [@spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=12,24.5], a span
-inside one second [@spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=4160,4160.5], and clock syntax
-[@spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=1:09:20].
+A range that starts on an unnumbered page cites only the numbered end
+[@spdf:sha256-HASH_QUIJOTE#p=14&pe=29].
 
-Sections: [@spdf:sha256-c5fbea8e0b34b1011a7002b2d8a69fcec184055902fbcbc4b0c08b1813c70e4f#s=%E5%AD%B8%E8%80%8C%E7%AC%AC%E4%B8%80&para=1], and
-the IRI form [@{spdf:sha256-c5fbea8e0b34b1011a7002b2d8a69fcec184055902fbcbc4b0c08b1813c70e4f#s=為政第二}].
+Time, in ground elapsed time: one moment [@spdf:sha256-HASH_APOLLO#t=369959], a span
+[@spdf:sha256-HASH_APOLLO#t=369966,369976], a span inside one second
+[@spdf:sha256-HASH_APOLLO#t=394996,394996.5], clock syntax
+[@spdf:sha256-HASH_APOLLO#t=102:45:59], and a time between two transmissions
+[@spdf:sha256-HASH_APOLLO#t=380000].
 
-Verses [@spdf:sha256-b74f52c7fbbf58aac689f9b78a79891bbf6b7b316a278bd16f857e21921fb214#v=2], [@spdf:sha256-b74f52c7fbbf58aac689f9b78a79891bbf6b7b316a278bd16f857e21921fb214#v=1-3], a verse that is not there
+Sections: [@spdf:sha256-HASH_LUNYU#s=%E5%AD%B8%E8%80%8C%E7%AC%AC%E4%B8%80&para=1], the
+IRI form [@{spdf:sha256-HASH_LUNYU#s=爲政第二}], a paragraph the file does not anchor
+[@spdf:sha256-HASH_LUNYU#s=%E5%AD%B8%E8%80%8C%E7%AC%AC%E4%B8%80&para=3], and a section
+with a printed page, cited by the page [@spdf:sha256-HASH_MINIMO#s=XXI&para=1&f=159].
+
+Canonical references kept on fragments [@spdf:sha256-HASH_LUNYU#ref=analects:1.2], and
+one that is not there [@spdf:sha256-HASH_LUNYU#ref=analects:9.9].
+
+Verses kept on fragments [@spdf:sha256-HASH_MINIMO#v=2-3], on units
+[@spdf:sha256-b74f52c7fbbf58aac689f9b78a79891bbf6b7b316a278bd16f857e21921fb214#v=2] [@spdf:sha256-b74f52c7fbbf58aac689f9b78a79891bbf6b7b316a278bd16f857e21921fb214#v=1-3], and a verse that is not there
 [@spdf:sha256-b74f52c7fbbf58aac689f9b78a79891bbf6b7b316a278bd16f857e21921fb214#v=40].
 
 Slides [@spdf:sha256-b74f52c7fbbf58aac689f9b78a79891bbf6b7b316a278bd16f857e21921fb214#sl=2], sheets [@spdf:sha256-b74f52c7fbbf58aac689f9b78a79891bbf6b7b316a278bd16f857e21921fb214#sh=Data&rows=4-9]
-[@spdf:sha256-b74f52c7fbbf58aac689f9b78a79891bbf6b7b316a278bd16f857e21921fb214#sh=Data&rows=4-4], and a canonical reference
+[@spdf:sha256-b74f52c7fbbf58aac689f9b78a79891bbf6b7b316a278bd16f857e21921fb214#sh=Data&rows=4-4], and a canonical reference on a unit
 [@spdf:sha256-b74f52c7fbbf58aac689f9b78a79891bbf6b7b316a278bd16f857e21921fb214#ref=stephanus:514a].
 
 Parameters that only narrow a unit do not change the citation
-[@spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=5&char=0,12&xywh=percent:10,20,30,40].
+[@spdf:sha256-HASH_QUIJOTE#p=29&char=0,12&xywh=percent:10,20,30,40].
 
 # References
