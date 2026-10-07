@@ -19,7 +19,9 @@ export interface EjemploAncla {
   cita: string;
   /** Página física, folio impreso y tramo de caracteres, para explicarla. */
   p?: number;
+  pe?: number;
   f?: string;
+  fe?: string;
   char?: [number, number];
   /** De qué obra sale (título y autor) y dónde inspeccionarla. */
   obra: string;
@@ -33,19 +35,23 @@ function uriHtml(uri: string): string {
 }
 
 function explicacion(e: EjemploAncla, l: Lengua): string {
+  const deducido = e.f !== undefined && e.cita.includes(`[${e.f}]`);
+  const y = (a: string | number, b: string | number) => (Number(b) === Number(a) + 1 ? (l === 'es' ? `${a} y ${b}` : `${a} and ${b}`) : (l === 'es' ? `${a} a ${b}` : `${a} to ${b}`));
   const partes: string[] = [];
   if (l === 'es') {
-    if (e.p !== undefined) partes.push(`página física ${e.p} del fichero`);
-    if (e.f !== undefined) partes.push(`folio impreso ${e.f}`);
-    if (e.char) partes.push(`caracteres ${e.char[0]} a ${e.char[1]} de esa página`);
+    if (e.p !== undefined) partes.push(e.pe !== undefined ? `páginas físicas ${y(e.p, e.pe)} del fichero` : `página física ${e.p} del fichero`);
+    if (e.f !== undefined) partes.push(e.fe !== undefined ? `folios impresos ${y(e.f, e.fe)}` : `folio impreso ${e.f}`);
+    if (e.char) partes.push(e.pe !== undefined ? `desde el carácter ${e.char[0]} de la primera` : `caracteres ${e.char[0]} a ${e.char[1]} de esa página`);
     const frase = partes.join(', ');
-    return `${frase.charAt(0).toUpperCase()}${frase.slice(1)}, en <cite>${esc(e.obra)}</cite>. La cita se calcula a partir del ancla guardada al leer; no se adivina nada. <a href="${e.inspeccionar.es}">Ábrelo en el validador</a>.`;
+    const nota = deducido ? ` El folio ${e.f} no está impreso en su página: se dedujo de las vecinas y por eso va entre corchetes.` : '';
+    return `${frase.charAt(0).toUpperCase()}${frase.slice(1)}, en <cite>${esc(e.obra)}</cite>.${nota} La cita se calcula a partir del ancla guardada al leer; no se adivina nada. <a href="${e.inspeccionar.es}">Ábrelo en el validador</a>.`;
   }
-  if (e.p !== undefined) partes.push(`physical page ${e.p} of the file`);
-  if (e.f !== undefined) partes.push(`printed folio ${e.f}`);
-  if (e.char) partes.push(`characters ${e.char[0]} to ${e.char[1]} of that page`);
+  if (e.p !== undefined) partes.push(e.pe !== undefined ? `physical pages ${y(e.p, e.pe)} of the file` : `physical page ${e.p} of the file`);
+  if (e.f !== undefined) partes.push(e.fe !== undefined ? `printed folios ${y(e.f, e.fe)}` : `printed folio ${e.f}`);
+  if (e.char) partes.push(e.pe !== undefined ? `from character ${e.char[0]} of the first` : `characters ${e.char[0]} to ${e.char[1]} of that page`);
   const frase = partes.join(', ');
-  return `${frase.charAt(0).toUpperCase()}${frase.slice(1)}, in <cite>${esc(e.obra)}</cite>. The citation is computed from the anchor stored at reading time; nothing is guessed. <a href="${e.inspeccionar.en}">Open it in the validator</a>.`;
+  const nota = deducido ? ` Folio ${e.f} is not printed on its page: it was inferred from its neighbours, which is why it is in brackets.` : '';
+  return `${frase.charAt(0).toUpperCase()}${frase.slice(1)}, in <cite>${esc(e.obra)}</cite>.${nota} The citation is computed from the anchor stored at reading time; nothing is guessed. <a href="${e.inspeccionar.en}">Open it in the validator</a>.`;
 }
 
 

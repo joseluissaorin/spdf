@@ -1,5 +1,169 @@
 {
   "name": "SPDF Commons",
   "description": "Public-domain works read into SPDF with the reference producer.",
-  "items": []
+  "items": [
+    {
+      "fichero": "calderon-alcalde-de-zalamea-1746.spdf",
+      "sha256": "a9f5fe7e5e688f11135943131ab021d1b82b831ba6424218b07ebdbe167e6d18",
+      "source_sha256": "0b4d890665e6617d28a900094cef3e980204fc2b2eed96c4fa921ad236e82505",
+      "title": "El garrote mas bien dado, y alcalde de Zalamea",
+      "authors": "Calderón de la Barca, Pedro",
+      "year": 1746,
+      "language": "es",
+      "kind": "scanned_pdf",
+      "profile": [
+        "core",
+        "semantic"
+      ],
+      "bytes": 5939200,
+      "units": 32,
+      "fragments": 70,
+      "source": {
+        "name": "Internet Archive",
+        "url": "https://archive.org/details/HHAZ381802"
+      },
+      "ejemplo": {
+        "cita": "(Calderón de la Barca, 1746, pp. 10-11)",
+        "uri": "spdf:sha256-0b4d890665e6617d28a900094cef3e980204fc2b2eed96c4fa921ad236e82505#p=10&pe=11&f=10&fe=11"
+      },
+      "generator": "spdf-build/0.1.0",
+      "created": "2026-10-07T09:33:19Z",
+      "verificacion": {
+        "en": "Read page by page with the vision engine. Printed page numbers checked by eye against the page images on physical pages 1 (\"Fol. 1\"), 11, 16, 29 and 32 (the last, with the colophon \"Año de 1746\"): all match. All 32 folios were read on the page; none is inferred. The lines of the sample (\"el honor / es patrimonio del alma\") were found on the image of p. 11.",
+        "es": "Leído página a página con el motor de visión. Folios comprobados a ojo contra las imágenes de página en las páginas físicas 1 («Fol. 1»), 11, 16, 29 y 32 (la última, con el colofón «Año de 1746»): coinciden todos. Los 32 folios se leyeron en la página; ninguno es deducido. Los versos del ejemplo («el honor / es patrimonio del alma») se encontraron en la imagen de la p. 11."
+      },
+      "verificado": "2026-10-07"
+    },
+    {
+      "fichero": "baudelaire-fleurs-du-mal-1857.spdf",
+      "sha256": "fa27b747bd9a9dfe0b04be643fc83a4dc0025212c2ba26bdbd88daea782446ea",
+      "source_sha256": "58244305ebe4d81cb8e4bebee90af06abbb32c07089e0d5e8124c8dba8d0b936",
+      "title": "Les Fleurs du mal",
+      "authors": "Baudelaire, Charles",
+      "year": 1857,
+      "language": "fr",
+      "kind": "scanned_pdf",
+      "profile": [
+        "core",
+        "semantic"
+      ],
+      "bytes": 13447168,
+      "units": 264,
+      "fragments": 128,
+      "source": {
+        "name": "Internet Archive",
+        "url": "https://archive.org/details/lesfleursdumal00bauduoft"
+      },
+      "ejemplo": {
+        "cita": "(Baudelaire, 1857, pp. [19]-20)",
+        "uri": "spdf:sha256-58244305ebe4d81cb8e4bebee90af06abbb32c07089e0d5e8124c8dba8d0b936#p=27&pe=28&f=19&fe=20&char=26,389"
+      },
+      "generator": "spdf-build/0.1.0",
+      "created": "2026-10-07T09:48:51Z",
+      "verificacion": {
+        "en": "Read page by page with the vision engine. Printed page numbers checked by eye against the page images on physical pages 14 (p. 6), 51 (p. 43), 55 (p. 47), 137 (p. 129) and 256 (p. 248): all match, with a constant offset of 8 between physical page and folio. Pages without a printed number (the first page of each poem, the table) carry the inferred folio in brackets, e.g. [11] for \"Bénédiction\" and [128] for \"A une dame créole\". Of the 102 entries of the book's own table, 96 were found on the page the table gives; of the other six, the table gives p. 43 for \"Châtiment de l'orgueil\", which begins on p. [44], the dedication (p. 1) has no folio, and four titles were not read as such although their pages are right. Physical 53 prints \"44\" by mistake and is cited as [45]. Four pages (physical 30, 53, 97 and 225) were refused by the vision engine as recitation of a known text and carry the old OCR layer instead, marked with low confidence: their folios are right, their text is poor. Front matter and endpapers have no folio.",
+        "es": "Leído página a página con el motor de visión. Folios comprobados a ojo contra las imágenes de página en las páginas físicas 14 (p. 6), 51 (p. 43), 55 (p. 47), 137 (p. 129) y 256 (p. 248): coinciden todos, con una diferencia constante de 8 entre página física y folio. Las páginas sin número impreso (la primera de cada poema, la tabla) llevan el folio deducido entre corchetes, por ejemplo [11] en «Bénédiction» y [128] en «A une dame créole». De las 102 entradas de la tabla del propio libro, 96 se encontraron en la página que da la tabla; de las otras seis, la tabla da la p. 43 para «Châtiment de l'orgueil», que empieza en la p. [44], la dedicatoria (p. 1) no tiene folio, y cuatro títulos no se leyeron como tales aunque su página es la correcta. La física 53 imprime «44» por error y se cita como [45]. Cuatro páginas (físicas 30, 53, 97 y 225) las rechazó el motor de visión por considerarlas recitación de un texto conocido y llevan en su lugar la capa de OCR antigua, marcada con confianza baja: sus folios son correctos y su texto es pobre. Los preliminares y las guardas no tienen folio."
+      },
+      "verificado": "2026-10-07"
+    },
+    {
+      "fichero": "poe-tell-tale-heart-1843.spdf",
+      "sha256": "4de4ca16794d566bf5ac364c7aa301dddaad7a0b7bdf388683c624d84cdf974d",
+      "source_sha256": "d4e988c072edd4fcc6df5196de79db8b469101c4858b62c7dad30f5c46a5f72e",
+      "title": "The Tell-Tale Heart",
+      "authors": "Poe, Edgar Allan",
+      "year": 1843,
+      "language": "en",
+      "kind": "audio",
+      "profile": [
+        "core",
+        "semantic",
+        "media"
+      ],
+      "bytes": 303104,
+      "units": 21,
+      "fragments": 21,
+      "source": {
+        "name": "LibriVox",
+        "url": "https://librivox.org/six-creepy-tales-by-edgar-allan-poe/"
+      },
+      "ejemplo": {
+        "cita": "(Poe, 1843, 1:37)",
+        "uri": "spdf:sha256-d4e988c072edd4fcc6df5196de79db8b469101c4858b62c7dad30f5c46a5f72e#t=97.93,149.55"
+      },
+      "generator": "spdf-build/0.1.0",
+      "created": "2026-10-07T09:33:13Z",
+      "verificacion": {
+        "en": "Checked without playing the audio. At 2:15, 10:00 and 16:30 the words the file places at that second were compared with an independent local transcription (whisper.cpp) of the same 30-second window: they are the same words, and the median difference between the start times of the matched words is at most 0.4 s (word times are interpolated within the transcriber's segments). Transcript against the Project Gutenberg text: word error rate 0.2 %.",
+        "es": "Comprobado sin reproducir el audio. En 2:15, 10:00 y 16:30 se compararon las palabras que el fichero sitúa en ese segundo con una transcripción local independiente (whisper.cpp) de la misma ventana de 30 s: son las mismas palabras, y la diferencia mediana entre los tiempos de inicio de las palabras emparejadas es como mucho de 0,4 s (los tiempos por palabra se interpolan dentro de los segmentos del transcriptor). Transcripción frente al texto de Project Gutenberg: tasa de error por palabra del 0,2 %."
+      },
+      "verificado": "2026-10-07"
+    },
+    {
+      "fichero": "becquer-monte-de-las-animas-1861.spdf",
+      "sha256": "d9f85ba4ac9375b5fb8448aec07e15b2e7bc7329e717bbcd8b0c9862f4579fbc",
+      "source_sha256": "28224889addbada0937b6e116e20ac14021bcabd7151da32d7a6eff19d0624b6",
+      "title": "El monte de las ánimas",
+      "authors": "Bécquer, Gustavo Adolfo",
+      "year": 1861,
+      "language": "es",
+      "kind": "audio",
+      "profile": [
+        "core",
+        "semantic",
+        "media"
+      ],
+      "bytes": 335872,
+      "units": 24,
+      "fragments": 24,
+      "source": {
+        "name": "LibriVox",
+        "url": "https://librivox.org/leyendas-by-gustavo-adolfo-becquer/"
+      },
+      "ejemplo": {
+        "cita": "(Bécquer, 1861, 1:33)",
+        "uri": "spdf:sha256-28224889addbada0937b6e116e20ac14021bcabd7151da32d7a6eff19d0624b6#t=93.44,142.68"
+      },
+      "generator": "spdf-build/0.1.0",
+      "created": "2026-10-07T09:34:59Z",
+      "verificacion": {
+        "en": "Checked without playing the audio. At 2:15, 10:10 and 18:20 the words the file places at that second were compared with an independent local transcription (whisper.cpp) of the same 30-second window: they are the same words, but the file's word times run about 1 s behind (median +0.9 to +1.3 s; they are interpolated within the transcriber's segments). Transcript against the text of the 1912 edition: word error rate 2.8 % (the reader used Wikisource's text).",
+        "es": "Comprobado sin reproducir el audio. En 2:15, 10:10 y 18:20 se compararon las palabras que el fichero sitúa en ese segundo con una transcripción local independiente (whisper.cpp) de la misma ventana de 30 s: son las mismas palabras, pero los tiempos del fichero van alrededor de 1 s por detrás (mediana de +0,9 a +1,3 s; se interpolan dentro de los segmentos del transcriptor). Transcripción frente al texto de la edición de 1912: tasa de error por palabra del 2,8 % (la lectora usó el texto de Wikisource)."
+      },
+      "verificado": "2026-10-07"
+    },
+    {
+      "fichero": "maupassant-menuet-1882.spdf",
+      "sha256": "149d4d7782cfa183c20cdccba471b941f3094d1e0a4dc25e8ccf7fd8d271ed87",
+      "source_sha256": "72abf4abda87f5b8c1667afb1c418042bf663def038dff8044b6251088209f2d",
+      "title": "Menuet",
+      "authors": "Maupassant, Guy de",
+      "year": 1882,
+      "language": "fr",
+      "kind": "audio",
+      "profile": [
+        "core",
+        "semantic",
+        "media"
+      ],
+      "bytes": 249856,
+      "units": 14,
+      "fragments": 14,
+      "source": {
+        "name": "LibriVox",
+        "url": "https://librivox.org/les-contes-de-la-becasse-by-guy-de-maupassant/"
+      },
+      "ejemplo": {
+        "cita": "(Maupassant, 1882, 2:08)",
+        "uri": "spdf:sha256-72abf4abda87f5b8c1667afb1c418042bf663def038dff8044b6251088209f2d#t=128.9,180.54"
+      },
+      "generator": "spdf-build/0.1.0",
+      "created": "2026-10-07T09:36:09Z",
+      "verificacion": {
+        "en": "Checked without playing the audio. At 2:15, 6:40 and 10:40 the words the file places at that second were compared with an independent local transcription (whisper.cpp) of the same 30-second window: they are the same words, and the median difference between the start times of the matched words is at most 0.2 s (word times are interpolated within the transcriber's segments). Transcript against the Project Gutenberg text: word error rate 1.4 %.",
+        "es": "Comprobado sin reproducir el audio. En 2:15, 6:40 y 10:40 se compararon las palabras que el fichero sitúa en ese segundo con una transcripción local independiente (whisper.cpp) de la misma ventana de 30 s: son las mismas palabras, y la diferencia mediana entre los tiempos de inicio de las palabras emparejadas es como mucho de 0,2 s (los tiempos por palabra se interpolan dentro de los segmentos del transcriptor). Transcripción frente al texto de Project Gutenberg: tasa de error por palabra del 1,4 %."
+      },
+      "verificado": "2026-10-07"
+    }
+  ]
 }
