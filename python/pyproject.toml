@@ -1,10 +1,10 @@
 [build-system]
-requires = ["hatchling>=1.25"]
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [project]
 name = "spdf-format"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Read, validate, search, cite and write SPDF (Semantic Processed Document Format) files"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -53,6 +53,9 @@ dev = [
     "numpy>=1.24",
     "cryptography>=42",
 ]
+
+[tool.hatch.version]
+path = "src/spdf/_version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/spdf"]

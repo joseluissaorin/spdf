@@ -1,0 +1,165 @@
+# spdf-format (python/): lint, types, tests on Linux/macOS/Windows with Python 3.10-3.13,
+# the conformance suite (artifact "conformance-python"), build, and publication to PyPI
+# with Trusted Publishing when a tag python-vX.Y.Z is pushed. See python/PUBLICAR.md.
+name: python
+
+on:
+  push:
+    branches: [main]
+    tags: ["python-v*"]
+    paths:
+      - "python/**"
+      - "conformance/**"
+      - ".github/workflows/python.yml"
+  pull_request:
+    paths:
+      - "python/**"
+      - "conformance/**"
+      - ".github/workflows/python.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: python-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+defaults:
+  run:
+    working-directory: python
+
+jobs:
+  lint:
+    name: ruff and mypy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - run: uv sync --group dev
+      - run: uv run ruff check src tests
+      - run: uv run ruff format --check src tests
+      - run: uv run mypy
+
+  test:
+    name: test ${{ matrix.os }} py${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.10", "3.11", "3.12", "3.13"]
+    env:
+      # Test the interpreter users get from python.org / the OS, not a uv-managed one.
+      UV_PYTHON_PREFERENCE: only-system
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        id: py
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: astral-sh/setup-uv@v6
+      - name: Create the environment (standard library only)
+        run: |
+          uv venv --python "${{ steps.py.outputs.python-path }}" .venv
+          uv pip install --python .venv -e . pytest
+      - name: SQLite and FTS5 of this interpreter
+        run: uv run --no-sync spdf info --env
+      - name: Tests without optional dependencies
+        run: uv run --no-sync python -m pytest -q
+      - name: Tests with numpy and cryptography
+        run: |
+          uv pip install --python .venv numpy cryptography
+          uv run --no-sync python -m pytest -q
+
+  extras:
+    name: pandas and Arrow
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - run: uv venv .venv && uv pip install --python .venv -e ".[all]" pytest
+      - run: uv run --no-sync python -m pytest -q tests/test_files.py -k "frames or arrow or iiif or alto"
+
+  conformance:
+    name: conformance suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        id: py
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+      - run: uv venv --python "${{ steps.py.outputs.python-path }}" .venv && uv pip install --python .venv -e .
+      - name: Run the suite (report in conformance.json)
+        run: uv run --no-sync spdf conformance ../conformance --output conformance.json
+      - name: Summary
+        if: always()
+        run: |
+          python - <<'EOF'
+          import json, os
+          r = json.load(open("conformance.json"))
+          line = f"spdf-format {r['version']}: {len(r['passed'])} passed, {len(r['failed'])} failed, {len(r['skipped'])} skipped"
+          print(line)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as s:
+              s.write(line + "\n")
+              for f in r["failed"]:
+                  s.write(f"- {f['id']}: {f['reason']}\n")
+          EOF
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: conformance-python
+          path: python/conformance.json
+          if-no-files-found: error
+
+  build:
+    name: build sdist and wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - name: Tag matches the version
+        if: startsWith(github.ref, 'refs/tags/python-v')
+        run: |
+          version=$(python3 -c "import re; print(re.search(r'__version__ = \"([^\"]+)\"', open('src/spdf/_version.py').read()).group(1))")
+          test "python-v${version}" = "${GITHUB_REF_NAME}" || { echo "Tag ${GITHUB_REF_NAME} does not match version ${version}"; exit 1; }
+      - run: uv build
+      - run: uvx twine check --strict dist/*
+      - name: Smoke test of the built wheel
+        run: |
+          uv venv /tmp/wheel-env
+          uv pip install --python /tmp/wheel-env dist/*.whl
+          /tmp/wheel-env/bin/spdf --version
+          /tmp/wheel-env/bin/spdf conformance ../conformance --compact --output /tmp/wheel-conformance.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-dist
+          path: python/dist/
+
+  publish:
+    name: publish to PyPI
+    if: startsWith(github.ref, 'refs/tags/python-v')
+    needs: [lint, test, conformance, build]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/spdf-format/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/

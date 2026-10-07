@@ -24,7 +24,7 @@ def test_read_document_and_records(quijote: Path) -> None:
         assert f.profile == ["core", "semantic"]
         d = f.document
         assert d.id == "quijote" and d.kind == "pdf" and d.year == 1605 and d.authors == "Cervantes Saavedra"
-        assert d.csl["id"] == "quijote" and "spdf" not in d.csl
+        assert d.csl["id"] == "cervantessaavedra1605" and "spdf" not in d.csl
         assert d.rights == {"license": "CC0-1.0", "access": "open", "holder": None, "note": None}
         units = f.units()
         assert [u.ord for u in units] == [1, 2, 3]
@@ -523,19 +523,45 @@ def test_writer_nfc_and_defaults(tmp_path: Path) -> None:
 def test_bibliography(quijote: Path) -> None:
     with spdf.open(quijote) as f:
         csl = f.to_csl_json()
-        assert csl[0]["id"] == "quijote" and csl[0]["type"] == "book"
+        assert csl[0]["id"] == "cervantessaavedra1605" and csl[0]["type"] == "book" and "spdf" not in csl[0]
         bib = f.to_bibtex()
-    assert bib.startswith("@book{cervantes1605ingenioso,")
+        item = spdf.bibliography.csl_citation_item(f.document, f.fragment("f2").anchor)  # type: ignore[union-attr]
+        assert item["label"] == "page" and item["locator"] == "23"
+    assert bib.startswith("@book{cervantessaavedra1605,")
     assert "author = {Cervantes Saavedra, Miguel de}" in bib
-    assert "address = {Madrid}" in bib
-    item = {
-        "type": "article-journal",
-        "title": "A & B_c",
-        "container-title": "Revista",
-        "author": [{"literal": "ACME"}],
-    }
-    entry = spdf.csl_to_bibtex(item, key="k")
-    assert "@article{k," in entry and "journal = {Revista}" in entry and r"A \& B\_c" in entry
+    assert "title = {{El} ingenioso hidalgo don {Quijote} de la {Mancha}}" in bib
+    assert "address = {Madrid}" in bib and "publisher = {Juan de la Cuesta}" in bib
+    item2 = {"type": "article-journal", "title": "a {b}", "container-title": "Revista", "author": [{"literal": "ACME"}]}
+    entry = spdf.csl_to_bibtex(item2)
+    assert entry.startswith("@article{acmend,") and "journal = {{Revista}}" in entry and r"a \{b\}" in entry
+    docs = [
+        spdf.Document(
+            "a",
+            "pdf",
+            {"type": "book", "title": "x", "author": [{"family": "Pérez"}], "issued": {"date-parts": [[2000]]}},
+            "",
+            None,
+            "",
+            0,
+            0,
+            None,
+            "",
+            "",
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        for _ in range(2)
+    ]
+    keys = [x["id"] for x in spdf.bibliography.to_csl_json(docs)]
+    assert keys == ["perez2000a", "perez2000b"]
+    assert spdf.bibliography.csl_locator({"type": "time", "t0": 61.5, "t1": 70}) == ("timestamp", "1:01")
+    assert spdf.bibliography.csl_locator(
+        {"type": "page", "physical": 1, "printed": "1r", "foliation": "leaf"},
+        {"type": "page", "physical": 2, "printed": "2v", "foliation": "leaf"},
+    ) == ("folio", "1r-2v")
 
 
 def test_alto(quijote: Path) -> None:
@@ -562,9 +588,46 @@ def test_iiif(quijote: Path) -> None:
     assert body["id"] == "https://example.org/iiif/quijote/blobs/pages/0001.png" and body["format"] == "image/png"
     annos = canvases[0]["annotations"][0]["items"]
     assert annos[0]["motivation"] == "supplementing" and annos[0]["body"]["value"] == TEXTS[0]
-    assert annos[1]["motivation"] == "describing" and annos[1]["target"].endswith("#xywh=0,0,0,0")
-    assert canvases[1]["label"] == {"none": ["p. 23"]}
+    assert annos[1]["motivation"] == "describing" and annos[1]["target"].endswith("#xywh=percent:10,20,50,25")
+    assert canvases[0]["label"] == {"none": ["1"]} and canvases[1]["label"] == {"none": ["23"]}
     assert m["structures"][0]["items"][0]["id"].endswith("/canvas/1")
+
+
+def test_audio_exports(tmp_path: Path) -> None:
+    p = tmp_path / "audio.spdf"
+    with spdf.Writer(p) as w:
+        w.add_document(
+            {
+                "id": "rima",
+                "kind": "audio",
+                "metadata": {
+                    "type": "speech",
+                    "title": "Rima LIII",
+                    "author": [{"family": "Bécquer", "given": "Gustavo Adolfo"}],
+                },
+                "source_sha256": "b" * 64,
+                "mime": "audio/mpeg",
+                "bytes": 3,
+                "duration": 20.0,
+                "source_ref": "blob:audio.mp3",
+            }
+        )
+        w.add_blob("audio.mp3", "audio/mpeg", b"ID3")
+        for i, (t0, t1) in enumerate([(0.0, 9.5), (9.5, 20.0)], start=1):
+            a = {"type": "time", "t0": t0, "t1": t1, "speaker": "Lectora"}
+            text = ["Volverán las oscuras golondrinas", "en tu balcón sus nidos a colgar"][i - 1]
+            w.add_unit({"id": f"u{i}", "ord": i, "anchor": a, "text": text, "reader": "whisper"})
+            w.add_fragment({"id": f"f{i}", "unit": f"u{i}", "ord": i, "text": text, "anchor": a})
+    with spdf.open(p) as f:
+        m = f.to_iiif("https://x.org/rima")
+        with pytest.raises(spdf.SpdfError):
+            f.to_alto()
+        assert f.cite(f.fragment("f2")) == "(Bécquer, s. f., 0:09)"
+    assert len(m["items"]) == 1 and m["items"][0]["duration"] == 20.0
+    assert m["items"][0]["items"][0]["items"][0]["body"]["type"] == "Sound"
+    targets = [a["target"] for a in m["items"][0]["annotations"][0]["items"]]
+    assert targets == ["https://x.org/rima/canvas/1#t=0,9.5", "https://x.org/rima/canvas/1#t=9.5,20"]
+    assert [r["items"][0]["id"] for r in m["structures"]] == targets
 
 
 def test_frames(quijote: Path) -> None:

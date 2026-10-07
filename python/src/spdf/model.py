@@ -51,10 +51,19 @@ class Document:
 
     @property
     def csl(self) -> dict[str, Any]:
-        """The CSL-JSON item ready for citeproc/Zotero/Pandoc: metadata without ``spdf``, plus ``id``."""
+        """The CSL-JSON item for citeproc/Zotero/Pandoc: metadata without ``spdf``, ``id`` = BibTeX key."""
+        from .bibliography import bibtex_key
+
         item = {k: v for k, v in self.metadata.items() if k != "spdf"}
-        item.setdefault("id", self.id)
+        item["id"] = bibtex_key(item)
         return item
+
+    @property
+    def bibtex_key(self) -> str:
+        """The BibTeX key of the document (SPEC §19): ``cervantessaavedra1605``."""
+        from .bibliography import bibtex_key
+
+        return bibtex_key(self.metadata)
 
     @property
     def extension(self) -> dict[str, Any]:

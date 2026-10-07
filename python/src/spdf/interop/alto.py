@@ -1,7 +1,8 @@
 """ALTO XML (v4) export.
 
-One ``<Page>`` per unit, with ``PHYSICAL_IMG_NR`` = unit order and ``PRINTED_IMG_NR`` =
-printed folio. SPDF stores text per unit, not word boxes, so blocks, lines and
+One ``<Page>`` per page unit, with ``PHYSICAL_IMG_NR`` = ``physical`` and
+``PRINTED_IMG_NR`` = printed folio (SPEC §19), one ``TextBlock`` per paragraph and one
+``TextLine`` per line. SPDF stores text per unit, not word boxes, so blocks, lines and
 strings carry no coordinates (they are optional in ALTO 4); page ``WIDTH``/``HEIGHT``
 come from the embedded page image when there is one. Running headers go to
 ``TopMargin``, footers to ``BottomMargin`` and footnotes to a separate block tagged
@@ -58,8 +59,9 @@ def _block(block_id: str, text: str, tag: str = "TextBlock", extra: str = "") ->
 
 
 def _page(f: SpdfFile, u: Unit) -> list[str]:
-    pid = f"P{u.ord}"
-    attrs = [f'ID="{pid}"', f'PHYSICAL_IMG_NR="{u.ord}"']
+    physical = u.anchor.physical if u.anchor.physical is not None else u.ord
+    pid = f"P{physical}"
+    attrs = [f'ID="{pid}"', f'PHYSICAL_IMG_NR="{physical}"']
     printed = u.printed if u.printed is not None else u.anchor.printed
     if printed:
         attrs.append(f"PRINTED_IMG_NR={quoteattr(printed)}")
@@ -116,7 +118,12 @@ def to_alto(f: SpdfFile) -> str:
         "</Tags>",
         "<Layout>",
     ]
-    for u in f.iter_units():
+    pages = [u for u in f.iter_units() if u.anchor.type == "page"]
+    if not pages:
+        from ..errors import SpdfError
+
+        raise SpdfError("ALTO export needs page units; this document has none (try IIIF or TEI)")
+    for u in pages:
         lines += _page(f, u)
     lines += ["</Layout>", "</alto>", ""]
     return "\n".join(lines)

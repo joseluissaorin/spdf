@@ -196,7 +196,7 @@ def to_iiif(
         for u in units:
             cid = f"{base}/canvas/{u.ord}"
             canvas_of[u.id] = cid
-            label = locator_label(u.anchor, None, locale) or str(u.ord)
+            label = _canvas_label(u, locale)
             img_url = url_of(u.image)
             size = None
             mime = None
@@ -228,9 +228,8 @@ def to_iiif(
                 region = g.anchor.region
                 target = cid
                 if region is not None:
-                    target = (
-                        f"{cid}#xywh={round(region.x * w)},{round(region.y * h)},"
-                        f"{round(region.w * w)},{round(region.h * h)}"
+                    target = f"{cid}#xywh=percent:" + ",".join(
+                        _pct(v) for v in (region.x, region.y, region.w, region.h)
                     )
                 text = " ".join(t for t in (g.caption, g.description) if t)
                 if text:
@@ -254,9 +253,53 @@ def to_iiif(
     manifest["items"] = canvases
 
     ranges = _ranges(f, base, canvas_of, units, lang)
+    if not ranges and doc.kind in ("audio", "video"):
+        ranges = _unit_ranges(base, canvas_of, units, lang, locale)
     if ranges:
         manifest["structures"] = ranges
     return manifest
+
+
+def _canvas_label(u: Unit, locale: str) -> str:
+    """The printed folio (``[21]`` if inferred) or, for other units, their locator."""
+    a = u.anchor
+    printed = u.printed if u.printed is not None else a.printed
+    if a.type == "page":
+        if printed is None:
+            return str(a.physical if a.physical is not None else u.ord)
+        return f"[{printed}]" if a.source == "inferred" else printed
+    return locator_label(a, None, locale) or str(u.ord)
+
+
+def _pct(fraction: float) -> str:
+    from ..canonical import es_number
+
+    r = round(float(fraction) * 100, 4)
+    return es_number(0.0 if r == 0 else r)
+
+
+def _unit_ranges(
+    base: str, canvas_of: dict[str, str], units: list[Unit], lang: str, locale: str
+) -> list[dict[str, Any]]:
+    out = []
+    for u in units:
+        cid = canvas_of.get(u.id)
+        t0 = u.t0 if u.t0 is not None else u.anchor.t0
+        t1 = u.t1 if u.t1 is not None else u.anchor.t1
+        if cid is None or t0 is None:
+            continue
+        label = locator_label(u.anchor, None, locale) or str(u.ord)
+        if u.anchor.speaker:
+            label = f"{label} {u.anchor.speaker}"
+        out.append(
+            {
+                "id": f"{base}/range/u{u.ord}",
+                "type": "Range",
+                "label": {lang: [label]},
+                "items": [{"id": f"{cid}#t={_n(t0)},{_n(t1 if t1 is not None else t0)}", "type": "Canvas"}],
+            }
+        )
+    return out
 
 
 def _n(x: float | None) -> str:
