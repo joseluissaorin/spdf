@@ -222,8 +222,11 @@ doc_fts <- function(doc) {
   name <- if (doc$legacy) "fragmentos_fts" else "fragments_fts"
   sql <- DBI::dbGetQuery(doc$con, "SELECT sql FROM sqlite_master WHERE name = ?", params = list(name))$sql
   tok <- if (length(sql) == 0 || is.na(sql)) NULL else {
-    m <- regmatches(sql, regexec("tokenize\\s*=\\s*'([^']*)'", sql))[[1]]
-    if (length(m) == 2) m[2] else "unicode61"
+    m <- regmatches(sql, regexec("(?i)tokenize\\s*=\\s*(?:'((?:[^']|'')*)'|\"((?:[^\"]|\"\")*)\"|([A-Za-z0-9_]+))", sql, perl = TRUE))[[1]]
+    if (length(m) == 0) "unicode61" else {
+      raw <- if (nzchar(m[4])) m[4] else if (nzchar(m[3])) gsub("\"\"", "\"", m[3], fixed = TRUE) else gsub("''", "'", m[2], fixed = TRUE)
+      paste(strsplit(trimws(raw), "\\s+")[[1]], collapse = " ")
+    }
   }
   list(tokenizer = tok, trigram = "fragments_fts_trigram" %in% doc$tables)
 }

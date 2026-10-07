@@ -190,7 +190,9 @@ module Spdf
       name = legacy? ? "fragmentos_fts" : "fragments_fts"
       sql = @db.get_first_value("SELECT sql FROM sqlite_master WHERE name = ?", [name])
       tok = if sql.nil? then nil
-            elsif (m = sql.match(/tokenize\s*=\s*'([^']*)'/)) then m[1]
+            elsif (m = sql.match(/tokenize\s*=\s*(?:'((?:[^']|'')*)'|"((?:[^"]|"")*)"|([A-Za-z0-9_]+))/i))
+              raw = m[1] ? m[1].gsub("''", "'") : (m[2] ? m[2].gsub('""', '"') : m[3])
+              raw.split.join(" ")
             else "unicode61"
             end
       { "tokenizer" => tok, "trigram" => @container.table?("fragments_fts_trigram") }

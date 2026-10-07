@@ -474,10 +474,14 @@ final class Document
         $name = $this->c->legacy ? 'fragmentos_fts' : 'fragments_fts';
         $sql = $this->c->pdo->query("SELECT sql FROM sqlite_master WHERE name = " . $this->c->pdo->quote($name))->fetchColumn();
         $tok = null;
-        if (is_string($sql) && preg_match('/tokenize\s*=\s*(?:\'((?:[^\']|\'\')*)\'|"((?:[^"]|"")*)")/i', $sql, $m)) {
-            $tok = isset($m[2]) && $m[2] !== '' ? str_replace('""', '"', $m[2]) : str_replace("''", "'", $m[1]);
-        } elseif (is_string($sql)) {
-            $tok = 'unicode61';
+        if (is_string($sql)) {
+            if (preg_match('/tokenize\s*=\s*(?:\'((?:[^\']|\'\')*)\'|"((?:[^"]|"")*)"|([A-Za-z0-9_]+))/i', $sql, $m)) {
+                $raw = isset($m[3]) && $m[3] !== '' ? $m[3]
+                    : (isset($m[2]) && $m[2] !== '' ? str_replace('""', '"', $m[2]) : str_replace("''", "'", $m[1]));
+                $tok = implode(' ', preg_split('/\s+/', trim($raw), -1, PREG_SPLIT_NO_EMPTY) ?: []);
+            } else {
+                $tok = 'unicode61';
+            }
         }
         return ['tokenizer' => $tok, 'trigram' => $this->c->hasTable('fragments_fts_trigram')];
     }
