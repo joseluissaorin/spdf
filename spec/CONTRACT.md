@@ -1,4 +1,4 @@
-# SPDF 5.0 implementation contract (draft 1.5, 2026-10-07)
+# SPDF 5.0 implementation contract (draft 1.6, 2026-10-07)
 
 This is the working contract every implementation in this repository codes against
 while the normative specification (`SPEC.md`) is being written. `SPEC.md` absorbs
@@ -7,6 +7,11 @@ change here. Key words MUST, SHOULD, MAY as in RFC 2119.
 
 ## Change log (read this first)
 
+- **2026-10-07, draft 1.6 (spec agent).** Suite 0.4.1, with the corpus rebuilt from literal
+  texts of identified sources. New optional anchor member `matter`; W103 for fragments
+  that cross matter or a folio boundary; SPEC §18.2 `cite_passage`, where a quotation is
+  cited by the unit it lies in; page ranges skip ends without a folio; `locate` finds
+  fragments by `anchor_end` too; `char` refers to the first unit. New kind `cite_passage`.
 - **2026-10-07, draft 1.5 (spec agent).** RFC 0002 accepted and made normative in SPEC
   §5.4 (`locate`: units, fragments, `char`, `xywh`; rule order `p f t sl v ref s sh`) and
   §19 (keys with `title-short` and `anon` fallbacks, CSL `label`/`locator`, canonical
@@ -458,7 +463,7 @@ Layout under `conformance/`: `sources/*.json` (full dumps: dump + vector values 
 `tools/generar.py`, `tools/verificar.py`, `tools/spdfref.py` (reference oracle). Case: `{"id","kind","input":{…},"expect":{…}}`, kinds `dump`,
 `validate`, `search_lexical`, `search_vector`, `search_hybrid`, `anchor_uri`, `cite`,
 `legacy_dump`, `roundtrip`, `quantize`, `locate`, `export_csl`, `export_bibtex`,
-`export_structure`. Paths are relative to `conformance/`. Exact input/expect
+`export_structure`, `cite_passage`. Paths are relative to `conformance/`. Exact input/expect
 shapes per kind: `conformance/README.md`. Every implementation ships a runner that prints
 `{"impl","version","passed":[…],"failed":[{"id","reason"}],"skipped":[…]}`; CI fails on
 any failure. Implementations MAY declare a profile subset (e.g. reader-only skips

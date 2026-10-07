@@ -467,7 +467,15 @@ Toda ancla PUEDE llevar además:
 - `region`: `{"x", "y", "w", "h"}`, números entre 0 y 1, fracciones de la anchura y de la
   altura de la imagen de la unidad, con el origen en la esquina superior izquierda;
 - `chars`: `[start, end]`, desplazamientos en puntos de código dentro del `text` en NFC de
-  la unidad del ancla, `0 ≤ start ≤ end ≤ length`, con el fin excluido (E042).
+  la unidad del ancla, `0 ≤ start ≤ end ≤ length`, con el fin excluido (E042);
+- `matter`: la clase de materia de la unidad: `body` (el texto de la obra), `front`
+  (preliminares: portada, índice, licencias, dedicatoria, prólogo de una edición), `back`
+  (índices, colofón, apéndices de una edición), `plate` (una lámina o desplegable fuera de
+  las páginas de texto), `cover` (cubierta), `library` (exlibris, sellos, páginas de la
+  biblioteca o del digitalizador, licencias de una edición digital) o `blank` (en
+  blanco). Si falta, vale `body`; los lectores DEBEN tratar como `body` los valores que no
+  conozcan. Los escritores DEBERÍAN indicarla en las unidades de los documentos paginados
+  siempre que no sea `body`.
 
 En esta especificación, un «entero» es un número JSON de valor entero: `10` y `10.0` son
 el mismo valor JSON y ambos son enteros. Un ancla cuyo JSON no es válido, o a la que le
@@ -508,9 +516,21 @@ minúsculas.
 ### 4.4 Inicio y fin
 
 El `anchor` de un fragmento localiza su inicio; `anchor_end`, cuando está presente,
-localiza su fin y tiene el mismo `type`. Una cita del fragmento imprime entonces un rango
-(`pp. 145-146`). `chars` en `anchor_end` se refiere al texto de la unidad donde termina el
-fragmento.
+localiza su fin y tiene el mismo `type`. La cita del fragmento entero imprime entonces un
+rango (`pp. 145-146`).
+
+- La **unidad final** de un fragmento es la primera unidad posterior a su unidad inicial
+  (en orden de `ord`) cuya ancla es igual a `anchor_end` una vez quitados `chars` y
+  `region` de ambas.
+- `chars` en `anchor` da la parte del fragmento que está en la unidad inicial, y `chars` en
+  `anchor_end`, la parte que está en la unidad final (normalmente `[0, b]`). Los escritores
+  DEBERÍAN indicar los dos en los fragmentos que cruzan unidades, para que los lectores
+  sepan de qué unidad viene cada parte del pasaje.
+- Los escritores NO DEBERÍAN dejar que un fragmento cruce de una unidad de una clase de
+  `matter` a otra (del texto de la obra a una lámina, una cubierta, una página de la
+  biblioteca o una licencia), ni de una página con folio impreso a otra sin él: la cita de
+  un fragmento así mezclaría localizadores de naturaleza distinta. Los validadores
+  notifican esos fragmentos con W103.
 
 <a id="anchor-uri"></a>
 ## 5. URI de ancla
@@ -652,12 +672,17 @@ identificador de fragmento ([§24](#media-type)), contra un fichero, y devuelve:
    - `sh`: un ancla `sheet` con `sheet = sh` y, cuando está presente `rows`,
      `row_from ≤ a ≤ row_to` para su primer valor `a`.
 4. **Coincidencias.** `units` son los id de las unidades cuya ancla coincide, en orden de
-   `ord`. `fragments` son los id de los fragmentos cuya `anchor` de inicio coincide, en
-   orden de `n`. Cuando no coincide ninguna unidad pero sí algunos fragmentos, `units` son
-   las unidades distintas de esos fragmentos, en orden de `ord`.
-5. **Caracteres.** Cuando está presente `char` = `[c, d]`, en `fragments` solo se
-   conservan los fragmentos que empiezan en alguna de las `units` y cuya ancla tiene
-   `chars` = `[a, b]` con `a < d` y `c < b` (si `c < d`), o con `a ≤ c < b` (si `c = d`).
+   `ord`. `fragments` son los id de los fragmentos cuya `anchor` de inicio o cuya
+   `anchor_end` coincide, en orden de `n` (un fragmento que termina en una página se
+   encuentra desde esa página). Cuando no coincide ninguna unidad pero sí algunos
+   fragmentos, `units` son las unidades iniciales distintas de esos fragmentos, en orden
+   de `ord`.
+5. **Caracteres.** `char` se refiere al texto de la primera unidad de `units`. Cuando está
+   presente `char` = `[c, d]`, un fragmento se conserva en `fragments` solo si su unidad
+   inicial es esa unidad y su `anchor` tiene `chars` = `[a, b]` que se solapan con el rango,
+   o si su unidad final ([§4.4](#anchors)) es esa unidad y su `anchor_end` tiene `chars`
+   que se solapan con él; `[a, b]` se solapa con `[c, d]` cuando `a < d` y `c < b` (si
+   `c < d`), o cuando `a ≤ c < b` (si `c = d`).
 6. `char` y `xywh` se copian del localizador, o son null.
 
 Pueden coincidir varias unidades (dos páginas con el folio impreso «1», un número de verso
@@ -1174,6 +1199,8 @@ implementaciones impriman el mismo localizador. Las bibliografías completas y l
 estilos se producen a partir del elemento CSL-JSON con un procesador CSL
 ([§19](#exports)).
 
+### 18.1 Cita de un ancla
+
 ```
 ( names ", " year [ ", " locator ] ")"
 ```
@@ -1215,10 +1242,36 @@ imprime en una cita breve.
 | canónica | `514a` | igual |
 | imagen | (sin localizador) | (sin localizador) |
 
-Los tiempos se escriben `h:mm:ss` a partir de una hora y `m:ss` por debajo. Un rango solo
-se imprime cuando el fin tiene un folio distinto; los corchetes marcan por separado cada
-extremo inferido. El localizador se omite cuando quedaría vacío, lo que da
-`(Hooke, 1665)`.
+Los tiempos se escriben `h:mm:ss` a partir de una hora y `m:ss` por debajo (las horas no
+se reinician: tiempo de misión `109:24:48`). Un rango solo se imprime cuando los dos
+extremos tienen folio impreso y los folios son distintos; los corchetes marcan por
+separado cada extremo inferido. Un extremo sin folio impreso nunca forma parte de un
+rango: la cita imprime solo el folio del otro extremo (`p. 211`, nunca `pp. s. p.-211`), y
+`s. p.` / `n. pag.` solo cuando ninguno de los dos lo tiene. El localizador se omite cuando
+quedaría vacío, lo que da `(Hooke, 1665)`.
+
+### 18.2 Cita de un pasaje
+
+Una cita DEBE localizar el pasaje que reproduce, no el fragmento que da la casualidad de
+contenerlo. `cite_passage(fragment, quote, locale)` cita una cita textual tomada de un
+fragmento:
+
+1. Se divide el fragmento en sus partes: el texto de la unidad inicial entre los dos
+   valores de `anchor.chars` y, en un fragmento que cruza unidades, el texto de la unidad
+   final ([§4.4](#anchors)) entre los dos valores de `anchor_end.chars` (el texto entero de
+   la unidad cuando falta `chars`).
+2. Si la cita textual está en la parte inicial, se cita el ancla de la unidad inicial,
+   con `chars` igual a la posición de la cita en esa unidad. Si no, y está en la parte
+   final, se cita solo el ancla de la unidad final, con sus `chars`. Si no, y abarca las
+   dos partes, se cita el rango que va del ancla de la unidad inicial al de la unidad
+   final, sin `chars`, con la regla de rangos de arriba (un extremo sin folio no cuenta).
+3. El resultado es la cita corta del §18 y la URI de ancla del ancla o rango citado
+   ([§5](#anchor-uri)).
+
+Los lectores y las herramientas de cita NO DEBEN citar un pasaje con la `anchor` de inicio
+de su fragmento cuando el pasaje no está en la unidad inicial: una cita de la segunda
+página de un fragmento que empieza en una lámina sin numerar cita el folio de la segunda
+página.
 
 <a id="exports"></a>
 ## 19. Exportaciones
@@ -1445,8 +1498,8 @@ histórico en el repositorio de Scholaris; esta especificación no la define.
 Una implementación declara su clase y los perfiles que cubre, por ejemplo «lector y
 escritor, perfiles core y semantic». Su declaración se respalda con la batería de
 conformidad: supera todos los casos de los tipos que exige su clase (`dump`,
-`legacy_dump`, `anchor_uri`, `cite`, `search_lexical`, `validate`, `locate`, `export_csl`,
-`export_bibtex` para los lectores; además, `search_vector` y `search_hybrid` para los
+`legacy_dump`, `anchor_uri`, `cite`, `cite_passage`, `search_lexical`, `validate`,
+`locate`, `export_csl`, `export_bibtex` para los lectores; además, `search_vector` y `search_hybrid` para los
 lectores semánticos; además, `roundtrip` y `quantize` para los escritores; y
 `export_structure` para las implementaciones que exportan ALTO, TEI o IIIF), con la
 versión de la batería con la que se probó. PUEDEN existir implementaciones parciales, pero NO DEBEN llamarse conformes.
@@ -1484,7 +1537,9 @@ validación:
    válido (E050); `metadata` tiene `type` y `title` de tipo cadena (E051).
 9. Extensiones obligatorias que el validador no conoce (E060).
 10. `units.ord` es 1…N (E090); `unit_count` es igual a N (W102).
-11. Anclas de unidades, fragmentos (inicio y fin) y figuras (E040, E041, E042).
+11. Anclas de unidades, fragmentos (inicio y fin) y figuras (E040, E041, E042);
+    fragmentos que cruzan de una clase de `matter` a otra o una frontera de folio (W103,
+    [§4.4](#anchors)).
 12. Espacios: `dtype` (E032). Vectores: espacio conocido (E031), longitud (E030).
 13. Índice FTS sincronizado: ejecutar `INSERT INTO fragments_fts(fragments_fts, rank)
     VALUES('integrity-check', 1)` (y lo mismo sobre `fragments_fts_trigram`) en una copia
@@ -1534,6 +1589,7 @@ desconoce. Los mensajes son texto libre; la conformidad compara los conjuntos de
 | W100 | perfil `semantic` sin vectores |
 | W101 | perfil `media` sin anclas de tiempo |
 | W102 | `unit_count` ≠ número de unidades |
+| W103 | un fragmento cruza entre unidades de distinta `matter`, o entre una página con folio impreso y otra sin él |
 | W105 | versión menor más reciente que la del validador |
 | W110 | fichero legado 4.x |
 

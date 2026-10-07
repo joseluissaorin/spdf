@@ -33,6 +33,10 @@
       "minItems": 2,
       "maxItems": 2,
       "description": "[start, end) in code points of the NFC text of the anchor's unit"
+    },
+    "matter": {
+      "type": "string",
+      "description": "body | front | back | plate | cover | library | blank; absent means body; unknown values are read as body"
     }
   },
   "oneOf": [

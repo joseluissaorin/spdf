@@ -65,7 +65,7 @@ W3C Media Fragments URI 1.0 (`t=4160,4175.5`, `xywh=percent:10,20,30,10`) and th
 character range that of RFC 5147 (`char=118,301`). Example:
 
 ```text
-spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=5&pe=6&f=1r&fe=1v&char=101,278
+spdf:sha256-27ea8a4dd0bbf0a511246fe67f81c19084aa2da75c871fe7acde688fd182cb60#p=29&pe=30&f=Ir&fe=Iv&char=729,745
 ```
 
 **Scheme semantics:**

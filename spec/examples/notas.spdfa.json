@@ -13,22 +13,22 @@
         "created": "2026-10-07T09:00:00Z",
         "body": {
           "type": "TextualBody",
-          "value": "Comienzo del capítulo primero; la cita cruza de la hoja 1r a la 1v.",
+          "value": "La cita cruza del folio Ir al Iv; el pasaje anotado está en el verso.",
           "format": "text/plain",
           "language": "es"
         },
         "target": {
-          "source": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75",
+          "source": "spdf:sha256-27ea8a4dd0bbf0a511246fe67f81c19084aa2da75c871fe7acde688fd182cb60",
           "selector": [
             {
               "type": "SpdfAnchorSelector",
-              "value": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=5&pe=6&f=1r&fe=1v&char=101,278"
+              "value": "spdf:sha256-27ea8a4dd0bbf0a511246fe67f81c19084aa2da75c871fe7acde688fd182cb60#p=30&f=Iv&char=0,35"
             },
             {
               "type": "TextQuoteSelector",
-              "exact": "En un lugar de la Mancha",
-              "prefix": "",
-              "suffix": ", de cuyo nombre no quiero acordarme"
+              "exact": "vna ama que paſſaua de los quarenta",
+              "prefix": "Tenia en ſu caſa ",
+              "suffix": ": y vna ſobrina"
             }
           ]
         }
@@ -39,15 +39,15 @@
         "motivation": "highlighting",
         "created": "2026-10-07T09:05:00Z",
         "target": {
-          "source": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75",
+          "source": "spdf:sha256-27ea8a4dd0bbf0a511246fe67f81c19084aa2da75c871fe7acde688fd182cb60",
           "selector": [
             {
               "type": "SpdfAnchorSelector",
-              "value": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=7&f=2r&char=0,57"
+              "value": "spdf:sha256-27ea8a4dd0bbf0a511246fe67f81c19084aa2da75c871fe7acde688fd182cb60#p=30&f=Iv&char=162,220"
             },
             {
               "type": "TextQuoteSelector",
-              "exact": "Frisaba la edad de nuestro hidalgo con los cincuenta años"
+              "exact": "Friſaua la edad de nueſtro hidalgo con los cincuenta años."
             }
           ]
         }

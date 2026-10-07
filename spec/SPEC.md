@@ -425,7 +425,14 @@ Every anchor MAY also carry:
 - `region`: `{"x", "y", "w", "h"}`, numbers between 0 and 1, fractions of the width and
   height of the unit's image, origin at the top left;
 - `chars`: `[start, end]`, code point offsets into the NFC `text` of the anchor's unit,
-  `0 ≤ start ≤ end ≤ length`, end exclusive (E042).
+  `0 ≤ start ≤ end ≤ length`, end exclusive (E042);
+- `matter`: what kind of matter the unit is: `body` (the text of the work), `front`
+  (preliminaries: title page, contents, licences, dedication, prologue of an edition),
+  `back` (index, colophon, appendices of an edition), `plate` (a plate or fold-out
+  outside the text pages), `cover`, `library` (bookplates, stamps, library or digitizer
+  pages, licences of a digital edition) or `blank`. Absent means `body`; readers MUST
+  treat values they do not know as `body`. Writers SHOULD set it on the units of paged
+  documents whenever it is not `body`.
 
 In this specification an "integer" is a JSON number with an integral value: `10` and
 `10.0` are the same JSON value and both are integers. An anchor whose JSON is invalid or
@@ -462,8 +469,19 @@ number them. Canonical anchors use a citation system that is independent of any 
 ### 4.4 Start and end
 
 A fragment's `anchor` locates its start; `anchor_end`, when present, locates its end and
-has the same `type`. A citation of the fragment then prints a range (`pp. 145-146`).
-`chars` in `anchor_end` refers to the text of the unit where the fragment ends.
+has the same `type`. A citation of the whole fragment then prints a range
+(`pp. 145-146`).
+
+- The **end unit** of a fragment is the first unit after its start unit (in `ord` order)
+  whose anchor equals `anchor_end` once `chars` and `region` are removed from both.
+- `chars` in `anchor` gives the part of the fragment that lies in the start unit, and
+  `chars` in `anchor_end` the part that lies in the end unit (usually `[0, b]`). Writers
+  SHOULD set both on crossing fragments, so that readers know which unit each part of
+  the passage comes from.
+- Writers SHOULD NOT let a fragment cross from a unit of one `matter` to a unit of
+  another (body text into a plate, a cover, a library page or a licence), nor from a page
+  with a printed folio to a page without one: the citation of such a fragment would mix
+  locators of different natures. Validators report such fragments as W103.
 
 <a id="anchor-uri"></a>
 ## 5. Anchor URI
@@ -599,12 +617,16 @@ fragment identifier ([§24](#media-type)), against a file, and returns:
    - `sh`: a `sheet` anchor with `sheet = sh` and, when `rows` is present,
      `row_from ≤ a ≤ row_to` for its first value `a`.
 4. **Matches.** `units` are the ids of the units whose anchor matches, in `ord` order.
-   `fragments` are the ids of the fragments whose start `anchor` matches, in `n` order.
-   When no unit matches but some fragments do, `units` are the distinct units of those
+   `fragments` are the ids of the fragments whose start `anchor` or whose `anchor_end`
+   matches, in `n` order (a fragment that ends on a page is found from that page). When
+   no unit matches but some fragments do, `units` are the distinct start units of those
    fragments, in `ord` order.
-5. **Characters.** When `char` = `[c, d]` is present, only the fragments that start in
-   one of `units` and whose anchor has `chars` = `[a, b]` with `a < d` and `c < b` (for
-   `c < d`), or `a ≤ c < b` (for `c = d`), are kept in `fragments`.
+5. **Characters.** `char` refers to the text of the first unit of `units`. When `char` =
+   `[c, d]` is present, a fragment is kept in `fragments` only if its start unit is that
+   unit and its `anchor` has `chars` = `[a, b]` that overlap the range, or its end unit
+   ([§4.4](#anchors)) is that unit and its `anchor_end` has `chars` that overlap it;
+   `[a, b]` overlaps `[c, d]` when `a < d` and `c < b` (for `c < d`), or when
+   `a ≤ c < b` (for `c = d`).
 6. `char` and `xywh` are copied from the locator, or null.
 
 Several units may match (two pages printed "1", a verse number repeated in two poems):
@@ -1079,6 +1101,8 @@ parentheses, the form most styles share, so that every implementation prints the
 locator. Full bibliographies and other styles are produced from the CSL-JSON item with a
 CSL processor ([§19](#exports)).
 
+### 18.1 Citing an anchor
+
 ```
 ( names ", " year [ ", " locator ] ")"
 ```
@@ -1119,9 +1143,33 @@ not printed in a short citation.
 | canonical | `514a` | same |
 | image | (no locator) | (no locator) |
 
-Times are written `h:mm:ss` from one hour on and `m:ss` below. A range is printed only
-when the end has a different folio; brackets mark each inferred end separately. The
-locator is omitted when it would be empty, giving `(Hooke, 1665)`.
+Times are written `h:mm:ss` from one hour on and `m:ss` below (hours are not wrapped:
+ground elapsed time `109:24:48`). A range is printed only when both ends have a printed
+folio and the folios differ; brackets mark each inferred end separately. An end without
+a printed folio never takes part in a range: the citation prints the folio of the other
+end alone (`p. 211`, never `pp. s. p.-211`), and `s. p.` / `n. pag.` only when neither end
+has one. The locator is omitted when it would be empty, giving `(Hooke, 1665)`.
+
+### 18.2 Citing a passage
+
+A citation MUST locate the passage it quotes, not the fragment that happens to contain
+it. `cite_passage(fragment, quote, locale)` cites a quotation taken from a fragment:
+
+1. Split the fragment into its parts: the text of the start unit between the two values
+   of `anchor.chars`, and, for a crossing fragment, the text of the end unit
+   ([§4.4](#anchors)) between the two values of `anchor_end.chars` (the whole text of a
+   unit when `chars` is absent).
+2. If the quotation lies in the start part, cite the start unit's anchor, with `chars`
+   giving the position of the quotation in that unit. Otherwise, if it lies in the end
+   part, cite the end unit's anchor alone, with its `chars`. Otherwise, if it spans both
+   parts, cite the range from the start unit's anchor to the end unit's anchor, without
+   `chars`, under the range rule above (an end without a folio does not count).
+3. The result is the short citation of §18 and the anchor URI of the cited anchor or
+   range ([§5](#anchor-uri)).
+
+Readers and citation tools MUST NOT cite a passage with the start `anchor` of its
+fragment when the passage is not in the start unit: a quotation from the second page of
+a fragment that begins on an unnumbered plate cites the folio of the second page.
 
 <a id="exports"></a>
 ## 19. Exports
@@ -1336,8 +1384,8 @@ historically in the Scholaris repository; this specification does not define it.
 An implementation states its class and the profiles it covers, for example "reader and
 writer, profiles core and semantic". Its claim is backed by the conformance suite: it
 passes every case of the kinds its class requires (`dump`, `legacy_dump`, `anchor_uri`,
-`cite`, `search_lexical`, `validate`, `locate`, `export_csl`, `export_bibtex` for
-readers; plus `search_vector` and `search_hybrid` for semantic readers; plus `roundtrip`
+`cite`, `cite_passage`, `search_lexical`, `validate`, `locate`, `export_csl`,
+`export_bibtex` for readers; plus `search_vector` and `search_hybrid` for semantic readers; plus `roundtrip`
 and `quantize` for writers; `export_structure` for implementations that export ALTO, TEI
 or IIIF), with the suite
 version it was tested against. Partial implementations MAY exist but MUST NOT call
@@ -1373,7 +1421,8 @@ A validator checks a file in this order; a step marked *stop* ends validation:
    (E050); `metadata` has string `type` and `title` (E051).
 9. Required extensions unknown to the validator (E060).
 10. `units.ord` is 1…N (E090); `unit_count` equals N (W102).
-11. Anchors of units, fragments (start and end) and figures (E040, E041, E042).
+11. Anchors of units, fragments (start and end) and figures (E040, E041, E042);
+    fragments that cross `matter` or a folio boundary (W103, [§4.4](#anchors)).
 12. Spaces: `dtype` (E032). Vectors: known space (E031), length (E030).
 13. FTS index in sync: run `INSERT INTO fragments_fts(fragments_fts, rank)
     VALUES('integrity-check', 1)` (and the same on `fragments_fts_trigram`) on a private
@@ -1423,6 +1472,7 @@ Messages are free text; conformance compares the sets of codes.
 | W100 | profile `semantic` without vectors |
 | W101 | profile `media` without time anchors |
 | W102 | `unit_count` ≠ number of units |
+| W103 | fragment crosses between units of different `matter`, or between a page with a printed folio and one without |
 | W105 | newer minor version than the validator's |
 | W110 | legacy 4.x file |
 

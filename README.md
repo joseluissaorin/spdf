@@ -30,7 +30,7 @@ SPDF is that form:
   `fol. 1r`, columns), time with speaker and per-word timings, sections and paragraphs,
   slides, sheet rows, verses and canonical references (Stephanus, Bekker, CTS). Anchors
   have a URI form aligned with W3C Media Fragments:
-  `spdf:sha256-fa38…4c75#p=5&pe=6&f=1r&fe=1v&char=101,278`.
+  `spdf:sha256-27ea…cb60#p=29&pe=30&f=Ir&fe=Iv&char=729,745`.
 - **Plain SQLite.** One uncompressed SQLite 3 file, `application_id` "SPDF". Any language
   with SQLite opens it; readers can memory-map it or fetch it by HTTP ranges. No code in
   the file: no triggers, no views, read-only, defensive opening.
@@ -40,8 +40,9 @@ SPDF is that form:
   (`unicode61 remove_diacritics 2`, and `trigram` for Chinese, Japanese and Korean), a
   modernized-spelling layer that finds `así` in `aſsi` without ever quoting it, and
   optional embedding vectors from several models side by side (f32, f16, i8).
-- **Honest citations.** Reference rules for a short citation, `(Cervantes Saavedra, 1605,
-  fols. 1r-[1v])`, that every implementation prints identically, and exports to CSL-JSON,
+- **Honest citations.** Reference rules for a short citation, `(Cervantes Saavedra, 1608,
+  fols. Ir-[Iv])`, that every implementation prints identically; a quotation is cited by
+  the page it is on, never by where its passage happens to start, and exports to CSL-JSON,
   BibTeX, IIIF, TEI, ALTO and W3C Web Annotation.
 
 ## A look inside
@@ -50,21 +51,24 @@ SPDF is that form:
 $ sqlite3 -readonly conformance/files/quijote.spdf
 sqlite> SELECT value FROM spdf_meta WHERE key = 'profile';
 core
-sqlite> SELECT ord, printed, json_extract(anchor, '$.source') FROM units LIMIT 6;
-1||none
-2|ii|read
-3|iii|read
-4|iv|inferred
-5|1r|read
-6|1v|inferred
+sqlite> SELECT ord, printed, json_extract(anchor, '$.source'), json_extract(anchor, '$.matter') FROM units;
+1||none|front
+2||none|front
+3|Ir|read|body
+4|Iv|inferred|body
+5|2r|read|body
 sqlite> SELECT f.id, bm25(fragments_fts, 1.0, 0.5, 0.5, 1.0) AS r
    ...>   FROM fragments_fts JOIN fragments f ON f.n = fragments_fts.rowid
    ...>  WHERE fragments_fts MATCH '"lanza" OR "astillero"' ORDER BY r, f.n;
-q4|-2.04469086337754
+q4|-3.73895696145584
 ```
 
-The same query through any library returns the fragment, its anchor, its anchor URI and
-the citation `(Cervantes Saavedra, 1605, fols. 1r-[1v])`.
+The fragment found is the 1608 text as printed, «EN Vn lugar de la Mãcha, de cuyo nombre
+no quiero acordarme, no ha mucho tiempo que viuia vn hidalgo de los de lança en
+aſtillero…»: the modern words of the query match through its modernized search layer.
+The same query through any library returns the fragment, its anchor URI
+(`spdf:sha256-27ea…cb60#p=29&f=Ir&char=168,345`) and the citation
+`(Cervantes Saavedra, 1608, fol. Ir)`.
 
 ## Repository map
 
