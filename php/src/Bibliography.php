@@ -72,20 +72,20 @@ final class Bibliography
         return null;
     }
 
-    /** Base key: `cervantessaavedra1605`, `lazarillo1554`, `hookend`. */
+    /** Base key (SPEC §19, RFC 0002): family (or literal) of the first author, else the first word of the title. */
     public static function key(array $item): string
     {
         $base = '';
         $a = $item['author'][0] ?? null;
         if (is_array($a)) {
-            $who = $a['family'] ?? null ?: ($a['literal'] ?? null ?: ($a['given'] ?? ''));
+            $who = ($a['family'] ?? null) ?: (($a['literal'] ?? null) ?: '');
             $base = self::asciiLetters((string) $who);
         }
         if ($base === '') {
             $words = preg_split('/\s+/u', trim((string) ($item['title'] ?? '')), -1, PREG_SPLIT_NO_EMPTY) ?: [];
             $base = $words === [] ? '' : self::asciiLetters($words[0]);
         }
-        return ($base === '' ? 'spdf' : $base) . (self::year($item) ?? 'nd');
+        return ($base === '' ? 'anon' : $base) . (self::year($item) ?? 'nd');
     }
 
     /** @param list<array> $items @return list<string> */

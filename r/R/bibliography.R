@@ -36,14 +36,14 @@ bib_key <- function(item) {
   base <- ""
   a <- if (is.list(item$author) && length(item$author) > 0) item$author[[1]] else NULL
   if (is.list(a)) {
-    who <- Filter(function(x) !is.null(x) && !identical(x, ""), list(a$family, a$literal, a$given))
+    who <- Filter(function(x) !is.null(x) && !identical(x, ""), list(a$family, a$literal))
     base <- ascii_letters(if (length(who) > 0) who[[1]] else "")
   }
   if (base == "") {
     w <- strsplit(trimws(as.character(item$title %||% "")), "\\s+")[[1]]
     base <- if (length(w) > 0 && nzchar(w[1])) ascii_letters(w[1]) else ""
   }
-  paste0(if (base == "") "spdf" else base, bib_year(item) %||% "nd")
+  paste0(if (base == "") "anon" else base, bib_year(item) %||% "nd")
 }
 
 bib_suffix <- function(n) {

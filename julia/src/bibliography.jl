@@ -35,14 +35,14 @@ function bibtex_key(item::AbstractDict)
     authors = get(item, "author", nothing)
     if authors isa AbstractVector && !isempty(authors) && authors[1] isa AbstractDict
         a = authors[1]
-        v = something(get(a, "family", nothing), get(a, "literal", nothing), get(a, "given", nothing), "")
+        v = something(get(a, "family", nothing), get(a, "literal", nothing), "")
         base = ascii_letters(v == "" ? "" : v)
     end
     if isempty(base)
         ws = split(string(something(get(item, "title", nothing), "")))
         base = isempty(ws) ? "" : ascii_letters(ws[1])
     end
-    return (isempty(base) ? "spdf" : base) * something(bib_year(item), "nd")
+    return (isempty(base) ? "anon" : base) * something(bib_year(item), "nd")
 end
 
 function bib_suffix(n::Int)

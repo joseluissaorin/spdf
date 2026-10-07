@@ -51,14 +51,14 @@ module Spdf
       base = ""
       a = item["author"].is_a?(Array) ? item["author"][0] : nil
       if a.is_a?(Hash)
-        who = [a["family"], a["literal"], a["given"]].find { |x| x && x != "" } || ""
+        who = [a["family"], a["literal"]].find { |x| x && x != "" } || ""
         base = ascii_letters(who)
       end
       if base.empty?
         w = item["title"].to_s.split.first
         base = w ? ascii_letters(w) : ""
       end
-      (base.empty? ? "spdf" : base) + (year(item) || "nd")
+      (base.empty? ? "anon" : base) + (year(item) || "nd")
     end
 
     def suffix(n)
