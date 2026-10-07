@@ -20,6 +20,8 @@ export const REPO = 'https://github.com/joseluissaorin/spdf';
 /** El repositorio es público desde el 7 de octubre de 2026: la web enlaza a GitHub (SPDF_REPO_PUBLICO=0 lo evita). */
 export const REPO_PUBLICO = process.env.SPDF_REPO_PUBLICO !== '0';
 export const VERSION = '5.0';
+/** Hasta la primera publicación, los paquetes no están en npm, PyPI, crates.io…: la web lo dice (SPDF_PAQUETES_PUBLICADOS=1 lo quita). */
+export const PAQUETES_PUBLICADOS = process.env.SPDF_PAQUETES_PUBLICADOS === '1';
 export const PUBLICADO = '2026-10-07';
 
 const aqui = dirname(fileURLToPath(import.meta.url));

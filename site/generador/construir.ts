@@ -31,7 +31,7 @@ import { html, indice, fechaLegible, ID, type Hoja } from './plantilla';
 import { portadaHtml, portadaMd, TEXTOS as PORTADA, type EjemploAncla } from './portada';
 import { estados, estadoDe, etiquetaEstado, type Estado } from './estado';
 import {
-  AUTOR, IMPLEMENTACIONES, INTEGRACIONES, LENGUAS, ORIGEN, OTRA, OTRAS_PIEZAS, PUBLICADO, RAIZ, REPO, REPO_PUBLICO, RUTAS, SITIO, UI, VERSION,
+  AUTOR, IMPLEMENTACIONES, INTEGRACIONES, LENGUAS, PAQUETES_PUBLICADOS, ORIGEN, OTRA, OTRAS_PIEZAS, PUBLICADO, RAIZ, REPO, REPO_PUBLICO, RUTAS, SITIO, UI, VERSION,
   esc, ficheroHtml, rutaMd, type Clave, type Lengua,
 } from './sitio';
 import { commonsBloque, cargarCommons } from './commons';
@@ -170,6 +170,7 @@ function integracionesSubhojas(): void {
         clave: `integracion-${i.id}`, seccion: 'integraciones', l, ruta, alterna: `${RUTAS.integraciones[OTRA[l]]}/${i.id}`,
         titulo: i.nombre[l], descripcion: i.resumen[l], md: `${l === 'es' ? '*El README de la integración está en inglés, como su código.*\n\n' : ''}${cuerpo}`,
         fecha: fechaGit([`integrations/${i.carpeta}/README.md`]), miga: [{ texto: UI[l].nav.integraciones, ruta: RUTAS.integraciones[l] }], enlace,
+        aviso: i.id === 'zotero' || i.id === 'pandoc' ? undefined : avisoPaquetes(l),
         ld: [{ '@type': 'SoftwareSourceCode', '@id': `${ORIGEN}${RUTAS.integraciones.en}/${i.id}#codigo`, name: i.nombre.en, description: i.resumen.en, license: ['https://opensource.org/licenses/MIT', 'https://www.apache.org/licenses/LICENSE-2.0'], author: { '@id': ID.autor }, about: { '@id': ID.formato }, url: `${ORIGEN}${ruta}` }],
       });
     }
@@ -419,7 +420,7 @@ function docsDeLenguaje(e: Record<string, Estado>): void {
       const ficha = [
         `- **${l === 'es' ? 'Paquete' : 'Package'}**: \`${im.paquete}\``,
         `- **${l === 'es' ? 'Instalar' : 'Install'}**: \`${im.instalar}\``,
-        ...(im.registro ? [`- **${l === 'es' ? 'Registro' : 'Registry'}**: [${im.registro.nombre}](${im.registro.url})`] : []),
+        ...(im.registro ? [`- **${l === 'es' ? 'Registro' : 'Registry'}**: ${PAQUETES_PUBLICADOS ? `[${im.registro.nombre}](${im.registro.url})` : `${im.registro.nombre} (${l === 'es' ? 'todavía sin publicar: se instala desde el repositorio' : 'not published yet: install from the repository'})`}`] : []),
         `- **${l === 'es' ? 'Nivel' : 'Tier'}**: ${nivel}`,
         `- **CI**: {{ci}}`,
         `- **${l === 'es' ? 'Carpeta' : 'Folder'}**: \`${im.carpeta}/\``,
@@ -444,7 +445,7 @@ function docsDeLenguaje(e: Record<string, Estado>): void {
       const ci: Bloque = { html: etiquetaEstado(s, l), md: etiquetaEstado(s, l, true) };
       hoja({
         clave: `docs-${im.id}`, seccion: 'docs', l, ruta, alterna: `${RUTAS.docs[OTRA[l]]}/${im.id}`, titulo, descripcion, md, fecha,
-        miga: [{ texto: UI[l].nav.docs, ruta: RUTAS.docs[l] }], enLinea: { ci }, enlace,
+        miga: [{ texto: UI[l].nav.docs, ruta: RUTAS.docs[l] }], enLinea: { ci }, enlace, aviso: avisoPaquetes(l),
         ld: [{
           '@type': 'SoftwareSourceCode', '@id': `${ORIGEN}${RUTAS.docs.en}/${im.id}#codigo`, name: `SPDF for ${im.nombre}`, alternateName: im.paquete,
           programmingLanguage: im.nombre, ...(REPO_PUBLICO ? { codeRepository: `${REPO}/tree/main/${im.carpeta}` } : {}),
@@ -837,6 +838,14 @@ async function validarPublicados(): Promise<number> {
   return todos.length;
 }
 
+/** El aviso honesto mientras los paquetes no estén en los registros. */
+function avisoPaquetes(l: Lengua): string | undefined {
+  if (PAQUETES_PUBLICADOS) return undefined;
+  return l === 'es'
+    ? `**Los paquetes todavía no están en los registros** (npm, PyPI, crates.io, Maven, NuGet…): las líneas de instalación son las que valdrán con la primera publicación. Mientras tanto, se instalan desde el [repositorio](${REPO}), como explica el README de cada carpeta.`
+    : `**The packages are not on the registries yet** (npm, PyPI, crates.io, Maven, NuGet…): the install lines are the ones that will work after the first release. Until then, install from the [repository](${REPO}), as each folder's README explains.`;
+}
+
 /** El ejemplo real de la portada: una obra de Commons con folio distinto de la página física, o la muestra. */
 async function ejemploAncla(commons: ReturnType<typeof cargarCommons>): Promise<EjemploAncla> {
   const { parseAnchorUri, openSpdf } = await import('spdf-format');
@@ -895,10 +904,10 @@ async function principal(): Promise<void> {
       bloques: { estado: estadoBloque(l, e), clases: clasesBloque(l) },
       ld: IMPLEMENTACIONES.map((im) => ({ '@type': 'SoftwareSourceCode', '@id': `${ORIGEN}${RUTAS.docs.en}/${im.id}#codigo`, name: `SPDF for ${im.nombre}`, programmingLanguage: im.nombre, url: `${ORIGEN}${RUTAS.docs[l]}/${im.id}` })),
     });
-    simple('docs', { bloques: { docs: docsBloque(l, e) } });
+    simple('docs', { bloques: { docs: docsBloque(l, e) }, aviso: avisoPaquetes(l) });
     simple('citar', { bloques: { 'cita-spec': citaSpecBloque(l) } });
     simple('agentes');
-    simple('integraciones', { bloques: { integraciones: integracionesBloque(l) } });
+    simple('integraciones', { bloques: { integraciones: integracionesBloque(l) }, aviso: avisoPaquetes(l) });
     simple('descargas', { bloques: { descargas: descargasBloque(l, hayLector) } });
     simple('commons', { bloques: { commons: commonsBloque(l, commons) }, ld: commons.ld(l) });
     simple('validador', {
