@@ -147,7 +147,7 @@ other_anchor <- function(doc, target, id) {
 #' @return A tibble with `fragment_id`, `score`, `via`, `anchor` and `anchor_uri`.
 #' @examples
 #' doc <- spdf_open(system.file("extdata", "quijote.spdf", package = "spdf"))
-#' spdf_search(doc, "hidalgo Mancha")
+#' spdf_search(doc, "hermoso libro")
 #' spdf_close(doc)
 #' @export
 spdf_search <- function(doc, query, limit = 10) {

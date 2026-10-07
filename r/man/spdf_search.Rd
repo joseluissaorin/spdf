@@ -39,6 +39,6 @@ rank (k = 10).
 }
 \examples{
 doc <- spdf_open(system.file("extdata", "quijote.spdf", package = "spdf"))
-spdf_search(doc, "hidalgo Mancha")
+spdf_search(doc, "hermoso libro")
 spdf_close(doc)
 }

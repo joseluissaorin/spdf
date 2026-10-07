@@ -172,6 +172,11 @@ conf_case <- function(dir, c) {
     }
     return(NULL)
   }
+  if (kind == "cite_passage") {
+    doc <- spdf_open(p(input$file))
+    on.exit(spdf_close(doc))
+    return(conf_compare(ex, spdf_cite_passage(doc, input$fragment, input$quote, input$locale %||% "en"), "cite_passage"))
+  }
   if (kind == "export_structure") {
     doc <- spdf_open(p(input$file))
     on.exit(spdf_close(doc))

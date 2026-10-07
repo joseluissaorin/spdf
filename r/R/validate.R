@@ -35,6 +35,9 @@ check_anchor <- function(a, text) {
   if (!isTRUE(ok)) {
     return(c("E040", paste(t, "anchor misses or mistypes a required member")))
   }
+  if ("matter" %in% names(a) && !is_str_json(a$matter)) {
+    return(c("E040", "matter must be a string"))
+  }
   if ("region" %in% names(a)) {
     r <- a$region
     if (!json_is_object(r) || !all(vapply(c("x", "y", "w", "h"), function(k) is_num_json(r[[k]]), logical(1)))) {
@@ -265,6 +268,26 @@ spdf_validate <- function(path) {
         error = function(e) FALSE
       )
       if (!good) err("E082", "signature does not verify", "spdf_meta.signature")
+    }
+  }
+
+  # W103: fragments that cross matter, or between a page with a folio and one without (4.4).
+  if (ok("units", "id", "ord", "anchor") && ok("fragments", "id", "unit", "anchor", "anchor_end")) {
+    ur <- DBI::dbGetQuery(con, "SELECT id, anchor FROM units ORDER BY ord, id")
+    us <- lapply(seq_len(nrow(ur)), function(i) list(id = ur$id[i], anchor = tryCatch(json_parse(ur$anchor[i]), error = function(e) NULL)))
+    names(us) <- ur$id
+    fr <- DBI::dbGetQuery(con, "SELECT id, unit, anchor_end FROM fragments WHERE anchor_end IS NOT NULL ORDER BY n")
+    for (i in seq_len(nrow(fr))) {
+      u1 <- us[[fr$unit[i]]]
+      end_anchor <- tryCatch(json_parse(fr$anchor_end[i]), error = function(e) NULL)
+      u2 <- if (!is.null(u1)) end_unit(unname(us), fr$unit[i], end_anchor) else NULL
+      if (is.null(u1) || is.null(u2) || !json_is_object(u1$anchor) || !json_is_object(u2$anchor)) next
+      a1 <- u1$anchor
+      a2 <- u2$anchor
+      folio_change <- identical(a1$type, "page") && identical(a2$type, "page") && (is.null(a1$printed) != is.null(a2$printed))
+      if (!identical(matter_of(a1), matter_of(a2)) || folio_change) {
+        warn("W103", "fragment crosses matter, or between a page with a folio and one without", paste0("fragments/", fr$id[i]))
+      }
     }
   }
 

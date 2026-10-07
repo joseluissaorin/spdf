@@ -230,7 +230,7 @@ spdf_parse_uri <- function(uri) {
 #'   `char` and `xywh`.
 #' @examples
 #' doc <- spdf_open(system.file("extdata", "quijote.spdf", package = "spdf"))
-#' uri <- spdf_search(doc, "\"lugar de la Mancha\"")$anchor_uri[1]
+#' uri <- spdf_search(doc, "hermoso")$anchor_uri[1]
 #' str(spdf_locate(doc, uri))
 #' spdf_close(doc)
 #' @export
@@ -269,7 +269,9 @@ spdf_locate <- function(doc, reference) {
       if (is.numeric(last$anchor$t1) && last$anchor$t1 == l$t[[1]]) hits <- last$id
     }
   }
-  frags <- Filter(function(f) locate_match(rule, l, f$anchor, NULL), doc_rows(doc, "fragments", "ORDER BY {n}"))
+  frags <- Filter(function(f) {
+    locate_match(rule, l, f$anchor, NULL) || (json_is_object(f$anchor_end) && locate_match(rule, l, f$anchor_end, NULL))
+  }, doc_rows(doc, "fragments", "ORDER BY {n}"))
   if (length(hits) == 0 && length(frags) > 0) {
     wanted <- vapply(frags, function(f) f$unit, character(1))
     hits <- unlist(lapply(units, function(u) if (u$id %in% wanted) u$id else NULL))
@@ -277,12 +279,18 @@ spdf_locate <- function(doc, reference) {
   if (!is.null(l$char)) {
     cc <- l$char[[1]]
     dd <- l$char[[2]]
-    frags <- Filter(function(f) {
-      ch <- if (json_is_object(f$anchor)) f$anchor$chars else NULL
-      if (!(f$unit %in% hits) || !is.list(ch) || length(ch) != 2) return(FALSE)
+    first <- if (length(hits) > 0) hits[[1]] else NULL # char refers to the text of the first unit
+    overlaps <- function(x) {
+      ch <- if (json_is_object(x)) x$chars else NULL
+      if (!is.list(ch) || length(ch) != 2) return(FALSE)
       a <- ch[[1]]
       b <- ch[[2]]
       if (cc < dd) a < dd && cc < b else a <= cc && cc < b
+    }
+    frags <- Filter(function(f) {
+      if (identical(f$unit, first) && overlaps(f$anchor)) return(TRUE)
+      eu <- end_unit(units, f$unit, f$anchor_end)
+      !is.null(eu) && identical(eu$id, first) && overlaps(f$anchor_end)
     }, frags)
   }
   out$units <- as.list(hits)
@@ -334,4 +342,106 @@ locate_match <- function(rule, l, a, printed) {
     },
     FALSE
   )
+}
+
+anchor_identity <- function(a) if (json_is_object(a)) a[!(names(a) %in% c("chars", "region"))] else a
+
+# JSON equality: key order ignored, 10 equals 10.0.
+json_same <- function(a, b) {
+  if (is.list(a) && is.list(b)) {
+    if (!is.null(names(a)) || !is.null(names(b))) {
+      if (is.null(names(a)) || is.null(names(b)) || !setequal(names(a), names(b)) || length(a) != length(b)) return(FALSE)
+      return(all(vapply(names(a), function(k) json_same(a[[k]], b[[k]]), logical(1))))
+    }
+    if (length(a) != length(b)) return(FALSE)
+    return(all(vapply(seq_along(a), function(i) json_same(a[[i]], b[[i]]), logical(1))))
+  }
+  if (is.null(a) || is.null(b)) return(is.null(a) && is.null(b))
+  if (is.numeric(a) && is.numeric(b)) return(isTRUE(a == b))
+  identical(a, b)
+}
+
+# The unit where a fragment ends: the first unit after its start unit whose anchor equals
+# anchor_end once chars and region are removed (SPEC 4.4).
+end_unit <- function(units, start_id, anchor_end) {
+  if (!json_is_object(anchor_end)) return(NULL)
+  want <- anchor_identity(anchor_end)
+  after <- FALSE
+  for (u in units) {
+    if (identical(u$id, start_id)) {
+      after <- TRUE
+      next
+    }
+    if (after && json_same(anchor_identity(u$anchor), want)) return(u)
+  }
+  NULL
+}
+
+matter_of <- function(a) {
+  m <- if (json_is_object(a)) a$matter else NULL
+  if (is.character(m) && length(m) == 1) m else "body"
+}
+
+#' Cite a passage
+#'
+#' Cites a quotation taken from a fragment by the unit or units it actually lies in
+#' (specification section 18.2): a quotation from the second page of a fragment that
+#' begins on an unnumbered plate cites the folio of the second page.
+#'
+#' @param doc A `spdf_document`.
+#' @param fragment Fragment id.
+#' @param quote The quoted text, as it appears in the fragment.
+#' @param locale `"es"` or `"en"`.
+#' @return A list with the short citation `text` and the anchor `uri`.
+#' @examples
+#' doc <- spdf_open(system.file("extdata", "quijote.spdf", package = "spdf"))
+#' f <- spdf_fragments(doc)[2, ]
+#' spdf_cite_passage(doc, f$id, substr(f$text, 1, 20))
+#' spdf_close(doc)
+#' @export
+spdf_cite_passage <- function(doc, fragment, quote, locale = "es") {
+  check_open(doc)
+  units <- doc_units(doc)
+  byid <- stats::setNames(units, vapply(units, function(u) u$id, character(1)))
+  rows <- doc_rows(doc, "fragments", "WHERE {id} = ?", params = list(fragment))
+  if (length(rows) == 0) spdf_abort("E040", paste("unknown fragment", fragment))
+  f <- rows[[1]]
+  q <- nfc(quote)
+  u1 <- byid[[f$unit]]
+  a <- if (json_is_object(f$anchor)) f$anchor else list()
+  sub_cp <- function(text, c) stringi::stri_sub(text, c[[1]] + 1, c[[2]])
+  text1 <- as.character(u1$text %||% "")
+  c1 <- a$chars %||% list(0, nchar(text1, type = "chars"))
+  seg1 <- sub_cp(text1, c1)
+  u2 <- end_unit(units, u1$id, f$anchor_end)
+  seg2 <- ""
+  c2 <- NULL
+  if (!is.null(u2)) {
+    text2 <- as.character(u2$text %||% "")
+    c2 <- f$anchor_end$chars %||% list(0, nchar(text2, type = "chars"))
+    seg2 <- sub_cp(text2, c2)
+  }
+  strip <- function(x) x[!(names(x) %in% c("chars", "region"))]
+  find <- function(hay, needle) {
+    pos <- stringi::stri_locate_first_fixed(hay, needle)[1, 1]
+    if (is.na(pos)) NULL else pos - 1
+  }
+  end <- NULL
+  if (!is.null(p <- find(seg1, q))) {
+    i <- p + c1[[1]]
+    anchor <- strip(u1$anchor)
+    anchor$chars <- list(i, i + nchar(q, type = "chars"))
+  } else if (!is.null(u2) && !is.null(p <- find(seg2, q))) {
+    i <- p + c2[[1]]
+    anchor <- strip(u2$anchor)
+    anchor$chars <- list(i, i + nchar(q, type = "chars"))
+  } else if (!is.null(u2) && !is.null(find(as.character(f$text), q))) {
+    anchor <- strip(u1$anchor)
+    end <- strip(u2$anchor)
+  } else {
+    spdf_abort("E040", "the quote is not in the fragment")
+  }
+  d <- doc_document(doc)
+  list(text = spdf_cite(spdf_metadata(doc), anchor, end, locale),
+       uri = spdf_anchor_uri(paste0("sha256-", d$source_sha256), anchor, end))
 }

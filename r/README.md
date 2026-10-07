@@ -28,14 +28,15 @@ spdf_info(doc)                     # title, authors, year, version, counts
 spdf_units(doc)                    # one row per citable unit (page, folio, time span...)
 fr <- spdf_fragments(doc)          # searchable passages, anchors as list-columns
 
-hits <- spdf_search(doc, "\"lugar de la Mancha\"")
-hits$anchor_uri                    # spdf:sha256-fa38...#p=5&pe=6&f=1r&fe=1v&char=101,278
-f <- fr[fr$id == hits$fragment_id[1], ]
-spdf_cite(spdf_metadata(doc), f$anchor[[1]], f$anchor_end[[1]], locale = "es")
-#> "(Cervantes Saavedra, 1605, fols. 1r-[1v])"
+hits <- spdf_search(doc, "hermoso")    # finds the long-s "hermoso" through the modern layer
+hits$anchor_uri                    # spdf:sha256-27ea...#p=13&char=10,194
+spdf_cite(spdf_metadata(doc), fr$anchor[[5]], fr$anchor_end[[5]], locale = "es")
+#> "(Cervantes Saavedra, 1608, fols. Ir-[Iv])"
+spdf_cite_passage(doc, "q5", "rozin, como tomaua la podadera.")$text
+#> "(Cervantes Saavedra, 1608, fol. [Iv])"   the page the quotation is on
 
 spdf_locate(doc, hits$anchor_uri[1])   # list(document, units, fragments, char, xywh)
-cat(spdf_bibtex(doc))              # @book{cervantessaavedra1605, ... (also spdf_csl())
+cat(spdf_bibtex(doc))              # @book{cervantessaavedra1608, ... (also spdf_csl())
 spdf_close(doc)
 ```
 

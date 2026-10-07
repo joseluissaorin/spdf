@@ -1,7 +1,7 @@
 test_that("lexical search finds old spellings through the modernized layer", {
-  doc <- spdf_open(extdata("lazarillo.spdf"))
+  doc <- spdf_open(extdata("quijote.spdf"))
   on.exit(spdf_close(doc))
-  r <- spdf_search(doc, "cosas")
+  r <- spdf_search(doc, "hermoso")
   expect_gt(nrow(r), 0)
   expect_true(all(startsWith(r$anchor_uri, "spdf:sha256-")))
   expect_equal(nrow(spdf_search(doc, "   ")), 0)
@@ -45,6 +45,15 @@ test_that("writes a file that validates and reads back", {
   expect_match(spdf_bibtex(doc), "^@book\\{prueba2026,")
 })
 
+test_that("a passage is cited by the page it lies in", {
+  doc <- spdf_open(extdata("quijote.spdf"))
+  on.exit(spdf_close(doc))
+  f <- spdf_fragments(doc)
+  t5 <- f$text[f$id == "q5"]
+  expect_equal(spdf_cite_passage(doc, "q5", substr(t5, 1, 15))$text, "(Cervantes Saavedra, 1608, fol. Ir)")
+  expect_equal(spdf_cite_passage(doc, "q5", substr(t5, nchar(t5) - 30, nchar(t5)))$text, "(Cervantes Saavedra, 1608, fol. [Iv])")
+})
+
 test_that("quantization matches the specification", {
   expect_equal(paste(spdf_vector_encode(c(1.5, -2, 0.1, -0.1), "i8"), collapse = ""), "7f810df3")
   expect_equal(paste(spdf_vector_encode(c(0.1, 65504, 0, 0.333333), "f16"), collapse = ""), "662eff7b00005535")
@@ -63,8 +72,8 @@ test_that("corpus helpers count terms by work", {
 test_that("exports ALTO, TEI and IIIF", {
   doc <- spdf_open(extdata("quijote.spdf"))
   on.exit(spdf_close(doc))
-  expect_match(spdf_alto(doc), "<Page ID=\"P2\" PHYSICAL_IMG_NR=\"2\" PRINTED_IMG_NR=\"ii\"", fixed = TRUE)
-  expect_match(spdf_tei(doc), "<pb n=\"[iv]\"", fixed = TRUE)
+  expect_match(spdf_alto(doc), "PRINTED_IMG_NR=\"Ir\"", fixed = TRUE)
+  expect_match(spdf_tei(doc), "<pb n=\"[Iv]\"", fixed = TRUE)
   m <- spdf_iiif(doc, "https://example.org/iiif/quijote")
   expect_equal(m$type, "Manifest")
   expect_null(m$items[[1]]$label)

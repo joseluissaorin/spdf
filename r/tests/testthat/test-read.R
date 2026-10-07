@@ -4,7 +4,7 @@ test_that("opens a 5.0 file and reads its parts", {
   info <- spdf_info(doc)
   expect_equal(info$version, "5.0")
   expect_false(info$legacy)
-  expect_equal(info$year, 1605L)
+  expect_equal(info$year, 1608L)
   u <- spdf_units(doc)
   expect_s3_class(u, "tbl_df")
   expect_equal(u$ord, seq_len(nrow(u)))

@@ -24,7 +24,7 @@ reading order, \code{fragments} the matching fragments (narrowed by \code{char})
 }
 \examples{
 doc <- spdf_open(system.file("extdata", "quijote.spdf", package = "spdf"))
-uri <- spdf_search(doc, "\"lugar de la Mancha\"")$anchor_uri[1]
+uri <- spdf_search(doc, "hermoso")$anchor_uri[1]
 str(spdf_locate(doc, uri))
 spdf_close(doc)
 }

@@ -26,11 +26,17 @@ library(spdf)
 
 ## El corpus
 
-El paquete trae cuatro fragmentos breves de obras de dominio público: el *Lazarillo de
-Tormes* (1554), las *Obras* de Garcilaso anotadas por Herrera (1580, un fichero del
-formato anterior 4.1 que se lee igual que los nuevos), el *Quijote* (1605) y las
-*Rimas* de Bécquer (1871). En un proyecto real serían cientos de ficheros en una
-carpeta; el código no cambia.
+El paquete trae cuatro fragmentos breves de ediciones de dominio público, transcritos
+literalmente de fuentes identificadas (la ficha de cada uno lo detalla en su nota):
+
+- el prólogo del *Quijote* en la edición de Madrid de 1608, con la ese larga y las
+  abreviaturas como se imprimieron;
+- el comienzo del *Lazarillo de Tormes* en la edición de Madrid de 1921;
+- dos rimas de Bécquer en sus *Obras* de 1885;
+- dos poemas de las *Poesías* de Garcilaso (1919), en un fichero del formato anterior
+  4.1, que se lee igual que los nuevos.
+
+En un proyecto real serían cientos de ficheros en una carpeta; el código no cambia.
 
 ```{r}
 archivos <- list.files(system.file("extdata", package = "spdf"), pattern = "\\.spdf$", full.names = TRUE)
@@ -46,19 +52,20 @@ un SPDF recibido de fuera es un dato, no un programa.
 `spdf_corpus_search()` aplica la búsqueda léxica de referencia de la especificación a
 cada fichero y devuelve una fila por pasaje, con su cita y su URI de ancla. La búsqueda
 no distingue mayúsculas ni tildes, admite frases entre comillas y alcanza también la
-capa de ortografía modernizada: en el *Lazarillo* impreso se lee «coſas», pero buscar
-«cosas» lo encuentra.
+capa de ortografía modernizada: el *Quijote* de 1608 imprime «hermoſo», con ese larga,
+pero buscar «hermoso» lo encuentra.
 
 ```{r}
-hallazgos <- spdf_corpus_search(archivos, "cosas")
-hallazgos$text
+hallazgos <- spdf_corpus_search(archivos, "hermoso")
+hallazgos$title
 hallazgos$citation
+substr(hallazgos$text, 1, 90)
 ```
 
-La cita sale del ancla, no de un cálculo aproximado. En el *Quijote* se ve mejor: la
-portada no lleva número y se cita «s. p.»; los preliminares conservan su numeración
-romana; un folio que el lector dedujo, porque no estaba impreso, va entre corchetes; y
-un pasaje que cruza de una página a otra se cita con las dos.
+La cita sale del ancla, no de un cálculo aproximado. El prólogo del *Quijote* ocupa
+páginas sin numerar y se cita «s. p.»; el texto empieza en el folio I recto; un folio
+que no está impreso y se dedujo va entre corchetes; y un pasaje que pasa de una página a
+otra se cita con las dos.
 
 ```{r}
 quijote <- spdf_open(system.file("extdata", "quijote.spdf", package = "spdf"))
@@ -69,20 +76,34 @@ vapply(seq_len(nrow(fragmentos)), function(i) {
 }, character(1))
 ```
 
-La URI de ancla identifica el pasaje de forma portátil, por la huella del original,
-aunque el fichero cambie de nombre o de carpeta:
+Cuando se cita una frase concreta y no el fragmento entero, hay que citar la página en
+la que está la frase, no la del comienzo del fragmento. El fragmento `q5` empieza al pie
+del folio I recto y sigue en el vuelto; `spdf_cite_passage()` cita cada frase por su
+página:
 
 ```{r}
-hallazgos$anchor_uri[1]
+cruza <- fragmentos[fragmentos$id == "q5", ]
+n <- nchar(cruza$text)
+spdf_cite_passage(quijote, "q5", substr(cruza$text, 1, 15))$text       # al pie del recto
+spdf_cite_passage(quijote, "q5", substr(cruza$text, n - 30, n))$text   # en el vuelto
+```
+
+La URI de ancla identifica el pasaje de forma portátil, por la huella del original,
+aunque el fichero cambie de nombre o de carpeta, y `spdf_locate()` la resuelve:
+
+```{r}
+hallazgos$anchor_uri[2]
+str(spdf_locate(quijote, hallazgos$anchor_uri[2]))
 ```
 
 ## Contar apariciones por obra y año
 
 `spdf_count_terms()` cuenta, para cada obra y cada término, los fragmentos que lo
-contienen y las apariciones del término en ellos.
+contienen y las apariciones del término en ellos. Como la búsqueda, cuenta sobre la capa
+modernizada cuando la hay: «coſa» cuenta como «cosa».
 
 ```{r}
-terminos <- c("vida", "hijo", "cosas", "dulce", "poesía")
+terminos <- c("hijo", "cosa", "cosas", "merced", "dulce", "poesía")
 recuento <- spdf_count_terms(archivos, terminos)
 recuento[recuento$occurrences > 0, c("title", "year", "term", "fragments", "occurrences")]
 ```
@@ -123,12 +144,15 @@ metodología de cualquier trabajo con texto digitalizado.
 ## Exportar la bibliografía
 
 La ficha de cada obra es un ítem CSL-JSON, así que pasa sin pérdidas a Zotero, Pandoc o
-citeproc; también hay BibTeX:
+citeproc; también hay BibTeX, con claves estables entre herramientas:
 
 ```{r}
 cat(spdf_bibtex(quijote))
 spdf_close(quijote)
 ```
+
+Para una edición digital, `spdf_tei()`, `spdf_alto()` y `spdf_iiif()` exportan el
+documento a TEI, ALTO e IIIF.
 
 ## Validar antes de analizar
 

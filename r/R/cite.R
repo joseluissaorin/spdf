@@ -47,18 +47,20 @@ cite_label <- function(a) {
   if (identical(a$source, "inferred")) paste0("[", p, "]") else as.character(p)
 }
 
+# An end without a printed folio never takes part in a range (SPEC 18.1).
 cite_page <- function(a, e, es, one, many) {
-  la <- cite_label(a)
-  if (is.null(la)) {
+  ends <- list(a)
+  if (!is.null(e) && identical(e$type, a$type)) ends[[2]] <- e
+  with_folio <- Filter(function(x) !is.null(x$printed), ends)
+  if (length(with_folio) == 0) {
     return(if (es) "s. p." else "n. pag.")
   }
-  if (!is.null(e) && identical(e$type, a$type)) {
-    lb <- cite_label(e)
-    if (!is.null(lb) && !identical(e$printed, a$printed)) {
-      return(paste0(many, " ", la, "-", lb))
-    }
+  first <- with_folio[[1]]
+  last <- with_folio[[length(with_folio)]]
+  if (length(with_folio) > 1 && !identical(last$printed, first$printed)) {
+    return(paste0(many, " ", cite_label(first), "-", cite_label(last)))
   }
-  paste0(one, " ", la)
+  paste0(one, " ", cite_label(first))
 }
 
 cite_locator <- function(a, e, es) {
