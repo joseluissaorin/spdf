@@ -3,7 +3,8 @@
 export const SPDF_VERSION = '5.0';
 export const APPLICATION_ID = 1397769286; // 0x53504446, "SPDF"
 export const USER_VERSION = 500;
-export const MEDIA_TYPE = 'application/vnd.spdf';
+/** SPEC §24 (registration with IANA in preparation). */
+export const MEDIA_TYPE = 'application/vnd.spdf+sqlite3';
 
 export const SCHEMA_50 = `
 CREATE TABLE spdf_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);

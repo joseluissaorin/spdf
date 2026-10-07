@@ -267,12 +267,113 @@ export function toSpace(r: ViewRow): Space {
 // SpdfDocument
 // ---------------------------------------------------------------------------
 
-/** Where an anchor URI points in a file (SPEC §5.4). */
+/** What an anchor URI designates in a file (SPEC §5.4). */
+export interface Location {
+  /** The reference is for this document. */
+  document: boolean;
+  /** Matching unit ids, in reading order. */
+  units: string[];
+  /** Matching fragment ids, in `n` order (narrowed by `char` when present). */
+  fragments: string[];
+  char: [number, number] | null;
+  xywh: [number, number, number, number] | null;
+}
+
+/** The first unit of a {@link Location}. */
 export interface Resolution {
   unit: string;
   ord: number;
+  fragments: string[];
   chars: [number, number] | null;
   xywh: [number, number, number, number] | null;
+}
+
+const RULE_ORDER = ['p', 'f', 't', 'sl', 'v', 'ref', 's', 'sh'] as const;
+type Rule = (typeof RULE_ORDER)[number];
+
+const isIntValue = (v: unknown): v is number => typeof v === 'number' && Number.isInteger(v);
+const isNumValue = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+
+function anchorMatches(rule: Rule, L: AnchorLocator, anchor: unknown, printed?: string | null): boolean {
+  if (!anchor || typeof anchor !== 'object') return false;
+  const a = anchor as Record<string, unknown>;
+  const t = a.type;
+  switch (rule) {
+    case 'p':
+      return t === 'page' && isIntValue(a.physical) && (L.p as number) <= a.physical && a.physical <= (L.pe ?? (L.p as number));
+    case 'f':
+      return (printed !== undefined ? printed : a.printed) === L.f;
+    case 't': {
+      const x = (L.t as number[])[0] as number;
+      return t === 'time' && isNumValue(a.t0) && isNumValue(a.t1) && a.t0 <= x && x < a.t1;
+    }
+    case 'sl':
+      return t === 'slide' && a.n === L.sl;
+    case 'v': {
+      const x = (L.v as number[])[0] as number;
+      const lf = a.line_from;
+      const lt = a.line_to !== undefined && a.line_to !== null ? a.line_to : lf;
+      return t === 'verse' && isIntValue(lf) && lf <= x && x <= (lt as number);
+    }
+    case 'ref':
+      return t === 'canonical' && a.scheme === L.ref?.scheme && a.ref === L.ref?.ref;
+    case 's': {
+      const path = a.path;
+      if ((t !== 'section' && t !== 'web') || !Array.isArray(path)) return false;
+      const s = L.s ?? [];
+      if (L.para !== undefined) return JSON.stringify(path) === JSON.stringify(s) && a.paragraph === L.para;
+      return JSON.stringify(path.slice(0, s.length)) === JSON.stringify(s);
+    }
+    case 'sh': {
+      if (t !== 'sheet' || a.sheet !== L.sh) return false;
+      if (!L.rows) return true;
+      const x = L.rows[0];
+      return isIntValue(a.row_from) && isIntValue(a.row_to) && a.row_from <= x && x <= a.row_to;
+    }
+  }
+}
+
+/** SPEC §5.4 on an open document. */
+export async function locateIn(doc: SpdfDocument, reference: string): Promise<Location> {
+  const empty: Location = { document: false, units: [], fragments: [], char: null, xywh: null };
+  let L: AnchorLocator;
+  if (reference.startsWith('spdf:')) {
+    const parsed = parseAnchorUri(reference);
+    if (parsed.docref !== `sha256-${doc.document.source_sha256}` && parsed.docref !== doc.document.id) return empty;
+    L = parsed.locator;
+  } else {
+    const hash = reference.indexOf('#');
+    const frag = hash >= 0 ? reference.slice(hash + 1) : '';
+    L = frag ? parseAnchorUri(`spdf:x#${frag}`).locator : {};
+  }
+  const out: Location = { document: true, units: [], fragments: [], char: L.char ?? null, xywh: L.xywh ?? null };
+  const rule = RULE_ORDER.find((r) => L[r] !== undefined);
+  if (!rule) return out;
+  const units = await doc.units();
+  let unitIds = units.filter((u) => anchorMatches(rule, L, u.anchor, rule === 'f' ? u.printed : undefined)).map((u) => u.id);
+  if (rule === 't' && !unitIds.length) {
+    const timed = units.filter((u) => (u.anchor as { type?: string }).type === 'time');
+    const last = timed[timed.length - 1];
+    const t1 = last ? (last.anchor as { t1?: unknown }).t1 : undefined;
+    if (last && isNumValue(t1) && t1 === (L.t as number[])[0]) unitIds = [last.id];
+  }
+  let frags = (await doc.fragments()).filter((f) => anchorMatches(rule, L, f.anchor));
+  if (!unitIds.length && frags.length) {
+    const order = new Map(units.map((u) => [u.id, u.ord]));
+    unitIds = [...new Set(frags.map((f) => f.unit))].sort((x, y) => (order.get(x) ?? 0) - (order.get(y) ?? 0));
+  }
+  if (L.char) {
+    const [c, d] = L.char;
+    frags = frags.filter((f) => {
+      const ch = (f.anchor as { chars?: unknown }).chars;
+      if (!unitIds.includes(f.unit) || !Array.isArray(ch) || ch.length !== 2) return false;
+      const [a, b] = ch as [number, number];
+      return c < d ? a < d && c < b : a <= c && c < b;
+    });
+  }
+  out.units = unitIds;
+  out.fragments = frags.map((f) => f.id);
+  return out;
 }
 
 export interface FragmentWithUri extends Fragment {
@@ -380,56 +481,22 @@ export class SpdfDocument {
   }
 
   /**
-   * Resolves an anchor URI (or its locator) against this file (SPEC §5.4): the unit it
-   * designates, plus the `char` range and the `xywh` region. Throws if the document
-   * reference is not this document.
+   * Locates an anchor URI, or the URL of this file with an anchor fragment
+   * (`https://…/quijote.spdf#p=5&f=1r`), in this file (SPEC §5.4): the matching units and
+   * fragments in reading order, and the `char` and `xywh` that narrow them. A URI for
+   * another document gives `document: false` and empty lists.
    */
-  async resolve(uri: string | AnchorLocator): Promise<Resolution | null> {
-    let loc: AnchorLocator;
-    if (typeof uri === 'string') {
-      const p = parseAnchorUri(uri);
-      const ok = p.docref === this.docref || p.docref === this.document.id || p.docref === `sha256-${this.document.source_sha256.toLowerCase()}`;
-      if (!ok) throw new SpdfError('E000', `the anchor URI is for another document (${p.docref})`);
-      loc = p.locator;
-    } else loc = uri;
-    const extra = { chars: loc.char ?? null, xywh: loc.xywh ?? null };
-    const units = await this.units();
-    const pick = (u: Unit | undefined): Resolution | null => (u ? { unit: u.id, ord: u.ord, ...extra } : null);
-    const an = (u: { anchor: Anchor }) => u.anchor as Anchor & Record<string, unknown>;
-    if (loc.p !== undefined) return pick(units.find((u) => an(u).type === 'page' && an(u).physical === loc.p));
-    if (loc.f !== undefined) return pick(units.find((u) => u.printed === loc.f));
-    if (loc.t !== undefined) {
-      const t = loc.t[0];
-      const hit = units.find((u) => an(u).type === 'time' && (an(u).t0 as number) <= t && t < (an(u).t1 as number));
-      if (hit) return pick(hit);
-      const last = units[units.length - 1];
-      return last && an(last).type === 'time' && an(last).t1 === t ? pick(last) : null;
-    }
-    const matches = (a: Anchor & Record<string, unknown>): boolean => {
-      if (loc.s !== undefined || loc.para !== undefined) {
-        if (a.type !== 'section' && a.type !== 'web') return false;
-        if (loc.s !== undefined && JSON.stringify(a.path ?? []) !== JSON.stringify(loc.s)) return false;
-        return loc.para === undefined || a.paragraph === loc.para;
-      }
-      if (loc.sl !== undefined) return a.type === 'slide' && a.n === loc.sl;
-      if (loc.sh !== undefined) {
-        if (a.type !== 'sheet' || a.sheet !== loc.sh) return false;
-        return !loc.rows || ((a.row_from as number) <= loc.rows[0] && loc.rows[0] <= (a.row_to as number));
-      }
-      if (loc.v !== undefined) {
-        if (a.type !== 'verse') return false;
-        const from = a.line_from as number;
-        const to = (a.line_to as number | undefined) ?? from;
-        return from <= loc.v[0] && loc.v[0] <= to;
-      }
-      if (loc.ref !== undefined) return a.type === 'canonical' && a.scheme === loc.ref.scheme && a.ref === loc.ref.ref;
-      return false;
-    };
-    const unit = units.find((u) => matches(an(u)));
-    if (unit) return pick(unit);
-    const frag = (await this.fragments()).find((f) => matches(an(f)));
-    if (frag) return pick(units.find((u) => u.id === frag.unit));
-    return null;
+  async locate(reference: string): Promise<Location> {
+    return locateIn(this, reference);
+  }
+
+  /** The first unit `locate` finds (null if none, or if the URI is for another document). */
+  async resolve(reference: string): Promise<Resolution | null> {
+    const l = await this.locate(reference);
+    const first = l.units[0];
+    if (!l.document || first === undefined) return null;
+    const u = await this.unitById(first);
+    return u ? { unit: u.id, ord: u.ord, fragments: l.fragments, chars: l.char, xywh: l.xywh } : null;
   }
 
   /** Short citation `(Family, Year, locator)`. */

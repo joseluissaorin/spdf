@@ -19,6 +19,8 @@ import { cite } from './cite.js';
 import { SpdfWriter, type SpdfSource } from './writer.js';
 import { canonicalize } from './canonical.js';
 import { encodeVector } from './vectors.js';
+import { cslLocator, toBibtex, toCslJsonArray } from './bib.js';
+import { pageSequence } from './structure.js';
 import { toHex } from './bytes.js';
 import type { Anchor, CslItem, VectorTarget } from './types.js';
 
@@ -171,9 +173,10 @@ async function runCase(c: Case, io: ConformanceIO, engine: SqlEngine | undefined
       const doc = await openSpdf(await io.read(String(input.file)), opts);
       try {
         const hits = await searchVector(doc, String(input.space), input.query_vector as number[], { target: input.target as VectorTarget, limit: Number(input.limit) });
+        const key = (r: Result & { unit_id?: string; figure_id?: string }) => r.fragment_id ?? r.unit_id ?? r.figure_id;
         compareResults(
-          hits.map((h) => ({ fragment_id: h.fragment_id ?? h.id, score: h.score, anchor_uri: h.anchor_uri as string })),
-          expect.results as Result[],
+          hits.map((h) => ({ fragment_id: h.fragment_id ?? h.unit_id ?? h.figure_id ?? h.id, score: h.score, anchor_uri: h.anchor_uri as string })),
+          (expect.results as Array<Result & { unit_id?: string; figure_id?: string }>).map((r) => ({ ...r, fragment_id: key(r) as string })),
           false,
         );
       } finally {
@@ -237,6 +240,61 @@ async function runCase(c: Case, io: ConformanceIO, engine: SqlEngine | undefined
       }
       if (expect.error === true) fail(`encoded ${toHex(bytes)} instead of failing`);
       if (toHex(bytes) !== expect.hex) fail(`${toHex(bytes)} ≠ ${String(expect.hex)}`);
+      return;
+    }
+    case 'locate': {
+      const doc = await openSpdf(await io.read(String(input.file)), opts);
+      try {
+        let got: unknown;
+        try {
+          got = await doc.locate(String(input.reference));
+        } catch {
+          got = { document: false, units: [], fragments: [], char: null, xywh: null };
+        }
+        const diff = jsonDiff(canonicalize(got), canonicalize(expect));
+        if (diff) fail(`locate differs at ${diff}`);
+      } finally {
+        await doc.close();
+      }
+      return;
+    }
+    case 'export_csl':
+    case 'export_bibtex': {
+      const metas: CslItem[] = [];
+      for (const f of input.files as string[]) {
+        const doc = await openSpdf(await io.read(f), opts);
+        metas.push(doc.document.metadata);
+        await doc.close();
+      }
+      if (c.kind === 'export_bibtex') {
+        const norm = (t: string) => t.replace(/\r\n/g, '\n').split('\n').map((l) => l.trim()).filter(Boolean);
+        const got = norm(toBibtex(metas));
+        const want = norm(String(expect.text));
+        const i = got.findIndex((l, k) => l !== want[k]);
+        if (got.length !== want.length || i >= 0) fail(`BibTeX differs at line ${i >= 0 ? i + 1 : Math.min(got.length, want.length) + 1}: ${JSON.stringify(got[i] ?? null)} ≠ ${JSON.stringify(want[i >= 0 ? i : got.length] ?? null)}`);
+        return;
+      }
+      const items = toCslJsonArray(metas);
+      if (input.anchor && items.length === 1) {
+        const ll = cslLocator(input.anchor as Anchor, (input.anchor_end ?? null) as Anchor | null);
+        if (ll) {
+          (items[0] as CslItem).label = ll[0];
+          (items[0] as CslItem).locator = ll[1];
+        }
+      }
+      const diff = jsonDiff(canonicalize(items), canonicalize(expect.items));
+      if (diff) fail(`CSL-JSON differs at ${diff}`);
+      return;
+    }
+    case 'export_structure': {
+      const doc = await openSpdf(await io.read(String(input.file)), opts);
+      try {
+        const pages = await pageSequence(doc, input.format as 'alto' | 'tei' | 'iiif');
+        const diff = jsonDiff(canonicalize({ pages }), canonicalize(expect));
+        if (diff) fail(`${String(input.format)} page sequence differs at ${diff}`);
+      } finally {
+        await doc.close();
+      }
       return;
     }
     default:

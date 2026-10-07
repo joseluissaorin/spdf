@@ -19,9 +19,10 @@ and 4.1 formats (Scholaris).
   from the platform (`zlib`, `DecompressionStream`, WebCrypto).
 - **TypeScript first**: strict types, ESM only, declarations included.
 - **Conforming reader, semantic reader, writer and validator**, profiles `core`,
-  `semantic` and `media`: it passes the whole SPDF conformance suite (228 cases of suite
-  0.2.0) with `node:sqlite` (Node 22, 24 and 26), with `bun:sqlite`, and with
-  `sqlite-wasm` in Node and in Chromium.
+  `semantic` and `media`, with the ALTO, TEI and IIIF exports: it passes the whole SPDF
+  conformance suite (309 cases of suite 0.4.0, every kind, nothing skipped) with
+  `node:sqlite` (Node 22, 24 and 26), with `bun:sqlite`, and with `sqlite-wasm` in Node
+  and in Chromium.
 - **Remote reading**: in the browser, `openRemote(url)` opens a file with HTTP Range
   requests and downloads only the pages a query touches (about 1 % of a 23 MiB book for a
   lexical search; figures below).
@@ -158,9 +159,9 @@ const copy = await SpdfWriter.fromSpdf(doc); // a full 5.0 copy, e.g. to add a v
 | Open | `openSpdf(input, opts)`, `openRemote(url)`, `openBlob(blob)` (browser), `validate(input)`, `dump(input)` |
 | Document | `doc.version`, `doc.legacy`, `doc.meta`, `doc.document`, `units()`, `unit(ord)`, `unitByPrinted()`, `sections()`, `fragments()`, `fragment(id)`, `figures()`, `spaces()`, `vectors()`, `blob(key)`, `blobs()`, `provenance()`, `extensions()`, `dump()`, `validate()` |
 | Search | `doc.searchLexical(q)`, `doc.searchVector(space, vec)`, `doc.searchHybrid(q, vec, space)` |
-| Anchors | `formatAnchorUri(docref, anchor, end)`, `parseAnchorUri(uri)`, `locatorToAnchor()`, `checkAnchor()` |
+| Anchors | `formatAnchorUri(docref, anchor, end)`, `parseAnchorUri(uri)`, `locatorToAnchor()`, `checkAnchor()`, `doc.locate(uriOrUrl)` (SPEC §5.4: units, fragments, `char`, `xywh`), `doc.resolve()` |
 | Citation | `cite(anchor, document, locale, end)`, `doc.cite(anchor, locale, end)` (es, en) |
-| Export | `toCslJson()`, `toCslJsonArray()`, `cslCitationItem()`, `toBibtex()` |
+| Export | `toCslJson()`, `toCslJsonArray()`, `cslCitationItem()`, `toBibtex()` (keys `cervantessaavedra1605`, SPEC §19), `toAlto()`, `toTei()`, `toIiif()` |
 | Write | `SpdfWriter.create()`, `.fromSpdf()`, `.fromSource()`, `convertLegacy()`, `encodeVector()` |
 | Integrity | `doc.contentSha256()`, `doc.verifyIntegrity(publicKey?)`, `verifySignature()`, `generateSigningKey()` |
 | Engines | `nodeEngine()`, `bunEngine()`, `wasmEngine()`, `setDefaultEngine()`; the port is `SqlEngine`/`SqlConnection` |
@@ -168,6 +169,10 @@ const copy = await SpdfWriter.fromSpdf(doc); // a full 5.0 copy, e.g. to add a v
 Entry points: `spdf-format` (picks Node, Bun or the browser by export condition),
 `spdf-format/node`, `spdf-format/bun`, `spdf-format/browser`, `spdf-format/core` (no
 engine; pass `{ engine }`), `spdf-format/wasm` and `spdf-format/cli`.
+
+Media type: `application/vnd.spdf+sqlite3` (`MEDIA_TYPE`); a `.spdf` URL may carry the
+anchor parameters as its fragment (`https://example.org/quijote.spdf#p=5&f=1r`), which
+`doc.locate()` accepts as well as `spdf:` URIs.
 
 ## Command line
 

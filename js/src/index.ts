@@ -35,6 +35,8 @@ export {
   type SpdfInput,
   type FragmentWithUri,
   type Resolution,
+  type Location,
+  locateIn,
   type RawOpen,
 } from './document.js';
 export { dump, dumpDocument, type CanonicalDump } from './dump.js';
@@ -89,4 +91,5 @@ export { encodeVector, decodeVector, f16ToNumber, numberToF16, dot, cosine, norm
 export { canonicalJson, canonicalize, round6 } from './canonical.js';
 export { mapLegacyAnchor, mapLegacyMetadata, mapLegacyKind } from './legacy.js';
 export { isGzip, isSqlite, sha256Hex, gunzipWeb, gzipWeb, toHex, fromHex, toBase64, fromBase64 } from './bytes.js';
+export { toAlto, toTei, toIiif, pageSequence, folioN, type IiifOptions } from './structure.js';
 export { BytesSource, BlobSource, HttpRangeSource, RangeSource, RangeNotSupportedError, xhrTransport, type HttpSourceOptions, type RangeTransport, type RangeSourceStats } from './sources.js';

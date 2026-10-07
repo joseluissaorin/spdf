@@ -26,8 +26,10 @@ export interface VectorHit {
   target: VectorTarget;
   id: string;
   score: number;
-  /** Same as `id` for fragments (so vector hits look like the other results). */
+  /** Same as `id`: `fragment_id`, `unit_id` or `figure_id` according to the target. */
   fragment_id?: string;
+  unit_id?: string;
+  figure_id?: string;
   n?: number;
   anchor?: Anchor;
   anchor_end?: Anchor | null;
@@ -267,7 +269,22 @@ export async function vectorRanking(
 export async function searchVector(doc: SpdfDocument, spaceId: string, query: ArrayLike<number>, options: VectorOptions = {}): Promise<VectorHit[]> {
   const target = options.target ?? 'fragment';
   const ranking = await vectorRanking(doc, spaceId, query, target, options.limit ?? 10);
-  if (target !== 'fragment') return ranking.map((r) => ({ target, id: r.id, score: r.score, via: ['vector'] }));
+  if (target === 'unit' || target === 'figure') {
+    // Units and figures carry the anchor URI of their own anchor (SPEC §8.2).
+    const anchors = new Map<string, Anchor>();
+    if (target === 'unit') for (const u of await doc.units()) anchors.set(u.id, u.anchor);
+    else for (const g of await doc.figures()) anchors.set(g.id, g.anchor);
+    return ranking.map((r) => {
+      const hit: VectorHit = { target, id: r.id, score: r.score, via: ['vector'], ...(target === 'unit' ? { unit_id: r.id } : { figure_id: r.id }) };
+      const a = anchors.get(r.id);
+      if (a) {
+        hit.anchor = a;
+        hit.anchor_end = null;
+        hit.anchor_uri = doc.anchorUri(a);
+      }
+      return hit;
+    });
+  }
   const frags = await doc.fragmentsByN(ranking.map((r) => Number(r.tie)).filter((n) => Number.isFinite(n)));
   return ranking.map((r) => {
     const f = frags.get(Number(r.tie));

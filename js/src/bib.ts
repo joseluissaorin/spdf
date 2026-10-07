@@ -60,18 +60,19 @@ function yearOf(m: CslItem): string | null {
 }
 
 /**
- * The base BibTeX key of an item (SPEC §19, RFC 0002): the first author's `family` (or
- * `literal`), else the first word of the title, folded to ASCII letters and lowercased
- * (`anon` if nothing is left), plus the first year of `issued` (or `nd`):
- * `cervantessaavedra1605`, `lazarillo1554`, `hookend`.
+ * The base BibTeX key of an item (SPEC §19.3): the first author's `family` (or `literal`,
+ * or `given`) folded to ASCII letters and lowercased; if that leaves nothing, the first
+ * word of `title-short` (or `title`); `anon` as a last resort; then the first year of
+ * `issued` with its sign, or `nd`: `cervantessaavedra1605`, `lazarillo1554`, `anonnd`.
  */
 export function citationKey(d: Source): string {
   const m = metadataOf(d);
   let base = '';
   const a = Array.isArray(m.author) ? m.author[0] : undefined;
-  if (a && typeof a === 'object') base = asciiLetters(String(a.family || a.literal || ''));
+  if (a && typeof a === 'object') base = asciiLetters(String(a.family || a.literal || a.given || ''));
   if (!base) {
-    const words = String(m.title ?? '').split(/\s+/).filter(Boolean);
+    const title = String(m['title-short'] || m.title || '');
+    const words = title.split(/\s+/).filter(Boolean);
     base = words.length ? asciiLetters(words[0] as string) : '';
   }
   return (base || 'anon') + (yearOf(m) ?? 'nd');
