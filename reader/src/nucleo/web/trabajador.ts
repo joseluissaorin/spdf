@@ -243,14 +243,14 @@ async function buscarEn(id: string, p: PeticionBusqueda, limite: number): Promis
   if (modo === 'lexica') crudos = await d.searchLexical(p.consulta, { limit: limite });
   const aciertos: Acierto[] = [];
   for (const h of crudos) {
-    const f = (await d.fragment(h.fragment_id)) as any;
+    const f = (h.fragment ?? (await d.fragment(h.fragment_id))) as any;
     if (!f) continue;
     const ancla = (h.anchor ?? f.anchor) as Ancla;
     aciertos.push({
       fragment_id: h.fragment_id, n: h.n ?? f.n, score: h.score, via: h.via, anchor: ancla, anchor_uri: h.anchor_uri,
       documento: id, texto: f.text, contexto: f.context ?? '',
       unidad_ord: a.ordDe.get(f.unit) ?? 1, folio: (ancla as any).printed ?? null,
-      cita: d.cite(ancla, p.lengua, f.anchor_end ?? undefined),
+      cita: d.cite(ancla as never, p.lengua, f.anchor_end ?? undefined),
     });
   }
   return { aciertos, modo, motivo };
@@ -333,6 +333,7 @@ atender({
       figuras: (await d.figures()).length, fragmentos: (await d.fragments()).length,
       extensions: await d.extensions(),
       folios: a.unidades.map((u) => u.printed ?? null),
+      ids: a.unidades.map((u) => u.id),
       medio: (doc.kind === 'audio' || doc.kind === 'video') && ref ? { ref, mime: doc.mime } : null,
     };
   },
@@ -383,10 +384,10 @@ atender({
   },
 
   async citar(id: string, ancla: Ancla, lengua: 'es' | 'en', fin?: Ancla | null) {
-    return (await abierto(id)).doc.cite(ancla, lengua, fin ?? undefined);
+    return (await abierto(id)).doc.cite(ancla as never, lengua, (fin ?? undefined) as never);
   },
   async uriAncla(id: string, ancla: Ancla, fin?: Ancla | null) {
-    return (await abierto(id)).doc.anchorUri(ancla, fin ?? undefined);
+    return (await abierto(id)).doc.anchorUri(ancla as never, (fin ?? undefined) as never);
   },
   async referencia(id: string, formato: 'csl' | 'bibtex') {
     const d = (await abierto(id)).doc.document;

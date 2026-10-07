@@ -1,0 +1,23 @@
+{
+  "name": "Lector SPDF",
+  "short_name": "SPDF",
+  "description": "Lee, busca y cita documentos SPDF en tu equipo, sin conexión.",
+  "lang": "es",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f0e8",
+  "theme_color": "#f5f0e8",
+  "categories": ["books", "education", "productivity"],
+  "icons": [
+    { "src": "icono.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "icono-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icono-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icono-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "file_handlers": [
+    { "action": "./", "accept": { "application/vnd.spdf": [".spdf"] } }
+  ],
+  "launch_handler": { "client_mode": "focus-existing" }
+}

@@ -217,6 +217,8 @@ export interface Resumen {
   extensions: Extension[];
   /** Ord → folio impreso, para el navegador de páginas sin cargar todas las unidades. */
   folios: (string | null)[];
+  /** Ord → id de la unidad (índice ord - 1), para situar secciones, figuras y anotaciones. */
+  ids: string[];
   /** Hay medio reproducible (blob o URL) para audio o vídeo. */
   medio: { ref: string; mime: string } | null;
 }

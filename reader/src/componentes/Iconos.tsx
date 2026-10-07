@@ -16,6 +16,8 @@ export const Der = (p: SVGProps<SVGSVGElement>) => <svg {...P(p)}><path d="M9.5 
 export const Lupa = (p: SVGProps<SVGSVGElement>) => <svg {...P(p)}><circle cx="10.5" cy="10.5" r="6" /><path d="M15 15l5.5 5.5" /></svg>;
 export const Cerrar = (p: SVGProps<SVGSVGElement>) => <svg {...P(p)}><path d="M6 6l12 12M18 6L6 18" /></svg>;
 export const Mas = (p: SVGProps<SVGSVGElement>) => <svg {...P(p)}><path d="M12 5v14M5 12h14" /></svg>;
+export const Menos = (p: SVGProps<SVGSVGElement>) => <svg {...P(p)}><path d="M5 12h14" /></svg>;
+export const Puntos = (p: SVGProps<SVGSVGElement>) => <svg {...P(p)}><path d="M5.5 12h.01M12 12h.01M18.5 12h.01" strokeWidth={2.6} /></svg>;
 export const Ajustes = (p: SVGProps<SVGSVGElement>) => <svg {...P(p)}><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></svg>;
 export const Comillas = (p: SVGProps<SVGSVGElement>) => <svg {...P(p)}><path d="M10 7l-4 5 4 5M17 7l-4 5 4 5" /></svg>;
 export const Ficha = (p: SVGProps<SVGSVGElement>) => <svg {...P(p)}><rect x="4" y="5" width="16" height="14" rx="1" /><path d="M8 9h8M8 12.5h8M8 16h5" /><circle cx="12" cy="5" r="1" /></svg>;

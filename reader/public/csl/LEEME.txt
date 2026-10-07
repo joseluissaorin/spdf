@@ -1,0 +1,5 @@
+Estilos y localizaciones de Citation Style Language, sin modificar:
+  apa.csl, chicago-author-date.csl  (https://github.com/citation-style-language/styles)
+  locales-es-ES.xml, locales-en-US.xml (https://github.com/citation-style-language/locales)
+Licencia: Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0).
+Los usa citeproc-js (licencia CPAL 1.0 / AGPL 3.0, a elección) para la referencia en APA y Chicago.

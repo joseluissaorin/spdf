@@ -5,11 +5,7 @@
  * (o al contenedor .boceto) cuando deba dibujarse: animar.js o <Boceto> lo hacen.
  */
 
-@font-face {
-  font-family: 'Mano';
-  font-display: swap;
-  src: url('/fuentes/mano.woff2') format('woff2'); /* ajustar la ruta al proyecto */
-}
+/* @font-face de 'Mano': en estilos/lector.css, con la copia arreglada de la fuente (public/fuentes/mano.woff2). */
 
 /* Las tintas: papel crema, tinta ferrogálica, lápiz y los tres colores de la Bauhaus. */
 .dibujo, .boceto {

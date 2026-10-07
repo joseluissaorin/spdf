@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f5f0e8" />
+    <meta name="description" content="Lector SPDF: lee, busca y cita documentos SPDF en tu equipo. Sin conexión y sin telemetría. / SPDF Reader: read, search and cite SPDF documents on your device." />
+    <!--CSP-->
+    <title>Lector SPDF · SPDF Reader</title>
+    <link rel="icon" href="./icono.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icono-192.png" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <script>
+      // Tema antes del primer pintado (sin destello de papel claro en modo oscuro).
+      try {
+        var p = JSON.parse(localStorage.getItem('spdf-lector:prefs') || '{}');
+        var o = p.tema === 'oscuro' || ((!p.tema || p.tema === 'sistema') && matchMedia('(prefers-color-scheme: dark)').matches);
+        if (o) document.documentElement.classList.add('oscuro');
+        if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('anima');
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="raiz"></div>
+    <noscript><p style="font:18px Georgia,serif;padding:2rem">El Lector SPDF necesita JavaScript: todo ocurre en tu navegador. / SPDF Reader needs JavaScript: everything happens in your browser.</p></noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -281,7 +281,7 @@ export class SpdfDocument {
       const dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
       let s = 0;
       const dt = (sp as any).dtype ?? 'f32';
-      for (let i = 0; i < q.length; i++) s += q[i] * (dt === 'i8' ? dv.getInt8(i) / 127 : dt === 'f16' ? dv.getFloat16?.(i * 2, true) ?? 0 : dv.getFloat32(i * 4, true));
+      for (let i = 0; i < q.length; i++) s += q[i] * (dt === 'i8' ? dv.getInt8(i) / 127 : dt === 'f16' ? (dv as any).getFloat16?.(i * 2, true) ?? 0 : dv.getFloat32(i * 4, true));
       const a = this.legacy ? anclaLegado(json(f.anchor)) : json(f.anchor);
       return { fragment_id: f.id as string, n: f.n as number, score: s, via: ['vector'], anchor: a, anchor_uri: this.anchorUri(a) };
     });

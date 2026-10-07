@@ -16,9 +16,9 @@
     "types": ["vite/client"],
     "baseUrl": ".",
     "paths": {
-      "spdf-format/browser": ["./src/nucleo/simulacros/spdf-format.ts"],
-      "spdf-infer-web": ["./src/nucleo/simulacros/spdf-infer-web.ts"]
+      "spdf-format/browser": ["../js/dist/entry/browser.d.ts", "./src/nucleo/simulacros/spdf-format.ts"],
+      "spdf-infer-web": ["../models/web/dist/index.d.ts", "./src/nucleo/simulacros/spdf-infer-web.ts"]
     }
   },
-  "include": ["src", "vite.config.ts"]
+  "include": ["src"]
 }

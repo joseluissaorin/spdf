@@ -13,6 +13,26 @@ import { VitePWA } from 'vite-plugin-pwa';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+/**
+ * Política de contenido de la web (solo al compilar: el servidor de desarrollo
+ * necesita scripts en línea). Nada de terceros salvo lo que el usuario pide:
+ * descargar un modelo (Hugging Face) o llamar a Gemini con su clave. Las
+ * imágenes y medios remotos solo se cargan si el usuario pulsa «Cargar».
+ */
+export const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'wasm-unsafe-eval'",
+  "worker-src 'self' blob:",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' blob: data: https:",
+  "media-src 'self' blob: https:",
+  "font-src 'self' data:",
+  "connect-src 'self' blob: data: https://generativelanguage.googleapis.com https://huggingface.co https://*.huggingface.co https://*.hf.co",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'none'",
+].join('; ');
+
 const aqui = import.meta.dirname;
 const ruta = (p: string) => resolve(aqui, p);
 
@@ -31,6 +51,11 @@ export default defineConfig(({ mode }) => {
     clearScreen: false,
     plugins: [
       react(),
+      {
+        name: 'csp',
+        transformIndexHtml: (html: string, ctx: { server?: unknown }) =>
+          html.replace('<!--CSP-->', ctx.server || !web ? '' : `<meta http-equiv="Content-Security-Policy" content="${CSP}" />`),
+      },
       web &&
         VitePWA({
           registerType: 'prompt',
