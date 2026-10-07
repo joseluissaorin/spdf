@@ -86,3 +86,11 @@ trabaje en este repositorio las sigue; si una no se sostiene, se discute en
 - Commits con `Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>`.
 - Nada de secretos en el repositorio. Nunca reproducir audio por los altavoces del Mac.
 - Corpus de ejemplo y pruebas: solo obras de dominio público verificables.
+
+## Versiones y etiquetas (añadido el 7-10-2026)
+- Tren de versiones común: las etiquetas semánticas sin prefijo (`0.1.0`, `0.2.0`…) marcan una
+  publicación coordinada de todas las bibliotecas, con el mismo número en todas, y sirven a SwiftPM
+  (que exige etiquetas sin prefijo y `Package.swift` en la raíz; hay uno fino que apunta a `swift/`).
+- Go usa `go/vX.Y.Z` con el mismo número. La especificación lleva su propia serie: `spec-v5.0.0`.
+- Las bibliotecas empiezan en 0.x hasta que la especificación 5.0 sea estable y haya dos productores
+  y al menos tres lectores independientes que pasen toda la conformidad; entonces, 1.0.0.
