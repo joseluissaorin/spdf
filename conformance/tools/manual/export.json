@@ -9,7 +9,7 @@
     ]
    },
    "expect": {
-    "text": "@book{cervantessaavedra1605,\n  author = {Cervantes Saavedra, Miguel de},\n  title = {{El} ingenioso hidalgo don {Quijote} de la {Mancha}},\n  year = {1605},\n  publisher = {Juan de la Cuesta},\n  address = {Madrid},\n  language = {es},\n  note = {SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.}\n}\n"
+    "text": "@book{cervantessaavedra1608,\n  author = {Cervantes Saavedra, Miguel de},\n  title = {{El} ingenioso hidalgo {Don} {Quixote} de la {Mancha}},\n  year = {1608},\n  publisher = {Juan de la Cuesta},\n  address = {Madrid},\n  language = {es},\n  note = {SPDF conformance document: pages of the facsimile of the Madrid 1608 edition (Barcelona, Montaner y Simón, 1897; Internet Archive elingenioso01cerv), transcribed literally from validated Wikisource pages, with long s and abbreviations as printed. The modernized search layer comes from the 1905 Barcelona edition on Wikisource.}\n}\n"
    }
   },
   {
@@ -21,7 +21,7 @@
     ]
    },
    "expect": {
-    "text": "@misc{nationalaeronauticsandspaceadministration1969,\n  author = {{National Aeronautics and Space Administration}},\n  title = {{Apollo} 11 air-to-ground voice transmissions (excerpts)},\n  year = {1969},\n  language = {en},\n  note = {SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.}\n}\n"
+    "text": "@misc{nationalaeronauticsandspaceadministration1969,\n  author = {{National Aeronautics and Space Administration}},\n  title = {{Apollo} 11 air-to-ground voice communications},\n  year = {1969},\n  language = {en},\n  note = {SPDF conformance document: seven transmissions transcribed literally from NASA's Apollo 11 Technical Air-to-Ground Voice Transcription (Manned Spacecraft Center, Houston, 1969). Times are ground elapsed time (GET) in seconds, as in the transcription; each span ends at the next later transmission. The recording itself is not included and source_sha256 is a placeholder; word timings are spread evenly over each span, not measured.}\n}\n"
    }
   },
   {
@@ -33,7 +33,7 @@
     ]
    },
    "expect": {
-    "text": "@book{lazarillo1554,\n  title = {{La} vida de {Lazarillo} de {Tormes} y de sus fortunas y adversidades},\n  year = {1554},\n  publisher = {Juan de Junta},\n  address = {Burgos},\n  language = {es},\n  note = {SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.}\n}\n"
+    "text": "@book{lazarillo1921,\n  title = {{El} {Lazarillo} de {Tormes}},\n  year = {1921},\n  address = {Madrid},\n  series = {Colección Universal},\n  language = {es},\n  note = {SPDF conformance document: pages 9-12 of the Madrid 1921 edition (Colección Universal 510), transcribed literally from validated Wikisource pages; modern spelling as in that edition. Pages 9 and 11 carry no printed number: their folios are inferred from pages 10 and 12.}\n}\n"
    }
   },
   {
@@ -45,7 +45,19 @@
     ]
    },
    "expect": {
-    "text": "@book{anonnd,\n  author = {{孔子}},\n  title = {論語},\n  language = {lzh},\n  note = {SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.}\n}\n"
+    "text": "@book{anonnd,\n  author = {{孔子}},\n  title = {論語},\n  language = {lzh},\n  note = {SPDF conformance document: Analects 1.1-1.4, 2.1 and 2.15, copied literally from Chinese Wikisource (論語/學而第一 and 論語/爲政第二). The original of this document is that plain-text excerpt; source_sha256 is its SHA-256.}\n}\n"
+   }
+  },
+  {
+   "id": "export-bibtex-minimo-incollection",
+   "kind": "export_bibtex",
+   "input": {
+    "files": [
+     "files/minimo.spdf"
+    ]
+   },
+   "expect": {
+    "text": "@incollection{becquer1885,\n  author = {Bécquer, Gustavo Adolfo},\n  title = {{Rimas}},\n  year = {1885},\n  booktitle = {{Obras} de {Gustavo} {A.} {Bécquer}},\n  publisher = {Librería de Fernando Fe},\n  address = {Madrid},\n  volume = {III},\n  language = {es},\n  note = {SPDF conformance document: Rima XXI and the first stanza of Rima LIII, transcribed literally from Wikisource (Obras de Gustavo A. Bécquer, vol. III, Madrid, 1885). The printed «proguntas» is an error of that edition, checked on the facsimile, and is kept.}\n}\n"
    }
   },
   {
@@ -57,7 +69,7 @@
     ]
    },
    "expect": {
-    "text": "@book{garcilasodelavega1580,\n  author = {{Garcilaso de la Vega}},\n  editor = {Herrera, Fernando de},\n  title = {{Obras} de {Garcilaso} de la {Vega:} con anotaciones de {Fernando} de {Herrera}},\n  year = {1580},\n  publisher = {Alonso de la Barrera},\n  address = {Sevilla},\n  series = {Prueba de conformidad SPDF},\n  language = {es}\n}\n"
+    "text": "@book{garcilasodelavega1919,\n  author = {{Garcilaso de la Vega}},\n  title = {{Poesías}},\n  year = {1919},\n  address = {Madrid},\n  series = {Colección Universal},\n  language = {es}\n}\n"
    }
   },
   {
@@ -70,7 +82,7 @@
     ]
    },
    "expect": {
-    "text": "@book{cervantessaavedra1605a,\n  author = {Cervantes Saavedra, Miguel de},\n  title = {{El} ingenioso hidalgo don {Quijote} de la {Mancha}},\n  year = {1605},\n  publisher = {Juan de la Cuesta},\n  address = {Madrid},\n  language = {es},\n  note = {SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.}\n}\n\n@book{cervantessaavedra1605b,\n  author = {Cervantes Saavedra, Miguel de},\n  title = {{El} ingenioso hidalgo don {Quijote} de la {Mancha}},\n  year = {1605},\n  publisher = {Juan de la Cuesta},\n  address = {Madrid},\n  language = {es},\n  note = {SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.}\n}\n"
+    "text": "@book{cervantessaavedra1608a,\n  author = {Cervantes Saavedra, Miguel de},\n  title = {{El} ingenioso hidalgo {Don} {Quixote} de la {Mancha}},\n  year = {1608},\n  publisher = {Juan de la Cuesta},\n  address = {Madrid},\n  language = {es},\n  note = {SPDF conformance document: pages of the facsimile of the Madrid 1608 edition (Barcelona, Montaner y Simón, 1897; Internet Archive elingenioso01cerv), transcribed literally from validated Wikisource pages, with long s and abbreviations as printed. The modernized search layer comes from the 1905 Barcelona edition on Wikisource.}\n}\n\n@book{cervantessaavedra1608b,\n  author = {Cervantes Saavedra, Miguel de},\n  title = {{El} ingenioso hidalgo {Don} {Quixote} de la {Mancha}},\n  year = {1608},\n  publisher = {Juan de la Cuesta},\n  address = {Madrid},\n  language = {es},\n  note = {SPDF conformance document: pages of the facsimile of the Madrid 1608 edition (Barcelona, Montaner y Simón, 1897; Internet Archive elingenioso01cerv), transcribed literally from validated Wikisource pages, with long s and abbreviations as printed. The modernized search layer comes from the 1905 Barcelona edition on Wikisource.}\n}\n"
    }
   },
   {
@@ -84,21 +96,29 @@
    "expect": {
     "items": [
      {
-      "id": "lazarillo1554",
+      "id": "lazarillo1921",
       "type": "book",
-      "title": "La vida de Lazarillo de Tormes y de sus fortunas y adversidades",
+      "title": "El Lazarillo de Tormes",
       "title-short": "Lazarillo de Tormes",
       "issued": {
+       "date-parts": [
+        [
+         1921
+        ]
+       ]
+      },
+      "original-date": {
        "date-parts": [
         [
          1554
         ]
        ]
       },
-      "publisher": "Juan de Junta",
-      "publisher-place": "Burgos",
+      "publisher-place": "Madrid",
+      "collection-title": "Colección Universal",
+      "collection-number": "510",
       "language": "es",
-      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy."
+      "note": "SPDF conformance document: pages 9-12 of the Madrid 1921 edition (Colección Universal 510), transcribed literally from validated Wikisource pages; modern spelling as in that edition. Pages 9 and 11 carry no printed number: their folios are inferred from pages 10 and 12."
      }
     ]
    }
@@ -116,7 +136,7 @@
      {
       "id": "kennedy1962",
       "type": "speech",
-      "title": "Address at Rice University on the Nation's Space Effort",
+      "title": "Address at Rice University in Houston on the Nation's Space Effort",
       "author": [
        {
         "family": "Kennedy",
@@ -133,7 +153,8 @@
        ]
       },
       "publisher-place": "Houston",
-      "language": "en"
+      "language": "en",
+      "URL": "https://www.presidency.ucsb.edu/node/236798"
      }
     ]
    }
@@ -147,23 +168,29 @@
     ],
     "anchor": {
      "chars": [
-      101,
-      278
+      729,
+      745
      ],
-     "confidence": 0.98,
+     "confidence": 1,
      "foliation": "leaf",
-     "physical": 5,
-     "printed": "1r",
-     "roman": false,
+     "matter": "body",
+     "physical": 29,
+     "printed": "Ir",
+     "roman": true,
      "source": "read",
      "type": "page"
     },
     "anchor_end": {
-     "confidence": 0.92,
+     "chars": [
+      0,
+      161
+     ],
+     "confidence": 0.9,
      "foliation": "leaf",
-     "physical": 6,
-     "printed": "1v",
-     "roman": false,
+     "matter": "body",
+     "physical": 30,
+     "printed": "Iv",
+     "roman": true,
      "source": "inferred",
      "type": "page"
     }
@@ -180,20 +207,27 @@
       "issued": {
        "date-parts": [
         [
-         1605
+         1608
         ]
        ]
       },
       "language": "es",
-      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+      "note": "SPDF conformance document: pages of the facsimile of the Madrid 1608 edition (Barcelona, Montaner y Simón, 1897; Internet Archive elingenioso01cerv), transcribed literally from validated Wikisource pages, with long s and abbreviations as printed. The modernized search layer comes from the 1905 Barcelona edition on Wikisource.",
+      "original-date": {
+       "date-parts": [
+        [
+         1605
+        ]
+       ]
+      },
       "publisher": "Juan de la Cuesta",
       "publisher-place": "Madrid",
-      "title": "El ingenioso hidalgo don Quijote de la Mancha",
-      "title-short": "Don Quijote",
+      "title": "El ingenioso hidalgo Don Quixote de la Mancha",
+      "title-short": "Don Quixote",
       "type": "book",
-      "id": "cervantessaavedra1605",
+      "id": "cervantessaavedra1608",
       "label": "folio",
-      "locator": "1r-[1v]"
+      "locator": "Ir-[Iv]"
      }
     ]
    }
@@ -207,12 +241,13 @@
     ],
     "anchor": {
      "chars": [
-      0,
-      89
+      10,
+      194
      ],
      "confidence": 1,
      "foliation": "page",
-     "physical": 1,
+     "matter": "front",
+     "physical": 13,
      "printed": null,
      "roman": false,
      "source": "none",
@@ -232,18 +267,25 @@
       "issued": {
        "date-parts": [
         [
-         1605
+         1608
         ]
        ]
       },
       "language": "es",
-      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+      "note": "SPDF conformance document: pages of the facsimile of the Madrid 1608 edition (Barcelona, Montaner y Simón, 1897; Internet Archive elingenioso01cerv), transcribed literally from validated Wikisource pages, with long s and abbreviations as printed. The modernized search layer comes from the 1905 Barcelona edition on Wikisource.",
+      "original-date": {
+       "date-parts": [
+        [
+         1605
+        ]
+       ]
+      },
       "publisher": "Juan de la Cuesta",
       "publisher-place": "Madrid",
-      "title": "El ingenioso hidalgo don Quijote de la Mancha",
-      "title-short": "Don Quijote",
+      "title": "El ingenioso hidalgo Don Quixote de la Mancha",
+      "title-short": "Don Quixote",
       "type": "book",
-      "id": "cervantessaavedra1605"
+      "id": "cervantessaavedra1608"
      }
     ]
    }
@@ -258,11 +300,11 @@
     "anchor": {
      "chars": [
       0,
-      78
+      79
      ],
-     "speaker": "Neil Armstrong",
-     "t0": 4160,
-     "t1": 4175.5,
+     "speaker": "CDR (TRANQ)",
+     "t0": 393888,
+     "t1": 393930,
      "type": "time"
     },
     "anchor_end": null
@@ -285,13 +327,13 @@
        ]
       },
       "language": "en",
-      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
-      "title": "Apollo 11 air-to-ground voice transmissions (excerpts)",
+      "note": "SPDF conformance document: seven transmissions transcribed literally from NASA's Apollo 11 Technical Air-to-Ground Voice Transcription (Manned Spacecraft Center, Houston, 1969). Times are ground elapsed time (GET) in seconds, as in the transcription; each span ends at the next later transmission. The recording itself is not included and source_sha256 is a placeholder; word timings are spread evenly over each span, not measured.",
+      "title": "Apollo 11 air-to-ground voice communications",
       "title-short": "Apollo 11 air-to-ground",
       "type": "broadcast",
       "id": "nationalaeronauticsandspaceadministration1969",
       "label": "timestamp",
-      "locator": "1:09:20"
+      "locator": "109:24:48"
      }
     ]
    }
@@ -323,7 +365,7 @@
        }
       ],
       "language": "lzh",
-      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+      "note": "SPDF conformance document: Analects 1.1-1.4, 2.1 and 2.15, copied literally from Chinese Wikisource (論語/學而第一 and 論語/爲政第二). The original of this document is that plain-text excerpt; source_sha256 is its SHA-256.",
       "title": "論語",
       "type": "book",
       "id": "anonnd",
@@ -342,12 +384,13 @@
     ],
     "anchor": {
      "chars": [
-      0,
-      349
+      796,
+      1145
      ],
-     "confidence": 0.99,
+     "confidence": 1,
      "foliation": "page",
-     "physical": 3,
+     "matter": "body",
+     "physical": 71,
      "printed": "61",
      "roman": false,
      "source": "read",
@@ -372,10 +415,10 @@
        ]
       },
       "language": "en",
-      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+      "note": "SPDF conformance document: pages vii, 1, 5, 61, 84 and 490 of the first edition (1859), transcribed literally from validated English Wikisource pages of the facsimile; page numbers as printed in the running heads (page 1 has none in the transcription and is inferred). Vectors are toy vectors chosen by hand for the suite.",
       "publisher": "John Murray",
       "publisher-place": "London",
-      "title": "On the Origin of Species by Means of Natural Selection",
+      "title": "On the Origin of Species by Means of Natural Selection, or the Preservation of Favoured Races in the Struggle for Life",
       "title-short": "On the Origin of Species",
       "type": "book",
       "id": "darwin1859",
@@ -395,7 +438,7 @@
     "anchor": {
      "chars": [
       0,
-      125
+      124
      ],
      "line_from": 1,
      "line_to": 4,
@@ -412,18 +455,29 @@
         "given": "Gustavo Adolfo"
        }
       ],
+      "container-title": "Obras de Gustavo A. Bécquer",
       "issued": {
+       "date-parts": [
+        [
+         1885
+        ]
+       ]
+      },
+      "language": "es",
+      "note": "SPDF conformance document: Rima XXI and the first stanza of Rima LIII, transcribed literally from Wikisource (Obras de Gustavo A. Bécquer, vol. III, Madrid, 1885). The printed «proguntas» is an error of that edition, checked on the facsimile, and is kept.",
+      "original-date": {
        "date-parts": [
         [
          1871
         ]
        ]
       },
-      "language": "es",
-      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+      "publisher": "Librería de Fernando Fe",
+      "publisher-place": "Madrid",
       "title": "Rimas",
-      "type": "book",
-      "id": "becquer1871",
+      "type": "chapter",
+      "volume": "III",
+      "id": "becquer1885",
       "label": "verse",
       "locator": "1-4"
      }
@@ -443,25 +497,16 @@
       "n": null
      },
      {
-      "n": "ii"
+      "n": null
      },
      {
-      "n": "iii"
+      "n": "Ir"
      },
      {
-      "n": "[iv]"
-     },
-     {
-      "n": "1r"
-     },
-     {
-      "n": "[1v]"
+      "n": "[Iv]"
      },
      {
       "n": "2r"
-     },
-     {
-      "n": "[2v]"
      }
     ]
    }
@@ -479,25 +524,16 @@
       "label": null
      },
      {
-      "label": "ii"
+      "label": null
      },
      {
-      "label": "iii"
+      "label": "Ir"
      },
      {
-      "label": "[iv]"
-     },
-     {
-      "label": "1r"
-     },
-     {
-      "label": "[1v]"
+      "label": "[Iv]"
      },
      {
       "label": "2r"
-     },
-     {
-      "label": "[2v]"
      }
     ]
    }
@@ -512,36 +548,24 @@
    "expect": {
     "pages": [
      {
-      "physical": 1,
+      "physical": 13,
       "printed": null
      },
      {
-      "physical": 2,
-      "printed": "ii"
-     },
-     {
-      "physical": 3,
-      "printed": "iii"
-     },
-     {
-      "physical": 4,
+      "physical": 14,
       "printed": null
      },
      {
-      "physical": 5,
-      "printed": "1r"
+      "physical": 29,
+      "printed": "Ir"
      },
      {
-      "physical": 6,
+      "physical": 30,
       "printed": null
      },
      {
-      "physical": 7,
+      "physical": 31,
       "printed": "2r"
-     },
-     {
-      "physical": 8,
-      "printed": null
      }
     ]
    }
@@ -556,19 +580,16 @@
    "expect": {
     "pages": [
      {
-      "n": null
+      "n": "[9]"
      },
      {
-      "n": "3"
+      "n": "10"
      },
      {
-      "n": "4"
+      "n": "[11]"
      },
      {
-      "n": "5"
-     },
-     {
-      "n": "[6]"
+      "n": "12"
      }
     ]
    }
@@ -583,24 +604,20 @@
    "expect": {
     "pages": [
      {
-      "physical": 1,
+      "physical": 7,
       "printed": null
      },
      {
-      "physical": 2,
-      "printed": "3"
+      "physical": 8,
+      "printed": "10"
      },
      {
-      "physical": 3,
-      "printed": "4"
-     },
-     {
-      "physical": 4,
-      "printed": "5"
-     },
-     {
-      "physical": 5,
+      "physical": 9,
       "printed": null
+     },
+     {
+      "physical": 10,
+      "printed": "12"
      }
     ]
    }
@@ -615,13 +632,10 @@
    "expect": {
     "pages": [
      {
-      "n": null
+      "n": "[7]"
      },
      {
-      "n": "ix"
-     },
-     {
-      "n": "[x]"
+      "n": "159"
      }
     ]
    }
@@ -787,6 +801,24 @@
    "input": {
     "files": [
      "legacy/kennedy-4.0.spdf"
+    ]
+   }
+  },
+  {
+   "id": "export-csl-apolo11-4.1-plain",
+   "kind": "export_csl",
+   "input": {
+    "files": [
+     "legacy/apolo11-4.1.spdf"
+    ]
+   }
+  },
+  {
+   "id": "export-bibtex-apolo11-4.1-plain",
+   "kind": "export_bibtex",
+   "input": {
+    "files": [
+     "legacy/apolo11-4.1.spdf"
     ]
    }
   },

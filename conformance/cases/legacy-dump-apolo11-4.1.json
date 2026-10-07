@@ -1,0 +1,11 @@
+{
+  "expect": {
+    "content_sha256": "eb3812ebfef4dde960d06cfec02e00cfb0d7ab8d5fb748d307aac7a769162acf",
+    "dump": "expected/apolo11-4.1.dump.json"
+  },
+  "id": "legacy-dump-apolo11-4.1",
+  "input": {
+    "file": "legacy/apolo11-4.1.spdf"
+  },
+  "kind": "legacy_dump"
+}

@@ -1,6 +1,6 @@
 {
   "expect": {
-    "text": "@book{cervantessaavedra1605,\n  author = {Cervantes Saavedra, Miguel de},\n  title = {{El} ingenioso hidalgo don {Quijote} de la {Mancha}},\n  year = {1605},\n  publisher = {Juan de la Cuesta},\n  address = {Madrid},\n  language = {es},\n  note = {SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.}\n}\n"
+    "text": "@book{cervantessaavedra1608,\n  author = {Cervantes Saavedra, Miguel de},\n  title = {{El} ingenioso hidalgo {Don} {Quixote} de la {Mancha}},\n  year = {1608},\n  publisher = {Juan de la Cuesta},\n  address = {Madrid},\n  language = {es},\n  note = {SPDF conformance document: pages of the facsimile of the Madrid 1608 edition (Barcelona, Montaner y Simón, 1897; Internet Archive elingenioso01cerv), transcribed literally from validated Wikisource pages, with long s and abbreviations as printed. The modernized search layer comes from the 1905 Barcelona edition on Wikisource.}\n}\n"
   },
   "id": "export-bibtex-quijote-plain",
   "input": {

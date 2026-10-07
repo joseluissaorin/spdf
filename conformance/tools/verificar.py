@@ -44,6 +44,7 @@ KINDS = {
     "export_csl": ({"files"}, {"items"}),
     "export_bibtex": ({"files"}, {"text"}),
     "export_structure": ({"file", "format"}, {"pages"}),
+    "cite_passage": ({"file", "fragment", "quote", "locale"}, {"text", "uri"}),
 }
 TOL = 1e-6
 
@@ -182,6 +183,9 @@ def run_case(c: dict, base: Path = CONF) -> str | None:
             return None if R.jcs(got) == R.jcs(R.canon(e["items"])) else f"got {got}"
         got = R.export_bibtex(items)
         return None if R.normalize_bibtex(got) == R.normalize_bibtex(e["text"]) else f"got {got!r}"
+    if k == "cite_passage":
+        got = R.cite_passage(R.dump_file(base / i["file"]), i["fragment"], i["quote"], i["locale"])
+        return None if R.jcs(got) == R.jcs(R.canon(e)) else f"got {got}"
     if k == "export_structure":
         got = R.export_structure(R.dump_file(base / i["file"]), i["format"])
         return None if R.jcs(got) == R.jcs(R.canon(e)) else f"got {got}"

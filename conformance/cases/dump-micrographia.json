@@ -1,6 +1,6 @@
 {
   "expect": {
-    "content_sha256": "f901e9065225f5f0cc9b2f8ddf0357930f8db8153669f8478d565d2b58d904d6",
+    "content_sha256": "553c2fa18e0a48306ba5423eece0dd25ece78c20a63b1a8e40bbcecca16e1668",
     "dump": "expected/micrographia.dump.json"
   },
   "id": "dump-micrographia",

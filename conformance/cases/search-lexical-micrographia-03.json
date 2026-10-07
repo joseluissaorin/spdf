@@ -1,17 +1,11 @@
 {
   "expect": {
-    "match": "\"description\" OR \"intruding\"",
+    "match": "\"Crown\" OR \"officious\"",
     "results": [
       {
-        "anchor_uri": "spdf:sha256-4501ef3a079e09d5556746bba9fc26e261aa6cbc5d47b056382d400ec1523bfd#p=1&f=210&char=26,142",
-        "fragment_id": "m1",
-        "score": 0.000001,
-        "via": ["lexical"]
-      },
-      {
-        "anchor_uri": "spdf:sha256-4501ef3a079e09d5556746bba9fc26e261aa6cbc5d47b056382d400ec1523bfd#p=2&f=211&char=26,198",
+        "anchor_uri": "spdf:sha256-ba9d5d9537d3088ed539bf3acd7bb626b05d73a65dc373653c7e226ce9fc0dd6#p=321&f=211&char=818,1107",
         "fragment_id": "m2",
-        "score": 0.000001,
+        "score": 0.000002,
         "via": ["lexical"]
       }
     ],
@@ -21,7 +15,7 @@
   "input": {
     "file": "files/micrographia.spdf",
     "limit": 10,
-    "query": "description intruding"
+    "query": "Crown officious"
   },
   "kind": "search_lexical"
 }

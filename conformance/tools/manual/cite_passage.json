@@ -1,0 +1,197 @@
+[
+ {
+  "id": "cite-passage-before-plate-es",
+  "input": {
+   "file": "invalid/W103-fragment-crosses-matter.spdf",
+   "fragment": "m3",
+   "quote": "it has a small proboscis, or probe, N N O",
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Hooke, 1665, p. 210)",
+   "uri": "spdf:sha256-ba9d5d9537d3088ed539bf3acd7bb626b05d73a65dc373653c7e226ce9fc0dd6#p=318&f=210&char=2815,2856"
+  }
+ },
+ {
+  "id": "cite-passage-before-plate-en",
+  "input": {
+   "file": "invalid/W103-fragment-crosses-matter.spdf",
+   "fragment": "m3",
+   "quote": "it has a small proboscis, or probe, N N O",
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Hooke, 1665, p. 210)",
+   "uri": "spdf:sha256-ba9d5d9537d3088ed539bf3acd7bb626b05d73a65dc373653c7e226ce9fc0dd6#p=318&f=210&char=2815,2856"
+  }
+ },
+ {
+  "id": "cite-passage-in-plate-es",
+  "input": {
+   "file": "invalid/W103-fragment-crosses-matter.spdf",
+   "fragment": "m3",
+   "quote": "Schem. XXXIV.",
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Hooke, 1665, s. p.)",
+   "uri": "spdf:sha256-ba9d5d9537d3088ed539bf3acd7bb626b05d73a65dc373653c7e226ce9fc0dd6#p=319&char=0,13"
+  }
+ },
+ {
+  "id": "cite-passage-in-plate-en",
+  "input": {
+   "file": "invalid/W103-fragment-crosses-matter.spdf",
+   "fragment": "m3",
+   "quote": "Schem. XXXIV.",
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Hooke, 1665, n. pag.)",
+   "uri": "spdf:sha256-ba9d5d9537d3088ed539bf3acd7bb626b05d73a65dc373653c7e226ce9fc0dd6#p=319&char=0,13"
+  }
+ },
+ {
+  "id": "cite-passage-after-plate-es",
+  "input": {
+   "file": "invalid/W103-fragment-crosses-matter.spdf",
+   "fragment": "m4",
+   "quote": "which I have perceiv'd him to slip in and out",
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Hooke, 1665, p. 211)",
+   "uri": "spdf:sha256-ba9d5d9537d3088ed539bf3acd7bb626b05d73a65dc373653c7e226ce9fc0dd6#p=321&f=211&char=36,81"
+  }
+ },
+ {
+  "id": "cite-passage-across-plate-es",
+  "input": {
+   "file": "invalid/W103-fragment-crosses-matter.spdf",
+   "fragment": "m4",
+   "quote": "XXXIV.\ntube N N",
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Hooke, 1665, p. 211)",
+   "uri": "spdf:sha256-ba9d5d9537d3088ed539bf3acd7bb626b05d73a65dc373653c7e226ce9fc0dd6#p=319&pe=321&fe=211"
+  }
+ },
+ {
+  "id": "cite-passage-after-plate-en",
+  "input": {
+   "file": "invalid/W103-fragment-crosses-matter.spdf",
+   "fragment": "m4",
+   "quote": "which I have perceiv'd him to slip in and out",
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Hooke, 1665, p. 211)",
+   "uri": "spdf:sha256-ba9d5d9537d3088ed539bf3acd7bb626b05d73a65dc373653c7e226ce9fc0dd6#p=321&f=211&char=36,81"
+  }
+ },
+ {
+  "id": "cite-passage-across-plate-en",
+  "input": {
+   "file": "invalid/W103-fragment-crosses-matter.spdf",
+   "fragment": "m4",
+   "quote": "XXXIV.\ntube N N",
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Hooke, 1665, p. 211)",
+   "uri": "spdf:sha256-ba9d5d9537d3088ed539bf3acd7bb626b05d73a65dc373653c7e226ce9fc0dd6#p=319&pe=321&fe=211"
+  }
+ },
+ {
+  "id": "cite-passage-leaf-verso-es",
+  "input": {
+   "file": "files/quijote.spdf",
+   "fragment": "q5",
+   "quote": "vna ama que paſſaua de los quarenta",
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1608, fol. [Iv])",
+   "uri": "spdf:sha256-27ea8a4dd0bbf0a511246fe67f81c19084aa2da75c871fe7acde688fd182cb60#p=30&f=Iv&char=0,35"
+  }
+ },
+ {
+  "id": "cite-passage-leaf-recto-es",
+  "input": {
+   "file": "files/quijote.spdf",
+   "fragment": "q5",
+   "quote": "Tenia en ſu caſa",
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1608, fol. Ir)",
+   "uri": "spdf:sha256-27ea8a4dd0bbf0a511246fe67f81c19084aa2da75c871fe7acde688fd182cb60#p=29&f=Ir&char=729,745"
+  }
+ },
+ {
+  "id": "cite-passage-leaf-across-es",
+  "input": {
+   "file": "files/quijote.spdf",
+   "fragment": "q5",
+   "quote": "Tenia en ſu caſa vna ama",
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1608, fols. Ir-[Iv])",
+   "uri": "spdf:sha256-27ea8a4dd0bbf0a511246fe67f81c19084aa2da75c871fe7acde688fd182cb60#p=29&pe=30&f=Ir&fe=Iv"
+  }
+ },
+ {
+  "id": "cite-passage-single-unit-en",
+  "input": {
+   "file": "files/quijote.spdf",
+   "fragment": "q4",
+   "quote": "rozin flaco",
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(Cervantes Saavedra, 1608, fol. Ir)",
+   "uri": "spdf:sha256-27ea8a4dd0bbf0a511246fe67f81c19084aa2da75c871fe7acde688fd182cb60#p=29&f=Ir&char=315,326"
+  }
+ },
+ {
+  "id": "cite-passage-time-end-unit-en",
+  "input": {
+   "file": "files/apolo11.spdf",
+   "fragment": "a5-7",
+   "quote": "Magnificent desolation.",
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(National Aeronautics and Space Administration, 1969, 109:43:24)",
+   "uri": "spdf:sha256-c9f25c86982e2335a82641d8accb29c5d6771443c40257e33b0a6ecf78895906#t=395004,395027&char=15,38"
+  }
+ },
+ {
+  "id": "cite-passage-time-start-unit-en",
+  "input": {
+   "file": "files/apolo11.spdf",
+   "fragment": "a5-7",
+   "quote": "Beautiful view!",
+   "locale": "en"
+  },
+  "expect": {
+   "text": "(National Aeronautics and Space Administration, 1969, 109:43:16)",
+   "uri": "spdf:sha256-c9f25c86982e2335a82641d8accb29c5d6771443c40257e33b0a6ecf78895906#t=394996,394998&char=15,30"
+  }
+ },
+ {
+  "id": "cite-passage-time-across-es",
+  "input": {
+   "file": "files/apolo11.spdf",
+   "fragment": "a5-7",
+   "quote": "view!\n**CDR (EVA):**",
+   "locale": "es"
+  },
+  "expect": {
+   "text": "(National Aeronautics and Space Administration, 1969, 109:43:16-109:43:47)",
+   "uri": "spdf:sha256-c9f25c86982e2335a82641d8accb29c5d6771443c40257e33b0a6ecf78895906#t=394996,395027"
+  }
+ }
+]

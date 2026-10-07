@@ -1,0 +1,15 @@
+{
+  "expect": {
+    "char": null,
+    "document": true,
+    "fragments": ["q5", "q6", "q7"],
+    "units": ["p30"],
+    "xywh": null
+  },
+  "id": "locate-quijote-folio-end-anchor",
+  "input": {
+    "file": "files/quijote.spdf",
+    "reference": "spdf:sha256-27ea8a4dd0bbf0a511246fe67f81c19084aa2da75c871fe7acde688fd182cb60#f=Iv"
+  },
+  "kind": "locate"
+}

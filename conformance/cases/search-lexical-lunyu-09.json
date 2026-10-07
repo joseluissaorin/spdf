@@ -1,0 +1,21 @@
+{
+  "expect": {
+    "match": null,
+    "results": [
+      {
+        "anchor_uri": "spdf:sha256-81a81ee712e0186cfc5b620aa14271523df036e91afbf0fc93bc72d48974e6fd#ref=analects:2.1&char=0,25",
+        "fragment_id": "lunyu-2.1",
+        "score": 1,
+        "via": ["lexical"]
+      }
+    ],
+    "route": "substring"
+  },
+  "id": "search-lexical-lunyu-09",
+  "input": {
+    "file": "files/lunyu.spdf",
+    "limit": 10,
+    "query": "爲政"
+  },
+  "kind": "search_lexical"
+}

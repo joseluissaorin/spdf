@@ -1,11 +1,11 @@
 {
   "expect": {
-    "match": "\"hijo seco\" AND \"entendimiento\"",
+    "match": "\"monda y desnuda\" AND \"sonetos\"",
     "results": [
       {
-        "anchor_uri": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=3&pe=4&f=iii&fe=iv&char=0,101",
+        "anchor_uri": "spdf:sha256-27ea8a4dd0bbf0a511246fe67f81c19084aa2da75c871fe7acde688fd182cb60#p=14&char=221,419",
         "fragment_id": "q3",
-        "score": 1.560137,
+        "score": 4.637727,
         "via": ["lexical"]
       }
     ],
@@ -15,7 +15,7 @@
   "input": {
     "file": "files/quijote.spdf",
     "limit": 10,
-    "query": "“hijo seco” «entendimiento»"
+    "query": "“monda y desnuda” «sonetos»"
   },
   "kind": "search_lexical"
 }

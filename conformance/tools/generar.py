@@ -40,7 +40,7 @@ import spdfref as R  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 CONF = HERE.parent
-SUITE_VERSION = "0.4.0"
+SUITE_VERSION = "0.4.1"
 # Public test key. NEVER use it for anything but this suite.
 TEST_SECRET = hashlib.sha256(b"SPDF conformance test key: public, never use it for real signatures").digest()
 SIGNED = {"quijote"}
@@ -220,6 +220,24 @@ def build_invalid(out: Path, sources: dict) -> list[tuple[str, dict]]:
     _mutate(fresh("OK-integral-number"), "UPDATE units SET anchor = '{\"paragraph\":1.0,\"path\":[\"XXI\"],\"type\":\"section\"}' WHERE id = 'u1'",
             "UPDATE fragments SET anchor = '{\"chars\":[0.0,111],\"line_from\":1.0,\"line_to\":4,\"type\":\"verse\"}' WHERE id = 'f1'")
     expect("OK-integral-number")
+    # W103: fragments that cross from a page with a folio into a plate without one, and back
+    mic = json.loads(json.dumps(sources["micrographia"]))
+    units = {u["id"]: u for u in mic["units"]}
+    t318, t319, t321 = units["p318"]["text"], units["p319"]["text"], units["p321"]["text"]
+    tail = "it has a small proboscis, or probe, N N O, that seems to consist of a"
+    head = "tube N N, and a tongue or sucker O, which I have perceiv'd him to slip in and out."
+    check(t318.endswith(tail) and t321.startswith(head), "micrographia page texts changed")
+    strip = lambda a: {k: v for k, v in a.items() if k != "chars"}
+    a318, a319, a321 = strip(units["p318"]["anchor"]), strip(units["p319"]["anchor"]), strip(units["p321"]["anchor"])
+    mic["fragments"] += [
+        {"n": 3, "id": "m3", "unit": "p318", "ord": 3, "text": tail + "\n" + t319, "context": "Hooke: end of page 210 and the plate.",
+         "section": ["Observ. LIII. Of a Flea."], "anchor": dict(a318, chars=[len(t318) - len(tail), len(t318)]),
+         "anchor_end": dict(a319, chars=[0, len(t319)]), "search_text": ""},
+        {"n": 4, "id": "m4", "unit": "p319", "ord": 4, "text": t319 + "\n" + head, "context": "Hooke: the plate and the start of page 211.",
+         "section": ["Observ. LIII. Of a Flea."], "anchor": dict(a319, chars=[0, len(t319)]),
+         "anchor_end": dict(a321, chars=[0, len(head)]), "search_text": ""}]
+    R.write_50(mic, inv / "W103-fragment-crosses-matter.spdf", page_size=1024)
+    expect("W103-fragment-crosses-matter", warnings=["W103"])
     _mutate(fresh("W100-semantic-without-vectors"), "UPDATE spdf_meta SET value = 'core semantic' WHERE key = 'profile'")
     expect("W100-semantic-without-vectors", warnings=["W100"])
     _mutate(fresh("W101-media-without-time"), "UPDATE spdf_meta SET value = 'core media' WHERE key = 'profile'")
@@ -370,7 +388,8 @@ def build_cases(out: Path, dumps: dict, legacy: dict, invalid: list) -> list[dic
 
     for c in R.read_json(HERE / "manual" / "locate.json"):
         i, e = R.canon(c["input"]), R.canon(c["expect"])
-        got = R.locate(all_dumps[i["file"]], i["reference"])
+        d = all_dumps.get(i["file"]) or R.dump_file(out / i["file"])
+        got = R.locate(d, i["reference"])
         check(same(got, e), f"{c['id']}: reference locates {got}, the hand-written case says {e}")
         add(c["id"], "locate", i, e)
 
@@ -394,6 +413,13 @@ def build_cases(out: Path, dumps: dict, legacy: dict, invalid: list) -> list[dic
     for c in ex["computed"]:
         i = R.canon(c["input"])
         add(c["id"], c["kind"], i, run_export(c["kind"], i))
+
+    for c in R.read_json(HERE / "manual" / "cite_passage.json"):
+        i, e = R.canon(c["input"]), R.canon(c["expect"])
+        d = all_dumps.get(i["file"]) or R.dump_file(out / i["file"])
+        got = R.cite_passage(d, i["fragment"], i["quote"], i["locale"])
+        check(same(got, e), f"{c['id']}: reference gives {got}, the hand-written case says {e}")
+        add(c["id"], "cite_passage", i, e)
 
     for c in R.read_json(HERE / "manual" / "cite.json"):
         i = R.canon(c["input"])

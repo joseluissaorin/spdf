@@ -4,35 +4,37 @@
    "hidalgo",
    "lanza astillero",
    "\"de cuyo nombre no quiero acordarme\"",
-   "rocin",
+   "rocín",
    "Hidalgo hidalgo HIDALGO",
    "«libros de caballerías» hacienda",
-   "Prólogo",
+   "Prologo",
    "xyzzy",
    "¿?¡!",
-   "“hijo seco” «entendimiento»"
+   "“monda y desnuda” «sonetos»",
+   "aſtillero",
+   "Quixote"
   ],
   "lazarillo": [
    "González",
-   "Gonçales",
+   "\"Antona Pérez\"",
    "vuestra merced",
-   "baxos",
-   "bajos",
    "olvido",
-   "ſepultura",
-   "\"Thome Gonçales\""
+   "caballerizas",
+   "fue Tormes",
+   "Plinio"
   ],
   "apolo11": [
    "Eagle landed",
    "\"one giant leap\"",
    "magnificent",
-   "Armstrong",
-   "Tranquility"
+   "Tranquility",
+   "CDR",
+   "desolation"
   ],
   "micrographia": [
    "flea",
    "creature",
-   "description intruding"
+   "Crown officious"
   ],
   "darwin": [
    "natural selection",
@@ -49,7 +51,8 @@
    "「學而不思」",
    "子曰",
    "仁",
-   "“學而時”"
+   "“學而時”",
+   "爲政"
   ]
  },
  "lexical_limit": 10,
@@ -143,7 +146,7 @@
     0.25,
     0.5
    ],
-   "limit": 5
+   "limit": 6
   },
   {
    "file": "micrographia",
@@ -155,7 +158,7 @@
     0.25,
     0
    ],
-   "limit": 2
+   "limit": 4
   },
   {
    "file": "micrographia",

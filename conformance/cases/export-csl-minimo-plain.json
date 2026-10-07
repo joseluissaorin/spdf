@@ -8,16 +8,25 @@
             "given": "Gustavo Adolfo"
           }
         ],
-        "id": "becquer1871",
+        "container-title": "Obras de Gustavo A. Bécquer",
+        "id": "becquer1885",
         "issued": {
+          "date-parts": [
+            [1885]
+          ]
+        },
+        "language": "es",
+        "note": "SPDF conformance document: Rima XXI and the first stanza of Rima LIII, transcribed literally from Wikisource (Obras de Gustavo A. Bécquer, vol. III, Madrid, 1885). The printed «proguntas» is an error of that edition, checked on the facsimile, and is kept.",
+        "original-date": {
           "date-parts": [
             [1871]
           ]
         },
-        "language": "es",
-        "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+        "publisher": "Librería de Fernando Fe",
+        "publisher-place": "Madrid",
         "title": "Rimas",
-        "type": "book"
+        "type": "chapter",
+        "volume": "III"
       }
     ]
   },

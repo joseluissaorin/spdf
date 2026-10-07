@@ -1,37 +1,43 @@
 {
   "blobs": [
     {
-      "bytes": 73,
-      "key": "figures/flea.png",
-      "mime": "image/png",
-      "sha256": "e1e3f5a05c82b5bedbc2ba4ba821faa02cba927c6165af0c60b0287240468aae"
+      "bytes": 2392,
+      "key": "pages/0318.jpg",
+      "mime": "image/jpeg",
+      "sha256": "f31172b4c2778d813a68f44328c83c79feb121cb96dc1766f52e14b8051a40e2"
     },
     {
-      "bytes": 74,
-      "key": "pages/0001.png",
-      "mime": "image/png",
-      "sha256": "f3b90163840f55b2df0362cec73845fe60df5a60115727e44d7145ff7926f998"
+      "bytes": 3488,
+      "key": "pages/0319.jpg",
+      "mime": "image/jpeg",
+      "sha256": "64349f41fd55fe4b238e03404474e7ea8364e05f676ce1ed940b102137210f03"
     },
     {
-      "bytes": 74,
-      "key": "pages/0002.png",
-      "mime": "image/png",
-      "sha256": "367dc35fe74787fa82b07f1dedbeec72384278edf8783e941447324a08d0f943"
+      "bytes": 2176,
+      "key": "pages/0321.jpg",
+      "mime": "image/jpeg",
+      "sha256": "fff42bb90c7f8b1bb8c364bc7bed1acb3c75192885f3206ec7fc0266474663d0"
     },
     {
-      "bytes": 73,
-      "key": "thumbs/0001.png",
-      "mime": "image/png",
-      "sha256": "cb55181ba0027e827bb8cd096a1b2d18286a71d1bb237f5910f6048672d1c830"
+      "bytes": 3073,
+      "key": "pages/0323.jpg",
+      "mime": "image/jpeg",
+      "sha256": "6f56ea0b87d509c6eda53a8b82ce0329c74e88b4c9103f60827a4578e3d8686c"
+    },
+    {
+      "bytes": 1384,
+      "key": "thumbs/0318.jpg",
+      "mime": "image/jpeg",
+      "sha256": "590ce7913f2f081d215f70d6b2b436eefb2166a3575ce16131ac14d151c0a6ed"
     }
   ],
   "document": {
     "authors": "Hooke",
-    "bytes": 1048576,
+    "bytes": 74523910,
     "created": "2026-10-07T00:00:00Z",
     "duration": null,
     "id": "micrographia-1665",
-    "kind": "scanned_pdf",
+    "kind": "photos",
     "language": "en",
     "metadata": {
       "author": [
@@ -46,24 +52,24 @@
         ]
       },
       "language": "en",
-      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+      "note": "SPDF conformance document: pages 210-211 and the plates Schem. XXXIV and XXXV, transcribed literally from validated English Wikisource pages of the 1665 edition. Figure regions were measured approximately on the Commons page images; the page images are small thumbnails of those scans.",
       "publisher": "Jo. Martyn and Ja. Allestry",
       "publisher-place": "London",
-      "title": "Micrographia: or some physiological descriptions of minute bodies made by magnifying glasses",
+      "title": "Micrographia: or some physiological descriptions of minute bodies made by magnifying glasses. With observations and inquiries thereupon",
       "title-short": "Micrographia",
       "type": "book"
     },
-    "mime": "application/pdf",
+    "mime": "image/vnd.djvu",
     "rights": {
       "access": "open",
       "holder": null,
       "license": "https://creativecommons.org/publicdomain/mark/1.0/",
-      "note": "Public-domain work. Synthetic layout built for the SPDF conformance suite."
+      "note": "Public domain work. Facsimile and transcription from Wikimedia Commons and Wikisource."
     },
-    "source_ref": null,
-    "source_sha256": "4501ef3a079e09d5556746bba9fc26e261aa6cbc5d47b056382d400ec1523bfd",
-    "title": "Micrographia: or some physiological descriptions of minute bodies made by magnifying glasses",
-    "unit_count": 2,
+    "source_ref": "https://upload.wikimedia.org/wikipedia/commons/b/be/Micrographia_-_or_some_physiological_descriptions_of_minute_bodies_made_by_magnifying_glasses_with_observations_and_inquiries_thereupon.djvu",
+    "source_sha256": "ba9d5d9537d3088ed539bf3acd7bb626b05d73a65dc373653c7e226ce9fc0dd6",
+    "title": "Micrographia: or some physiological descriptions of minute bodies made by magnifying glasses. With observations and inquiries thereupon",
+    "unit_count": 4,
     "updated": "2026-10-07T00:00:00Z",
     "year": 1665
   },
@@ -71,56 +77,59 @@
   "figures": [
     {
       "anchor": {
-        "confidence": 0.95,
+        "confidence": 1,
         "foliation": "page",
-        "physical": 1,
-        "printed": "210",
+        "matter": "plate",
+        "physical": 319,
+        "printed": null,
         "region": {
-          "h": 0.5,
-          "w": 0.8,
-          "x": 0.1,
-          "y": 0.25
+          "h": 0.88,
+          "w": 0.86,
+          "x": 0.03,
+          "y": 0.08
         },
         "roman": false,
-        "source": "read",
+        "source": "none",
         "type": "page"
       },
-      "caption": "A flea, as seen through the microscope.",
-      "description": "Engraving of a flea in profile, its legs extended and its body covered in jointed plates.",
+      "caption": "Schem. XXXIV.",
+      "description": "Engraving of a flea seen in profile, its legs and mouthparts lettered A to I for the description in the text.",
       "id": "fig-flea",
-      "image": "blob:figures/flea.png",
-      "unit": "p1"
+      "image": "blob:pages/0319.jpg",
+      "unit": "p319"
     },
     {
       "anchor": {
-        "confidence": 0.95,
+        "confidence": 1,
         "foliation": "page",
-        "physical": 2,
-        "printed": "211",
+        "matter": "plate",
+        "physical": 323,
+        "printed": null,
         "region": {
-          "h": 0.333333,
-          "w": 0.75,
-          "x": 0.125,
-          "y": 0.3
+          "h": 0.95,
+          "w": 0.96,
+          "x": 0.01,
+          "y": 0.02
         },
         "roman": false,
-        "source": "read",
+        "source": "none",
         "type": "page"
       },
-      "caption": "A louse, holding a human hair.",
-      "description": "Engraving of a louse seen from above, clinging to a single hair.",
+      "caption": "Schem. XXXV.",
+      "description": "Engraving of a louse seen from above, clinging to a human hair, its parts lettered for the description in the text.",
       "id": "fig-louse",
-      "image": "blob:pages/0002.png",
-      "unit": "p2"
+      "image": "blob:pages/0323.jpg",
+      "unit": "p323"
     }
   ],
   "fragments": [
     {
       "anchor": {
-        "chars": [26, 142],
-        "confidence": 0.95,
+        "chars": [989, 1105],
+        "confidence": 1,
         "foliation": "page",
-        "physical": 1,
+        "matter": "body",
+        "physical": 318,
         "printed": "210",
         "roman": false,
         "source": "read",
@@ -132,16 +141,17 @@
       "n": 1,
       "ord": 1,
       "search_text": "",
-      "section": ["Observ. LIII. Of a Flea"],
+      "section": ["Observ. LIII. Of a Flea."],
       "text": "The strength and beauty of this small creature, had it no other relation at all to man, would deserve a description.",
-      "unit": "p1"
+      "unit": "p318"
     },
     {
       "anchor": {
-        "chars": [26, 198],
-        "confidence": 0.95,
+        "chars": [818, 1107],
+        "confidence": 1,
         "foliation": "page",
-        "physical": 2,
+        "matter": "body",
+        "physical": 321,
         "printed": "211",
         "roman": false,
         "source": "read",
@@ -153,9 +163,9 @@
       "n": 2,
       "ord": 2,
       "search_text": "",
-      "section": ["Observ. LIV. Of a Louse"],
-      "text": "This is a Creature so officious, that 'twill be known to every one at one time or other, so busie, and so impudent, that it will be intruding it self in every ones company.",
-      "unit": "p2"
+      "section": ["Observ. LIV. Of a Louse."],
+      "text": "THis is a Creature so officious, that 'twill be known to every one at one time or other, so busie, and so impudent, that it will be intruding it self in every ones company, and so proud and aspiring withall, that it fears not to trample on the best, and affects nothing so much as a Crown;",
+      "unit": "p321"
     }
   ],
   "fts": {
@@ -173,23 +183,49 @@
     {
       "at": "2026-10-07T00:00:00Z",
       "detail": {
-        "dims": 4,
-        "targets": ["fragment", "unit", "figure"]
+        "accessed": "2026-10-07",
+        "edition": "Micrographia, London, Jo. Martyn and Ja. Allestry, 1665; Commons File:Micrographia - or some physiological descriptions of minute bodies made by magnifying glasses with observations and inquiries thereupon.djvu, SHA-1 d79c0d7024cc8c193cbf5b3e35f6c363a5923e5e",
+        "license": "Text: public domain; Wikisource transcription under CC BY-SA 4.0",
+        "pages": [
+          {
+            "revision": 9089412,
+            "title": "Page:Micrographia - or some physiological descriptions of minute bodies made by magnifying glasses with observations and inquiries thereupon.djvu/318",
+            "url": "https://en.wikisource.org/w/index.php?oldid=9089412"
+          },
+          {
+            "revision": 9138282,
+            "title": "Page:Micrographia - or some physiological descriptions of minute bodies made by magnifying glasses with observations and inquiries thereupon.djvu/319",
+            "url": "https://en.wikisource.org/w/index.php?oldid=9138282"
+          },
+          {
+            "revision": 9089442,
+            "title": "Page:Micrographia - or some physiological descriptions of minute bodies made by magnifying glasses with observations and inquiries thereupon.djvu/321",
+            "url": "https://en.wikisource.org/w/index.php?oldid=9089442"
+          },
+          {
+            "revision": 9138283,
+            "title": "Page:Micrographia - or some physiological descriptions of minute bodies made by magnifying glasses with observations and inquiries thereupon.djvu/323",
+            "url": "https://en.wikisource.org/w/index.php?oldid=9138283"
+          }
+        ],
+        "regions": "measured approximately on the 960 px Commons page images of DjVu pages 319 and 323"
       },
-      "model": "toy-clip",
-      "ms": 1,
-      "provider": "spdf-conformance",
-      "stage": "embedding"
+      "model": null,
+      "ms": null,
+      "provider": "Wikisource",
+      "stage": "source-text"
     },
     {
       "at": "2026-10-07T00:00:00Z",
       "detail": {
-        "figures": 2
+        "dims": 4,
+        "note": "toy vectors chosen by hand for the suite",
+        "targets": ["fragment", "unit", "figure"]
       },
-      "model": "gemma-4-e4b",
-      "ms": 2400,
-      "provider": "local",
-      "stage": "figures"
+      "model": "toy-clip",
+      "ms": null,
+      "provider": "spdf-conformance",
+      "stage": "embedding"
     }
   ],
   "sections": [],
@@ -212,59 +248,113 @@
   "units": [
     {
       "anchor": {
-        "confidence": 0.95,
+        "confidence": 1,
         "foliation": "page",
-        "physical": 1,
+        "matter": "body",
+        "physical": 318,
         "printed": "210",
         "roman": false,
         "source": "read",
         "type": "page"
       },
       "confidence": 1,
-      "footer": null,
-      "header": null,
-      "id": "p1",
-      "image": "blob:pages/0001.png",
+      "footer": "tube,",
+      "header": "210 Micrographia.",
+      "id": "p318",
+      "image": "blob:pages/0318.jpg",
       "notes": null,
       "ord": 1,
       "printed": "210",
-      "reader": "pdf-text-layer",
+      "reader": "wikisource-transcription",
       "t0": null,
       "t1": null,
-      "text": "Observ. LIII. Of a Flea.\n\nThe strength and beauty of this small creature, had it no other relation at all to man, would deserve a description.",
-      "thumbnail": "blob:thumbs/0001.png",
+      "text": "through so many scourings, washings, dressings and dryings, as the parts of old Paper must necessarily have suffer'd; the digestive faculty, it seems, of these little creatures being able yet further to work upon those stubborn parts, and reduce them into another form.\n\nAnd indeed, when I consider what a heap of Saw-dust or chips this little creature (which is one of the teeth of Time) conveys into its intrals, I cannot chuse but remember and admire the excellent contrivance of Nature, in placing in Animals such a fire, as is continually nourished and supply'd by the materials convey'd into the stomach, and fomented by the bellows of the lungs; and in so contriving the most admirable fabrick of Animals, as to make the very spending and wasting of that fire, to be instrumental to the procuring and collecting more materials to augment and cherish it self, which indeed seems to be the principal end of all the contrivances observable in bruit Animals.\n\nObserv. LIII. Of a Flea.\n\nThe strength and beauty of this small creature, had it no other relation at all to man, would deserve a description.\n\nFor its strength, the Microscope is able to make no greater discoveries of it then the naked eye, but onely the curious contrivance of its leggs and joints, for the exerting that strength, is very plainly manifested, such as no other creature, I have yet observ'd, has any thing like it; for the joints of it are so adapted, that he can, as 'twere, fold them short one within another, and suddenly stretch, or spring them out to their whole length, that is, of the fore-leggs, the part A, of the 34. Scheme, lies within B, and B within C, parallel to, or side by side each other; but the parts of the two next, lie quite contrary, that is, D without E, and E without F, but parallel also; but the parts of the hinder leggs, G, H and I, bend one within another, like the parts of a double jointed Ruler, or like the foot, legg and thigh of a man; these six leggs he clitches up altogether, and when he leaps, springs them all out, and thereby exerts his whole strength at once.\n\nBut, as for the beauty of it, the Microscope manifests it to be all over adorn'd with a curiously polish'd suit of sable Armour, neatly jointed, and beset with multitudes of sharp pinns, shap'd almost like Porcupine's Quills, or bright conical Steel-bodkins; the head is on either side beautify'd with a quick and round black eye K, behind each of which also appears a small cavity, L, in which he seems to move to and fro a certain thin film beset with many small transparent hairs, which probably may be his ears; in the forepart of his head, between the two fore-leggs, he has two small long jointed feelers, or rather smellers, M M, which have four joints, and are hairy, like those of several other creatures; between these, it has a small proboscis, or probe, N N O, that seems to consist of a",
+      "thumbnail": "blob:thumbs/0318.jpg",
       "words": null
     },
     {
       "anchor": {
-        "confidence": 0.95,
+        "confidence": 1,
         "foliation": "page",
-        "physical": 2,
+        "matter": "plate",
+        "physical": 319,
+        "printed": null,
+        "roman": false,
+        "source": "none",
+        "type": "page"
+      },
+      "confidence": 1,
+      "footer": null,
+      "header": null,
+      "id": "p319",
+      "image": "blob:pages/0319.jpg",
+      "notes": null,
+      "ord": 2,
+      "printed": null,
+      "reader": "wikisource-transcription",
+      "t0": null,
+      "t1": null,
+      "text": "Schem. XXXIV.",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 1,
+        "foliation": "page",
+        "matter": "body",
+        "physical": 321,
         "printed": "211",
         "roman": false,
         "source": "read",
         "type": "page"
       },
       "confidence": 1,
-      "footer": null,
-      "header": null,
-      "id": "p2",
-      "image": "blob:pages/0002.png",
+      "footer": "F f 2 two",
+      "header": "Micrographia. 211",
+      "id": "p321",
+      "image": "blob:pages/0321.jpg",
       "notes": null,
-      "ord": 2,
+      "ord": 3,
       "printed": "211",
-      "reader": "pdf-text-layer",
+      "reader": "wikisource-transcription",
       "t0": null,
       "t1": null,
-      "text": "Observ. LIV. Of a Louse.\n\nThis is a Creature so officious, that 'twill be known to every one at one time or other, so busie, and so impudent, that it will be intruding it self in every ones company.",
+      "text": "tube N N, and a tongue or sucker O, which I have perceiv'd him to slip in and out. Besides these, it has also two chaps or biters P P, which are somewhat like those of an Ant, but I could not perceive them tooth'd; these were shap'd very like the blades of a pair of round top'd Scizers, and were opened and shut just after the same manner; with these Instruments does this little busie Creature bite and pierce the skin, and suck out the blood of an Animal, leaving the skin inflamed with a small round red spot. These parts are very difficult to be discovered, because, for the most part, they lye covered between the fore-legs. There are many other particulars, which, being more obvious, and affording no great matter of information, I shall pass by, and refer the Reader to the Figure.\n\nObserv. LIV. Of a Louse.\n\nTHis is a Creature so officious, that 'twill be known to every one at one time or other, so busie, and so impudent, that it will be intruding it self in every ones company, and so proud and aspiring withall, that it fears not to trample on the best, and affects nothing so much as a Crown; feeds and lives very high, and that makes it so saucy, as to pull any one by the ears that comes in its way, and will never be quiet till it has drawn blood: it is troubled at nothing so much as at a man that scratches his head, as knowing that man is plotting and contriving some mischief against it, and that makes it oftentime sculk into some meaner and lower place, and run behind a mans back, though it go very much against the hair; which ill conditions of it having made it better known then trusted, would exempt me from making any further description of it, did not my faithful Mercury, my Microscope, bring me other information of it. For this has discovered to me, by means of a very bright light cast on it, that it is a Creature of a very odd shape; it has a head shap'd like that exprest in 35. Scheme marked with A, which seems almost Conical, but is a little flatted on the upper and under sides, at the biggest part of which, on either side behind the head (as it were, being the place where other Creatures ears stand) are placed its two black shining goggle eyes B B, looking backwards, and fenced round with several small cilia, or hairs that incompass it, so that it seems this Creature has no very good foresight: It does not seem to have any eye-lids, and therefore perhaps its eyes were so placed, that it might the better cleanse them with its fore-legs; and perhaps this may be the reason, why they so much avoid and run from the light behind them, for being made to live in the shady and dark recesses of the hair, and thence probably their eye having a great aperture, the open and clear light, especially that of the Sun, must needs very much offend them; to secure these eyes from receiving any injury from the hairs through which it passes, it has",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 1,
+        "foliation": "page",
+        "matter": "plate",
+        "physical": 323,
+        "printed": null,
+        "roman": false,
+        "source": "none",
+        "type": "page"
+      },
+      "confidence": 1,
+      "footer": null,
+      "header": null,
+      "id": "p323",
+      "image": "blob:pages/0323.jpg",
+      "notes": null,
+      "ord": 4,
+      "printed": null,
+      "reader": "wikisource-transcription",
+      "t0": null,
+      "t1": null,
+      "text": "Schem. XXXV.",
       "thumbnail": null,
       "words": null
     }
   ],
   "vectors": {
     "toy-clip@4": {
-      "count": 6,
-      "sha256": "938fc056a3affe83f09f1a00db5c936df0904a35f87ddb8b08525ef260c71bf7"
+      "count": 8,
+      "sha256": "ffae1741549f9a0753a1eed29d17355ca6228fc053b75388e0151be0ea10e806"
     }
   }
 }

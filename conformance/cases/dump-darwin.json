@@ -1,6 +1,6 @@
 {
   "expect": {
-    "content_sha256": "66526308e28d39c2ff652a573472753bc82bfa946389ab16b85c443aef1a53f3",
+    "content_sha256": "3e3a94b2ea00629636b9675b0d0f30630e3aa649fe51d9bddcc09da87750859e",
     "dump": "expected/darwin.dump.json"
   },
   "id": "dump-darwin",

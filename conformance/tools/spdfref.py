@@ -1205,19 +1205,20 @@ def _hms(t: float) -> str:
 
 
 def _page_locator(anchor, end, es, label_single, label_plural):
+    """Units without a printed folio never contribute to a range (SPEC §18)."""
     def lab(a):
         p = a.get("printed")
         if p is None:
             return None
         return f"[{p}]" if a.get("source") == "inferred" else p
-    a = lab(anchor)
-    if a is None:
+    ends = [anchor] + ([end] if end and end.get("type") == anchor.get("type") else [])
+    with_folio = [x for x in ends if x.get("printed") is not None]
+    if not with_folio:
         return "s. p." if es else "n. pag."
-    if end and end.get("type") == anchor.get("type"):
-        b = lab(end)
-        if b is not None and end.get("printed") != anchor.get("printed"):
-            return f"{label_plural} {a}-{b}"
-    return f"{label_single} {a}"
+    first, last = with_folio[0], with_folio[-1]
+    if last is not first and last.get("printed") != first.get("printed"):
+        return f"{label_plural} {lab(first)}-{lab(last)}"
+    return f"{label_single} {lab(first)}"
 
 
 def locator(anchor: dict, end: dict | None, es: bool) -> str | None:
@@ -1342,6 +1343,8 @@ def check_anchor(a, text: str | None):
     }[t]
     if not req():
         return ("E040", f"{t} anchor misses or mistypes a required member")
+    if "matter" in a and not isinstance(a["matter"], str):
+        return ("E040", "matter must be a string")
     if "region" in a:
         r = a["region"]
         if not (isinstance(r, dict) and all(_is_num(r.get(k)) for k in "xywh")):
@@ -1516,6 +1519,21 @@ def validate_file(path: Path) -> dict:
                     ok_sig = False
                 if not ok_sig:
                     err("E082", "signature does not verify", "spdf_meta.signature")
+        if ok("units", "id", "ord", "anchor") and ok("fragments", "id", "unit", "anchor", "anchor_end"):
+            try:
+                us = [{"id": i, "anchor": json.loads(a)} for i, a in con.execute("SELECT id, anchor FROM units ORDER BY ord, id")]
+                ubyid = {u["id"]: u for u in us}
+                for fid, unit, end in con.execute("SELECT id, unit, anchor_end FROM fragments WHERE anchor_end IS NOT NULL ORDER BY n"):
+                    u1 = ubyid.get(unit)
+                    u2 = end_unit(us, unit, json.loads(end)) if u1 else None
+                    if not (u1 and u2):
+                        continue
+                    a1, a2 = u1["anchor"], u2["anchor"]
+                    folio_change = a1.get("type") == a2.get("type") == "page" and (a1.get("printed") is None) != (a2.get("printed") is None)
+                    if matter_of(a1) != matter_of(a2) or folio_change:
+                        warn("W103", f"fragment crosses from {matter_of(a1)} to {matter_of(a2)} matter, or between a page with a folio and one without", f"fragments/{fid}")
+            except (json.JSONDecodeError, TypeError):
+                pass
         if "semantic" in profile and nvec == 0:
             warn("W100", "profile semantic without vectors")
         if "media" in profile and ok("units", "anchor"):
@@ -1612,6 +1630,64 @@ def _anchor_matches(rule: str, L: dict, a: dict | None, printed=None) -> bool:
     return False
 
 
+MATTER_DEFAULT = "body"
+_IDENTITY_SKIP = ("chars", "region")
+
+
+def _identity(a):
+    return {k: v for k, v in a.items() if k not in _IDENTITY_SKIP} if isinstance(a, dict) else a
+
+
+def end_unit(units: list[dict], start_id: str, anchor_end) -> dict | None:
+    """The unit where a fragment ends: the first unit after its start unit (in ord order)
+    whose anchor equals anchor_end, ignoring `chars` and `region` (SPEC §4.4)."""
+    if not isinstance(anchor_end, dict):
+        return None
+    after = False
+    for u in units:
+        if u["id"] == start_id:
+            after = True
+            continue
+        if after and _identity(u["anchor"]) == _identity(anchor_end):
+            return u
+    return None
+
+
+def matter_of(a) -> str:
+    m = a.get("matter") if isinstance(a, dict) else None
+    return m if isinstance(m, str) else MATTER_DEFAULT
+
+
+def cite_passage(dump: dict, fragment_id: str, quote: str, locale: str) -> dict:
+    """SPEC §18.2: cite a passage of a fragment by the unit(s) the passage actually touches."""
+    units = dump["units"]
+    byid = {u["id"]: u for u in units}
+    f = next(x for x in dump["fragments"] if x["id"] == fragment_id)
+    q = unicodedata.normalize("NFC", quote)
+    u1 = byid[f["unit"]]
+    a = f["anchor"]
+    c1 = a.get("chars") or [0, len(u1["text"])]
+    seg1 = u1["text"][c1[0]:c1[1]]
+    u2 = end_unit(units, u1["id"], f.get("anchor_end"))
+    seg2 = ""
+    if u2 is not None:
+        c2 = f["anchor_end"].get("chars") or [0, len(u2["text"])]
+        seg2 = u2["text"][c2[0]:c2[1]]
+    strip = lambda x: {k: v for k, v in x.items() if k not in _IDENTITY_SKIP}
+    if q in seg1:
+        i = seg1.find(q) + c1[0]
+        anchor, end = dict(strip(u1["anchor"]), chars=[i, i + len(q)]), None
+    elif u2 is not None and q in seg2:
+        i = seg2.find(q) + c2[0]
+        anchor, end = dict(strip(u2["anchor"]), chars=[i, i + len(q)]), None
+    elif q in f["text"] and u2 is not None:
+        anchor, end = strip(u1["anchor"]), strip(u2["anchor"])
+    else:
+        raise SpdfError("the quote is not in the fragment")
+    docref = "sha256-" + dump["document"]["source_sha256"]
+    return canon({"text": cite(anchor, end, dump["document"]["metadata"], locale), "uri": format_uri(docref, anchor, end)})
+
+
 def locate(dump: dict, reference: str) -> dict:
     """SPEC §5.4 on a canonical dump."""
     empty = {"document": False, "units": [], "fragments": [], "char": None, "xywh": None}
@@ -1633,19 +1709,32 @@ def locate(dump: dict, reference: str) -> dict:
         timed = [u for u in dump["units"] if isinstance(u["anchor"], dict) and u["anchor"].get("type") == "time"]
         if timed and _is_num(timed[-1]["anchor"].get("t1")) and timed[-1]["anchor"]["t1"] == L["t"][0]:
             units = [timed[-1]["id"]]
-    frags = [f for f in dump["fragments"] if _anchor_matches(rule, L, f["anchor"])]
-    if not units and frags:
+    matched = []  # (fragment, [anchors of it that match])
+    for f in dump["fragments"]:
+        hits = [x for x in (f["anchor"], f.get("anchor_end")) if x is not None and _anchor_matches(rule, L, x)]
+        if hits:
+            matched.append((f, hits))
+    if not units and matched:
         order = {u["id"]: u["ord"] for u in dump["units"]}
-        units = sorted({f["unit"] for f in frags}, key=lambda i: order.get(i, 0))
+        units = sorted({f["unit"] for f, _ in matched}, key=lambda i: order.get(i, 0))
     if "char" in L:
         c, d = L["char"]
-        def keep(f):
-            ch = f["anchor"].get("chars") if isinstance(f["anchor"], dict) else None
-            if f["unit"] not in units or not (isinstance(ch, list) and len(ch) == 2):
+        first = units[0] if units else None  # `char` refers to the text of the first unit
+
+        def overlaps(x):
+            ch = x.get("chars") if isinstance(x, dict) else None
+            if not (isinstance(ch, list) and len(ch) == 2):
                 return False
             a, b = ch
             return (a < d and c < b) if c < d else (a <= c < b)
-        frags = [f for f in frags if keep(f)]
+
+        def keep(f):
+            if f["unit"] == first and overlaps(f["anchor"]):
+                return True
+            eu = end_unit(dump["units"], f["unit"], f.get("anchor_end"))
+            return eu is not None and eu["id"] == first and overlaps(f["anchor_end"])
+        matched = [(f, hits) for f, hits in matched if keep(f)]
+    frags = [f for f, _ in matched]
     out["units"] = units
     out["fragments"] = [f["id"] for f in frags]
     return canon(out)

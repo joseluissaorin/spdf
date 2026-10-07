@@ -1,0 +1,15 @@
+{
+  "expect": {
+    "char": [0, 10],
+    "document": true,
+    "fragments": ["m4"],
+    "units": ["p321"],
+    "xywh": null
+  },
+  "id": "locate-crossing-out-of-plate-chars",
+  "input": {
+    "file": "invalid/W103-fragment-crosses-matter.spdf",
+    "reference": "spdf:sha256-ba9d5d9537d3088ed539bf3acd7bb626b05d73a65dc373653c7e226ce9fc0dd6#p=321&char=0,10"
+  },
+  "kind": "locate"
+}

@@ -1,6 +1,6 @@
 {
   "expect": {
-    "content_sha256": "f346ea4724b86b9fea806a5f89313bb84feda528f193d1c843bbe9b2e4866705",
+    "content_sha256": "a50158af68550faf5572d0b5c79e1f7d6341b2c890e407b2771c06961d2f971d",
     "dump": "expected/minimo.dump.json"
   },
   "id": "dump-minimo",

@@ -2,21 +2,31 @@
   "expect": {
     "results": [
       {
-        "anchor_uri": "spdf:sha256-4501ef3a079e09d5556746bba9fc26e261aa6cbc5d47b056382d400ec1523bfd#p=1&f=210",
-        "score": 0.952381,
-        "unit_id": "p1"
+        "anchor_uri": "spdf:sha256-ba9d5d9537d3088ed539bf3acd7bb626b05d73a65dc373653c7e226ce9fc0dd6#p=319",
+        "score": 0.994104,
+        "unit_id": "p319"
       },
       {
-        "anchor_uri": "spdf:sha256-4501ef3a079e09d5556746bba9fc26e261aa6cbc5d47b056382d400ec1523bfd#p=2&f=211",
+        "anchor_uri": "spdf:sha256-ba9d5d9537d3088ed539bf3acd7bb626b05d73a65dc373653c7e226ce9fc0dd6#p=318&f=210",
+        "score": 0.952381,
+        "unit_id": "p318"
+      },
+      {
+        "anchor_uri": "spdf:sha256-ba9d5d9537d3088ed539bf3acd7bb626b05d73a65dc373653c7e226ce9fc0dd6#p=321&f=211",
         "score": 0.356348,
-        "unit_id": "p2"
+        "unit_id": "p321"
+      },
+      {
+        "anchor_uri": "spdf:sha256-ba9d5d9537d3088ed539bf3acd7bb626b05d73a65dc373653c7e226ce9fc0dd6#p=323",
+        "score": 0.227921,
+        "unit_id": "p323"
       }
     ]
   },
   "id": "search-vector-micrographia-07",
   "input": {
     "file": "files/micrographia.spdf",
-    "limit": 2,
+    "limit": 4,
     "query_vector": [1, 0.5, 0.25, 0],
     "space": "toy-clip@4",
     "target": "unit"

@@ -14,8 +14,8 @@
           ]
         },
         "language": "en",
-        "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
-        "title": "Apollo 11 air-to-ground voice transmissions (excerpts)",
+        "note": "SPDF conformance document: seven transmissions transcribed literally from NASA's Apollo 11 Technical Air-to-Ground Voice Transcription (Manned Spacecraft Center, Houston, 1969). Times are ground elapsed time (GET) in seconds, as in the transcription; each span ends at the next later transmission. The recording itself is not included and source_sha256 is a placeholder; word timings are spread evenly over each span, not measured.",
+        "title": "Apollo 11 air-to-ground voice communications",
         "title-short": "Apollo 11 air-to-ground",
         "type": "broadcast"
       }

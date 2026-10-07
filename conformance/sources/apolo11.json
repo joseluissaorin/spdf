@@ -2,9 +2,9 @@
   "blobs": [],
   "document": {
     "authors": "National Aeronautics and Space Administration",
-    "bytes": 33881600,
+    "bytes": 0,
     "created": "2026-10-07T00:00:00Z",
-    "duration": 4186,
+    "duration": 395027,
     "id": "apollo-11-air-to-ground",
     "kind": "audio",
     "language": "en",
@@ -20,8 +20,8 @@
         ]
       },
       "language": "en",
-      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
-      "title": "Apollo 11 air-to-ground voice transmissions (excerpts)",
+      "note": "SPDF conformance document: seven transmissions transcribed literally from NASA's Apollo 11 Technical Air-to-Ground Voice Transcription (Manned Spacecraft Center, Houston, 1969). Times are ground elapsed time (GET) in seconds, as in the transcription; each span ends at the next later transmission. The recording itself is not included and source_sha256 is a placeholder; word timings are spread evenly over each span, not measured.",
+      "title": "Apollo 11 air-to-ground voice communications",
       "title-short": "Apollo 11 air-to-ground",
       "type": "broadcast"
     },
@@ -33,9 +33,9 @@
       "note": "Work of the United States federal government (NASA): public domain in the United States."
     },
     "source_ref": null,
-    "source_sha256": "704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1",
-    "title": "Apollo 11 air-to-ground voice transmissions (excerpts)",
-    "unit_count": 6,
+    "source_sha256": "c9f25c86982e2335a82641d8accb29c5d6771443c40257e33b0a6ecf78895906",
+    "title": "Apollo 11 air-to-ground voice communications",
+    "unit_count": 7,
     "updated": "2026-10-07T00:00:00Z",
     "year": 1969
   },
@@ -44,116 +44,117 @@
   "fragments": [
     {
       "anchor": {
-        "chars": [0, 73],
-        "speaker": "Neil Armstrong",
-        "t0": 12,
-        "t1": 15.5,
+        "chars": [0, 48],
+        "speaker": "CDR (TRANQ)",
+        "t0": 369959,
+        "t1": 369964,
         "type": "time"
       },
       "anchor_end": null,
-      "context": "Apollo 11, descent and first steps.",
+      "context": "Apollo 11: landing and first steps (GET).",
       "id": "a1",
       "n": 1,
       "ord": 1,
       "search_text": "",
       "section": [],
-      "text": "**Neil Armstrong:** Houston, Tranquility Base here. The Eagle has landed.",
+      "text": "**CDR (TRANQ):** Houston, Tranquility Base here.",
       "unit": "t1"
     },
     {
       "anchor": {
-        "chars": [0, 151],
-        "speaker": "Charles Duke",
-        "t0": 16,
-        "t1": 24.5,
+        "chars": [0, 38],
+        "speaker": "CDR (TRANQ)",
+        "t0": 369964,
+        "t1": 369966,
         "type": "time"
       },
       "anchor_end": null,
-      "context": "Apollo 11, descent and first steps.",
+      "context": "Apollo 11: landing and first steps (GET).",
       "id": "a2",
       "n": 2,
       "ord": 2,
       "search_text": "",
       "section": [],
-      "text": "**Charles Duke:** Roger, Twan- Tranquility, we copy you on the ground. You got a bunch of guys about to turn blue. We're breathing again. Thanks a lot.",
+      "text": "**CDR (TRANQ):** THE EAGLE HAS LANDED.",
       "unit": "t2"
     },
     {
       "anchor": {
-        "chars": [0, 78],
-        "speaker": "Neil Armstrong",
-        "t0": 4160,
-        "t1": 4175.5,
+        "chars": [0, 135],
+        "speaker": "CC",
+        "t0": 369966,
+        "t1": 369976,
         "type": "time"
       },
       "anchor_end": null,
-      "context": "Apollo 11, descent and first steps.",
+      "context": "Apollo 11: landing and first steps (GET).",
       "id": "a3",
       "n": 3,
       "ord": 3,
       "search_text": "",
       "section": [],
-      "text": "**Neil Armstrong:** That's one small step for man, one giant leap for mankind.",
+      "text": "**CC:** Roger, Tranquility. We copy you on the ground. You got a bunch of guys about to turn blue. We're breathing again. Thanks a lot.",
       "unit": "t3"
     },
     {
       "anchor": {
-        "chars": [0, 69],
-        "speaker": "Neil Armstrong",
-        "t0": 4178.5,
-        "t1": 4183,
+        "chars": [0, 79],
+        "speaker": "CDR (TRANQ)",
+        "t0": 393888,
+        "t1": 393930,
         "type": "time"
       },
       "anchor_end": null,
-      "context": "Apollo 11, descent and first steps.",
-      "id": "a5",
+      "context": "Apollo 11: landing and first steps (GET).",
+      "id": "a4",
       "n": 4,
       "ord": 4,
       "search_text": "",
       "section": [],
-      "text": "**Neil Armstrong:** Isn't that something! Magnificent sight out here.",
-      "unit": "t5"
+      "text": "**CDR (TRANQ):** THAT'S ONE SMALL STEP FOR (A) MAN, ONE GIANT LEAP FOR MANKIND.",
+      "unit": "t4"
     },
     {
       "anchor": {
-        "chars": [0, 40],
-        "speaker": "Buzz Aldrin",
-        "t0": 4183.5,
-        "t1": 4186,
+        "chars": [0, 30],
+        "speaker": "LMP (EVA)",
+        "t0": 394996,
+        "t1": 394998,
         "type": "time"
       },
-      "anchor_end": null,
-      "context": "Apollo 11, descent and first steps.",
-      "id": "a6",
+      "anchor_end": {
+        "chars": [0, 38],
+        "speaker": "LMP (EVA)",
+        "t0": 395004,
+        "t1": 395027,
+        "type": "time"
+      },
+      "context": "Apollo 11: first impressions on the surface.",
+      "id": "a5-7",
       "n": 5,
       "ord": 5,
       "search_text": "",
       "section": [],
-      "text": "**Buzz Aldrin:** Magnificent desolation.",
-      "unit": "t6"
+      "text": "**LMP (EVA):** Beautiful view!\n**CDR (EVA):** Isn't that something! Magnificent sight out here.\n**LMP (EVA):** Magnificent desolation.",
+      "unit": "t5"
     },
     {
       "anchor": {
-        "chars": [0, 32],
-        "speaker": "Buzz Aldrin",
-        "t0": 4176,
-        "t1": 4178,
+        "chars": [0, 38],
+        "speaker": "LMP (EVA)",
+        "t0": 395004,
+        "t1": 395027,
         "type": "time"
       },
-      "anchor_end": {
-        "speaker": "Buzz Aldrin",
-        "t0": 4183.5,
-        "t1": 4186,
-        "type": "time"
-      },
-      "context": "Apollo 11: first impressions on the surface.",
-      "id": "a4-6",
+      "anchor_end": null,
+      "context": "Apollo 11: Aldrin on the surface.",
+      "id": "a7",
       "n": 6,
       "ord": 6,
       "search_text": "",
       "section": [],
-      "text": "**Buzz Aldrin:** Beautiful view!\n**Neil Armstrong:** Isn't that something! Magnificent sight out here.\n**Buzz Aldrin:** Magnificent desolation.",
-      "unit": "t4"
+      "text": "**LMP (EVA):** Magnificent desolation.",
+      "unit": "t7"
     }
   ],
   "fts": {
@@ -171,22 +172,28 @@
     {
       "at": "2026-10-07T00:00:00Z",
       "detail": {
-        "language": "en"
+        "accessed": "2026-10-07",
+        "edition": "Apollo 11 Technical Air-to-Ground Voice Transcription, NASA Manned Spacecraft Center, Houston, July 1969 (OCR PDF published by the Apollo Lunar Surface Journal)",
+        "license": "Public domain (NASA)",
+        "pages": ["Tape 66/12 - Page 317", "Tape 70/24 - Page 377", "Tape 71/2 - Page 382"],
+        "sha256": "59d9e5d0dc8728738bf884ec0af747cca7cd9e0ebc486e7a949863efc32c4b8d",
+        "url": "https://web.archive.org/web/20161221154706id_/https://www.hq.nasa.gov/alsj/a11/a11transcript_tec.pdf"
       },
-      "model": "whisper-large-v3-turbo",
-      "ms": 91000,
-      "provider": "local",
-      "stage": "transcription"
+      "model": null,
+      "ms": null,
+      "provider": "NASA",
+      "stage": "source-text"
     },
     {
       "at": "2026-10-07T00:00:00Z",
       "detail": {
-        "speakers": 3
+        "measured": false,
+        "method": "uniform"
       },
-      "model": "pyannote-3.1",
-      "ms": 15000,
-      "provider": "local",
-      "stage": "diarization"
+      "model": null,
+      "ms": null,
+      "provider": "spdf-conformance",
+      "stage": "word-timing"
     }
   ],
   "sections": [],
@@ -195,12 +202,12 @@
   "units": [
     {
       "anchor": {
-        "speaker": "Neil Armstrong",
-        "t0": 12,
-        "t1": 15.5,
+        "speaker": "CDR (TRANQ)",
+        "t0": 369959,
+        "t1": 369964,
         "type": "time"
       },
-      "confidence": 0.93,
+      "confidence": 1,
       "footer": null,
       "header": null,
       "id": "t1",
@@ -208,25 +215,25 @@
       "notes": null,
       "ord": 1,
       "printed": null,
-      "reader": "whisper-large-v3-turbo",
-      "t0": 12,
-      "t1": 15.5,
-      "text": "**Neil Armstrong:** Houston, Tranquility Base here. The Eagle has landed.",
+      "reader": "nasa-technical-transcription",
+      "t0": 369959,
+      "t1": 369964,
+      "text": "**CDR (TRANQ):** Houston, Tranquility Base here.",
       "thumbnail": null,
       "words": {
-        "cs": [0, 38, 43, 38, 86, 38, 129, 38, 172, 38, 215, 38, 258, 38, 301, 38],
-        "t0": 12,
+        "cs": [0, 125, 125, 125, 250, 125, 375, 125],
+        "t0": 369959,
         "v": 1
       }
     },
     {
       "anchor": {
-        "speaker": "Charles Duke",
-        "t0": 16,
-        "t1": 24.5,
+        "speaker": "CDR (TRANQ)",
+        "t0": 369964,
+        "t1": 369966,
         "type": "time"
       },
-      "confidence": 0.93,
+      "confidence": 1,
       "footer": null,
       "header": null,
       "id": "t2",
@@ -234,25 +241,25 @@
       "notes": null,
       "ord": 2,
       "printed": null,
-      "reader": "whisper-large-v3-turbo",
-      "t0": 16,
-      "t1": 24.5,
-      "text": "**Charles Duke:** Roger, Twan- Tranquility, we copy you on the ground. You got a bunch of guys about to turn blue. We're breathing again. Thanks a lot.",
+      "reader": "nasa-technical-transcription",
+      "t0": 369964,
+      "t1": 369966,
+      "text": "**CDR (TRANQ):** THE EAGLE HAS LANDED.",
       "thumbnail": null,
       "words": {
-        "cs": [0, 29, 34, 29, 68, 29, 102, 29, 136, 29, 170, 29, 204, 29, 238, 29, 272, 29, 306, 29, 340, 29, 374, 29, 408, 29, 442, 29, 476, 29, 510, 29, 544, 29, 578, 29, 612, 29, 646, 29, 680, 29, 714, 29, 748, 29, 782, 29, 816, 29],
-        "t0": 16,
+        "cs": [0, 50, 50, 50, 100, 50, 150, 50],
+        "t0": 369964,
         "v": 1
       }
     },
     {
       "anchor": {
-        "speaker": "Neil Armstrong",
-        "t0": 4160,
-        "t1": 4175.5,
+        "speaker": "CC",
+        "t0": 369966,
+        "t1": 369976,
         "type": "time"
       },
-      "confidence": 0.93,
+      "confidence": 1,
       "footer": null,
       "header": null,
       "id": "t3",
@@ -260,25 +267,25 @@
       "notes": null,
       "ord": 3,
       "printed": null,
-      "reader": "whisper-large-v3-turbo",
-      "t0": 4160,
-      "t1": 4175.5,
-      "text": "**Neil Armstrong:** That's one small step for man, one giant leap for mankind.",
+      "reader": "nasa-technical-transcription",
+      "t0": 369966,
+      "t1": 369976,
+      "text": "**CC:** Roger, Tranquility. We copy you on the ground. You got a bunch of guys about to turn blue. We're breathing again. Thanks a lot.",
       "thumbnail": null,
       "words": {
-        "cs": [0, 135, 140, 135, 280, 135, 420, 135, 560, 135, 700, 135, 840, 135, 980, 135, 1120, 135, 1260, 135, 1400, 135],
-        "t0": 4160,
+        "cs": [0, 41, 41, 41, 82, 41, 123, 41, 164, 41, 205, 41, 246, 41, 287, 41, 328, 41, 369, 41, 410, 41, 451, 41, 492, 41, 533, 41, 574, 41, 615, 41, 656, 41, 697, 41, 738, 41, 779, 41, 820, 41, 861, 41, 902, 41, 943, 41],
+        "t0": 369966,
         "v": 1
       }
     },
     {
       "anchor": {
-        "speaker": "Buzz Aldrin",
-        "t0": 4176,
-        "t1": 4178,
+        "speaker": "CDR (TRANQ)",
+        "t0": 393888,
+        "t1": 393930,
         "type": "time"
       },
-      "confidence": 0.93,
+      "confidence": 1,
       "footer": null,
       "header": null,
       "id": "t4",
@@ -286,25 +293,25 @@
       "notes": null,
       "ord": 4,
       "printed": null,
-      "reader": "whisper-large-v3-turbo",
-      "t0": 4176,
-      "t1": 4178,
-      "text": "**Buzz Aldrin:** Beautiful view!",
+      "reader": "nasa-technical-transcription",
+      "t0": 393888,
+      "t1": 393930,
+      "text": "**CDR (TRANQ):** THAT'S ONE SMALL STEP FOR (A) MAN, ONE GIANT LEAP FOR MANKIND.",
       "thumbnail": null,
       "words": {
-        "cs": [0, 95, 100, 95],
-        "t0": 4176,
+        "cs": [0, 350, 350, 350, 700, 350, 1050, 350, 1400, 350, 1750, 350, 2100, 350, 2450, 350, 2800, 350, 3150, 350, 3500, 350, 3850, 350],
+        "t0": 393888,
         "v": 1
       }
     },
     {
       "anchor": {
-        "speaker": "Neil Armstrong",
-        "t0": 4178.5,
-        "t1": 4183,
+        "speaker": "LMP (EVA)",
+        "t0": 394996,
+        "t1": 394998,
         "type": "time"
       },
-      "confidence": 0.93,
+      "confidence": 1,
       "footer": null,
       "header": null,
       "id": "t5",
@@ -312,25 +319,25 @@
       "notes": null,
       "ord": 5,
       "printed": null,
-      "reader": "whisper-large-v3-turbo",
-      "t0": 4178.5,
-      "t1": 4183,
-      "text": "**Neil Armstrong:** Isn't that something! Magnificent sight out here.",
+      "reader": "nasa-technical-transcription",
+      "t0": 394996,
+      "t1": 394998,
+      "text": "**LMP (EVA):** Beautiful view!",
       "thumbnail": null,
       "words": {
-        "cs": [0, 59, 64, 59, 128, 59, 192, 59, 256, 59, 320, 59, 384, 59],
-        "t0": 4178.5,
+        "cs": [0, 100, 100, 100],
+        "t0": 394996,
         "v": 1
       }
     },
     {
       "anchor": {
-        "speaker": "Buzz Aldrin",
-        "t0": 4183.5,
-        "t1": 4186,
+        "speaker": "CDR (EVA)",
+        "t0": 394998,
+        "t1": 395004,
         "type": "time"
       },
-      "confidence": 0.93,
+      "confidence": 1,
       "footer": null,
       "header": null,
       "id": "t6",
@@ -338,14 +345,40 @@
       "notes": null,
       "ord": 6,
       "printed": null,
-      "reader": "whisper-large-v3-turbo",
-      "t0": 4183.5,
-      "t1": 4186,
-      "text": "**Buzz Aldrin:** Magnificent desolation.",
+      "reader": "nasa-technical-transcription",
+      "t0": 394998,
+      "t1": 395004,
+      "text": "**CDR (EVA):** Isn't that something! Magnificent sight out here.",
       "thumbnail": null,
       "words": {
-        "cs": [0, 120, 125, 120],
-        "t0": 4183.5,
+        "cs": [0, 85, 85, 85, 170, 85, 255, 85, 340, 85, 425, 85, 510, 85],
+        "t0": 394998,
+        "v": 1
+      }
+    },
+    {
+      "anchor": {
+        "speaker": "LMP (EVA)",
+        "t0": 395004,
+        "t1": 395027,
+        "type": "time"
+      },
+      "confidence": 1,
+      "footer": null,
+      "header": null,
+      "id": "t7",
+      "image": null,
+      "notes": null,
+      "ord": 7,
+      "printed": null,
+      "reader": "nasa-technical-transcription",
+      "t0": 395004,
+      "t1": 395027,
+      "text": "**LMP (EVA):** Magnificent desolation.",
+      "thumbnail": null,
+      "words": {
+        "cs": [0, 1150, 1150, 1150],
+        "t0": 395004,
         "v": 1
       }
     }

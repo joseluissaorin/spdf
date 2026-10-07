@@ -1,6 +1,6 @@
 {
   "expect": {
-    "text": "@book{darwin1859,\n  author = {Darwin, Charles},\n  title = {{On} the {Origin} of {Species} by {Means} of {Natural} {Selection}},\n  year = {1859},\n  publisher = {John Murray},\n  address = {London},\n  language = {en},\n  note = {SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.}\n}\n"
+    "text": "@book{darwin1859,\n  author = {Darwin, Charles},\n  title = {{On} the {Origin} of {Species} by {Means} of {Natural} {Selection,} or the {Preservation} of {Favoured} {Races} in the {Struggle} for {Life}},\n  year = {1859},\n  publisher = {John Murray},\n  address = {London},\n  language = {en},\n  note = {SPDF conformance document: pages vii, 1, 5, 61, 84 and 490 of the first edition (1859), transcribed literally from validated English Wikisource pages of the facsimile; page numbers as printed in the running heads (page 1 has none in the transcription and is inferred). Vectors are toy vectors chosen by hand for the suite.}\n}\n"
   },
   "id": "export-bibtex-darwin-plain",
   "input": {

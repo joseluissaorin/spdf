@@ -8,20 +8,25 @@
             "given": "Miguel de"
           }
         ],
-        "id": "cervantessaavedra1605",
+        "id": "cervantessaavedra1608",
         "issued": {
           "date-parts": [
-            [1605]
+            [1608]
           ]
         },
         "label": "folio",
         "language": "es",
-        "locator": "1r-[1v]",
-        "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+        "locator": "Ir-[Iv]",
+        "note": "SPDF conformance document: pages of the facsimile of the Madrid 1608 edition (Barcelona, Montaner y Simón, 1897; Internet Archive elingenioso01cerv), transcribed literally from validated Wikisource pages, with long s and abbreviations as printed. The modernized search layer comes from the 1905 Barcelona edition on Wikisource.",
+        "original-date": {
+          "date-parts": [
+            [1605]
+          ]
+        },
         "publisher": "Juan de la Cuesta",
         "publisher-place": "Madrid",
-        "title": "El ingenioso hidalgo don Quijote de la Mancha",
-        "title-short": "Don Quijote",
+        "title": "El ingenioso hidalgo Don Quixote de la Mancha",
+        "title-short": "Don Quixote",
         "type": "book"
       }
     ]
@@ -29,21 +34,24 @@
   "id": "export-csl-citation-leaf-range",
   "input": {
     "anchor": {
-      "chars": [101, 278],
-      "confidence": 0.98,
+      "chars": [729, 745],
+      "confidence": 1,
       "foliation": "leaf",
-      "physical": 5,
-      "printed": "1r",
-      "roman": false,
+      "matter": "body",
+      "physical": 29,
+      "printed": "Ir",
+      "roman": true,
       "source": "read",
       "type": "page"
     },
     "anchor_end": {
-      "confidence": 0.92,
+      "chars": [0, 161],
+      "confidence": 0.9,
       "foliation": "leaf",
-      "physical": 6,
-      "printed": "1v",
-      "roman": false,
+      "matter": "body",
+      "physical": 30,
+      "printed": "Iv",
+      "roman": true,
       "source": "inferred",
       "type": "page"
     },

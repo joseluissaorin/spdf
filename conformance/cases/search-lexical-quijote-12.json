@@ -1,0 +1,14 @@
+{
+  "expect": {
+    "match": "\"Quixote\"",
+    "results": [],
+    "route": "fts"
+  },
+  "id": "search-lexical-quijote-12",
+  "input": {
+    "file": "files/quijote.spdf",
+    "limit": 10,
+    "query": "Quixote"
+  },
+  "kind": "search_lexical"
+}

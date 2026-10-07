@@ -1,0 +1,27 @@
+{
+  "expect": {
+    "items": [
+      {
+        "author": [
+          {
+            "family": "National Aeronautics and Space Administration"
+          }
+        ],
+        "id": "nationalaeronauticsandspaceadministration1969",
+        "issued": {
+          "date-parts": [
+            [1969, 7, 20]
+          ]
+        },
+        "language": "en",
+        "title": "Apollo 11 air-to-ground voice communications",
+        "type": "broadcast"
+      }
+    ]
+  },
+  "id": "export-csl-apolo11-4.1-plain",
+  "input": {
+    "files": ["legacy/apolo11-4.1.spdf"]
+  },
+  "kind": "export_csl"
+}

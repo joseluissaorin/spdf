@@ -3,9 +3,9 @@
     "match": "\"Eagle\" OR \"landed\"",
     "results": [
       {
-        "anchor_uri": "spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=12,15.5&char=0,73",
-        "fragment_id": "a1",
-        "score": 2.838483,
+        "anchor_uri": "spdf:sha256-c9f25c86982e2335a82641d8accb29c5d6771443c40257e33b0a6ecf78895906#t=369964,369966&char=0,38",
+        "fragment_id": "a2",
+        "score": 3.000697,
         "via": ["lexical"]
       }
     ],

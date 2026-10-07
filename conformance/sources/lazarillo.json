@@ -2,23 +2,29 @@
   "blobs": [],
   "document": {
     "authors": null,
-    "bytes": 210334,
+    "bytes": 1274601,
     "created": "2026-10-07T00:00:00Z",
     "duration": null,
-    "id": "lazarillo-1554",
+    "id": "lazarillo-1921",
     "kind": "scanned_pdf",
     "language": "es",
     "metadata": {
+      "collection-number": "510",
+      "collection-title": "Colección Universal",
       "issued": {
+        "date-parts": [
+          [1921]
+        ]
+      },
+      "language": "es",
+      "note": "SPDF conformance document: pages 9-12 of the Madrid 1921 edition (Colección Universal 510), transcribed literally from validated Wikisource pages; modern spelling as in that edition. Pages 9 and 11 carry no printed number: their folios are inferred from pages 10 and 12.",
+      "original-date": {
         "date-parts": [
           [1554]
         ]
       },
-      "language": "es",
-      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
-      "publisher": "Juan de Junta",
-      "publisher-place": "Burgos",
-      "title": "La vida de Lazarillo de Tormes y de sus fortunas y adversidades",
+      "publisher-place": "Madrid",
+      "title": "El Lazarillo de Tormes",
       "title-short": "Lazarillo de Tormes",
       "type": "book"
     },
@@ -27,46 +33,46 @@
       "access": "open",
       "holder": null,
       "license": "https://creativecommons.org/publicdomain/mark/1.0/",
-      "note": "Public-domain work. Synthetic layout built for the SPDF conformance suite."
+      "note": "Anonymous work published in 1554: public domain. Facsimile and transcription from Wikimedia Commons and Wikisource."
     },
-    "source_ref": null,
-    "source_sha256": "c2f0966e90fc3c5dcda91143a8271f4636bab035b060ae577724283514c00e4a",
-    "title": "La vida de Lazarillo de Tormes y de sus fortunas y adversidades",
-    "unit_count": 5,
+    "source_ref": "https://upload.wikimedia.org/wikipedia/commons/6/60/El_Lazarillo_de_Tormes_%281921%29.pdf",
+    "source_sha256": "5b44e83c28cc4a93bf63f5ed6d7e77e1fb86ef61573780410d7a8f3e5b8491b0",
+    "title": "El Lazarillo de Tormes",
+    "unit_count": 4,
     "updated": "2026-10-07T00:00:00Z",
-    "year": 1554
+    "year": 1921
   },
   "extensions": [],
   "figures": [],
   "fragments": [
     {
       "anchor": {
-        "chars": [0, 65],
-        "confidence": 1,
+        "chars": [9, 267],
+        "confidence": 0.9,
         "foliation": "page",
-        "physical": 1,
-        "printed": null,
+        "physical": 7,
+        "printed": "9",
         "roman": false,
-        "source": "none",
+        "source": "inferred",
         "type": "page"
       },
       "anchor_end": null,
-      "context": "Lazarillo de Tormes, portada.",
+      "context": "Lazarillo de Tormes, prólogo.",
       "id": "l1",
       "n": 1,
       "ord": 1,
-      "search_text": "La vida de Lazarillo de Tormes y de sus fortunas y adversidades.",
-      "section": [],
-      "text": "LA VIDA DE LAZARILLO DE TORMES, Y DE SVS FORTVNAS Y ADVERSIDADES.",
-      "unit": "p1"
+      "search_text": "",
+      "section": ["Prólogo"],
+      "text": "Yo por bien tengo que cosas tan señaladas y por ventura nunca oídas ni vistas vengan a noticia de muchos y no se entierren en la sepultura del olvido, pues podría ser que alguno que las lea halle algo que le agrade y a los que no ahondaren tanto los deleite.",
+      "unit": "p7"
     },
     {
       "anchor": {
-        "chars": [0, 153],
-        "confidence": 0.9,
+        "chars": [696, 818],
+        "confidence": 1,
         "foliation": "page",
-        "physical": 2,
-        "printed": "3",
+        "physical": 8,
+        "printed": "10",
         "roman": false,
         "source": "read",
         "type": "page"
@@ -76,20 +82,20 @@
       "id": "l2",
       "n": 2,
       "ord": 2,
-      "search_text": "Yo por bien tengo que cosas tan señaladas, y por ventura nunca oídas ni vistas, vengan a noticia de muchos, y no se entierren en la sepultura del olvido.",
+      "search_text": "",
       "section": ["Prólogo"],
-      "text": "Yo por bien tengo que coſas tan ſeñaladas, y por ventura nunca oydas ni viſtas, vengan a noticia de muchos, y no ſe entierren en la ſepultura del oluido.",
-      "unit": "p2"
+      "text": "Suplico a vuestra merced reciba el pobre servicio de mano de quien lo hiciera más rico si su poder y deseo se conformaran.",
+      "unit": "p8"
     },
     {
       "anchor": {
-        "chars": [0, 150],
+        "chars": [57, 220],
         "confidence": 0.9,
         "foliation": "page",
-        "physical": 3,
-        "printed": "4",
+        "physical": 9,
+        "printed": "11",
         "roman": false,
-        "source": "read",
+        "source": "inferred",
         "type": "page"
       },
       "anchor_end": null,
@@ -97,20 +103,20 @@
       "id": "l3",
       "n": 3,
       "ord": 3,
-      "search_text": "Pues sepa vuestra merced ante todas cosas que a mí llaman Lázaro de Tormes, hijo de Tomé González y de Antona Pérez, naturales de Tejares, aldea de Salamanca.",
+      "search_text": "",
       "section": ["Tratado primero"],
-      "text": "Pues ſepa V. M. ante todas coſas que a mi llaman Lazaro de Tormes, hijo de Thome Gonçales y de Antona Perez, naturales de Tejares, aldea de Salamanca.",
-      "unit": "p3"
+      "text": "Pues sepa vuestra merced, ante todas cosas, que a mí me llaman Lázaro de Tormes, hijo de Tomé González y de Antona Pérez, naturales de Tejares, aldea de Salamanca.",
+      "unit": "p9"
     },
     {
       "anchor": {
-        "chars": [0, 100],
+        "chars": [221, 320],
         "confidence": 0.9,
         "foliation": "page",
-        "physical": 4,
-        "printed": "5",
+        "physical": 9,
+        "printed": "11",
         "roman": false,
-        "source": "read",
+        "source": "inferred",
         "type": "page"
       },
       "anchor_end": null,
@@ -118,20 +124,20 @@
       "id": "l4",
       "n": 4,
       "ord": 4,
-      "search_text": "Mi nacimiento fue dentro del río Tormes, por la cual causa tomé el sobrenombre, y fue desta manera.",
+      "search_text": "",
       "section": ["Tratado primero"],
-      "text": "Mi naſcimiento fue dentro del rio Tormes, por la qual cauſa tome el ſobrenombre, y fue deſta manera.",
-      "unit": "p4"
+      "text": "Mi nacimiento fué dentro del río Tormes, por la cual causa tomé el sobrenombre, y fué desta manera.",
+      "unit": "p9"
     },
     {
       "anchor": {
-        "chars": [0, 152],
-        "confidence": 0.9,
+        "chars": [0, 337],
+        "confidence": 1,
         "foliation": "page",
-        "physical": 5,
-        "printed": "6",
+        "physical": 10,
+        "printed": "12",
         "roman": false,
-        "source": "inferred",
+        "source": "read",
         "type": "page"
       },
       "anchor_end": null,
@@ -139,10 +145,10 @@
       "id": "l5",
       "n": 5,
       "ord": 5,
-      "search_text": "Huelgo de contar a vuestra merced estas niñerías, para mostrar cuánta virtud sea saber los hombres subir siendo bajos, y dejarse bajar siendo altos cuánto vicio.",
+      "search_text": "",
       "section": ["Tratado primero"],
-      "text": "Huelgo de contar a V. M. eſtas niñerias, para moſtrar quanta virtud ſea ſaber los hombres ſubir ſiendo baxos, y dexarſe baxar ſiendo altos quanto vicio.",
-      "unit": "p5"
+      "text": "Mi viuda madre, como sin marido y sin abrigo se viese, determinó arrimarse a los buenos por ser uno dellos, y vínose a vivir a la ciudad, y alquiló una casilla, y metióse a guisar de comer a ciertos estudiantes, y lavaba la ropa a ciertos mozos de caballos del comendador de la Magdalena, de manera que fué frecuentando las caballerizas.",
+      "unit": "p10"
     }
   ],
   "fts": {
@@ -151,7 +157,7 @@
   },
   "meta": {
     "created": "2026-10-07T00:00:00Z",
-    "document_id": "lazarillo-1554",
+    "document_id": "lazarillo-1921",
     "generator": "spdf-conformance/1.0",
     "profile": "core",
     "spdf_version": "5.0"
@@ -160,23 +166,36 @@
     {
       "at": "2026-10-07T00:00:00Z",
       "detail": {
-        "layer": "search_text",
-        "period": "early-modern"
+        "accessed": "2026-10-07",
+        "edition": "El Lazarillo de Tormes, Madrid, 1921 (Colección Universal, 510); Commons File:El Lazarillo de Tormes (1921).pdf, SHA-1 64463f8ff64767ac0db7c91d1846b31666f3781b",
+        "license": "Text: public domain; Wikisource transcription under CC BY-SA 4.0",
+        "pages": [
+          {
+            "revision": 1648110,
+            "title": "Página:El Lazarillo de Tormes (1921).pdf/7",
+            "url": "https://es.wikisource.org/w/index.php?oldid=1648110"
+          },
+          {
+            "revision": 1648111,
+            "title": "Página:El Lazarillo de Tormes (1921).pdf/8",
+            "url": "https://es.wikisource.org/w/index.php?oldid=1648111"
+          },
+          {
+            "revision": 1648112,
+            "title": "Página:El Lazarillo de Tormes (1921).pdf/9",
+            "url": "https://es.wikisource.org/w/index.php?oldid=1648112"
+          },
+          {
+            "revision": 1648113,
+            "title": "Página:El Lazarillo de Tormes (1921).pdf/10",
+            "url": "https://es.wikisource.org/w/index.php?oldid=1648113"
+          }
+        ]
       },
       "model": null,
-      "ms": 40,
-      "provider": "spdf-producer",
-      "stage": "normalization"
-    },
-    {
-      "at": "2026-10-07T00:00:00Z",
-      "detail": {
-        "pages": 5
-      },
-      "model": "gemma-4-e4b",
-      "ms": 3100,
-      "provider": "local",
-      "stage": "reading"
+      "ms": null,
+      "provider": "Wikisource",
+      "stage": "source-text"
     }
   ],
   "sections": [
@@ -186,17 +205,17 @@
       "parent": null,
       "summary": null,
       "title": "Prólogo",
-      "unit_from": "p2",
-      "unit_to": "p2"
+      "unit_from": "p7",
+      "unit_to": "p8"
     },
     {
       "id": "tratado-1",
       "level": 1,
       "parent": null,
-      "summary": "Cuenta Lázaro su vida y cuyo hijo fue.",
+      "summary": "Cuenta Lázaro su vida y cúyo hijo fué.",
       "title": "Tratado primero",
-      "unit_from": "p3",
-      "unit_to": "p5"
+      "unit_from": "p9",
+      "unit_to": "p10"
     }
   ],
   "spaces": [],
@@ -204,126 +223,101 @@
   "units": [
     {
       "anchor": {
-        "confidence": 1,
-        "foliation": "page",
-        "physical": 1,
-        "printed": null,
-        "roman": false,
-        "source": "none",
-        "type": "page"
-      },
-      "confidence": 0.91,
-      "footer": null,
-      "header": null,
-      "id": "p1",
-      "image": null,
-      "notes": null,
-      "ord": 1,
-      "printed": null,
-      "reader": "gemma-4-e4b",
-      "t0": null,
-      "t1": null,
-      "text": "LA VIDA DE LAZARILLO DE TORMES, Y DE SVS FORTVNAS Y ADVERSIDADES.",
-      "thumbnail": null,
-      "words": null
-    },
-    {
-      "anchor": {
         "confidence": 0.9,
         "foliation": "page",
-        "physical": 2,
-        "printed": "3",
-        "roman": false,
-        "source": "read",
-        "type": "page"
-      },
-      "confidence": 0.91,
-      "footer": null,
-      "header": null,
-      "id": "p2",
-      "image": null,
-      "notes": null,
-      "ord": 2,
-      "printed": "3",
-      "reader": "gemma-4-e4b",
-      "t0": null,
-      "t1": null,
-      "text": "Yo por bien tengo que coſas tan ſeñaladas, y por ventura nunca oydas ni viſtas, vengan a noticia de muchos, y no ſe entierren en la ſepultura del oluido.",
-      "thumbnail": null,
-      "words": null
-    },
-    {
-      "anchor": {
-        "confidence": 0.9,
-        "foliation": "page",
-        "physical": 3,
-        "printed": "4",
-        "roman": false,
-        "source": "read",
-        "type": "page"
-      },
-      "confidence": 0.91,
-      "footer": null,
-      "header": null,
-      "id": "p3",
-      "image": null,
-      "notes": null,
-      "ord": 3,
-      "printed": "4",
-      "reader": "gemma-4-e4b",
-      "t0": null,
-      "t1": null,
-      "text": "Pues ſepa V. M. ante todas coſas que a mi llaman Lazaro de Tormes, hijo de Thome Gonçales y de Antona Perez, naturales de Tejares, aldea de Salamanca.",
-      "thumbnail": null,
-      "words": null
-    },
-    {
-      "anchor": {
-        "confidence": 0.9,
-        "foliation": "page",
-        "physical": 4,
-        "printed": "5",
-        "roman": false,
-        "source": "read",
-        "type": "page"
-      },
-      "confidence": 0.91,
-      "footer": null,
-      "header": null,
-      "id": "p4",
-      "image": null,
-      "notes": null,
-      "ord": 4,
-      "printed": "5",
-      "reader": "gemma-4-e4b",
-      "t0": null,
-      "t1": null,
-      "text": "Mi naſcimiento fue dentro del rio Tormes, por la qual cauſa tome el ſobrenombre, y fue deſta manera.",
-      "thumbnail": null,
-      "words": null
-    },
-    {
-      "anchor": {
-        "confidence": 0.9,
-        "foliation": "page",
-        "physical": 5,
-        "printed": "6",
+        "physical": 7,
+        "printed": "9",
         "roman": false,
         "source": "inferred",
         "type": "page"
       },
-      "confidence": 0.91,
+      "confidence": 1,
       "footer": null,
       "header": null,
-      "id": "p5",
+      "id": "p7",
       "image": null,
       "notes": null,
-      "ord": 5,
-      "printed": "6",
-      "reader": "gemma-4-e4b",
+      "ord": 1,
+      "printed": "9",
+      "reader": "wikisource-transcription",
       "t0": null,
       "t1": null,
-      "text": "Huelgo de contar a V. M. eſtas niñerias, para moſtrar quanta virtud ſea ſaber los hombres ſubir ſiendo baxos, y dexarſe baxar ſiendo altos quanto vicio.",
+      "text": "PROLOGO\n\nYo por bien tengo que cosas tan señaladas y por ventura nunca oídas ni vistas vengan a noticia de muchos y no se entierren en la sepultura del olvido, pues podría ser que alguno que las lea halle algo que le agrade y a los que no ahondaren tanto los deleite. Y a este propósito dice Plinio que no hay libro, por malo que sea, que no tenga alguna cosa buena. Mayormente que los gustos no son todos unos; mas lo que uno no come otro se pierde por ello. Y así, vemos cosas tenidas en poco de algunos que de otros no lo son. Y esto, para que ninguna cosa se debería romper ni echar a mal, si muy detestable no fuese, sino que a todos se comunicase, mayormente siendo sin perjuicio y pudiendo sacar de ella algún fruto.\n\nPorque si así no fuese, muy pocos escribirían para uno solo, pues no se hace sin trabajo, y quieren, ya que lo pasan, ser recompensados, no con dineros, mas con que vean y lean sus obras y, si hay de qué, se las alaben. Y a este propósito dice Tulio: «La honra cría las artes.»\n\n¿Quién piensa que el soldado, que es primero del escala, tiene más aborrecido el vivir? No por cierto; mas el deseo de alabanza le hace ponerse al peligro;",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 1,
+        "foliation": "page",
+        "physical": 8,
+        "printed": "10",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "confidence": 1,
+      "footer": null,
+      "header": "10",
+      "id": "p8",
+      "image": null,
+      "notes": null,
+      "ord": 2,
+      "printed": "10",
+      "reader": "wikisource-transcription",
+      "t0": null,
+      "t1": null,
+      "text": "y así, en las artes y letras es lo mismo. Predica muy bien el presentado y es hombre que desea mucho el provecho de las ánimas; mas pregunten a su merced si le pesa cuando le dicen: «¡Oh qué maravillosamente lo ha hecho vuestra reverencia!» Justó muy ruinmente el señor don Fulano, y dió el sayete de armas al truhán porque le loaba de haber llevado muy buenas lanzas: ¿qué hiciera si fuera verdad?\n\nY, todo va desta manera: que confesando yo no ser más santo que mis vecinos, desta nonada, que en este grosero estilo escribo, no me pesará que hayan parte y se huelguen con ello todos los que en ella algún gusto hallaren, y vean que vive un hombre con tantas fortunas, peligros y adversidades.\n\nSuplico a vuestra merced reciba el pobre servicio de mano de quien lo hiciera más rico si su poder y deseo se conformaran. Y pues vuestra merced escribe se le escriba y relate el caso muy por extenso, parescióme no tomalle por el medio, sino del principio, por que se tenga entera noticia de mi persona. Y también por que consideren los que heredaron nobles estados cuán poco se les debe, pues Fortuna fué con ellos parcial, y cuánto más hicieron los que, siéndoles contraria, con fuerza y maña remando salieron a buen puerto.",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 0.9,
+        "foliation": "page",
+        "physical": 9,
+        "printed": "11",
+        "roman": false,
+        "source": "inferred",
+        "type": "page"
+      },
+      "confidence": 1,
+      "footer": null,
+      "header": null,
+      "id": "p9",
+      "image": null,
+      "notes": null,
+      "ord": 3,
+      "printed": "11",
+      "reader": "wikisource-transcription",
+      "t0": null,
+      "t1": null,
+      "text": "TRATADO PRIMERO\n\nCuenta Lázaro su vida y cúyo hijo fué.\n\nPues sepa vuestra merced, ante todas cosas, que a mí me llaman Lázaro de Tormes, hijo de Tomé González y de Antona Pérez, naturales de Tejares, aldea de Salamanca. Mi nacimiento fué dentro del río Tormes, por la cual causa tomé el sobrenombre, y fué desta manera. Mi padre, que Dios perdone, tenía cargo de proveer una molienda de una aceña que está ribera de aquel río, en la cual fué molinero más de quince años. Y estando mi madre una noche en la aceña, preñada de mí, tomóle el parto y parióme allí. De manera que con verdad me puedo decir nascido en el río.\n\nPues, siendo yo niño de ocho años, achacaron a mi padre ciertas sangrías mal hechas en los costales de los que allí a moler venían, por lo cual fué preso, y confesó y no negó y padeció persecución por justicia. Espero en Dios que está en la gloria, pues el Evangelio los llama bienaventurados. En este tiempo se hizo cierta armada contra moros, entre los cuales fué mi padre, que a la sazón estaba desterrado por el desastre ya dicho, con cargo de acemilero de un caballero que allá fué. Y con su señor, como leal criado, fenesció su vida.",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 1,
+        "foliation": "page",
+        "physical": 10,
+        "printed": "12",
+        "roman": false,
+        "source": "read",
+        "type": "page"
+      },
+      "confidence": 1,
+      "footer": null,
+      "header": "12",
+      "id": "p10",
+      "image": null,
+      "notes": null,
+      "ord": 4,
+      "printed": "12",
+      "reader": "wikisource-transcription",
+      "t0": null,
+      "t1": null,
+      "text": "Mi viuda madre, como sin marido y sin abrigo se viese, determinó arrimarse a los buenos por ser uno dellos, y vínose a vivir a la ciudad, y alquiló una casilla, y metióse a guisar de comer a ciertos estudiantes, y lavaba la ropa a ciertos mozos de caballos del comendador de la Magdalena, de manera que fué frecuentando las caballerizas.\n\nElla y un hombre moreno de aquellos que las bestias curaban vinieron en conoscimiento. Este, algunas veces se venía a nuestra casa y se iba a la mañana. Otras veces, de día llegaba a la puerta, en achaque de comprar huevos, y entrábase en casa. Yo, al principio de su entrada, pesábame con él y habíale miedo, viendo el color y mal gesto que tenía; mas de que vi que con su venida mejoraba el comer, fuíle queriendo bien, porque siempre traía pan, pedazos de carne, y en el invierno, leños, a que nos calentábamos.\n\nDe manera que, continuando la posada y conversación, mi madre vino á darme un negrito muy bonito, el cual yo brincaba y ayudaba a calentar.\n\nY acuérdome que, estando el negro de mi padrastro trabajando con el mozuelo, como el niño veía a mi madre y a mí blancos y a él no, huía dél, con miedo, para mi madre, y, señalando con el dedo, decía: «¡Madre, coco!»\n\nRespondió él riendo: «¡Hideputa!»\n\nYo, aunque bien muchacho, noté aquella palabra de mi hermanico, y dije entre mí: «¡Cuántos debe de haber en el mundo que huyen de otros porque no se ven a sí mesmos!»\n\nQuiso nuestra fortuna que la conversación del",
       "thumbnail": null,
       "words": null
     }

@@ -1,0 +1,15 @@
+{
+  "expect": {
+    "char": null,
+    "document": true,
+    "fragments": [],
+    "units": ["u1"],
+    "xywh": null
+  },
+  "id": "locate-minimo-printed-section",
+  "input": {
+    "file": "files/minimo.spdf",
+    "reference": "spdf:sha256-cfc8a2dcf65ec4eee72e3980eb2a4d0e5ec76fb016a8381a580f525ca3b862cc#f=159"
+  },
+  "kind": "locate"
+}

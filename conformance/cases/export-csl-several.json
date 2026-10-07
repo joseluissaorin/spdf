@@ -8,32 +8,43 @@
             "given": "Miguel de"
           }
         ],
-        "id": "cervantessaavedra1605a",
+        "id": "cervantessaavedra1608a",
         "issued": {
+          "date-parts": [
+            [1608]
+          ]
+        },
+        "language": "es",
+        "note": "SPDF conformance document: pages of the facsimile of the Madrid 1608 edition (Barcelona, Montaner y Simón, 1897; Internet Archive elingenioso01cerv), transcribed literally from validated Wikisource pages, with long s and abbreviations as printed. The modernized search layer comes from the 1905 Barcelona edition on Wikisource.",
+        "original-date": {
           "date-parts": [
             [1605]
           ]
         },
-        "language": "es",
-        "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
         "publisher": "Juan de la Cuesta",
         "publisher-place": "Madrid",
-        "title": "El ingenioso hidalgo don Quijote de la Mancha",
-        "title-short": "Don Quijote",
+        "title": "El ingenioso hidalgo Don Quixote de la Mancha",
+        "title-short": "Don Quixote",
         "type": "book"
       },
       {
-        "id": "lazarillo1554",
+        "collection-number": "510",
+        "collection-title": "Colección Universal",
+        "id": "lazarillo1921",
         "issued": {
+          "date-parts": [
+            [1921]
+          ]
+        },
+        "language": "es",
+        "note": "SPDF conformance document: pages 9-12 of the Madrid 1921 edition (Colección Universal 510), transcribed literally from validated Wikisource pages; modern spelling as in that edition. Pages 9 and 11 carry no printed number: their folios are inferred from pages 10 and 12.",
+        "original-date": {
           "date-parts": [
             [1554]
           ]
         },
-        "language": "es",
-        "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
-        "publisher": "Juan de Junta",
-        "publisher-place": "Burgos",
-        "title": "La vida de Lazarillo de Tormes y de sus fortunas y adversidades",
+        "publisher-place": "Madrid",
+        "title": "El Lazarillo de Tormes",
         "title-short": "Lazarillo de Tormes",
         "type": "book"
       },
@@ -44,18 +55,23 @@
             "given": "Miguel de"
           }
         ],
-        "id": "cervantessaavedra1605b",
+        "id": "cervantessaavedra1608b",
         "issued": {
+          "date-parts": [
+            [1608]
+          ]
+        },
+        "language": "es",
+        "note": "SPDF conformance document: pages of the facsimile of the Madrid 1608 edition (Barcelona, Montaner y Simón, 1897; Internet Archive elingenioso01cerv), transcribed literally from validated Wikisource pages, with long s and abbreviations as printed. The modernized search layer comes from the 1905 Barcelona edition on Wikisource.",
+        "original-date": {
           "date-parts": [
             [1605]
           ]
         },
-        "language": "es",
-        "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
         "publisher": "Juan de la Cuesta",
         "publisher-place": "Madrid",
-        "title": "El ingenioso hidalgo don Quijote de la Mancha",
-        "title-short": "Don Quijote",
+        "title": "El ingenioso hidalgo Don Quixote de la Mancha",
+        "title-short": "Don Quixote",
         "type": "book"
       }
     ]

@@ -2,7 +2,10 @@
   "expect": {
     "pages": [
       {
-        "label": "1"
+        "label": "vii"
+      },
+      {
+        "label": "[1]"
       },
       {
         "label": "5"

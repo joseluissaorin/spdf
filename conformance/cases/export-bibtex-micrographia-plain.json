@@ -1,6 +1,6 @@
 {
   "expect": {
-    "text": "@book{hooke1665,\n  author = {Hooke, Robert},\n  title = {{Micrographia:} or some physiological descriptions of minute bodies made by magnifying glasses},\n  year = {1665},\n  publisher = {Jo. Martyn and Ja. Allestry},\n  address = {London},\n  language = {en},\n  note = {SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.}\n}\n"
+    "text": "@book{hooke1665,\n  author = {Hooke, Robert},\n  title = {{Micrographia:} or some physiological descriptions of minute bodies made by magnifying glasses. {With} observations and inquiries thereupon},\n  year = {1665},\n  publisher = {Jo. Martyn and Ja. Allestry},\n  address = {London},\n  language = {en},\n  note = {SPDF conformance document: pages 210-211 and the plates Schem. XXXIV and XXXV, transcribed literally from validated English Wikisource pages of the 1665 edition. Figure regions were measured approximately on the Commons page images; the page images are small thumbnails of those scans.}\n}\n"
   },
   "id": "export-bibtex-micrographia-plain",
   "input": {

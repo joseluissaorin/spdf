@@ -2,7 +2,7 @@
   "blobs": [],
   "document": {
     "authors": "孔子",
-    "bytes": 4096,
+    "bytes": 592,
     "created": "2026-10-07T00:00:00Z",
     "duration": null,
     "id": "lunyu",
@@ -15,7 +15,7 @@
         }
       ],
       "language": "lzh",
-      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+      "note": "SPDF conformance document: Analects 1.1-1.4, 2.1 and 2.15, copied literally from Chinese Wikisource (論語/學而第一 and 論語/爲政第二). The original of this document is that plain-text excerpt; source_sha256 is its SHA-256.",
       "spdf": {
         "original_language": "lzh",
         "undated": {
@@ -32,10 +32,10 @@
       "access": "open",
       "holder": null,
       "license": "https://creativecommons.org/publicdomain/mark/1.0/",
-      "note": "Public-domain work. Synthetic layout built for the SPDF conformance suite."
+      "note": "Ancient work: public domain. Text from Chinese Wikisource."
     },
     "source_ref": null,
-    "source_sha256": "c5fbea8e0b34b1011a7002b2d8a69fcec184055902fbcbc4b0c08b1813c70e4f",
+    "source_sha256": "81a81ee712e0186cfc5b620aa14271523df036e91afbf0fc93bc72d48974e6fd",
     "title": "論語",
     "unit_count": 2,
     "updated": "2026-10-07T00:00:00Z",
@@ -75,7 +75,7 @@
       "ord": 2,
       "search_text": "",
       "section": ["學而第一"],
-      "text": "有子曰：「其為人也孝弟，而好犯上者，鮮矣；不好犯上，而好作亂者，未之有也。君子務本，本立而道生。孝弟也者，其為仁之本與！」",
+      "text": "有子曰：「其爲人也孝弟，而好犯上者，鮮矣；不好犯上，而好作亂者，未之有也。君子務本，本立而道生；孝弟也者，其爲仁之本與？」",
       "unit": "b1"
     },
     {
@@ -92,7 +92,7 @@
       "ord": 3,
       "search_text": "",
       "section": ["學而第一"],
-      "text": "子曰：「巧言令色，鮮矣仁！」",
+      "text": "子曰：「巧言令色，鮮矣仁。」",
       "unit": "b1"
     },
     {
@@ -109,40 +109,40 @@
       "ord": 4,
       "search_text": "",
       "section": ["學而第一"],
-      "text": "曾子曰：「吾日三省吾身：為人謀而不忠乎？與朋友交而不信乎？傳不習乎？」",
+      "text": "曾子曰：「吾日三省吾身：爲人謀而不忠乎？與朋友交而不信乎？傳不習乎？」",
       "unit": "b1"
     },
     {
       "anchor": {
-        "chars": [0, 24],
+        "chars": [0, 25],
         "ref": "2.1",
         "scheme": "analects",
         "type": "canonical"
       },
       "anchor_end": null,
-      "context": "論語·為政第二",
+      "context": "論語·爲政第二",
       "id": "lunyu-2.1",
       "n": 5,
       "ord": 5,
       "search_text": "",
-      "section": ["為政第二"],
-      "text": "子曰：「為政以德，譬如北辰，居其所而眾星共之。」",
+      "section": ["爲政第二"],
+      "text": "子曰：「爲政以德，譬如北辰，居其所，而眾星共之。」",
       "unit": "b2"
     },
     {
       "anchor": {
-        "chars": [25, 44],
+        "chars": [26, 45],
         "ref": "2.15",
         "scheme": "analects",
         "type": "canonical"
       },
       "anchor_end": null,
-      "context": "論語·為政第二",
+      "context": "論語·爲政第二",
       "id": "lunyu-2.15",
       "n": 6,
       "ord": 6,
       "search_text": "",
-      "section": ["為政第二"],
+      "section": ["爲政第二"],
       "text": "子曰：「學而不思則罔，思而不學則殆。」",
       "unit": "b2"
     }
@@ -162,12 +162,26 @@
     {
       "at": "2026-10-07T00:00:00Z",
       "detail": {
-        "units": 2
+        "accessed": "2026-10-07",
+        "edition": "Wikisource (zh) collaborative text of 論語, chapters 學而第一 and 爲政第二",
+        "license": "Text: public domain; Wikisource text under CC BY-SA 4.0",
+        "pages": [
+          {
+            "revision": 11118093,
+            "title": "論語/學而第一",
+            "url": "https://zh.wikisource.org/w/index.php?oldid=11118093"
+          },
+          {
+            "revision": 11118094,
+            "title": "論語/爲政第二",
+            "url": "https://zh.wikisource.org/w/index.php?oldid=11118094"
+          }
+        ]
       },
       "model": null,
-      "ms": 1,
-      "provider": "plain-text",
-      "stage": "reading"
+      "ms": null,
+      "provider": "Wikisource",
+      "stage": "source-text"
     }
   ],
   "sections": [],
@@ -188,17 +202,17 @@
       "notes": null,
       "ord": 1,
       "printed": null,
-      "reader": "plain-text",
+      "reader": "wikisource-transcription",
       "t0": null,
       "t1": null,
-      "text": "子曰：「學而時習之，不亦說乎？有朋自遠方來，不亦樂乎？人不知而不慍，不亦君子乎？」\n有子曰：「其為人也孝弟，而好犯上者，鮮矣；不好犯上，而好作亂者，未之有也。君子務本，本立而道生。孝弟也者，其為仁之本與！」\n子曰：「巧言令色，鮮矣仁！」\n曾子曰：「吾日三省吾身：為人謀而不忠乎？與朋友交而不信乎？傳不習乎？」",
+      "text": "子曰：「學而時習之，不亦說乎？有朋自遠方來，不亦樂乎？人不知而不慍，不亦君子乎？」\n有子曰：「其爲人也孝弟，而好犯上者，鮮矣；不好犯上，而好作亂者，未之有也。君子務本，本立而道生；孝弟也者，其爲仁之本與？」\n子曰：「巧言令色，鮮矣仁。」\n曾子曰：「吾日三省吾身：爲人謀而不忠乎？與朋友交而不信乎？傳不習乎？」",
       "thumbnail": null,
       "words": null
     },
     {
       "anchor": {
         "paragraph": 1,
-        "path": ["為政第二"],
+        "path": ["爲政第二"],
         "type": "section"
       },
       "confidence": 1,
@@ -209,10 +223,10 @@
       "notes": null,
       "ord": 2,
       "printed": null,
-      "reader": "plain-text",
+      "reader": "wikisource-transcription",
       "t0": null,
       "t1": null,
-      "text": "子曰：「為政以德，譬如北辰，居其所而眾星共之。」\n子曰：「學而不思則罔，思而不學則殆。」",
+      "text": "子曰：「爲政以德，譬如北辰，居其所，而眾星共之。」\n子曰：「學而不思則罔，思而不學則殆。」",
       "thumbnail": null,
       "words": null
     }

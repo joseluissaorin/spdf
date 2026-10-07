@@ -1,11 +1,11 @@
 {
   "expect": {
-    "match": "\"bajos\"",
+    "match": "\"caballerizas\"",
     "results": [
       {
-        "anchor_uri": "spdf:sha256-c2f0966e90fc3c5dcda91143a8271f4636bab035b060ae577724283514c00e4a#p=5&f=6&char=0,152",
+        "anchor_uri": "spdf:sha256-5b44e83c28cc4a93bf63f5ed6d7e77e1fb86ef61573780410d7a8f3e5b8491b0#p=10&f=12&char=0,337",
         "fragment_id": "l5",
-        "score": 1.034161,
+        "score": 0.883187,
         "via": ["lexical"]
       }
     ],
@@ -15,7 +15,7 @@
   "input": {
     "file": "files/lazarillo.spdf",
     "limit": 10,
-    "query": "bajos"
+    "query": "caballerizas"
   },
   "kind": "search_lexical"
 }

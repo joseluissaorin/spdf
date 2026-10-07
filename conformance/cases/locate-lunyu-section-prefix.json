@@ -9,7 +9,7 @@
   "id": "locate-lunyu-section-prefix",
   "input": {
     "file": "files/lunyu.spdf",
-    "reference": "spdf:sha256-c5fbea8e0b34b1011a7002b2d8a69fcec184055902fbcbc4b0c08b1813c70e4f#s=%E5%AD%B8%E8%80%8C%E7%AC%AC%E4%B8%80"
+    "reference": "spdf:sha256-81a81ee712e0186cfc5b620aa14271523df036e91afbf0fc93bc72d48974e6fd#s=%E5%AD%B8%E8%80%8C%E7%AC%AC%E4%B8%80"
   },
   "kind": "locate"
 }

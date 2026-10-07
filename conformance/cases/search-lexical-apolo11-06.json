@@ -1,0 +1,27 @@
+{
+  "expect": {
+    "match": "\"desolation\"",
+    "results": [
+      {
+        "anchor_uri": "spdf:sha256-c9f25c86982e2335a82641d8accb29c5d6771443c40257e33b0a6ecf78895906#t=395004,395027&char=0,38",
+        "fragment_id": "a7",
+        "score": 0.732437,
+        "via": ["lexical"]
+      },
+      {
+        "anchor_uri": "spdf:sha256-c9f25c86982e2335a82641d8accb29c5d6771443c40257e33b0a6ecf78895906#t=394996,395027&char=0,30",
+        "fragment_id": "a5-7",
+        "score": 0.524854,
+        "via": ["lexical"]
+      }
+    ],
+    "route": "fts"
+  },
+  "id": "search-lexical-apolo11-06",
+  "input": {
+    "file": "files/apolo11.spdf",
+    "limit": 10,
+    "query": "desolation"
+  },
+  "kind": "search_lexical"
+}

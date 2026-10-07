@@ -6,11 +6,11 @@
         "anio": 1962,
         "autores": "Kennedy",
         "bibliotecas": [],
-        "bytes": 26214400,
+        "bytes": 75714,
         "creado": "2026-03-14T18:00:00.000Z",
-        "duracion": 1083,
+        "duracion": null,
         "estado": "listo",
-        "huella": "546afd0cb0d04766d16bd990bd444c6497ef6d68c1bfa43a0bf7f35d3aaaf42b",
+        "huella": "5a94f6c8d72292ac78091fb84d1af4b4d09b90b8cbf66ae75b3026459635dd95",
         "id": "kennedy-rice",
         "idioma": "en",
         "metadatos": {
@@ -32,59 +32,63 @@
           },
           "sinFecha": null,
           "tipoCSL": "speech",
-          "titulo": "Address at Rice University on the Nation's Space Effort"
+          "titulo": "Address at Rice University in Houston on the Nation's Space Effort",
+          "url": "https://www.presidency.ucsb.edu/node/236798"
         },
-        "mime": "audio/mpeg",
+        "mime": "text/html; charset=utf-8",
         "original": "",
-        "tipo": "audio",
-        "titulo": "Address at Rice University on the Nation's Space Effort",
+        "tipo": "documento",
+        "titulo": "Address at Rice University in Houston on the Nation's Space Effort",
         "unidades": 2
       }
     ],
     "fragmentos": [
       {
         "ancla": {
-          "hablante": "John F. Kennedy",
-          "t0": 0,
-          "t1": 9.5,
-          "tipo": "tiempo"
+          "parrafo": 15,
+          "ruta": [],
+          "tipo": "seccion"
         },
         "ancla_fin": null,
-        "contexto": "Discurso en la Universidad Rice, Houston.",
+        "contexto": "Discurso en la Universidad Rice, Houston, 12 de septiembre de 1962.",
         "documento": "kennedy-rice",
         "id": "k-f0",
         "n": 1,
         "orden": 0,
         "seccion": [],
-        "texto": "**John F. Kennedy:** We choose to go to the moon.",
+        "texto": "There is no strife, no prejudice, no national conflict in outer space as yet. Its hazards are hostile to us all. Its conquest deserves the best of all mankind, and its opportunity for peaceful cooperation may never come again. But why, some say, the moon? Why choose this as our goal? And they may well ask why climb the highest mountain. Why, 35 years ago, fly the Atlantic? Why does Rice play Texas?",
         "unidad": "k-u0"
       },
       {
         "ancla": {
-          "hablante": "John F. Kennedy",
-          "t0": 9.5,
-          "t1": 41,
-          "tipo": "tiempo"
+          "parrafo": 16,
+          "ruta": [],
+          "tipo": "seccion"
         },
         "ancla_fin": null,
-        "contexto": "Discurso en la Universidad Rice, Houston.",
+        "contexto": "Discurso en la Universidad Rice, Houston, 12 de septiembre de 1962.",
         "documento": "kennedy-rice",
         "id": "k-f1",
         "n": 2,
         "orden": 1,
         "seccion": [],
-        "texto": "**John F. Kennedy:** We choose to go to the moon in this decade and do the other things, not because they are easy, but because they are hard, because that goal will serve to organize and measure the best of our energies and skills, because that challenge is one that we are willing to accept, one we are unwilling to postpone, and one which we intend to win, and the others, too.",
+        "texto": "We choose to go to the moon. We choose to go to the moon in this decade and do the other things, not because they are easy, but because they are hard, because that goal will serve to organize and measure the best of our energies and skills, because that challenge is one that we are willing to accept, one we are unwilling to postpone, and one which we intend to win, and the others, too.",
         "unidad": "k-u1"
       }
     ],
     "procedencia": [
       {
         "cuando": "2026-03-14T18:10:00.000Z",
-        "detalle": null,
+        "detalle": {
+          "consultado": "2026-10-07",
+          "cotejo": "NASA JSC, er.jsc.nasa.gov/seh/ricetalk.htm (Internet Archive, 2020-01-01): same text except «mountain?» and the typo «many never come again»",
+          "fuente": "The American Presidency Project (text of the Public Papers of the Presidents: John F. Kennedy, 1962)",
+          "url": "https://www.presidency.ucsb.edu/documents/address-rice-university-houston-the-nations-space-effort"
+        },
         "documento": "kennedy-rice",
         "fase": "lectura",
-        "ms": 60000,
-        "proveedor": "whisper-large-v3-turbo"
+        "ms": null,
+        "proveedor": "html"
       }
     ],
     "spdf": [
@@ -104,47 +108,45 @@
     "unidades": [
       {
         "ancla": {
-          "hablante": "John F. Kennedy",
-          "t0": 0,
-          "t1": 9.5,
-          "tipo": "tiempo"
+          "parrafo": 15,
+          "ruta": [],
+          "tipo": "seccion"
         },
         "cabecera": null,
-        "confianza": 0.95,
+        "confianza": 1,
         "documento": "kennedy-rice",
         "id": "k-u0",
         "imagen": null,
         "impresa": null,
-        "lector": "whisper-large-v3-turbo",
+        "lector": "html",
         "miniatura": null,
         "notas": null,
         "orden": 0,
         "pie": null,
-        "t0": 0,
-        "t1": 9.5,
-        "texto": "**John F. Kennedy:** We choose to go to the moon."
+        "t0": null,
+        "t1": null,
+        "texto": "There is no strife, no prejudice, no national conflict in outer space as yet. Its hazards are hostile to us all. Its conquest deserves the best of all mankind, and its opportunity for peaceful cooperation may never come again. But why, some say, the moon? Why choose this as our goal? And they may well ask why climb the highest mountain. Why, 35 years ago, fly the Atlantic? Why does Rice play Texas?"
       },
       {
         "ancla": {
-          "hablante": "John F. Kennedy",
-          "t0": 9.5,
-          "t1": 41,
-          "tipo": "tiempo"
+          "parrafo": 16,
+          "ruta": [],
+          "tipo": "seccion"
         },
         "cabecera": null,
-        "confianza": 0.95,
+        "confianza": 1,
         "documento": "kennedy-rice",
         "id": "k-u1",
         "imagen": null,
         "impresa": null,
-        "lector": "whisper-large-v3-turbo",
+        "lector": "html",
         "miniatura": null,
         "notas": null,
         "orden": 1,
         "pie": null,
-        "t0": 9.5,
-        "t1": 41,
-        "texto": "**John F. Kennedy:** We choose to go to the moon in this decade and do the other things, not because they are easy, but because they are hard, because that goal will serve to organize and measure the best of our energies and skills, because that challenge is one that we are willing to accept, one we are unwilling to postpone, and one which we intend to win, and the others, too."
+        "t0": null,
+        "t1": null,
+        "texto": "We choose to go to the moon. We choose to go to the moon in this decade and do the other things, not because they are easy, but because they are hard, because that goal will serve to organize and measure the best of our energies and skills, because that challenge is one that we are willing to accept, one we are unwilling to postpone, and one which we intend to win, and the others, too."
       }
     ]
   },

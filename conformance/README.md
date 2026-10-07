@@ -23,11 +23,31 @@ Normative text: [`spec/SPEC.md`](../spec/SPEC.md) (while it is written,
 | `tools/spdfref.py` | the reference oracle (Python standard library only) | hand |
 | `tools/manual/*.json` | hand-written anchor URI and citation cases, search queries | hand |
 
-All documents are short excerpts of public-domain works (Cervantes, the anonymous
-*Lazarillo*, Bécquer, Hooke, Darwin, the *Analects*, NASA air-to-ground transmissions,
-Garcilaso, J. F. Kennedy). Their layout, folios, timings and source hashes are synthetic
-and say so in each document's CSL `note`. The Ed25519 key that signs `files/quijote.spdf`
-is a public test key derived in `generar.py`; never trust it for anything else.
+### Where the texts come from
+
+Every text in the corpus is copied literally from an identified source, downloaded on
+2026-10-07; nothing is typed from memory. Each source JSON records the exact revision and
+URL in its `provenance` (stage `source-text`), and each document's CSL `note` says what
+is real and what is not.
+
+| File | Work and edition | Transcription | Original (`source_sha256`) |
+|---|---|---|---|
+| `minimo` | Bécquer, *Rimas* XXI and LIII, in *Obras*, t. III, Madrid, Fernando Fe, 1885 (the printed «proguntas» is kept: checked on the facsimile) | es.wikisource, pages of *Obras de Bécquer - Vol. 3.djvu* | the plain-text excerpt, embedded |
+| `quijote` | Cervantes, *El ingenioso hidalgo Don Quixote de la Mancha*, Madrid, Juan de la Cuesta, 1608 (facsimile Barcelona, 1897); the 1605 princeps has no open transcription | es.wikisource, validated pages with long s and abbreviations; search layer from the Barcelona [1905] edition | the Commons DjVu |
+| `lazarillo` | *El Lazarillo de Tormes*, Madrid, 1921 (Colección Universal 510), modern spelling; no open transcription of the 1554 editions exists | es.wikisource | the Commons PDF |
+| `micrographia` | Hooke, *Micrographia*, London, 1665, pp. 210-211 and plates Schem. XXXIV-XXXV | en.wikisource | the Commons DjVu |
+| `darwin` | Darwin, *On the Origin of Species*, London, John Murray, 1859, pp. vii, 1, 5, 61, 84, 490 | en.wikisource (facsimile) | the Commons DjVu |
+| `lunyu` | 論語 1.1-1.4, 2.1, 2.15 | zh.wikisource | the plain-text excerpt |
+| `apolo11` | NASA, *Apollo 11 Technical Air-to-Ground Voice Transcription*, MSC Houston, 1969; times are GET | NASA PDF (Internet Archive copy) | placeholder: the recording is not included |
+| `legacy/garcilaso-4.1` | Garcilaso, *Poesías*, Madrid, Calpe, 1919: Égloga I (opening) and Soneto XXIII | es.wikisource | the Commons PDF |
+| `legacy/kennedy-4.0` | J. F. Kennedy, Address at Rice University, 12 September 1962, paragraphs 15-16 | The American Presidency Project (text of the *Public Papers*), checked against NASA JSC | the HTML page as downloaded |
+| `legacy/apolo11-4.1` | NASA transcription, three transmissions after the landing | as `apolo11` | placeholder |
+
+What is not real, and is declared as such: the word timings of `apolo11` (spread evenly
+over each span), the figure regions of `micrographia` (measured approximately on the page
+images), the toy embedding vectors, and the placeholder hashes of the two recordings. The
+Ed25519 key that signs `files/quijote.spdf` is a public test key derived in
+`generar.py`; never trust it for anything else.
 
 ## Regenerating and checking
 
@@ -79,6 +99,7 @@ How expectations are made, so nobody has to trust a single implementation:
 | `anchor_uri` (parse) | `uri` | `docref`, `locator`, `canonical` | `parse(uri) == {docref, locator}` and `format(parse(uri)) == canonical` |
 | `anchor_uri` (error) | `uri` | `{"error": true}` | `parse(uri)` fails |
 | `cite` | `anchor`, `anchor_end`, `metadata` (CSL-JSON item), `locale` | `text` | `cite(...) == text`, byte for byte |
+| `cite_passage` | `file`, `fragment`, `quote`, `locale` | `text`, `uri` | citing the quotation from that fragment (SPEC §18.2) gives this citation and this anchor URI, byte for byte |
 | `quantize` | `dtype` (`f32`, `f16`, `i8`), `values` | `hex` or `{"error": true}` | encoding the values as a writer would gives these little-endian bytes (lowercase hex), or fails for out-of-range values |
 | `locate` | `file`, `reference` (an `spdf:` URI or the URL of a `.spdf` with a fragment) | `document`, `units`, `fragments`, `char`, `xywh` | `locate(file, reference)` (SPEC §5.4) gives exactly this object; an implementation that raises for a reference to another document maps it to `document: false` with empty lists and nulls |
 | `export_csl` | `files` (in order), optional `anchor`, `anchor_end` | `items` | the CSL-JSON export of those files (SPEC §19.1, §19.2), compared as JSON; with an anchor, the single item carries `label` and `locator` (or neither) |

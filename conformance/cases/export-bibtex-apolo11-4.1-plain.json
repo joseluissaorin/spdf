@@ -1,0 +1,10 @@
+{
+  "expect": {
+    "text": "@misc{nationalaeronauticsandspaceadministration1969,\n  author = {{National Aeronautics and Space Administration}},\n  title = {{Apollo} 11 air-to-ground voice communications},\n  year = {1969},\n  language = {en}\n}\n"
+  },
+  "id": "export-bibtex-apolo11-4.1-plain",
+  "input": {
+    "files": ["legacy/apolo11-4.1.spdf"]
+  },
+  "kind": "export_bibtex"
+}

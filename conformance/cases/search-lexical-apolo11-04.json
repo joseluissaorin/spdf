@@ -1,29 +1,17 @@
 {
   "expect": {
-    "match": "\"Armstrong\"",
+    "match": "\"Tranquility\"",
     "results": [
       {
-        "anchor_uri": "spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=12,15.5&char=0,73",
+        "anchor_uri": "spdf:sha256-c9f25c86982e2335a82641d8accb29c5d6771443c40257e33b0a6ecf78895906#t=369959,369964&char=0,48",
         "fragment_id": "a1",
-        "score": 0.000001,
+        "score": 0.678747,
         "via": ["lexical"]
       },
       {
-        "anchor_uri": "spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=4178.5,4183&char=0,69",
-        "fragment_id": "a5",
-        "score": 0.000001,
-        "via": ["lexical"]
-      },
-      {
-        "anchor_uri": "spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=4160,4175.5&char=0,78",
+        "anchor_uri": "spdf:sha256-c9f25c86982e2335a82641d8accb29c5d6771443c40257e33b0a6ecf78895906#t=369966,369976&char=0,135",
         "fragment_id": "a3",
-        "score": 0.000001,
-        "via": ["lexical"]
-      },
-      {
-        "anchor_uri": "spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=4176,4186&char=0,32",
-        "fragment_id": "a4-6",
-        "score": 0.000001,
+        "score": 0.455937,
         "via": ["lexical"]
       }
     ],
@@ -33,7 +21,7 @@
   "input": {
     "file": "files/apolo11.spdf",
     "limit": 10,
-    "query": "Armstrong"
+    "query": "Tranquility"
   },
   "kind": "search_lexical"
 }

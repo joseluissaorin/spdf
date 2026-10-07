@@ -1,0 +1,21 @@
+{
+  "expect": {
+    "match": "\"aſtillero\"",
+    "results": [
+      {
+        "anchor_uri": "spdf:sha256-27ea8a4dd0bbf0a511246fe67f81c19084aa2da75c871fe7acde688fd182cb60#p=29&f=Ir&char=168,345",
+        "fragment_id": "q4",
+        "score": 2.172247,
+        "via": ["lexical"]
+      }
+    ],
+    "route": "fts"
+  },
+  "id": "search-lexical-quijote-11",
+  "input": {
+    "file": "files/quijote.spdf",
+    "limit": 10,
+    "query": "aſtillero"
+  },
+  "kind": "search_lexical"
+}

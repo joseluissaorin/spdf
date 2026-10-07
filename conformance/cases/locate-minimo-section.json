@@ -9,7 +9,7 @@
   "id": "locate-minimo-section",
   "input": {
     "file": "files/minimo.spdf",
-    "reference": "spdf:sha256-95ee321f7ae3a0e2d961614603703297425cf1e969b749599971e34fe69b7ba2#s=XXI"
+    "reference": "spdf:sha256-cfc8a2dcf65ec4eee72e3980eb2a4d0e5ec76fb016a8381a580f525ca3b862cc#s=XXI"
   },
   "kind": "locate"
 }

@@ -1,6 +1,6 @@
 {
   "expect": {
-    "content_sha256": "d5d248c7d130ca36205ed6e37b338a66f6d438c6429e686ed148f1ee448f646f",
+    "content_sha256": "b004f3a3ec82d5d06552c48bf0b13f1d37a3330fdd5db18e709ddd6a492d96d1",
     "dump": "expected/kennedy-4.0.dump.json"
   },
   "id": "legacy-dump-kennedy-4.0",

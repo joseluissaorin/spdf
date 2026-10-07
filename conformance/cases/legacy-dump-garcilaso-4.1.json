@@ -1,6 +1,6 @@
 {
   "expect": {
-    "content_sha256": "edaf212aa0c473318c481ac05db31773a8162aca34d68e22459b450ed3f99ff5",
+    "content_sha256": "3081ab4521a91aea781a3883326f95f8c93ef6ae93973aa67dcfb119bd6a500b",
     "dump": "expected/garcilaso-4.1.dump.json"
   },
   "id": "legacy-dump-garcilaso-4.1",

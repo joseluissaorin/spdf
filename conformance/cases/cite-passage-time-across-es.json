@@ -1,0 +1,14 @@
+{
+  "expect": {
+    "text": "(National Aeronautics and Space Administration, 1969, 109:43:16-109:43:47)",
+    "uri": "spdf:sha256-c9f25c86982e2335a82641d8accb29c5d6771443c40257e33b0a6ecf78895906#t=394996,395027"
+  },
+  "id": "cite-passage-time-across-es",
+  "input": {
+    "file": "files/apolo11.spdf",
+    "fragment": "a5-7",
+    "locale": "es",
+    "quote": "view!\n**CDR (EVA):**"
+  },
+  "kind": "cite_passage"
+}

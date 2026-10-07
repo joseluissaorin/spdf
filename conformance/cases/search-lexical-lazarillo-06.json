@@ -1,11 +1,35 @@
 {
   "expect": {
-    "match": "\"olvido\"",
+    "match": "\"fue\" OR \"Tormes\"",
     "results": [
       {
-        "anchor_uri": "spdf:sha256-c2f0966e90fc3c5dcda91143a8271f4636bab035b060ae577724283514c00e4a#p=2&f=3&char=0,153",
+        "anchor_uri": "spdf:sha256-5b44e83c28cc4a93bf63f5ed6d7e77e1fb86ef61573780410d7a8f3e5b8491b0#p=9&f=11&char=221,320",
+        "fragment_id": "l4",
+        "score": 0.523477,
+        "via": ["lexical"]
+      },
+      {
+        "anchor_uri": "spdf:sha256-5b44e83c28cc4a93bf63f5ed6d7e77e1fb86ef61573780410d7a8f3e5b8491b0#p=10&f=12&char=0,337",
+        "fragment_id": "l5",
+        "score": 0.270494,
+        "via": ["lexical"]
+      },
+      {
+        "anchor_uri": "spdf:sha256-5b44e83c28cc4a93bf63f5ed6d7e77e1fb86ef61573780410d7a8f3e5b8491b0#p=9&f=11&char=57,220",
+        "fragment_id": "l3",
+        "score": 0.000001,
+        "via": ["lexical"]
+      },
+      {
+        "anchor_uri": "spdf:sha256-5b44e83c28cc4a93bf63f5ed6d7e77e1fb86ef61573780410d7a8f3e5b8491b0#p=8&f=10&char=696,818",
         "fragment_id": "l2",
-        "score": 1.003957,
+        "score": 0.000001,
+        "via": ["lexical"]
+      },
+      {
+        "anchor_uri": "spdf:sha256-5b44e83c28cc4a93bf63f5ed6d7e77e1fb86ef61573780410d7a8f3e5b8491b0#p=7&f=9&char=9,267",
+        "fragment_id": "l1",
+        "score": 0.000001,
         "via": ["lexical"]
       }
     ],
@@ -15,7 +39,7 @@
   "input": {
     "file": "files/lazarillo.spdf",
     "limit": 10,
-    "query": "olvido"
+    "query": "fue Tormes"
   },
   "kind": "search_lexical"
 }

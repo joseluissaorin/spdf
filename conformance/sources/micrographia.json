@@ -1,41 +1,48 @@
 {
   "blobs": [
     {
-      "bytes": 73,
-      "data_base64": "iVBORw0KGgoAAAANSUhEUgAAAAQAAAADCAIAAAA7ljmRAAAAEElEQVR42mOwMdGBIwacHACPfwdRhrU1ogAAAABJRU5ErkJggg==",
-      "key": "figures/flea.png",
-      "mime": "image/png",
-      "sha256": "e1e3f5a05c82b5bedbc2ba4ba821faa02cba927c6165af0c60b0287240468aae"
+      "bytes": 2392,
+      "data_base64": "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",
+      "key": "pages/0318.jpg",
+      "mime": "image/jpeg",
+      "sha256": "f31172b4c2778d813a68f44328c83c79feb121cb96dc1766f52e14b8051a40e2"
     },
     {
-      "bytes": 74,
-      "data_base64": "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAHCAIAAABPxRC5AAAAEUlEQVR42mP48OIaMmKgMR8AiVpdy9L7ndcAAAAASUVORK5CYII=",
-      "key": "pages/0001.png",
-      "mime": "image/png",
-      "sha256": "f3b90163840f55b2df0362cec73845fe60df5a60115727e44d7145ff7926f998"
+      "bytes": 3488,
+      "data_base64": "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",
+      "key": "pages/0319.jpg",
+      "mime": "image/jpeg",
+      "sha256": "64349f41fd55fe4b238e03404474e7ea8364e05f676ce1ed940b102137210f03"
     },
     {
-      "bytes": 74,
-      "data_base64": "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAHCAIAAABPxRC5AAAAEUlEQVR42mN49+wKMmKgMR8AW2pc+RLGl/sAAAAASUVORK5CYII=",
-      "key": "pages/0002.png",
-      "mime": "image/png",
-      "sha256": "367dc35fe74787fa82b07f1dedbeec72384278edf8783e941447324a08d0f943"
+      "bytes": 2176,
+      "data_base64": "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",
+      "key": "pages/0321.jpg",
+      "mime": "image/jpeg",
+      "sha256": "fff42bb90c7f8b1bb8c364bc7bed1acb3c75192885f3206ec7fc0266474663d0"
     },
     {
-      "bytes": 73,
-      "data_base64": "iVBORw0KGgoAAAANSUhEUgAAAAIAAAADCAIAAAA2iEnWAAAAEElEQVR42mP48OIaEDGgUACpgxAV4KFlEwAAAABJRU5ErkJggg==",
-      "key": "thumbs/0001.png",
-      "mime": "image/png",
-      "sha256": "cb55181ba0027e827bb8cd096a1b2d18286a71d1bb237f5910f6048672d1c830"
+      "bytes": 3073,
+      "data_base64": "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",
+      "key": "pages/0323.jpg",
+      "mime": "image/jpeg",
+      "sha256": "6f56ea0b87d509c6eda53a8b82ce0329c74e88b4c9103f60827a4578e3d8686c"
+    },
+    {
+      "bytes": 1384,
+      "data_base64": "/9j/4AAQSkZJRgABAQAASABIAAD/4QBMRXhpZgAATU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAI6ADAAQAAAABAAAAOAAAAAD/7QA4UGhvdG9zaG9wIDMuMAA4QklNBAQAAAAAAAA4QklNBCUAAAAAABDUHYzZjwCyBOmACZjs+EJ+/8AAEQgAOAAjAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/bAEMABAQEBAQECAQECAsICAgLDwsLCwsPEg8PDw8PEhYSEhISEhIWFhYWFhYWFhsbGxsbGx8fHx8fIyMjIyMjIyMjI//bAEMBBQYGCQgJDwgIDyQZFBkkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJP/dAAQAA//aAAwDAQACEQMRAD8A+UbTT7rUrqOwsEMk0p2ogxyfxrpD8KvHsmWXTX/76T/4qnfDtt3jnSx/03H8jX29fyS2MKzxHOTtIPT14HrXJVqyjLlRrGKauz4Yf4S/EAjI05/++4//AIqqb/Cfx/nH9nMP+Bx//FV9q/2hdkk7sZJP09utU5dSnVSS68joQaz9tPyK5InxE/gnxPaObe408l16/Ov17Gm/8Ij4h/6B5/77H+NfTetbW1KRj3Cn81FZeF/yaXt6nkPkif/Q+cfhy3/Fd6V/18L/ACNfdWp2sl1aoIsZDZ5+hr4R+HPHjrSif+fgfyNfdeqTOlirREqS2Mg47GvPr/GvQ3h8JzzaZOpKsyKevfP8qzb3SwykiUHHoD/jVl7qcgnezEd/Wsa8vJ0BAbIPc5/pWYzmNWiQXzA84VBn6KKzvLT0rbvYVluPMfqyqT/3yKq/ZY6aGf/R+bfh6CPG+l/9fA/ka+4dUf8A4l6nPRx/I18ReAV2+NdLP/Twv8jX2/d20l7aBIiFIbOT+IrzcR/EXodFP4Tk1dCCGJHPYZ/qKzL8RAFtzD8B/jXSnRLrPLoB16mqU2iXHlktImQOOvWs7lWOQvJAs+P9lP8A0EVW84VJqC7LtkYjICg/goql8vqKXMFj/9L5Y0jV30LV7bWIlEjWzhwrcAkdsivV2/aB1heF0+D/AL7b/CvDZuh+prNf71Yypxk7yRSk1se9yftBa2eBYQD/AIG1Upfj/rZUj7BB/wB9tXhTVWk6VPsIdh+0l3PYZfi1qt7Ibp7SJS3YFu3FM/4WhqX/AD6xfm3+NeWW3+pH4/zqen7GHYfO+5//2Q==",
+      "key": "thumbs/0318.jpg",
+      "mime": "image/jpeg",
+      "sha256": "590ce7913f2f081d215f70d6b2b436eefb2166a3575ce16131ac14d151c0a6ed"
     }
   ],
   "document": {
     "authors": "Hooke",
-    "bytes": 1048576,
+    "bytes": 74523910,
     "created": "2026-10-07T00:00:00Z",
     "duration": null,
     "id": "micrographia-1665",
-    "kind": "scanned_pdf",
+    "kind": "photos",
     "language": "en",
     "metadata": {
       "author": [
@@ -50,24 +57,24 @@
         ]
       },
       "language": "en",
-      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+      "note": "SPDF conformance document: pages 210-211 and the plates Schem. XXXIV and XXXV, transcribed literally from validated English Wikisource pages of the 1665 edition. Figure regions were measured approximately on the Commons page images; the page images are small thumbnails of those scans.",
       "publisher": "Jo. Martyn and Ja. Allestry",
       "publisher-place": "London",
-      "title": "Micrographia: or some physiological descriptions of minute bodies made by magnifying glasses",
+      "title": "Micrographia: or some physiological descriptions of minute bodies made by magnifying glasses. With observations and inquiries thereupon",
       "title-short": "Micrographia",
       "type": "book"
     },
-    "mime": "application/pdf",
+    "mime": "image/vnd.djvu",
     "rights": {
       "access": "open",
       "holder": null,
       "license": "https://creativecommons.org/publicdomain/mark/1.0/",
-      "note": "Public-domain work. Synthetic layout built for the SPDF conformance suite."
+      "note": "Public domain work. Facsimile and transcription from Wikimedia Commons and Wikisource."
     },
-    "source_ref": null,
-    "source_sha256": "4501ef3a079e09d5556746bba9fc26e261aa6cbc5d47b056382d400ec1523bfd",
-    "title": "Micrographia: or some physiological descriptions of minute bodies made by magnifying glasses",
-    "unit_count": 2,
+    "source_ref": "https://upload.wikimedia.org/wikipedia/commons/b/be/Micrographia_-_or_some_physiological_descriptions_of_minute_bodies_made_by_magnifying_glasses_with_observations_and_inquiries_thereupon.djvu",
+    "source_sha256": "ba9d5d9537d3088ed539bf3acd7bb626b05d73a65dc373653c7e226ce9fc0dd6",
+    "title": "Micrographia: or some physiological descriptions of minute bodies made by magnifying glasses. With observations and inquiries thereupon",
+    "unit_count": 4,
     "updated": "2026-10-07T00:00:00Z",
     "year": 1665
   },
@@ -75,56 +82,59 @@
   "figures": [
     {
       "anchor": {
-        "confidence": 0.95,
+        "confidence": 1,
         "foliation": "page",
-        "physical": 1,
-        "printed": "210",
+        "matter": "plate",
+        "physical": 319,
+        "printed": null,
         "region": {
-          "h": 0.5,
-          "w": 0.8,
-          "x": 0.1,
-          "y": 0.25
+          "h": 0.88,
+          "w": 0.86,
+          "x": 0.03,
+          "y": 0.08
         },
         "roman": false,
-        "source": "read",
+        "source": "none",
         "type": "page"
       },
-      "caption": "A flea, as seen through the microscope.",
-      "description": "Engraving of a flea in profile, its legs extended and its body covered in jointed plates.",
+      "caption": "Schem. XXXIV.",
+      "description": "Engraving of a flea seen in profile, its legs and mouthparts lettered A to I for the description in the text.",
       "id": "fig-flea",
-      "image": "blob:figures/flea.png",
-      "unit": "p1"
+      "image": "blob:pages/0319.jpg",
+      "unit": "p319"
     },
     {
       "anchor": {
-        "confidence": 0.95,
+        "confidence": 1,
         "foliation": "page",
-        "physical": 2,
-        "printed": "211",
+        "matter": "plate",
+        "physical": 323,
+        "printed": null,
         "region": {
-          "h": 0.333333,
-          "w": 0.75,
-          "x": 0.125,
-          "y": 0.3
+          "h": 0.95,
+          "w": 0.96,
+          "x": 0.01,
+          "y": 0.02
         },
         "roman": false,
-        "source": "read",
+        "source": "none",
         "type": "page"
       },
-      "caption": "A louse, holding a human hair.",
-      "description": "Engraving of a louse seen from above, clinging to a single hair.",
+      "caption": "Schem. XXXV.",
+      "description": "Engraving of a louse seen from above, clinging to a human hair, its parts lettered for the description in the text.",
       "id": "fig-louse",
-      "image": "blob:pages/0002.png",
-      "unit": "p2"
+      "image": "blob:pages/0323.jpg",
+      "unit": "p323"
     }
   ],
   "fragments": [
     {
       "anchor": {
-        "chars": [26, 142],
-        "confidence": 0.95,
+        "chars": [989, 1105],
+        "confidence": 1,
         "foliation": "page",
-        "physical": 1,
+        "matter": "body",
+        "physical": 318,
         "printed": "210",
         "roman": false,
         "source": "read",
@@ -136,16 +146,17 @@
       "n": 1,
       "ord": 1,
       "search_text": "",
-      "section": ["Observ. LIII. Of a Flea"],
+      "section": ["Observ. LIII. Of a Flea."],
       "text": "The strength and beauty of this small creature, had it no other relation at all to man, would deserve a description.",
-      "unit": "p1"
+      "unit": "p318"
     },
     {
       "anchor": {
-        "chars": [26, 198],
-        "confidence": 0.95,
+        "chars": [818, 1107],
+        "confidence": 1,
         "foliation": "page",
-        "physical": 2,
+        "matter": "body",
+        "physical": 321,
         "printed": "211",
         "roman": false,
         "source": "read",
@@ -157,9 +168,9 @@
       "n": 2,
       "ord": 2,
       "search_text": "",
-      "section": ["Observ. LIV. Of a Louse"],
-      "text": "This is a Creature so officious, that 'twill be known to every one at one time or other, so busie, and so impudent, that it will be intruding it self in every ones company.",
-      "unit": "p2"
+      "section": ["Observ. LIV. Of a Louse."],
+      "text": "THis is a Creature so officious, that 'twill be known to every one at one time or other, so busie, and so impudent, that it will be intruding it self in every ones company, and so proud and aspiring withall, that it fears not to trample on the best, and affects nothing so much as a Crown;",
+      "unit": "p321"
     }
   ],
   "fts": {
@@ -177,23 +188,49 @@
     {
       "at": "2026-10-07T00:00:00Z",
       "detail": {
-        "dims": 4,
-        "targets": ["fragment", "unit", "figure"]
+        "accessed": "2026-10-07",
+        "edition": "Micrographia, London, Jo. Martyn and Ja. Allestry, 1665; Commons File:Micrographia - or some physiological descriptions of minute bodies made by magnifying glasses with observations and inquiries thereupon.djvu, SHA-1 d79c0d7024cc8c193cbf5b3e35f6c363a5923e5e",
+        "license": "Text: public domain; Wikisource transcription under CC BY-SA 4.0",
+        "pages": [
+          {
+            "revision": 9089412,
+            "title": "Page:Micrographia - or some physiological descriptions of minute bodies made by magnifying glasses with observations and inquiries thereupon.djvu/318",
+            "url": "https://en.wikisource.org/w/index.php?oldid=9089412"
+          },
+          {
+            "revision": 9138282,
+            "title": "Page:Micrographia - or some physiological descriptions of minute bodies made by magnifying glasses with observations and inquiries thereupon.djvu/319",
+            "url": "https://en.wikisource.org/w/index.php?oldid=9138282"
+          },
+          {
+            "revision": 9089442,
+            "title": "Page:Micrographia - or some physiological descriptions of minute bodies made by magnifying glasses with observations and inquiries thereupon.djvu/321",
+            "url": "https://en.wikisource.org/w/index.php?oldid=9089442"
+          },
+          {
+            "revision": 9138283,
+            "title": "Page:Micrographia - or some physiological descriptions of minute bodies made by magnifying glasses with observations and inquiries thereupon.djvu/323",
+            "url": "https://en.wikisource.org/w/index.php?oldid=9138283"
+          }
+        ],
+        "regions": "measured approximately on the 960 px Commons page images of DjVu pages 319 and 323"
       },
-      "model": "toy-clip",
-      "ms": 1,
-      "provider": "spdf-conformance",
-      "stage": "embedding"
+      "model": null,
+      "ms": null,
+      "provider": "Wikisource",
+      "stage": "source-text"
     },
     {
       "at": "2026-10-07T00:00:00Z",
       "detail": {
-        "figures": 2
+        "dims": 4,
+        "note": "toy vectors chosen by hand for the suite",
+        "targets": ["fragment", "unit", "figure"]
       },
-      "model": "gemma-4-e4b",
-      "ms": 2400,
-      "provider": "local",
-      "stage": "figures"
+      "model": "toy-clip",
+      "ms": null,
+      "provider": "spdf-conformance",
+      "stage": "embedding"
     }
   ],
   "sections": [],
@@ -216,58 +253,112 @@
   "units": [
     {
       "anchor": {
-        "confidence": 0.95,
+        "confidence": 1,
         "foliation": "page",
-        "physical": 1,
+        "matter": "body",
+        "physical": 318,
         "printed": "210",
         "roman": false,
         "source": "read",
         "type": "page"
       },
       "confidence": 1,
-      "footer": null,
-      "header": null,
-      "id": "p1",
-      "image": "blob:pages/0001.png",
+      "footer": "tube,",
+      "header": "210 Micrographia.",
+      "id": "p318",
+      "image": "blob:pages/0318.jpg",
       "notes": null,
       "ord": 1,
       "printed": "210",
-      "reader": "pdf-text-layer",
+      "reader": "wikisource-transcription",
       "t0": null,
       "t1": null,
-      "text": "Observ. LIII. Of a Flea.\n\nThe strength and beauty of this small creature, had it no other relation at all to man, would deserve a description.",
-      "thumbnail": "blob:thumbs/0001.png",
+      "text": "through so many scourings, washings, dressings and dryings, as the parts of old Paper must necessarily have suffer'd; the digestive faculty, it seems, of these little creatures being able yet further to work upon those stubborn parts, and reduce them into another form.\n\nAnd indeed, when I consider what a heap of Saw-dust or chips this little creature (which is one of the teeth of Time) conveys into its intrals, I cannot chuse but remember and admire the excellent contrivance of Nature, in placing in Animals such a fire, as is continually nourished and supply'd by the materials convey'd into the stomach, and fomented by the bellows of the lungs; and in so contriving the most admirable fabrick of Animals, as to make the very spending and wasting of that fire, to be instrumental to the procuring and collecting more materials to augment and cherish it self, which indeed seems to be the principal end of all the contrivances observable in bruit Animals.\n\nObserv. LIII. Of a Flea.\n\nThe strength and beauty of this small creature, had it no other relation at all to man, would deserve a description.\n\nFor its strength, the Microscope is able to make no greater discoveries of it then the naked eye, but onely the curious contrivance of its leggs and joints, for the exerting that strength, is very plainly manifested, such as no other creature, I have yet observ'd, has any thing like it; for the joints of it are so adapted, that he can, as 'twere, fold them short one within another, and suddenly stretch, or spring them out to their whole length, that is, of the fore-leggs, the part A, of the 34. Scheme, lies within B, and B within C, parallel to, or side by side each other; but the parts of the two next, lie quite contrary, that is, D without E, and E without F, but parallel also; but the parts of the hinder leggs, G, H and I, bend one within another, like the parts of a double jointed Ruler, or like the foot, legg and thigh of a man; these six leggs he clitches up altogether, and when he leaps, springs them all out, and thereby exerts his whole strength at once.\n\nBut, as for the beauty of it, the Microscope manifests it to be all over adorn'd with a curiously polish'd suit of sable Armour, neatly jointed, and beset with multitudes of sharp pinns, shap'd almost like Porcupine's Quills, or bright conical Steel-bodkins; the head is on either side beautify'd with a quick and round black eye K, behind each of which also appears a small cavity, L, in which he seems to move to and fro a certain thin film beset with many small transparent hairs, which probably may be his ears; in the forepart of his head, between the two fore-leggs, he has two small long jointed feelers, or rather smellers, M M, which have four joints, and are hairy, like those of several other creatures; between these, it has a small proboscis, or probe, N N O, that seems to consist of a",
+      "thumbnail": "blob:thumbs/0318.jpg",
       "words": null
     },
     {
       "anchor": {
-        "confidence": 0.95,
+        "confidence": 1,
         "foliation": "page",
-        "physical": 2,
+        "matter": "plate",
+        "physical": 319,
+        "printed": null,
+        "roman": false,
+        "source": "none",
+        "type": "page"
+      },
+      "confidence": 1,
+      "footer": null,
+      "header": null,
+      "id": "p319",
+      "image": "blob:pages/0319.jpg",
+      "notes": null,
+      "ord": 2,
+      "printed": null,
+      "reader": "wikisource-transcription",
+      "t0": null,
+      "t1": null,
+      "text": "Schem. XXXIV.",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 1,
+        "foliation": "page",
+        "matter": "body",
+        "physical": 321,
         "printed": "211",
         "roman": false,
         "source": "read",
         "type": "page"
       },
       "confidence": 1,
-      "footer": null,
-      "header": null,
-      "id": "p2",
-      "image": "blob:pages/0002.png",
+      "footer": "F f 2 two",
+      "header": "Micrographia. 211",
+      "id": "p321",
+      "image": "blob:pages/0321.jpg",
       "notes": null,
-      "ord": 2,
+      "ord": 3,
       "printed": "211",
-      "reader": "pdf-text-layer",
+      "reader": "wikisource-transcription",
       "t0": null,
       "t1": null,
-      "text": "Observ. LIV. Of a Louse.\n\nThis is a Creature so officious, that 'twill be known to every one at one time or other, so busie, and so impudent, that it will be intruding it self in every ones company.",
+      "text": "tube N N, and a tongue or sucker O, which I have perceiv'd him to slip in and out. Besides these, it has also two chaps or biters P P, which are somewhat like those of an Ant, but I could not perceive them tooth'd; these were shap'd very like the blades of a pair of round top'd Scizers, and were opened and shut just after the same manner; with these Instruments does this little busie Creature bite and pierce the skin, and suck out the blood of an Animal, leaving the skin inflamed with a small round red spot. These parts are very difficult to be discovered, because, for the most part, they lye covered between the fore-legs. There are many other particulars, which, being more obvious, and affording no great matter of information, I shall pass by, and refer the Reader to the Figure.\n\nObserv. LIV. Of a Louse.\n\nTHis is a Creature so officious, that 'twill be known to every one at one time or other, so busie, and so impudent, that it will be intruding it self in every ones company, and so proud and aspiring withall, that it fears not to trample on the best, and affects nothing so much as a Crown; feeds and lives very high, and that makes it so saucy, as to pull any one by the ears that comes in its way, and will never be quiet till it has drawn blood: it is troubled at nothing so much as at a man that scratches his head, as knowing that man is plotting and contriving some mischief against it, and that makes it oftentime sculk into some meaner and lower place, and run behind a mans back, though it go very much against the hair; which ill conditions of it having made it better known then trusted, would exempt me from making any further description of it, did not my faithful Mercury, my Microscope, bring me other information of it. For this has discovered to me, by means of a very bright light cast on it, that it is a Creature of a very odd shape; it has a head shap'd like that exprest in 35. Scheme marked with A, which seems almost Conical, but is a little flatted on the upper and under sides, at the biggest part of which, on either side behind the head (as it were, being the place where other Creatures ears stand) are placed its two black shining goggle eyes B B, looking backwards, and fenced round with several small cilia, or hairs that incompass it, so that it seems this Creature has no very good foresight: It does not seem to have any eye-lids, and therefore perhaps its eyes were so placed, that it might the better cleanse them with its fore-legs; and perhaps this may be the reason, why they so much avoid and run from the light behind them, for being made to live in the shady and dark recesses of the hair, and thence probably their eye having a great aperture, the open and clear light, especially that of the Sun, must needs very much offend them; to secure these eyes from receiving any injury from the hairs through which it passes, it has",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 1,
+        "foliation": "page",
+        "matter": "plate",
+        "physical": 323,
+        "printed": null,
+        "roman": false,
+        "source": "none",
+        "type": "page"
+      },
+      "confidence": 1,
+      "footer": null,
+      "header": null,
+      "id": "p323",
+      "image": "blob:pages/0323.jpg",
+      "notes": null,
+      "ord": 4,
+      "printed": null,
+      "reader": "wikisource-transcription",
+      "t0": null,
+      "t1": null,
+      "text": "Schem. XXXV.",
       "thumbnail": null,
       "words": null
     }
   ],
   "vectors": {
     "toy-clip@4": {
-      "count": 6,
+      "count": 8,
       "items": [
         {
           "id": "fig-flea",
@@ -290,17 +381,27 @@
           "values": [0, 0.5, 1, 0.25]
         },
         {
-          "id": "p1",
+          "id": "p318",
           "target": "unit",
           "values": [1, 0.5, 0, 0.25]
         },
         {
-          "id": "p2",
+          "id": "p319",
+          "target": "unit",
+          "values": [2, 1, 0.25, 0]
+        },
+        {
+          "id": "p321",
           "target": "unit",
           "values": [0, 0.5, 1, 0.5]
+        },
+        {
+          "id": "p323",
+          "target": "unit",
+          "values": [0, 0.25, 1, 1]
         }
       ],
-      "sha256": "938fc056a3affe83f09f1a00db5c936df0904a35f87ddb8b08525ef260c71bf7"
+      "sha256": "ffae1741549f9a0753a1eed29d17355ca6228fc053b75388e0151be0ea10e806"
     }
   }
 }

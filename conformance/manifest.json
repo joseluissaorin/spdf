@@ -2,23 +2,24 @@
   "by_kind": {
     "anchor_uri": 40,
     "cite": 79,
+    "cite_passage": 15,
     "dump": 7,
-    "export_bibtex": 16,
-    "export_csl": 18,
+    "export_bibtex": 18,
+    "export_csl": 19,
     "export_structure": 15,
-    "legacy_dump": 2,
-    "locate": 25,
+    "legacy_dump": 3,
+    "locate": 33,
     "quantize": 7,
     "roundtrip": 7,
     "search_hybrid": 2,
-    "search_lexical": 39,
+    "search_lexical": 42,
     "search_vector": 9,
-    "validate": 43
+    "validate": 45
   },
-  "cases": 309,
-  "cases_sha256": "231af9f787af9b25c416d465b8f7f8e9cfba659bfc5693104dcad68f03fe7959",
+  "cases": 341,
+  "cases_sha256": "c1bca16c57760b1099762084ce8cf1ad944f7238a9eae58fa9b136b02ae496ad",
   "spdf_version": "5.0",
   "suite": "spdf-conformance",
-  "suite_version": "0.4.0",
+  "suite_version": "0.4.1",
   "test_public_key": "ed25519:zTT6Bhc+ydufqk04cT9bPz9jDlHiRgXyOJ/VBgKzpv4="
 }

@@ -7,17 +7,11 @@
             "family": "Garcilaso de la Vega"
           }
         ],
-        "collection-title": "Prueba de conformidad SPDF",
-        "editor": [
-          {
-            "family": "Herrera",
-            "given": "Fernando de"
-          }
-        ],
-        "id": "garcilasodelavega1580",
+        "collection-title": "Colección Universal",
+        "id": "garcilasodelavega1919",
         "issued": {
           "date-parts": [
-            [1580]
+            [1919]
           ]
         },
         "language": "es",
@@ -26,10 +20,8 @@
             [1543]
           ]
         },
-        "publisher": "Alonso de la Barrera",
-        "publisher-place": "Sevilla",
-        "title": "Obras de Garcilaso de la Vega: con anotaciones de Fernando de Herrera",
-        "title-short": "Obras de Garcilaso de la Vega",
+        "publisher-place": "Madrid",
+        "title": "Poesías",
         "type": "book"
       }
     ]

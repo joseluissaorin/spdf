@@ -2,14 +2,14 @@
   "expect": {
     "char": null,
     "document": true,
-    "fragments": ["q1"],
-    "units": ["p1"],
+    "fragments": ["q4", "q5"],
+    "units": ["p29"],
     "xywh": null
   },
   "id": "locate-quijote-document-id",
   "input": {
     "file": "files/quijote.spdf",
-    "reference": "spdf:quijote-1605#p=1"
+    "reference": "spdf:quijote-1608#p=29"
   },
   "kind": "locate"
 }

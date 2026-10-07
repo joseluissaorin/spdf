@@ -2,25 +2,25 @@
   "expect": {
     "results": [
       {
-        "anchor_uri": "spdf:sha256-e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3#p=2&f=5&char=0,84",
+        "anchor_uri": "spdf:sha256-484ad7ca524b4a022327194b75fcb21e70006f99825afe3fda41ede5a73ac7b8#p=15&f=5&char=30,114",
         "fragment_id": "d2",
         "score": 0.181818,
         "via": ["lexical", "vector"]
       },
       {
-        "anchor_uri": "spdf:sha256-e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3#p=3&f=61&char=0,349",
+        "anchor_uri": "spdf:sha256-484ad7ca524b4a022327194b75fcb21e70006f99825afe3fda41ede5a73ac7b8#p=71&f=61&char=796,1145",
         "fragment_id": "d3",
         "score": 0.083333,
         "via": ["vector"]
       },
       {
-        "anchor_uri": "spdf:sha256-e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3#p=4&f=84&char=0,202",
+        "anchor_uri": "spdf:sha256-484ad7ca524b4a022327194b75fcb21e70006f99825afe3fda41ede5a73ac7b8#p=94&f=84&char=485,687",
         "fragment_id": "d5",
         "score": 0.076923,
         "via": ["vector"]
       },
       {
-        "anchor_uri": "spdf:sha256-e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3#p=3&f=61&char=351,530",
+        "anchor_uri": "spdf:sha256-484ad7ca524b4a022327194b75fcb21e70006f99825afe3fda41ede5a73ac7b8#p=71&f=61&char=1317,1496",
         "fragment_id": "d4",
         "score": 0.071429,
         "via": ["vector"]

@@ -3,9 +3,9 @@
     "match": "\"one giant leap\"",
     "results": [
       {
-        "anchor_uri": "spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=4160,4175.5&char=0,78",
-        "fragment_id": "a3",
-        "score": 1.303691,
+        "anchor_uri": "spdf:sha256-c9f25c86982e2335a82641d8accb29c5d6771443c40257e33b0a6ecf78895906#t=393888,393930&char=0,79",
+        "fragment_id": "a4",
+        "score": 1.229885,
         "via": ["lexical"]
       }
     ],

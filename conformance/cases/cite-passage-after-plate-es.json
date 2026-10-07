@@ -1,0 +1,14 @@
+{
+  "expect": {
+    "text": "(Hooke, 1665, p. 211)",
+    "uri": "spdf:sha256-ba9d5d9537d3088ed539bf3acd7bb626b05d73a65dc373653c7e226ce9fc0dd6#p=321&f=211&char=36,81"
+  },
+  "id": "cite-passage-after-plate-es",
+  "input": {
+    "file": "invalid/W103-fragment-crosses-matter.spdf",
+    "fragment": "m4",
+    "locale": "es",
+    "quote": "which I have perceiv'd him to slip in and out"
+  },
+  "kind": "cite_passage"
+}

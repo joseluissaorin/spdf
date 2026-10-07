@@ -1,0 +1,15 @@
+{
+  "expect": {
+    "char": null,
+    "document": true,
+    "fragments": ["a5-7", "a7"],
+    "units": ["t7"],
+    "xywh": null
+  },
+  "id": "locate-apolo11-time-crossing-end",
+  "input": {
+    "file": "files/apolo11.spdf",
+    "reference": "spdf:sha256-c9f25c86982e2335a82641d8accb29c5d6771443c40257e33b0a6ecf78895906#t=395010"
+  },
+  "kind": "locate"
+}

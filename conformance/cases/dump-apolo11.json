@@ -1,6 +1,6 @@
 {
   "expect": {
-    "content_sha256": "8c6ee07b5c0ae341b693273c042ef739cbed36f5d1176380a58f51b30145f0b7",
+    "content_sha256": "f24391e1f1648f394bf73a8012a0fbb48481a5f92801eabf298a8bd9127adcac",
     "dump": "expected/apolo11.dump.json"
   },
   "id": "dump-apolo11",

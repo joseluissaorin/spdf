@@ -1,6 +1,6 @@
 {
   "expect": {
-    "text": "@misc{nationalaeronauticsandspaceadministration1969,\n  author = {{National Aeronautics and Space Administration}},\n  title = {{Apollo} 11 air-to-ground voice transmissions (excerpts)},\n  year = {1969},\n  language = {en},\n  note = {SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.}\n}\n"
+    "text": "@misc{nationalaeronauticsandspaceadministration1969,\n  author = {{National Aeronautics and Space Administration}},\n  title = {{Apollo} 11 air-to-ground voice communications},\n  year = {1969},\n  language = {en},\n  note = {SPDF conformance document: seven transmissions transcribed literally from NASA's Apollo 11 Technical Air-to-Ground Voice Transcription (Manned Spacecraft Center, Houston, 1969). Times are ground elapsed time (GET) in seconds, as in the transcription; each span ends at the next later transmission. The recording itself is not included and source_sha256 is a placeholder; word timings are spread evenly over each span, not measured.}\n}\n"
   },
   "id": "export-bibtex-apolo11-literal-author",
   "input": {

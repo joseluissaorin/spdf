@@ -1,0 +1,14 @@
+{
+  "expect": {
+    "text": "(Cervantes Saavedra, 1608, fols. Ir-[Iv])",
+    "uri": "spdf:sha256-27ea8a4dd0bbf0a511246fe67f81c19084aa2da75c871fe7acde688fd182cb60#p=29&pe=30&f=Ir&fe=Iv"
+  },
+  "id": "cite-passage-leaf-across-es",
+  "input": {
+    "file": "files/quijote.spdf",
+    "fragment": "q5",
+    "locale": "es",
+    "quote": "Tenia en ſu caſa vna ama"
+  },
+  "kind": "cite_passage"
+}

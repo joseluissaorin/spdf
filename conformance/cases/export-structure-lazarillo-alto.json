@@ -2,24 +2,20 @@
   "expect": {
     "pages": [
       {
-        "physical": 1,
+        "physical": 7,
         "printed": null
       },
       {
-        "physical": 2,
-        "printed": "3"
+        "physical": 8,
+        "printed": "10"
       },
       {
-        "physical": 3,
-        "printed": "4"
-      },
-      {
-        "physical": 4,
-        "printed": "5"
-      },
-      {
-        "physical": 5,
+        "physical": 9,
         "printed": null
+      },
+      {
+        "physical": 10,
+        "printed": "12"
       }
     ]
   },

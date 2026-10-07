@@ -1,6 +1,6 @@
 {
   "expect": {
-    "text": "@book{lazarillo1554,\n  title = {{La} vida de {Lazarillo} de {Tormes} y de sus fortunas y adversidades},\n  year = {1554},\n  publisher = {Juan de Junta},\n  address = {Burgos},\n  language = {es},\n  note = {SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.}\n}\n"
+    "text": "@book{lazarillo1921,\n  title = {{El} {Lazarillo} de {Tormes}},\n  year = {1921},\n  address = {Madrid},\n  series = {Colección Universal},\n  language = {es},\n  note = {SPDF conformance document: pages 9-12 of the Madrid 1921 edition (Colección Universal 510), transcribed literally from validated Wikisource pages; modern spelling as in that edition. Pages 9 and 11 carry no printed number: their folios are inferred from pages 10 and 12.}\n}\n"
   },
   "id": "export-bibtex-lazarillo-plain",
   "input": {

@@ -1,6 +1,6 @@
 {
   "expect": {
-    "text": "@book{becquer1871,\n  author = {Bécquer, Gustavo Adolfo},\n  title = {{Rimas}},\n  year = {1871},\n  language = {es},\n  note = {SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.}\n}\n"
+    "text": "@incollection{becquer1885,\n  author = {Bécquer, Gustavo Adolfo},\n  title = {{Rimas}},\n  year = {1885},\n  booktitle = {{Obras} de {Gustavo} {A.} {Bécquer}},\n  publisher = {Librería de Fernando Fe},\n  address = {Madrid},\n  volume = {III},\n  language = {es},\n  note = {SPDF conformance document: Rima XXI and the first stanza of Rima LIII, transcribed literally from Wikisource (Obras de Gustavo A. Bécquer, vol. III, Madrid, 1885). The printed «proguntas» is an error of that edition, checked on the facsimile, and is kept.}\n}\n"
   },
   "id": "export-bibtex-minimo-plain",
   "input": {

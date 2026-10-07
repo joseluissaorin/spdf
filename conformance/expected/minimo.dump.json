@@ -1,15 +1,15 @@
 {
   "blobs": [
     {
-      "bytes": 273,
+      "bytes": 276,
       "key": "original.txt",
       "mime": "text/plain; charset=utf-8",
-      "sha256": "95ee321f7ae3a0e2d961614603703297425cf1e969b749599971e34fe69b7ba2"
+      "sha256": "cfc8a2dcf65ec4eee72e3980eb2a4d0e5ec76fb016a8381a580f525ca3b862cc"
     }
   ],
   "document": {
     "authors": "Bécquer",
-    "bytes": 273,
+    "bytes": 276,
     "created": "2026-10-07T00:00:00Z",
     "duration": null,
     "id": "minimo",
@@ -22,53 +22,62 @@
           "given": "Gustavo Adolfo"
         }
       ],
+      "container-title": "Obras de Gustavo A. Bécquer",
       "issued": {
+        "date-parts": [
+          [1885]
+        ]
+      },
+      "language": "es",
+      "note": "SPDF conformance document: Rima XXI and the first stanza of Rima LIII, transcribed literally from Wikisource (Obras de Gustavo A. Bécquer, vol. III, Madrid, 1885). The printed «proguntas» is an error of that edition, checked on the facsimile, and is kept.",
+      "original-date": {
         "date-parts": [
           [1871]
         ]
       },
-      "language": "es",
-      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+      "publisher": "Librería de Fernando Fe",
+      "publisher-place": "Madrid",
       "title": "Rimas",
-      "type": "book"
+      "type": "chapter",
+      "volume": "III"
     },
     "mime": "text/plain; charset=utf-8",
     "rights": {
       "access": "open",
       "holder": null,
       "license": "https://creativecommons.org/publicdomain/mark/1.0/",
-      "note": "Public-domain work. Synthetic layout built for the SPDF conformance suite."
+      "note": "Public domain (author died in 1870). Text from Wikisource; the original of this document is the plain-text excerpt embedded as a blob."
     },
     "source_ref": "blob:original.txt",
-    "source_sha256": "95ee321f7ae3a0e2d961614603703297425cf1e969b749599971e34fe69b7ba2",
+    "source_sha256": "cfc8a2dcf65ec4eee72e3980eb2a4d0e5ec76fb016a8381a580f525ca3b862cc",
     "title": "Rimas",
     "unit_count": 2,
     "updated": "2026-10-07T00:00:00Z",
-    "year": 1871
+    "year": 1885
   },
   "extensions": [],
   "figures": [],
   "fragments": [
     {
       "anchor": {
-        "chars": [0, 125],
+        "chars": [0, 124],
         "line_from": 1,
         "line_to": 4,
         "type": "verse"
       },
       "anchor_end": null,
-      "context": "Rima XXI, completa.",
+      "context": "Rima XXI.",
       "id": "f1",
       "n": 1,
       "ord": 1,
       "search_text": "",
       "section": ["XXI"],
-      "text": "¿Qué es poesía?, dices mientras clavas\nen mi pupila tu pupila azul.\n¿Qué es poesía? ¿Y tú me lo preguntas?\nPoesía... eres tú.",
+      "text": "¿Qué es poesía? dices mientras clavas\nEn mi pupila tu pupila azul;\n¿Qué es poesía? ¿Y tú me lo proguntas?\nPoesía... eres tú.",
       "unit": "u1"
     },
     {
       "anchor": {
-        "chars": [0, 121],
+        "chars": [0, 123],
         "line_from": 1,
         "line_to": 4,
         "type": "verse"
@@ -80,7 +89,7 @@
       "ord": 2,
       "search_text": "",
       "section": ["LIII"],
-      "text": "Volverán las oscuras golondrinas\nen tu balcón sus nidos a colgar,\ny otra vez con el ala a sus cristales\njugando llamarán.",
+      "text": "Volverán las oscuras golondrinas\nEn tu balcón sus nidos á colgar,\nY, otra vez, con el ala á sus cristales\nJugando llamarán.",
       "unit": "u2"
     }
   ],
@@ -99,12 +108,27 @@
     {
       "at": "2026-10-07T00:00:00Z",
       "detail": {
-        "units": 2
+        "accessed": "2026-10-07",
+        "edition": "Obras de Gustavo A. Bécquer, tomo III, Madrid, Librería de Fernando Fe, 1885 (facsimile: Commons, Obras de Bécquer - Vol. 3.djvu, SHA-1 cc72da9e139d158041abb24ee2217a55b728e402)",
+        "license": "Text: public domain; Wikisource transcription under CC BY-SA 4.0",
+        "pages": [
+          {
+            "revision": 1603184,
+            "title": "Página:Obras de Bécquer - Vol. 3.djvu/165",
+            "url": "https://es.wikisource.org/w/index.php?oldid=1603184"
+          },
+          {
+            "revision": 1603174,
+            "title": "Página:Obras de Bécquer - Vol. 3.djvu/190",
+            "url": "https://es.wikisource.org/w/index.php?oldid=1603174"
+          }
+        ],
+        "sic": ["proguntas (printing error of the 1885 edition, checked on the facsimile page 159)"]
       },
       "model": null,
-      "ms": 1,
-      "provider": "plain-text",
-      "stage": "reading"
+      "ms": null,
+      "provider": "Wikisource",
+      "stage": "source-text"
     }
   ],
   "sections": [],
@@ -115,6 +139,7 @@
       "anchor": {
         "paragraph": 1,
         "path": ["XXI"],
+        "printed": "159",
         "type": "section"
       },
       "confidence": 1,
@@ -124,11 +149,11 @@
       "image": null,
       "notes": null,
       "ord": 1,
-      "printed": null,
-      "reader": "plain-text",
+      "printed": "159",
+      "reader": "wikisource-transcription",
       "t0": null,
       "t1": null,
-      "text": "¿Qué es poesía?, dices mientras clavas\nen mi pupila tu pupila azul.\n¿Qué es poesía? ¿Y tú me lo preguntas?\nPoesía... eres tú.",
+      "text": "¿Qué es poesía? dices mientras clavas\nEn mi pupila tu pupila azul;\n¿Qué es poesía? ¿Y tú me lo proguntas?\nPoesía... eres tú.",
       "thumbnail": null,
       "words": null
     },
@@ -136,6 +161,7 @@
       "anchor": {
         "paragraph": 1,
         "path": ["LIII"],
+        "printed": "184",
         "type": "section"
       },
       "confidence": 1,
@@ -145,11 +171,11 @@
       "image": null,
       "notes": null,
       "ord": 2,
-      "printed": null,
-      "reader": "plain-text",
+      "printed": "184",
+      "reader": "wikisource-transcription",
       "t0": null,
       "t1": null,
-      "text": "Volverán las oscuras golondrinas\nen tu balcón sus nidos a colgar,\ny otra vez con el ala a sus cristales\njugando llamarán.",
+      "text": "Volverán las oscuras golondrinas\nEn tu balcón sus nidos á colgar,\nY, otra vez, con el ala á sus cristales\nJugando llamarán.",
       "thumbnail": null,
       "words": null
     }

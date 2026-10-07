@@ -1,0 +1,187 @@
+{
+  "blobs": [],
+  "document": {
+    "authors": "National Aeronautics and Space Administration",
+    "bytes": 0,
+    "created": "2026-06-01T09:00:00.000Z",
+    "duration": 369985,
+    "id": "apolo11-tierra",
+    "kind": "audio",
+    "language": "en",
+    "metadata": {
+      "author": [
+        {
+          "family": "National Aeronautics and Space Administration"
+        }
+      ],
+      "issued": {
+        "date-parts": [
+          [1969, 7, 20]
+        ]
+      },
+      "language": "en",
+      "title": "Apollo 11 air-to-ground voice communications",
+      "type": "broadcast"
+    },
+    "mime": "audio/mpeg",
+    "rights": null,
+    "source_ref": null,
+    "source_sha256": "0f20db83ca82145981b6155cc7e7a33924888cebad20375dabedee0c001a6a40",
+    "title": "Apollo 11 air-to-ground voice communications",
+    "unit_count": 3,
+    "updated": "2026-06-01T09:00:00.000Z",
+    "year": 1969
+  },
+  "extensions": [],
+  "figures": [],
+  "fragments": [
+    {
+      "anchor": {
+        "speaker": "CDR (TRANQ)",
+        "t0": 369976,
+        "t1": 369978,
+        "type": "time"
+      },
+      "anchor_end": null,
+      "context": "Apolo 11, tras el alunizaje (tiempo de misión, GET).",
+      "id": "a-f0",
+      "n": 1,
+      "ord": 0,
+      "search_text": "",
+      "section": [],
+      "text": "**CDR (TRANQ):** Thank you.",
+      "unit": "a-u0"
+    },
+    {
+      "anchor": {
+        "speaker": "CC",
+        "t0": 369978,
+        "t1": 369983,
+        "type": "time"
+      },
+      "anchor_end": null,
+      "context": "Apolo 11, tras el alunizaje (tiempo de misión, GET).",
+      "id": "a-f1",
+      "n": 2,
+      "ord": 1,
+      "search_text": "",
+      "section": [],
+      "text": "**CC:** You're looking good here.",
+      "unit": "a-u1"
+    },
+    {
+      "anchor": {
+        "speaker": "CDR (TRANQ)",
+        "t0": 369983,
+        "t1": 369985,
+        "type": "time"
+      },
+      "anchor_end": null,
+      "context": "Apolo 11, tras el alunizaje (tiempo de misión, GET).",
+      "id": "a-f2",
+      "n": 3,
+      "ord": 2,
+      "search_text": "",
+      "section": [],
+      "text": "**CDR (TRANQ):** Okay. We're going to be busy for a minute.",
+      "unit": "a-u2"
+    }
+  ],
+  "fts": {
+    "tokenizer": "unicode61 remove_diacritics 2",
+    "trigram": false
+  },
+  "legacy": true,
+  "meta": {
+    "created": "2026-06-01T09:00:00.000Z",
+    "generator": "scholaris-nube 2.0.0",
+    "spdf_version": "4.1"
+  },
+  "provenance": [
+    {
+      "at": "2026-06-01T09:00:00.000Z",
+      "detail": {
+        "consultado": "2026-10-07",
+        "fuente": "Apollo 11 Technical Air-to-Ground Voice Transcription, NASA MSC, 1969, Tape 66/12 - Page 317",
+        "tiempos": "GET de la transcripción; cada tramo acaba en la transmisión siguiente",
+        "url": "https://web.archive.org/web/20161221154706id_/https://www.hq.nasa.gov/alsj/a11/a11transcript_tec.pdf"
+      },
+      "model": null,
+      "ms": null,
+      "provider": "transcripcion-nasa",
+      "stage": "lectura"
+    }
+  ],
+  "sections": [],
+  "spaces": [],
+  "spdf_version": "4.1",
+  "units": [
+    {
+      "anchor": {
+        "speaker": "CDR (TRANQ)",
+        "t0": 369976,
+        "t1": 369978,
+        "type": "time"
+      },
+      "confidence": 1,
+      "footer": null,
+      "header": null,
+      "id": "a-u0",
+      "image": null,
+      "notes": null,
+      "ord": 1,
+      "printed": null,
+      "reader": "transcripcion-nasa",
+      "t0": 369976,
+      "t1": 369978,
+      "text": "**CDR (TRANQ):** Thank you.",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "speaker": "CC",
+        "t0": 369978,
+        "t1": 369983,
+        "type": "time"
+      },
+      "confidence": 1,
+      "footer": null,
+      "header": null,
+      "id": "a-u1",
+      "image": null,
+      "notes": null,
+      "ord": 2,
+      "printed": null,
+      "reader": "transcripcion-nasa",
+      "t0": 369978,
+      "t1": 369983,
+      "text": "**CC:** You're looking good here.",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "speaker": "CDR (TRANQ)",
+        "t0": 369983,
+        "t1": 369985,
+        "type": "time"
+      },
+      "confidence": 1,
+      "footer": null,
+      "header": null,
+      "id": "a-u2",
+      "image": null,
+      "notes": null,
+      "ord": 3,
+      "printed": null,
+      "reader": "transcripcion-nasa",
+      "t0": 369983,
+      "t1": 369985,
+      "text": "**CDR (TRANQ):** Okay. We're going to be busy for a minute.",
+      "thumbnail": null,
+      "words": null
+    }
+  ],
+  "vectors": {}
+}

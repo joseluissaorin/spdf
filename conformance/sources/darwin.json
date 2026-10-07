@@ -2,11 +2,11 @@
   "blobs": [],
   "document": {
     "authors": "Darwin",
-    "bytes": 2097152,
+    "bytes": 11558823,
     "created": "2026-10-07T00:00:00Z",
     "duration": null,
     "id": "origin-of-species-1859",
-    "kind": "pdf",
+    "kind": "photos",
     "language": "en",
     "metadata": {
       "author": [
@@ -21,24 +21,24 @@
         ]
       },
       "language": "en",
-      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+      "note": "SPDF conformance document: pages vii, 1, 5, 61, 84 and 490 of the first edition (1859), transcribed literally from validated English Wikisource pages of the facsimile; page numbers as printed in the running heads (page 1 has none in the transcription and is inferred). Vectors are toy vectors chosen by hand for the suite.",
       "publisher": "John Murray",
       "publisher-place": "London",
-      "title": "On the Origin of Species by Means of Natural Selection",
+      "title": "On the Origin of Species by Means of Natural Selection, or the Preservation of Favoured Races in the Struggle for Life",
       "title-short": "On the Origin of Species",
       "type": "book"
     },
-    "mime": "application/pdf",
+    "mime": "image/vnd.djvu",
     "rights": {
       "access": "open",
       "holder": null,
       "license": "https://creativecommons.org/publicdomain/mark/1.0/",
-      "note": "Public-domain work. Synthetic layout built for the SPDF conformance suite."
+      "note": "Public domain work. Facsimile and transcription from Wikimedia Commons and Wikisource."
     },
-    "source_ref": null,
-    "source_sha256": "e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3",
-    "title": "On the Origin of Species by Means of Natural Selection",
-    "unit_count": 5,
+    "source_ref": "https://upload.wikimedia.org/wikipedia/commons/4/46/Origin_of_Species_1859_facsimile.djvu",
+    "source_sha256": "484ad7ca524b4a022327194b75fcb21e70006f99825afe3fda41ede5a73ac7b8",
+    "title": "On the Origin of Species by Means of Natural Selection, or the Preservation of Favoured Races in the Struggle for Life",
+    "unit_count": 6,
     "updated": "2026-10-07T00:00:00Z",
     "year": 1859
   },
@@ -47,13 +47,14 @@
   "fragments": [
     {
       "anchor": {
-        "chars": [0, 229],
-        "confidence": 0.99,
+        "chars": [58, 287],
+        "confidence": 0.9,
         "foliation": "page",
-        "physical": 1,
+        "matter": "body",
+        "physical": 11,
         "printed": "1",
         "roman": false,
-        "source": "read",
+        "source": "inferred",
         "type": "page"
       },
       "anchor_end": null,
@@ -64,14 +65,15 @@
       "search_text": "",
       "section": ["Introduction"],
       "text": "When on board H.M.S. 'Beagle,' as naturalist, I was much struck with certain facts in the distribution of the inhabitants of South America, and in the geological relations of the present to the past inhabitants of that continent.",
-      "unit": "p1"
+      "unit": "p11"
     },
     {
       "anchor": {
-        "chars": [0, 84],
-        "confidence": 0.99,
+        "chars": [30, 114],
+        "confidence": 1,
         "foliation": "page",
-        "physical": 2,
+        "matter": "body",
+        "physical": 15,
         "printed": "5",
         "roman": false,
         "source": "read",
@@ -85,14 +87,15 @@
       "search_text": "",
       "section": ["Introduction"],
       "text": "This is the doctrine of Malthus, applied to the whole animal and vegetable kingdoms.",
-      "unit": "p2"
+      "unit": "p15"
     },
     {
       "anchor": {
-        "chars": [0, 349],
-        "confidence": 0.99,
+        "chars": [796, 1145],
+        "confidence": 1,
         "foliation": "page",
-        "physical": 3,
+        "matter": "body",
+        "physical": 71,
         "printed": "61",
         "roman": false,
         "source": "read",
@@ -106,14 +109,15 @@
       "search_text": "",
       "section": ["Chapter III. Struggle for Existence"],
       "text": "Owing to this struggle for life, any variation, however slight and from whatever cause proceeding, if it be in any degree profitable to an individual of any species, in its infinitely complex relations to other organic beings and to external nature, will tend to the preservation of that individual, and will generally be inherited by its offspring.",
-      "unit": "p3"
+      "unit": "p71"
     },
     {
       "anchor": {
-        "chars": [351, 530],
-        "confidence": 0.99,
+        "chars": [1317, 1496],
+        "confidence": 1,
         "foliation": "page",
-        "physical": 3,
+        "matter": "body",
+        "physical": 71,
         "printed": "61",
         "roman": false,
         "source": "read",
@@ -127,14 +131,15 @@
       "search_text": "",
       "section": ["Chapter III. Struggle for Existence"],
       "text": "I have called this principle, by which each slight variation, if useful, is preserved, by the term of Natural Selection, in order to mark its relation to man's power of selection.",
-      "unit": "p3"
+      "unit": "p71"
     },
     {
       "anchor": {
-        "chars": [0, 202],
-        "confidence": 0.99,
+        "chars": [485, 687],
+        "confidence": 1,
         "foliation": "page",
-        "physical": 4,
+        "matter": "body",
+        "physical": 94,
         "printed": "84",
         "roman": false,
         "source": "read",
@@ -147,15 +152,16 @@
       "ord": 5,
       "search_text": "",
       "section": ["Chapter IV. Natural Selection"],
-      "text": "It may be said that natural selection is daily and hourly scrutinising, throughout the world, every variation, even the slightest; rejecting that which is bad, preserving and adding up all that is good.",
-      "unit": "p4"
+      "text": "It may be said that natural selection is daily and hourly scrutinising, throughout the world, every variation, even the slightest; rejecting that which is bad, preserving and adding up all that is good;",
+      "unit": "p94"
     },
     {
       "anchor": {
-        "chars": [0, 324],
-        "confidence": 0.99,
+        "chars": [402, 726],
+        "confidence": 1,
         "foliation": "page",
-        "physical": 5,
+        "matter": "body",
+        "physical": 502,
         "printed": "490",
         "roman": false,
         "source": "read",
@@ -169,7 +175,7 @@
       "search_text": "",
       "section": ["Chapter XIV. Recapitulation and Conclusion"],
       "text": "There is grandeur in this view of life, with its several powers, having been originally breathed into a few forms or into one; and that, whilst this planet has gone cycling on according to the fixed law of gravity, from so simple a beginning endless forms most beautiful and most wonderful have been, and are being, evolved.",
-      "unit": "p5"
+      "unit": "p502"
     }
   ],
   "fts": {
@@ -187,11 +193,56 @@
     {
       "at": "2026-10-07T00:00:00Z",
       "detail": {
+        "accessed": "2026-10-07",
+        "edition": "On the Origin of Species, London, John Murray, 1859, first edition; Commons File:Origin of Species 1859 facsimile.djvu, SHA-1 212b14f3a9549559bb746a613398cf8f804683a1",
+        "license": "Text: public domain; Wikisource transcription under CC BY-SA 4.0",
+        "pages": [
+          {
+            "revision": 7965483,
+            "title": "Page:Origin of Species 1859 facsimile.djvu/7",
+            "url": "https://en.wikisource.org/w/index.php?oldid=7965483"
+          },
+          {
+            "revision": 7963238,
+            "title": "Page:Origin of Species 1859 facsimile.djvu/11",
+            "url": "https://en.wikisource.org/w/index.php?oldid=7963238"
+          },
+          {
+            "revision": 7963500,
+            "title": "Page:Origin of Species 1859 facsimile.djvu/15",
+            "url": "https://en.wikisource.org/w/index.php?oldid=7963500"
+          },
+          {
+            "revision": 7965494,
+            "title": "Page:Origin of Species 1859 facsimile.djvu/71",
+            "url": "https://en.wikisource.org/w/index.php?oldid=7965494"
+          },
+          {
+            "revision": 7965592,
+            "title": "Page:Origin of Species 1859 facsimile.djvu/94",
+            "url": "https://en.wikisource.org/w/index.php?oldid=7965592"
+          },
+          {
+            "revision": 7965442,
+            "title": "Page:Origin of Species 1859 facsimile.djvu/502",
+            "url": "https://en.wikisource.org/w/index.php?oldid=7965442"
+          }
+        ]
+      },
+      "model": null,
+      "ms": null,
+      "provider": "Wikisource",
+      "stage": "source-text"
+    },
+    {
+      "at": "2026-10-07T00:00:00Z",
+      "detail": {
         "dims": 8,
+        "note": "toy vectors chosen by hand for the suite",
         "spaces": 3
       },
       "model": "toy-embedding",
-      "ms": 1,
+      "ms": null,
       "provider": "spdf-conformance",
       "stage": "embedding"
     }
@@ -251,34 +302,62 @@
   "units": [
     {
       "anchor": {
-        "confidence": 0.99,
+        "confidence": 1,
         "foliation": "page",
-        "physical": 1,
-        "printed": "1",
-        "roman": false,
+        "matter": "front",
+        "physical": 7,
+        "printed": "vii",
+        "roman": true,
         "source": "read",
         "type": "page"
       },
       "confidence": 1,
       "footer": null,
-      "header": null,
-      "id": "p1",
+      "header": "CONTENTS. vii",
+      "id": "p7",
       "image": null,
       "notes": null,
       "ord": 1,
-      "printed": "1",
-      "reader": "pdf-text-layer",
+      "printed": "vii",
+      "reader": "wikisource-transcription",
       "t0": null,
       "t1": null,
-      "text": "When on board H.M.S. 'Beagle,' as naturalist, I was much struck with certain facts in the distribution of the inhabitants of South America, and in the geological relations of the present to the past inhabitants of that continent.",
+      "text": "CHAPTER VI.\n\nDifficulties on Theory.\n\nDifficulties on the theory of descent with modification—Transitions—Absence or rarity of transitional varieties—Transitions in habits of life—Diversified habits in the same species—Species with habits widely different from those of their allies—Organs of extreme perfection—Means of transition—Cases of difficulty—Natura non facit saltum—Organs of small importance—Organs not in all cases absolutely perfect—The law of Unity of Type and of the Conditions of Existence embraced by the theory of Natural Selection Page 171–206\n\nCHAPTER VII.\n\nInstinct.\n\nInstincts comparable with habits, but different in their origin—Instincts graduated—Aphides and ants—Instincts variable—Domestic instincts, their origin—Natural instincts of the cuckoo, ostrich, and parasitic bees—Slave-making ants—Hive-bee, its cell-making instinct—Difficulties on the theory of the Natural Selection of instincts—Neuter or sterile insects—Summary 207–244\n\nCHAPTER VIII.\n\nHybridism.\n\nDistinction between the sterility of first crosses and of hybrids—Sterility various in degree, not universal, affected by close interbreeding, removed by domestication—Laws governing the sterility of hybrids—Sterility not a special endowment, but incidental on other differences—Causes of the sterility of first crosses and of hybrids—Parallelism between the effects of changed conditions of life and crossing—Fertility of varieties when crossed and of their mongrel offspring not universal—Hybrids and mongrels compared independently of their fertility—Summary 245–278",
       "thumbnail": null,
       "words": null
     },
     {
       "anchor": {
-        "confidence": 0.99,
+        "confidence": 0.9,
         "foliation": "page",
-        "physical": 2,
+        "matter": "body",
+        "physical": 11,
+        "printed": "1",
+        "roman": false,
+        "source": "inferred",
+        "type": "page"
+      },
+      "confidence": 1,
+      "footer": null,
+      "header": null,
+      "id": "p11",
+      "image": null,
+      "notes": null,
+      "ord": 2,
+      "printed": "1",
+      "reader": "wikisource-transcription",
+      "t0": null,
+      "t1": null,
+      "text": "ON THE ORIGIN OF SPECIES.\n\n══════════════\n\nINTRODUCTION.\n\nWhen on board H.M.S. 'Beagle,' as naturalist, I was much struck with certain facts in the distribution of the inhabitants of South America, and in the geological relations of the present to the past inhabitants of that continent. These facts seemed to me to throw some light on the origin of species—that mystery of mysteries, as it has been called by one of our greatest philosophers. On my return home, it occurred to me, in 1837, that something might perhaps be made out on this question by patiently accumulating and reflecting on all sorts of facts which could possibly have any bearing on it. After five years' work I allowed myself to speculate on the subject, and drew up some short notes; these I enlarged in 1844 into a sketch of the conclusions, which then seemed to me probable: from that period to the present day I have steadily pursued the same object. I hope that I may be excused for entering on these personal details, as I give them to show that I have not been hasty in coming to a decision.\n\nMy work is now nearly finished; but as it will take me two or three more years to complete it, and as my health is far from strong, I have been urged to publish this Abstract. I have more especially been induced to do this, as Mr. Wallace, who is now studying the",
+      "thumbnail": null,
+      "words": null
+    },
+    {
+      "anchor": {
+        "confidence": 1,
+        "foliation": "page",
+        "matter": "body",
+        "physical": 15,
         "printed": "5",
         "roman": false,
         "source": "read",
@@ -286,24 +365,25 @@
       },
       "confidence": 1,
       "footer": null,
-      "header": null,
-      "id": "p2",
+      "header": "INTRODUCTION. 5",
+      "id": "p15",
       "image": null,
       "notes": null,
-      "ord": 2,
+      "ord": 3,
       "printed": "5",
-      "reader": "pdf-text-layer",
+      "reader": "wikisource-transcription",
       "t0": null,
       "t1": null,
-      "text": "This is the doctrine of Malthus, applied to the whole animal and vegetable kingdoms.",
+      "text": "increase, will be treated of. This is the doctrine of Malthus, applied to the whole animal and vegetable kingdoms. As many more individuals of each species are born than can possibly survive; and as, consequently, there is a frequently recurring struggle for existence, it follows that any being, if it vary however slightly in any manner profitable to itself, under the complex and sometimes varying conditions of life, will have a better chance of surviving, and thus be naturally selected. From the strong principle of inheritance, any selected variety will tend to propagate its new and modified form.\n\nThis fundamental subject of Natural Selection will be treated at some length in the fourth chapter; and we shall then see how Natural Selection almost inevitably causes much Extinction of the less improved forms of life, and induces what I have called Divergence of Character. In the next chapter I shall discuss the complex and little known laws of variation and of correlation of growth. In the four succeeding chapters, the most apparent and gravest difficulties on the theory will be given: namely, first, the difficulties of transitions, or in understanding how a simple being or a simple organ can be changed and perfected into a highly developed being or elaborately constructed organ; secondly, the subject of Instinct, or the mental powers of animals; thirdly, Hybridism, or the infertility of species and the fertility of varieties when intercrossed; and fourthly, the imperfection of the Geological Record. In the next chapter I shall consider the geological succession of organic beings throughout time; in the eleventh and twelfth, their geographical distribution throughout space; in the thirteenth, their classification or mutual affinities, both when mature and in an embryonic condition. In the last chapter I shall give a",
       "thumbnail": null,
       "words": null
     },
     {
       "anchor": {
-        "confidence": 0.99,
+        "confidence": 1,
         "foliation": "page",
-        "physical": 3,
+        "matter": "body",
+        "physical": 71,
         "printed": "61",
         "roman": false,
         "source": "read",
@@ -311,24 +391,25 @@
       },
       "confidence": 1,
       "footer": null,
-      "header": null,
-      "id": "p3",
+      "header": "Chap. III. STRUGGLE FOR EXISTENCE. 61",
+      "id": "p71",
       "image": null,
       "notes": null,
-      "ord": 3,
+      "ord": 4,
       "printed": "61",
-      "reader": "pdf-text-layer",
+      "reader": "wikisource-transcription",
       "t0": null,
       "t1": null,
-      "text": "Owing to this struggle for life, any variation, however slight and from whatever cause proceeding, if it be in any degree profitable to an individual of any species, in its infinitely complex relations to other organic beings and to external nature, will tend to the preservation of that individual, and will generally be inherited by its offspring.\n\nI have called this principle, by which each slight variation, if useful, is preserved, by the term of Natural Selection, in order to mark its relation to man's power of selection.",
+      "text": "to the hairs of a quadruped or feathers of a bird; in the structure of the beetle which dives through the water; in the plumed seed which is wafted by the gentlest breeze; in short, we see beautiful adaptations everywhere and in every part of the organic world.\n\nAgain, it may be asked, how is it that varieties, which I have called incipient species, become ultimately converted into good and distinct species, which in most cases obviously differ from each other far more than do the varieties of the same species? How do those groups of species, which constitute what are called distinct genera, and which differ from each other more than do the species of the same genus, arise? All these results, as we shall more fully see in the next chapter, follow inevitably from the struggle for life. Owing to this struggle for life, any variation, however slight and from whatever cause proceeding, if it be in any degree profitable to an individual of any species, in its infinitely complex relations to other organic beings and to external nature, will tend to the preservation of that individual, and will generally be inherited by its offspring. The offspring, also, will thus have a better chance of surviving, for, of the many individuals of any species which are periodically born, but a small number can survive. I have called this principle, by which each slight variation, if useful, is preserved, by the term of Natural Selection, in order to mark its relation to man's power of selection. We have seen that man by selection can certainly produce great results, and can adapt organic beings to his own uses, through the accumulation of slight but useful variations, given to him by the hand of Nature. But Natural Selection, as we shall hereafter see, is a power incessantly ready for action, and is as immeasurably superior to man's feeble efforts, as the works of Nature are to those of Art.",
       "thumbnail": null,
       "words": null
     },
     {
       "anchor": {
-        "confidence": 0.99,
+        "confidence": 1,
         "foliation": "page",
-        "physical": 4,
+        "matter": "body",
+        "physical": 94,
         "printed": "84",
         "roman": false,
         "source": "read",
@@ -336,24 +417,25 @@
       },
       "confidence": 1,
       "footer": null,
-      "header": null,
-      "id": "p4",
+      "header": "84 NATURAL SELECTION. Chap. IV.",
+      "id": "p94",
       "image": null,
       "notes": null,
-      "ord": 4,
+      "ord": 5,
       "printed": "84",
-      "reader": "pdf-text-layer",
+      "reader": "wikisource-transcription",
       "t0": null,
       "t1": null,
-      "text": "It may be said that natural selection is daily and hourly scrutinising, throughout the world, every variation, even the slightest; rejecting that which is bad, preserving and adding up all that is good.",
+      "text": "struggle for life, and so be preserved. How fleeting are the wishes and efforts of man! how short his time! and consequently how poor will his products be, compared with those accumulated by nature during whole geological periods. Can we wonder, then, that nature's productions should be far \"truer\" in character than man's productions; that they should be infinitely better adapted to the most complex conditions of life, and should plainly bear the stamp of far higher workmanship?\n\nIt may be said that natural selection is daily and hourly scrutinising, throughout the world, every variation, even the slightest; rejecting that which is bad, preserving and adding up all that is good; silently and insensibly working, whenever and wherever opportunity offers, at the improvement of each organic being in relation to its organic and inorganic conditions of life. We see nothing of these slow changes in progress, until the hand of time has marked the long lapse of ages, and then so imperfect is our view into long past geological ages, that we only see that the forms of life are now different from what they formerly were.\n\nAlthough natural selection can act only through and for the good of each being, yet characters and structures, which we are apt to consider as of very trifling importance, may thus be acted on. When we see leaf-eating insects green, and bark-feeders mottled-grey; the alpine ptarmigan white in winter, the red-grouse the colour of heather, and the black-grouse that of peaty earth, we must believe that these tints are of service to these birds and insects in preserving them from danger. Grouse, if not destroyed at some period of their lives, would increase in countless numbers; they are known to suffer largely from birds of prey; and hawks are guided by eyesight to their prey,—so much so, that on",
       "thumbnail": null,
       "words": null
     },
     {
       "anchor": {
-        "confidence": 0.99,
+        "confidence": 1,
         "foliation": "page",
-        "physical": 5,
+        "matter": "body",
+        "physical": 502,
         "printed": "490",
         "roman": false,
         "source": "read",
@@ -361,23 +443,23 @@
       },
       "confidence": 1,
       "footer": null,
-      "header": null,
-      "id": "p5",
+      "header": "490 CONCLUSION. Chap XIV.",
+      "id": "p502",
       "image": null,
       "notes": null,
-      "ord": 5,
+      "ord": 6,
       "printed": "490",
-      "reader": "pdf-text-layer",
+      "reader": "wikisource-transcription",
       "t0": null,
       "t1": null,
-      "text": "There is grandeur in this view of life, with its several powers, having been originally breathed into a few forms or into one; and that, whilst this planet has gone cycling on according to the fixed law of gravity, from so simple a beginning endless forms most beautiful and most wonderful have been, and are being, evolved.",
+      "text": "ditions of life, and from use and disuse; a Ratio of Increase so high as to lead to a Struggle for Life, and as a consequence to Natural Selection, entailing Divergence of Character and the Extinction of less-improved forms. Thus, from the war of nature, from famine and death, the most exalted object which we are capable of conceiving, namely, the production of the higher animals, directly follows. There is grandeur in this view of life, with its several powers, having been originally breathed into a few forms or into one; and that, whilst this planet has gone cycling on according to the fixed law of gravity, from so simple a beginning endless forms most beautiful and most wonderful have been, and are being, evolved.",
       "thumbnail": null,
       "words": null
     }
   ],
   "vectors": {
     "toy-embedding@8": {
-      "count": 11,
+      "count": 12,
       "items": [
         {
           "id": "d1",
@@ -410,32 +492,37 @@
           "values": [0.25, 0, 0.25, 0, 0, 0.75, 0.5, 0.25]
         },
         {
-          "id": "p1",
+          "id": "p11",
           "target": "unit",
           "values": [0, 0, 0, 0, 1, 0, 0, 0]
         },
         {
-          "id": "p2",
+          "id": "p15",
           "target": "unit",
           "values": [0.25, 0.5, 0, 0.75, 0, 0, 0.25, 0.25]
         },
         {
-          "id": "p3",
+          "id": "p502",
+          "target": "unit",
+          "values": [0.25, 0, 0.25, 0, 0, 0.75, 0.5, 0.25]
+        },
+        {
+          "id": "p7",
+          "target": "unit",
+          "values": [0, 0, 0, 1, 0, 0, 0, 0]
+        },
+        {
+          "id": "p71",
           "target": "unit",
           "values": [0.5, 0.5, 0.5, 0.25, 0.25, 0.25, 0, 0.25]
         },
         {
-          "id": "p4",
+          "id": "p94",
           "target": "unit",
           "values": [0.5, 0.5, 0.5, 0.25, 0, 0.25, 0.25, 0.25]
-        },
-        {
-          "id": "p5",
-          "target": "unit",
-          "values": [0.25, 0, 0.25, 0, 0, 0.75, 0.5, 0.25]
         }
       ],
-      "sha256": "1e5a4a7ed795e216f647be4320ed40af92284884b52e21563808879078c8a37c"
+      "sha256": "353008d8af8d72919abbfb2f25be89690e93574dde1630c4d7890a662264c6d4"
     },
     "toy-embedding@8:f16": {
       "count": 6,

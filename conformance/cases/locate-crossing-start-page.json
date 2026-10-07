@@ -1,0 +1,15 @@
+{
+  "expect": {
+    "char": null,
+    "document": true,
+    "fragments": ["m1", "m3"],
+    "units": ["p318"],
+    "xywh": null
+  },
+  "id": "locate-crossing-start-page",
+  "input": {
+    "file": "invalid/W103-fragment-crosses-matter.spdf",
+    "reference": "spdf:sha256-ba9d5d9537d3088ed539bf3acd7bb626b05d73a65dc373653c7e226ce9fc0dd6#p=318"
+  },
+  "kind": "locate"
+}

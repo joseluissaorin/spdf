@@ -8,18 +8,23 @@
             "given": "Miguel de"
           }
         ],
-        "id": "cervantessaavedra1605",
+        "id": "cervantessaavedra1608",
         "issued": {
+          "date-parts": [
+            [1608]
+          ]
+        },
+        "language": "es",
+        "note": "SPDF conformance document: pages of the facsimile of the Madrid 1608 edition (Barcelona, Montaner y Simón, 1897; Internet Archive elingenioso01cerv), transcribed literally from validated Wikisource pages, with long s and abbreviations as printed. The modernized search layer comes from the 1905 Barcelona edition on Wikisource.",
+        "original-date": {
           "date-parts": [
             [1605]
           ]
         },
-        "language": "es",
-        "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
         "publisher": "Juan de la Cuesta",
         "publisher-place": "Madrid",
-        "title": "El ingenioso hidalgo don Quijote de la Mancha",
-        "title-short": "Don Quijote",
+        "title": "El ingenioso hidalgo Don Quixote de la Mancha",
+        "title-short": "Don Quixote",
         "type": "book"
       }
     ]
@@ -27,10 +32,11 @@
   "id": "export-csl-citation-unnumbered",
   "input": {
     "anchor": {
-      "chars": [0, 89],
+      "chars": [10, 194],
       "confidence": 1,
       "foliation": "page",
-      "physical": 1,
+      "matter": "front",
+      "physical": 13,
       "printed": null,
       "roman": false,
       "source": "none",

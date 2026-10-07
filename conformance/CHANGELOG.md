@@ -2,6 +2,38 @@
 
 Newest first. Implementers: read this before updating your runner.
 
+## 0.4.1 (2026-10-07)
+
+Literal texts from identified sources, and citations of passages. 341 cases. **Every
+dump, search, locate and export expectation that depends on the corpus changed**: rerun
+the whole suite.
+
+- The whole corpus was rebuilt from texts downloaded from identified sources and copied
+  literally (table in `README.md`, exact revisions in each source's `provenance`). The
+  earlier excerpts had been typed from memory and differed from the editions. Changes:
+  - `quijote` is now the Madrid 1608 edition with long s and abbreviations (paleographic
+    transcription), folios «Fol. I» and «2» as printed, unnumbered preliminaries, and a
+    modernized `search_text` layer taken from the [1905] edition.
+  - `lazarillo` is the Madrid 1921 edition, in modern spelling, with inferred folios 9 and 11.
+  - `minimo` is Bécquer's 1885 *Obras*, t. III.
+  - `micrographia` has real pages and plates, with captions «Schem. XXXIV.» and «Schem. XXXV.».
+  - `darwin` has real pages, including roman «vii».
+  - `lunyu` follows Chinese Wikisource (爲, not 為).
+  - `apolo11` follows the NASA transcription, with GET times and role labels (CDR, CC, LMP).
+  - Legacy: Garcilaso 1919, Kennedy as a text document with section anchors, and a new
+    `legacy/apolo11-4.1.spdf` with time anchors.
+  - `source_sha256` is the real SHA-256 of the facsimile wherever one exists.
+- New optional anchor member `matter` (`body`, `front`, `back`, `plate`, `cover`,
+  `library`, `blank`) and warning W103: a fragment crosses between units of different
+  matter, or from a page with a folio to one without (SPEC §4.1, §4.4). New file
+  `invalid/W103-fragment-crosses-matter.spdf`.
+- New kind `cite_passage` (15 cases), SPEC §18.2: a quotation is cited by the unit it
+  lies in, never by the start anchor of its fragment. Page ranges skip ends without a
+  folio: `p. 211`, never `pp. s. p.-211`.
+- `locate` also finds fragments by their `anchor_end`, and `char` refers to the first
+  unit of `units`. There are new cases for fragments that cross into a plate.
+- Crossing fragments carry `chars` in `anchor_end`.
+
 ## 0.4.0 (2026-10-07)
 
 RFC 0002 made normative (SPEC §5.4 and §19). 309 cases.

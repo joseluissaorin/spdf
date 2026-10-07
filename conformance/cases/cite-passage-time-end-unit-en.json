@@ -1,0 +1,14 @@
+{
+  "expect": {
+    "text": "(National Aeronautics and Space Administration, 1969, 109:43:24)",
+    "uri": "spdf:sha256-c9f25c86982e2335a82641d8accb29c5d6771443c40257e33b0a6ecf78895906#t=395004,395027&char=15,38"
+  },
+  "id": "cite-passage-time-end-unit-en",
+  "input": {
+    "file": "files/apolo11.spdf",
+    "fragment": "a5-7",
+    "locale": "en",
+    "quote": "Magnificent desolation."
+  },
+  "kind": "cite_passage"
+}

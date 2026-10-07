@@ -1,0 +1,14 @@
+{
+  "expect": {
+    "text": "(Cervantes Saavedra, 1608, fol. [Iv])",
+    "uri": "spdf:sha256-27ea8a4dd0bbf0a511246fe67f81c19084aa2da75c871fe7acde688fd182cb60#p=30&f=Iv&char=0,35"
+  },
+  "id": "cite-passage-leaf-verso-es",
+  "input": {
+    "file": "files/quijote.spdf",
+    "fragment": "q5",
+    "locale": "es",
+    "quote": "vna ama que paſſaua de los quarenta"
+  },
+  "kind": "cite_passage"
+}

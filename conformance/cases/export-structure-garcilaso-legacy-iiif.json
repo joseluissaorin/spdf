@@ -2,13 +2,10 @@
   "expect": {
     "pages": [
       {
-        "label": null
+        "label": "[7]"
       },
       {
-        "label": "ix"
-      },
-      {
-        "label": "[x]"
+        "label": "159"
       }
     ]
   },

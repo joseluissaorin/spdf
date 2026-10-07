@@ -1,0 +1,15 @@
+{
+  "expect": {
+    "char": null,
+    "document": true,
+    "fragments": [],
+    "units": ["p319"],
+    "xywh": [0.03, 0.08, 0.86, 0.88]
+  },
+  "id": "locate-micrographia-plate-region",
+  "input": {
+    "file": "files/micrographia.spdf",
+    "reference": "spdf:sha256-ba9d5d9537d3088ed539bf3acd7bb626b05d73a65dc373653c7e226ce9fc0dd6#p=319&xywh=percent:3,8,86,88"
+  },
+  "kind": "locate"
+}

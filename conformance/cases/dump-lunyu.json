@@ -1,6 +1,6 @@
 {
   "expect": {
-    "content_sha256": "516da22125a8908b7ec54752da651194b827f0dabece9432eca1f27430cc3efd",
+    "content_sha256": "4784efe3e8c60170bcc32c398cb456b0b61c9b55c88d94e6b197815804e15c6c",
     "dump": "expected/lunyu.dump.json"
   },
   "id": "dump-lunyu",

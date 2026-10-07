@@ -3,9 +3,9 @@
     "match": "\"de cuyo nombre no quiero acordarme\"",
     "results": [
       {
-        "anchor_uri": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=5&pe=6&f=1r&fe=1v&char=101,278",
+        "anchor_uri": "spdf:sha256-27ea8a4dd0bbf0a511246fe67f81c19084aa2da75c871fe7acde688fd182cb60#p=29&f=Ir&char=168,345",
         "fragment_id": "q4",
-        "score": 1.022345,
+        "score": 2.172247,
         "via": ["lexical"]
       }
     ],

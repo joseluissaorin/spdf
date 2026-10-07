@@ -1,15 +1,15 @@
 {
   "expect": {
-    "char": [101, 278],
+    "char": [729, 745],
     "document": true,
-    "fragments": ["q4"],
-    "units": ["p5", "p6"],
+    "fragments": ["q5"],
+    "units": ["p29", "p30"],
     "xywh": null
   },
   "id": "locate-quijote-leaf-range-chars",
   "input": {
     "file": "files/quijote.spdf",
-    "reference": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=5&pe=6&f=1r&fe=1v&char=101,278"
+    "reference": "spdf:sha256-27ea8a4dd0bbf0a511246fe67f81c19084aa2da75c871fe7acde688fd182cb60#p=29&pe=30&f=Ir&fe=Iv&char=729,745"
   },
   "kind": "locate"
 }

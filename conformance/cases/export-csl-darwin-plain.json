@@ -15,10 +15,10 @@
           ]
         },
         "language": "en",
-        "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+        "note": "SPDF conformance document: pages vii, 1, 5, 61, 84 and 490 of the first edition (1859), transcribed literally from validated English Wikisource pages of the facsimile; page numbers as printed in the running heads (page 1 has none in the transcription and is inferred). Vectors are toy vectors chosen by hand for the suite.",
         "publisher": "John Murray",
         "publisher-place": "London",
-        "title": "On the Origin of Species by Means of Natural Selection",
+        "title": "On the Origin of Species by Means of Natural Selection, or the Preservation of Favoured Races in the Struggle for Life",
         "title-short": "On the Origin of Species",
         "type": "book"
       }

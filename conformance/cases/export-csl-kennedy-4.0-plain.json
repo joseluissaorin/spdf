@@ -2,6 +2,7 @@
   "expect": {
     "items": [
       {
+        "URL": "https://www.presidency.ucsb.edu/node/236798",
         "author": [
           {
             "family": "Kennedy",
@@ -16,7 +17,7 @@
         },
         "language": "en",
         "publisher-place": "Houston",
-        "title": "Address at Rice University on the Nation's Space Effort",
+        "title": "Address at Rice University in Houston on the Nation's Space Effort",
         "type": "speech"
       }
     ]

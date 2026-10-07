@@ -1,0 +1,15 @@
+{
+  "expect": {
+    "char": null,
+    "document": true,
+    "fragments": [],
+    "units": ["p7"],
+    "xywh": null
+  },
+  "id": "locate-darwin-roman-front-matter",
+  "input": {
+    "file": "files/darwin.spdf",
+    "reference": "spdf:sha256-484ad7ca524b4a022327194b75fcb21e70006f99825afe3fda41ede5a73ac7b8#f=vii"
+  },
+  "kind": "locate"
+}

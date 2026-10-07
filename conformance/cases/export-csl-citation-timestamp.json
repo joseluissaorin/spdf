@@ -15,9 +15,9 @@
         },
         "label": "timestamp",
         "language": "en",
-        "locator": "1:09:20",
-        "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
-        "title": "Apollo 11 air-to-ground voice transmissions (excerpts)",
+        "locator": "109:24:48",
+        "note": "SPDF conformance document: seven transmissions transcribed literally from NASA's Apollo 11 Technical Air-to-Ground Voice Transcription (Manned Spacecraft Center, Houston, 1969). Times are ground elapsed time (GET) in seconds, as in the transcription; each span ends at the next later transmission. The recording itself is not included and source_sha256 is a placeholder; word timings are spread evenly over each span, not measured.",
+        "title": "Apollo 11 air-to-ground voice communications",
         "title-short": "Apollo 11 air-to-ground",
         "type": "broadcast"
       }
@@ -26,10 +26,10 @@
   "id": "export-csl-citation-timestamp",
   "input": {
     "anchor": {
-      "chars": [0, 78],
-      "speaker": "Neil Armstrong",
-      "t0": 4160,
-      "t1": 4175.5,
+      "chars": [0, 79],
+      "speaker": "CDR (TRANQ)",
+      "t0": 393888,
+      "t1": 393930,
       "type": "time"
     },
     "anchor_end": null,

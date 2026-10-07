@@ -1,0 +1,195 @@
+{
+  "tablas": {
+    "documentos": [
+      {
+        "actualizado": "2026-06-01T09:00:00.000Z",
+        "anio": 1969,
+        "autores": "National Aeronautics and Space Administration",
+        "bibliotecas": [],
+        "bytes": 0,
+        "creado": "2026-06-01T09:00:00.000Z",
+        "duracion": 369985,
+        "estado": "listo",
+        "huella": "0f20db83ca82145981b6155cc7e7a33924888cebad20375dabedee0c001a6a40",
+        "id": "apolo11-tierra",
+        "idioma": "en",
+        "metadatos": {
+          "anio": 1969,
+          "autores": [
+            {
+              "apellidos": "National Aeronautics and Space Administration",
+              "nombre": ""
+            }
+          ],
+          "fecha": "1969-07-20",
+          "idioma": "en",
+          "tipoCSL": "broadcast",
+          "titulo": "Apollo 11 air-to-ground voice communications"
+        },
+        "mime": "audio/mpeg",
+        "original": "",
+        "tipo": "audio",
+        "titulo": "Apollo 11 air-to-ground voice communications",
+        "unidades": 3
+      }
+    ],
+    "fragmentos": [
+      {
+        "ancla": {
+          "hablante": "CDR (TRANQ)",
+          "t0": 369976,
+          "t1": 369978,
+          "tipo": "tiempo"
+        },
+        "ancla_fin": null,
+        "contexto": "Apolo 11, tras el alunizaje (tiempo de misión, GET).",
+        "documento": "apolo11-tierra",
+        "id": "a-f0",
+        "n": 1,
+        "orden": 0,
+        "seccion": [],
+        "texto": "**CDR (TRANQ):** Thank you.",
+        "texto_busqueda": "",
+        "unidad": "a-u0"
+      },
+      {
+        "ancla": {
+          "hablante": "CC",
+          "t0": 369978,
+          "t1": 369983,
+          "tipo": "tiempo"
+        },
+        "ancla_fin": null,
+        "contexto": "Apolo 11, tras el alunizaje (tiempo de misión, GET).",
+        "documento": "apolo11-tierra",
+        "id": "a-f1",
+        "n": 2,
+        "orden": 1,
+        "seccion": [],
+        "texto": "**CC:** You're looking good here.",
+        "texto_busqueda": "",
+        "unidad": "a-u1"
+      },
+      {
+        "ancla": {
+          "hablante": "CDR (TRANQ)",
+          "t0": 369983,
+          "t1": 369985,
+          "tipo": "tiempo"
+        },
+        "ancla_fin": null,
+        "contexto": "Apolo 11, tras el alunizaje (tiempo de misión, GET).",
+        "documento": "apolo11-tierra",
+        "id": "a-f2",
+        "n": 3,
+        "orden": 2,
+        "seccion": [],
+        "texto": "**CDR (TRANQ):** Okay. We're going to be busy for a minute.",
+        "texto_busqueda": "",
+        "unidad": "a-u2"
+      }
+    ],
+    "procedencia": [
+      {
+        "cuando": "2026-06-01T09:00:00.000Z",
+        "detalle": {
+          "consultado": "2026-10-07",
+          "fuente": "Apollo 11 Technical Air-to-Ground Voice Transcription, NASA MSC, 1969, Tape 66/12 - Page 317",
+          "tiempos": "GET de la transcripción; cada tramo acaba en la transmisión siguiente",
+          "url": "https://web.archive.org/web/20161221154706id_/https://www.hq.nasa.gov/alsj/a11/a11transcript_tec.pdf"
+        },
+        "documento": "apolo11-tierra",
+        "fase": "lectura",
+        "ms": null,
+        "proveedor": "transcripcion-nasa"
+      }
+    ],
+    "spdf": [
+      {
+        "clave": "spdf_version",
+        "valor": "4.1"
+      },
+      {
+        "clave": "creado",
+        "valor": "2026-06-01T09:00:00.000Z"
+      },
+      {
+        "clave": "generador",
+        "valor": "scholaris-nube 2.0.0"
+      }
+    ],
+    "unidades": [
+      {
+        "ancla": {
+          "hablante": "CDR (TRANQ)",
+          "t0": 369976,
+          "t1": 369978,
+          "tipo": "tiempo"
+        },
+        "cabecera": null,
+        "confianza": 1,
+        "documento": "apolo11-tierra",
+        "id": "a-u0",
+        "imagen": null,
+        "impresa": null,
+        "lector": "transcripcion-nasa",
+        "miniatura": null,
+        "notas": null,
+        "orden": 0,
+        "palabras": null,
+        "pie": null,
+        "t0": 369976,
+        "t1": 369978,
+        "texto": "**CDR (TRANQ):** Thank you."
+      },
+      {
+        "ancla": {
+          "hablante": "CC",
+          "t0": 369978,
+          "t1": 369983,
+          "tipo": "tiempo"
+        },
+        "cabecera": null,
+        "confianza": 1,
+        "documento": "apolo11-tierra",
+        "id": "a-u1",
+        "imagen": null,
+        "impresa": null,
+        "lector": "transcripcion-nasa",
+        "miniatura": null,
+        "notas": null,
+        "orden": 1,
+        "palabras": null,
+        "pie": null,
+        "t0": 369978,
+        "t1": 369983,
+        "texto": "**CC:** You're looking good here."
+      },
+      {
+        "ancla": {
+          "hablante": "CDR (TRANQ)",
+          "t0": 369983,
+          "t1": 369985,
+          "tipo": "tiempo"
+        },
+        "cabecera": null,
+        "confianza": 1,
+        "documento": "apolo11-tierra",
+        "id": "a-u2",
+        "imagen": null,
+        "impresa": null,
+        "lector": "transcripcion-nasa",
+        "miniatura": null,
+        "notas": null,
+        "orden": 2,
+        "palabras": null,
+        "pie": null,
+        "t0": 369983,
+        "t1": 369985,
+        "texto": "**CDR (TRANQ):** Okay. We're going to be busy for a minute."
+      }
+    ]
+  },
+  "user_version": 410,
+  "version": "4.1"
+}

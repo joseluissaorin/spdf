@@ -2,31 +2,31 @@
   "tablas": {
     "blobs": [
       {
-        "clave": "original.pdf",
-        "datos": "JVBERi0xLjQKJSBTUERGIGNvbmZvcm1hbmNlIHBsYWNlaG9sZGVyLCBub3QgYSByZWFsIHNjYW4KJSVFT0YK",
-        "mime": "application/pdf"
+        "clave": "original.txt",
+        "datos": "w4lHTE9HQSBQUklNRVJBCgpFbCBkdWxjZSBsYW1lbnRhciBkZSBkb3MgcGFzdG9yZXMsClNhbGljaW8ganVudGFtZW50ZSB5IE5lbW9yb3NvLApoZSBkZSBjb250YXIsIHN1cyBxdWVqYXMgaW1pdGFuZG87CmN1eWFzIG92ZWphcyBhbCBjYW50YXIgc2Ficm9zbwplc3RhYmFuIG11eSBhdGVudGFzLCBsb3MgYW1vcmVzLApkZSBwYWNlciBvbHZpZGFkYXMsIGVzY3VjaGFuZG8uClTDuiwgcXVlIGdhbmFzdGUgb2JyYW5kbwp1biBub21icmUgZW4gdG9kbyBlbCBtdW5kbywKeSB1biBncmFkbyBzaW4gc2VndW5kbzsKYWdvcmEgZXN0w6lzIGF0ZW50bywgc8OzbG8geSBkYWRvCmFsIMOtbmNsaXRvIGdvYmllcm5vIGRlbCBlc3RhZG8KYWxiYW5vOyBhZ29yYSB2dWVsdG8gYSBsYSBvdHJhIHBhcnRlLApyZXNwbGFuZGVjaWVudGUsIGFybWFkbywKcmVwcmVzZW50YW5kbyBlbiB0aWVycmEgZWwgZmllcm8gTWFydGU7CmFnb3JhIGRlIGN1aWRhZG9zIGVub2pvc29zCnkgZGUgbmVnb2Npb3MgbGlicmUsIHBvciB2ZW50dXJhCmFuZGVzIGEgY2F6YSBlbCBtb250ZSBmYXRpZ2FuZG8KZW4gYXJkaWVudGUgamluZXRlLCBxdWUgYXByZXN1cmEKZWwgY3Vyc28gdHJhcyBsb3MgY2llcnZvcyB0ZW1lcm9zb3MsCgpTT05FVE8gWFhJSUkKCkVuIHRhbnRvIHF1ZSBkZSByb3NhIHkgYXp1Y2VuYQpzZSBtdWVzdHJhIGxhIGNvbG9yIGVuIHZ1ZXN0cm8gZ2VzdG8sCnkgcXVlIHZ1ZXN0cm8gbWlyYXIgYXJkaWVudGUsIGhvbmVzdG8sCmVuY2llbmRlIGVsIGNvcmF6w7NuIHkgbG8gcmVmcmVuYSwKeSBlbiB0YW50byBxdWUgZWwgY2FiZWxsbywgcXVlIGVuIGxhIHZlbmEKZGVsIG9ybyBzZSBlc2NvZ2nDsywgY29uIHZ1ZWxvIHByZXN0bywKcG9yIGVsIGhlcm1vc28gY3VlbGxvIGJsYW5jbywgZW5oaWVzdG8sCmVsIHZpZW50byBtdWV2ZSwgZXNwYXJjZSB5IGRlc29yZGVuYTsKY29nZWQgZGUgdnVlc3RyYSBhbGVncmUgcHJpbWF2ZXJhCmVsIGR1bGNlIGZydXRvLCBhbnRlcyBxdWUgZWwgdGllbXBvIGFpcmFkbwpjdWJyYSBkZSBuaWV2ZSBsYSBoZXJtb3NhIGN1bWJyZS4KTWFyY2hpdGFyw6EgbGEgcm9zYSBlbCB2aWVudG8gaGVsYWRvLAp0b2RvIGxvIG11ZGFyw6EgbGEgZWRhZCBsaWdlcmEsCnBvciBubyBoYWNlciBtdWRhbnphIGVuIHN1IGNvc3R1bWJyZS4K",
+        "mime": "text/plain; charset=utf-8"
       },
       {
-        "clave": "paginas/0001.png",
-        "datos": "iVBORw0KGgoAAAANSUhEUgAAAAMAAAAECAIAAADETxJQAAAAEUlEQVR42mN4ducEBDHgZQEAYw4eefCBGhoAAAAASUVORK5CYII=",
-        "mime": "image/png"
+        "clave": "miniaturas/0161.jpg",
+        "datos": "/9j/4AAQSkZJRgABAQAASABIAAD/4QBARXhpZgAATU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAMqADAAQAAAABAAAASAAAAAD/7QA4UGhvdG9zaG9wIDMuMAA4QklNBAQAAAAAAAA4QklNBCUAAAAAABDUHYzZjwCyBOmACZjs+EJ+/+IRrElDQ19QUk9GSUxFAAEBAAARnGFwcGwCAAAAbW50ckdSQVlYWVogB9wACAAXAA8ALgAPYWNzcEFQUEwAAAAAbm9uZQAAAAAAAAAAAAAAAAAAAAAAAPbWAAEAAAAA0y1hcHBsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFZGVzYwAAAMAAAAB5ZHNjbQAAATwAAAgaY3BydAAACVgAAAAjd3RwdAAACXwAAAAUa1RSQwAACZAAAAgMZGVzYwAAAAAAAAAfR2VuZXJpYyBHcmF5IEdhbW1hIDIuMiBQcm9maWxlAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAG1sdWMAAAAAAAAAHwAAAAxza1NLAAAALgAAAYRkYURLAAAAOgAAAbJjYUVTAAAAOAAAAex2aVZOAAAAQAAAAiRwdEJSAAAASgAAAmR1a1VBAAAALAAAAq5mckZVAAAAPgAAAtpodUhVAAAANAAAAxh6aFRXAAAAGgAAA0xrb0tSAAAAIgAAA2ZuYk5PAAAAOgAAA4hjc0NaAAAAKAAAA8JoZUlMAAAAJAAAA+pyb1JPAAAAKgAABA5kZURFAAAATgAABDhpdElUAAAATgAABIZzdlNFAAAAOAAABNR6aENOAAAAGgAABQxqYUpQAAAAJgAABSZlbEdSAAAAKgAABUxwdFBPAAAAUgAABXZubE5MAAAAQAAABchlc0VTAAAATAAABgh0aFRIAAAAMgAABlR0clRSAAAAJAAABoZmaUZJAAAARgAABqpockhSAAAAPgAABvBwbFBMAAAASgAABy5hckVHAAAALAAAB3hydVJVAAAAOgAAB6RlblVTAAAAPAAAB94AVgFhAGUAbwBiAGUAYwBuAOEAIABzAGkAdgDhACAAZwBhAG0AYQAgADIALAAyAEcAZQBuAGUAcgBpAHMAawAgAGcAcgDlACAAMgAsADIAIABnAGEAbQBtAGEALQBwAHIAbwBmAGkAbABHAGEAbQBtAGEAIABkAGUAIABnAHIAaQBzAG8AcwAgAGcAZQBuAOgAcgBpAGMAYQAgADIALgAyAEMepQB1ACAAaADsAG4AaAAgAE0A4AB1ACAAeADhAG0AIABDAGgAdQBuAGcAIABHAGEAbQBtAGEAIAAyAC4AMgBQAGUAcgBmAGkAbAAgAEcAZQBuAOkAcgBpAGMAbwAgAGQAYQAgAEcAYQBtAGEAIABkAGUAIABDAGkAbgB6AGEAcwAgADIALAAyBBcEMAQzBDAEOwRMBD0EMAAgAEcAcgBhAHkALQQzBDAEPAQwACAAMgAuADIAUAByAG8AZgBpAGwAIABnAOkAbgDpAHIAaQBxAHUAZQAgAGcAcgBpAHMAIABnAGEAbQBtAGEAIAAyACwAMgDBAGwAdABhAGwA4QBuAG8AcwAgAHMAegD8AHIAawBlACAAZwBhAG0AbQBhACAAMgAuADKQGnUocHCWjlFJXqYAMgAuADKCcl9pY8+P8Md8vBgAINaMwMkAIKwQucgAIAAyAC4AMgAg1QS4XNMMx3wARwBlAG4AZQByAGkAcwBrACAAZwByAOUAIABnAGEAbQBtAGEAIAAyACwAMgAtAHAAcgBvAGYAaQBsAE8AYgBlAGMAbgDhACABYQBlAGQA4QAgAGcAYQBtAGEAIAAyAC4AMgXSBdAF3gXUACAF0AXkBdUF6AAgBdsF3AXcBdkAIAAyAC4AMgBHAGEAbQBhACAAZwByAGkAIABnAGUAbgBlAHIAaQBjAQMAIAAyACwAMgBBAGwAbABnAGUAbQBlAGkAbgBlAHMAIABHAHIAYQB1AHMAdAB1AGYAZQBuAC0AUAByAG8AZgBpAGwAIABHAGEAbQBtAGEAIAAyACwAMgBQAHIAbwBmAGkAbABvACAAZwByAGkAZwBpAG8AIABnAGUAbgBlAHIAaQBjAG8AIABkAGUAbABsAGEAIABnAGEAbQBtAGEAIAAyACwAMgBHAGUAbgBlAHIAaQBzAGsAIABnAHIA5QAgADIALAAyACAAZwBhAG0AbQBhAHAAcgBvAGYAaQBsZm6QGnBwXqZ8+2VwADIALgAyY8+P8GWHTvZOAIIsMLAw7DCkMKww8zDeACAAMgAuADIAIDDXMO0w1TChMKQw6wOTA7UDvQO5A7oDzAAgA5MDugPBA7kAIAOTA6wDvAO8A7EAIAAyAC4AMgBQAGUAcgBmAGkAbAAgAGcAZQBuAOkAcgBpAGMAbwAgAGQAZQAgAGMAaQBuAHoAZQBuAHQAbwBzACAAZABhACAARwBhAG0AbQBhACAAMgAsADIAQQBsAGcAZQBtAGUAZQBuACAAZwByAGkAagBzACAAZwBhAG0AbQBhACAAMgAsADIALQBwAHIAbwBmAGkAZQBsAFAAZQByAGYAaQBsACAAZwBlAG4A6QByAGkAYwBvACAAZABlACAAZwBhAG0AbQBhACAAZABlACAAZwByAGkAcwBlAHMAIAAyACwAMg4jDjEOBw4qDjUOQQ4BDiEOIQ4yDkAOAQ4jDiIOTA4XDjEOSA4nDkQOGwAgADIALgAyAEcAZQBuAGUAbAAgAEcAcgBpACAARwBhAG0AYQAgADIALAAyAFkAbABlAGkAbgBlAG4AIABoAGEAcgBtAGEAYQBuACAAZwBhAG0AbQBhACAAMgAsADIAIAAtAHAAcgBvAGYAaQBpAGwAaQBHAGUAbgBlAHIAaQENAGsAaQAgAEcAcgBhAHkAIABHAGEAbQBtAGEAIAAyAC4AMgAgAHAAcgBvAGYAaQBsAFUAbgBpAHcAZQByAHMAYQBsAG4AeQAgAHAAcgBvAGYAaQBsACAAcwB6AGEAcgBvAVsAYwBpACAAZwBhAG0AbQBhACAAMgAsADIGOgYnBkUGJwAgADIALgAyACAGRAZIBkYAIAYxBkUGJwYvBkoAIAY5BicGRQQeBDEESQQwBE8AIARBBDUEQAQwBE8AIAQzBDAEPAQ8BDAAIAAyACwAMgAtBD8EQAQ+BEQEOAQ7BEwARwBlAG4AZQByAGkAYwAgAEcAcgBhAHkAIABHAGEAbQBtAGEAIAAyAC4AMgAgAFAAcgBvAGYAaQBsAGUAAHRleHQAAAAAQ29weXJpZ2h0IEFwcGxlIEluYy4sIDIwMTIAAFhZWiAAAAAAAADzUQABAAAAARbMY3VydgAAAAAAAAQAAAAABQAKAA8AFAAZAB4AIwAoAC0AMgA3ADsAQABFAEoATwBUAFkAXgBjAGgAbQByAHcAfACBAIYAiwCQAJUAmgCfAKQAqQCuALIAtwC8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",
+        "mime": "image/jpeg"
       }
     ],
     "documentos": [
       {
         "actualizado": "2026-05-02T10:05:00.000Z",
-        "anio": 1580,
+        "anio": 1919,
         "autores": "Garcilaso de la Vega",
         "bibliotecas": ["lirica"],
-        "bytes": 63,
+        "bytes": 3711038,
         "creado": "2026-05-02T10:00:00.000Z",
         "duracion": null,
         "estado": "listo",
-        "huella": "9f47b3f777324459aa6ee013085c85bf06b02aff716220c5766c0311dc20f5a6",
+        "huella": "3e807a32e66923b244ae6180aeb7be59825446181d5f5d106365bd16d345fde4",
         "id": "garcilaso",
         "idioma": "es",
         "metadatos": {
-          "anio": 1580,
+          "anio": 1919,
           "anioOriginal": 1543,
           "autores": [
             {
@@ -35,34 +35,26 @@
               "orcid": null
             }
           ],
-          "coleccion": "Prueba de conformidad SPDF",
-          "editores": [
-            {
-              "apellidos": "Herrera",
-              "nombre": "Fernando de"
-            }
-          ],
-          "editorial": "Alonso de la Barrera",
+          "coleccion": "Colección Universal",
           "idioma": "es",
-          "lugar": "Sevilla",
+          "lugar": "Madrid",
           "procedencia": {
             "anio": {
-              "confianza": 0.9,
-              "fuente": "colofon"
+              "confianza": 1,
+              "fuente": "usuario"
             },
             "titulo": {
-              "confianza": 0.97,
+              "confianza": 1,
               "fuente": "lectura"
             }
           },
-          "subtitulo": "con anotaciones de Fernando de Herrera",
-          "titulo": "Obras de Garcilaso de la Vega"
+          "titulo": "Poesías"
         },
         "mime": "application/pdf",
-        "original": "original.pdf",
+        "original": "original.txt",
         "tipo": "pdf_escaneado",
-        "titulo": "Obras de Garcilaso de la Vega",
-        "unidades": 3
+        "titulo": "Poesías",
+        "unidades": 2
       }
     ],
     "espacios": [
@@ -81,10 +73,10 @@
       {
         "ancla": {
           "region": {
-            "h": 0.4,
-            "w": 0.6,
-            "x": 0.2,
-            "y": 0.1
+            "h": 0.25,
+            "w": 0.5,
+            "x": 0.25,
+            "y": 0
           },
           "tipo": "imagen"
         },
@@ -92,90 +84,82 @@
         "documento": "garcilaso",
         "id": "g-fig1",
         "imagen": "",
-        "pie": "Portada",
+        "pie": null,
         "unidad": "g-u1"
       }
     ],
     "fragmentos": [
       {
         "ancla": {
-          "confianza": 1,
-          "fisica": 1,
-          "impresa": null,
-          "origen": "ninguno",
+          "confianza": 0.9,
+          "fisica": 9,
+          "impresa": "7",
+          "origen": "deducido",
           "romana": false,
-          "tipo": "pagina"
-        },
-        "ancla_fin": null,
-        "contexto": "Garcilaso, portada.",
-        "documento": "garcilaso",
-        "id": "g-f1",
-        "n": 1,
-        "orden": 0,
-        "seccion": [],
-        "texto": "OBRAS DE GARCILASSO DE LA VEGA CON ANOTACIONES DE FERNANDO DE HERRERA.",
-        "texto_busqueda": "Obras de Garcilaso de la Vega con anotaciones de Fernando de Herrera.",
-        "unidad": "g-u1"
-      },
-      {
-        "ancla": {
-          "confianza": 0.94,
-          "fisica": 2,
-          "impresa": "ix",
-          "origen": "leido",
-          "romana": true,
           "tipo": "pagina"
         },
         "ancla_fin": null,
         "contexto": "Garcilaso, Égloga primera.",
         "documento": "garcilaso",
-        "id": "g-f2",
-        "n": 2,
-        "orden": 1,
+        "id": "g-f1",
+        "n": 1,
+        "orden": 0,
         "seccion": ["Égloga primera"],
-        "texto": "El dulce lamentar de dos paſtores,\nSalicio juntamente y Nemoroſo,\nhe de cantar, ſus quexas imitando;",
-        "texto_busqueda": "El dulce lamentar de dos pastores,\nSalicio juntamente y Nemoroso,\nhe de cantar, sus quejas imitando;",
-        "unidad": "g-u2"
+        "texto": "El dulce lamentar de dos pastores,\nSalicio juntamente y Nemoroso,\nhe de contar, sus quejas imitando;",
+        "texto_busqueda": "",
+        "unidad": "g-u1"
       },
       {
         "ancla": {
-          "confianza": 0.8,
-          "fisica": 3,
-          "impresa": "x",
-          "origen": "deducido",
-          "romana": true,
+          "confianza": 1,
+          "fisica": 161,
+          "impresa": "159",
+          "origen": "leido",
+          "romana": false,
           "tipo": "pagina"
         },
         "ancla_fin": null,
         "contexto": "Garcilaso, Soneto XXIII.",
         "documento": "garcilaso",
-        "id": "g-f3",
-        "n": 3,
-        "orden": 2,
+        "id": "g-f2",
+        "n": 2,
+        "orden": 1,
         "seccion": ["Soneto XXIII"],
-        "texto": "En tanto que de roſa y açucena\nſe mueſtra la color en vueſtro geſto,\ny que vueſtro mirar ardiente, honeſto,\ncon clara luz la tempeſtad ſerena;",
-        "texto_busqueda": "En tanto que de rosa y azucena\nse muestra la color en vuestro gesto,\ny que vuestro mirar ardiente, honesto,\ncon clara luz la tempestad serena;",
-        "unidad": "g-u3"
+        "texto": "En tanto que de rosa y azucena\nse muestra la color en vuestro gesto,\ny que vuestro mirar ardiente, honesto,\nenciende el corazón y lo refrena,\ny en tanto que el cabello, que en la vena\ndel oro se escogió, con vuelo presto,\npor el hermoso cuello blanco, enhiesto,\nel viento mueve, esparce y desordena;\ncoged de vuestra alegre primavera\nel dulce fruto, antes que el tiempo airado\ncubra de nieve la hermosa cumbre.\nMarchitará la rosa el viento helado,\ntodo lo mudará la edad ligera,\npor no hacer mudanza en su costumbre.",
+        "texto_busqueda": "",
+        "unidad": "g-u2"
       }
     ],
     "procedencia": [
       {
         "cuando": "2026-05-02T10:02:00.000Z",
         "detalle": {
-          "paginas": 3
+          "consultado": "2026-10-07",
+          "edicion": "Poesías de Garcilaso de la Vega, Madrid, Calpe, 1919 (Colección Universal 83-84); Commons File:Poesías de Garcilaso de la Vega (1919).pdf, SHA-1 d5a1f893f42aee069a0a947e1dd554b3acbf5925",
+          "paginas": [
+            {
+              "revision": 1288223,
+              "titulo": "Página:Poesías de Garcilaso de la Vega (1919).pdf/9",
+              "url": "https://es.wikisource.org/w/index.php?oldid=1288223"
+            },
+            {
+              "revision": 1496717,
+              "titulo": "Página:Poesías de Garcilaso de la Vega (1919).pdf/161",
+              "url": "https://es.wikisource.org/w/index.php?oldid=1496717"
+            }
+          ]
         },
         "documento": "garcilaso",
         "fase": "lectura",
-        "ms": 4200,
-        "proveedor": "gemini-3-flash"
+        "ms": null,
+        "proveedor": "wikisource"
       },
       {
         "cuando": "2026-05-02T10:03:00.000Z",
         "detalle": {
           "deducido": 1,
           "fuente": "etiquetas",
-          "leido": 1,
-          "ninguno": 1
+          "leido": 1
         },
         "documento": "garcilaso",
         "fase": "folios",
@@ -191,17 +175,17 @@
         "padre": null,
         "resumen": null,
         "titulo": "Égloga primera",
-        "unidad_desde": "g-u2",
-        "unidad_hasta": "g-u2"
+        "unidad_desde": "g-u1",
+        "unidad_hasta": "g-u1"
       },
       {
         "documento": "garcilaso",
         "id": "g-s2",
         "nivel": 1,
         "padre": null,
-        "resumen": "Carpe diem.",
+        "resumen": null,
         "titulo": "Soneto XXIII",
-        "unidad_desde": "g-u3",
+        "unidad_desde": "g-u2",
         "unidad_hasta": null
       }
     ],
@@ -222,20 +206,20 @@
     "unidades": [
       {
         "ancla": {
-          "confianza": 1,
-          "fisica": 1,
-          "impresa": null,
-          "origen": "ninguno",
+          "confianza": 0.9,
+          "fisica": 9,
+          "impresa": "7",
+          "origen": "deducido",
           "romana": false,
           "tipo": "pagina"
         },
         "cabecera": null,
-        "confianza": 0.9,
+        "confianza": 1,
         "documento": "garcilaso",
         "id": "g-u1",
-        "imagen": "paginas/0001.png",
-        "impresa": null,
-        "lector": "gemini-3-flash",
+        "imagen": "u/42/d/garcilaso/paginas/0009.png",
+        "impresa": "7",
+        "lector": "wikisource",
         "miniatura": null,
         "notas": null,
         "orden": 0,
@@ -243,57 +227,32 @@
         "pie": null,
         "t0": null,
         "t1": null,
-        "texto": "OBRAS DE GARCILASSO DE LA VEGA CON ANOTACIONES DE FERNANDO DE HERRERA."
+        "texto": "ÉGLOGA PRIMERA\n\nAL VISORREY DE NAPOLES\n\nSALICIO, NEMOROSO\n\nEl dulce lamentar de dos pastores,\nSalicio juntamente y Nemoroso,\nhe de contar, sus quejas imitando;\ncuyas ovejas al cantar sabroso\nestaban muy atentas, los amores,\nde pacer olvidadas, escuchando.\nTú, que ganaste obrando\nun nombre en todo el mundo,\ny un grado sin segundo;\nagora estés atento, sólo y dado\nal ínclito gobierno del estado\nalbano; agora vuelto a la otra parte,\nresplandeciente, armado,\nrepresentando en tierra el fiero Marte;\nagora de cuidados enojosos\ny de negocios libre, por ventura\nandes a caza el monte fatigando\nen ardiente jinete, que apresura\nel curso tras los ciervos temerosos,"
       },
       {
         "ancla": {
-          "confianza": 0.94,
-          "fisica": 2,
-          "impresa": "ix",
+          "confianza": 1,
+          "fisica": 161,
+          "impresa": "159",
           "origen": "leido",
-          "romana": true,
+          "romana": false,
           "tipo": "pagina"
         },
-        "cabecera": null,
-        "confianza": 0.9,
+        "cabecera": "159",
+        "confianza": 1,
         "documento": "garcilaso",
         "id": "g-u2",
-        "imagen": "u/42/d/garcilaso/paginas/0002.png",
-        "impresa": "ix",
-        "lector": "gemini-3-flash",
-        "miniatura": null,
+        "imagen": null,
+        "impresa": "159",
+        "lector": "wikisource",
+        "miniatura": "miniaturas/0161.jpg",
         "notas": null,
         "orden": 1,
         "palabras": null,
         "pie": null,
         "t0": null,
         "t1": null,
-        "texto": "El dulce lamentar de dos paſtores,\nSalicio juntamente y Nemoroſo,\nhe de cantar, ſus quexas imitando;"
-      },
-      {
-        "ancla": {
-          "confianza": 0.8,
-          "fisica": 3,
-          "impresa": "x",
-          "origen": "deducido",
-          "romana": true,
-          "tipo": "pagina"
-        },
-        "cabecera": null,
-        "confianza": 0.9,
-        "documento": "garcilaso",
-        "id": "g-u3",
-        "imagen": "u/42/d/garcilaso/paginas/0003.png",
-        "impresa": "x",
-        "lector": "gemini-3-flash",
-        "miniatura": null,
-        "notas": null,
-        "orden": 2,
-        "palabras": null,
-        "pie": null,
-        "t0": null,
-        "t1": null,
-        "texto": "En tanto que de roſa y açucena\nſe mueſtra la color en vueſtro geſto,\ny que vueſtro mirar ardiente, honeſto,\ncon clara luz la tempeſtad ſerena;"
+        "texto": "mis ojos, y no pasan tan adentro\n\nque miren lo que el alma en sí contiene.\n\nY así, se quedan tristes en la puerta\n\nhecha por mi dolor, con esa mano\n\nque aun a su mismo pecho no perdona;\n\ndonde vi claro mi esperanza muerta;\n\ny el golpe que os hizo amor en vano\n\nnon esservi passato oltra la gonna.\n\nXXIII\n\nEn tanto que de rosa y azucena\n\nse muestra la color en vuestro gesto,\n\ny que vuestro mirar ardiente, honesto,\n\nenciende el corazón y lo refrena,\n\ny en tanto que el cabello, que en la vena\n\ndel oro se escogió, con vuelo presto,\n\npor el hermoso cuello blanco, enhiesto,\n\nel viento mueve, esparce y desordena;\n\ncoged de vuestra alegre primavera\n\nel dulce fruto, antes que el tiempo airado\n\ncubra de nieve la hermosa cumbre.\n\nMarchitará la rosa el viento helado,\n\ntodo lo mudará la edad ligera,\n\npor no hacer mudanza en su costumbre.\n\nXXIV\n\nA LA MARQUESA DE PADULA, DOÑA MARIA DE CARDONA\n\nIlustre honor del nombre de Cardona,\n\ndécima moradora de Parnaso,"
       }
     ],
     "vectores": [
@@ -302,19 +261,12 @@
         "espacio": "qwen3-vl-embedding-2b@4",
         "id": "g-f1",
         "objetivo": "fragmento",
-        "valores": [1, 0, 0, 0]
-      },
-      {
-        "documento": "garcilaso",
-        "espacio": "qwen3-vl-embedding-2b@4",
-        "id": "g-f2",
-        "objetivo": "fragmento",
         "valores": [0, 0.5, 0.5, 0]
       },
       {
         "documento": "garcilaso",
         "espacio": "qwen3-vl-embedding-2b@4",
-        "id": "g-f3",
+        "id": "g-f2",
         "objetivo": "fragmento",
         "valores": [0, 0, 0.5, 0.5]
       },
