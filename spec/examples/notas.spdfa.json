@@ -1,0 +1,57 @@
+{
+  "@context": "http://www.w3.org/ns/anno.jsonld",
+  "type": "AnnotationCollection",
+  "spdf_annotations": "1.0",
+  "label": "Notas de lectura (ejemplo)",
+  "first": {
+    "type": "AnnotationPage",
+    "items": [
+      {
+        "id": "urn:uuid:0b6f8f0e-5d0c-4f4e-9a57-1c1f0e2a7d01",
+        "type": "Annotation",
+        "motivation": "commenting",
+        "created": "2026-10-07T09:00:00Z",
+        "body": {
+          "type": "TextualBody",
+          "value": "Comienzo del capítulo primero; la cita cruza de la hoja 1r a la 1v.",
+          "format": "text/plain",
+          "language": "es"
+        },
+        "target": {
+          "source": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75",
+          "selector": [
+            {
+              "type": "SpdfAnchorSelector",
+              "value": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=5&pe=6&f=1r&fe=1v&char=101,278"
+            },
+            {
+              "type": "TextQuoteSelector",
+              "exact": "En un lugar de la Mancha",
+              "prefix": "",
+              "suffix": ", de cuyo nombre no quiero acordarme"
+            }
+          ]
+        }
+      },
+      {
+        "id": "urn:uuid:0b6f8f0e-5d0c-4f4e-9a57-1c1f0e2a7d02",
+        "type": "Annotation",
+        "motivation": "highlighting",
+        "created": "2026-10-07T09:05:00Z",
+        "target": {
+          "source": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75",
+          "selector": [
+            {
+              "type": "SpdfAnchorSelector",
+              "value": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=7&f=2r&char=0,57"
+            },
+            {
+              "type": "TextQuoteSelector",
+              "exact": "Frisaba la edad de nuestro hidalgo con los cincuenta años"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spdf.joseluissaorin.com/schema/5.0/annotation.schema.json",
+  "title": "SPDF annotations (.spdfa.json)",
+  "description": "User annotations as a W3C Web Annotation AnnotationCollection whose targets use SPDF anchor URIs (SPEC §17.1).",
+  "type": "object",
+  "required": [
+    "@context",
+    "type",
+    "spdf_annotations",
+    "first"
+  ],
+  "properties": {
+    "@context": {
+      "anyOf": [
+        {
+          "const": "http://www.w3.org/ns/anno.jsonld"
+        },
+        {
+          "type": "array",
+          "contains": {
+            "const": "http://www.w3.org/ns/anno.jsonld"
+          }
+        }
+      ]
+    },
+    "type": {
+      "const": "AnnotationCollection"
+    },
+    "spdf_annotations": {
+      "type": "string",
+      "pattern": "^1\\.[0-9]+$"
+    },
+    "label": {
+      "type": "string"
+    },
+    "first": {
+      "type": "object",
+      "required": [
+        "type",
+        "items"
+      ],
+      "properties": {
+        "type": {
+          "const": "AnnotationPage"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/annotation"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "annotation": {
+      "type": "object",
+      "required": [
+        "type",
+        "target"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "Annotation"
+        },
+        "motivation": {
+          "type": "string"
+        },
+        "created": {
+          "type": "string"
+        },
+        "body": {},
+        "target": {
+          "$ref": "#/$defs/target"
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "required": [
+        "source",
+        "selector"
+      ],
+      "properties": {
+        "source": {
+          "type": "string",
+          "pattern": "^spdf:[^#]+$"
+        },
+        "selector": {
+          "type": "array",
+          "minItems": 1,
+          "contains": {
+            "$ref": "#/$defs/spdfSelector"
+          },
+          "items": {
+            "type": "object",
+            "required": [
+              "type"
+            ]
+          }
+        }
+      }
+    },
+    "spdfSelector": {
+      "type": "object",
+      "required": [
+        "type",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "SpdfAnchorSelector"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^spdf:[^#]+(#.*)?$"
+        }
+      }
+    }
+  }
+}

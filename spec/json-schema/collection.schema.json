@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spdf.joseluissaorin.com/schema/5.0/collection.schema.json",
+  "title": "SPDF collection manifest (.spdfl.json)",
+  "description": "A library of SPDF documents, by identity (SPEC §17.2).",
+  "type": "object",
+  "required": [
+    "spdf_library",
+    "name",
+    "items"
+  ],
+  "properties": {
+    "spdf_library": {
+      "type": "string",
+      "pattern": "^1\\.[0-9]+$"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "created": {
+      "type": "string"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "sha256",
+          "title"
+        ],
+        "properties": {
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "title": {
+            "type": "string"
+          },
+          "authors": {
+            "type": "string"
+          },
+          "year": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "url": {
+            "type": "string"
+          },
+          "file_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    }
+  }
+}

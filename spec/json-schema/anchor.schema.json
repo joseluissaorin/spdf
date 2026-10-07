@@ -1,0 +1,282 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spdf.joseluissaorin.com/schema/5.0/anchor.schema.json",
+  "title": "SPDF 5.0 anchor",
+  "description": "Locates a unit, fragment or figure in a document (SPEC §4). Unknown members are allowed and must be preserved.",
+  "type": "object",
+  "required": [
+    "type"
+  ],
+  "properties": {
+    "type": {
+      "enum": [
+        "page",
+        "time",
+        "section",
+        "slide",
+        "sheet",
+        "web",
+        "image",
+        "verse",
+        "canonical"
+      ]
+    },
+    "region": {
+      "$ref": "#/$defs/region"
+    },
+    "chars": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "[start, end) in code points of the NFC text of the anchor's unit"
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "type": {
+          "const": "page"
+        },
+        "physical": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "printed": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "roman": {
+          "type": "boolean"
+        },
+        "foliation": {
+          "enum": [
+            "page",
+            "leaf",
+            "column"
+          ]
+        },
+        "source": {
+          "enum": [
+            "read",
+            "inferred",
+            "epub",
+            "none"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "type",
+        "physical",
+        "printed"
+      ]
+    },
+    {
+      "properties": {
+        "type": {
+          "const": "time"
+        },
+        "t0": {
+          "type": "number",
+          "minimum": 0
+        },
+        "t1": {
+          "type": "number",
+          "minimum": 0
+        },
+        "speaker": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "t0",
+        "t1"
+      ]
+    },
+    {
+      "properties": {
+        "type": {
+          "const": "section"
+        },
+        "path": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "paragraph": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "printed": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "path"
+      ]
+    },
+    {
+      "properties": {
+        "type": {
+          "const": "slide"
+        },
+        "n": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "type",
+        "n"
+      ]
+    },
+    {
+      "properties": {
+        "type": {
+          "const": "sheet"
+        },
+        "sheet": {
+          "type": "string"
+        },
+        "row_from": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "row_to": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "type",
+        "sheet",
+        "row_from",
+        "row_to"
+      ]
+    },
+    {
+      "properties": {
+        "type": {
+          "const": "web"
+        },
+        "url": {
+          "type": "string"
+        },
+        "path": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "paragraph": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "accessed": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "url"
+      ]
+    },
+    {
+      "properties": {
+        "type": {
+          "const": "image"
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    {
+      "properties": {
+        "type": {
+          "const": "verse"
+        },
+        "line_from": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "line_to": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "printed": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "line_from"
+      ]
+    },
+    {
+      "properties": {
+        "type": {
+          "const": "canonical"
+        },
+        "scheme": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*$"
+        },
+        "ref": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "scheme",
+        "ref"
+      ]
+    }
+  ],
+  "$defs": {
+    "region": {
+      "type": "object",
+      "required": [
+        "x",
+        "y",
+        "w",
+        "h"
+      ],
+      "properties": {
+        "x": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "y": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "w": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "h": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    }
+  }
+}

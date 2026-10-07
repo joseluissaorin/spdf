@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spdf.joseluissaorin.com/schema/5.0/validation-result.schema.json",
+  "title": "SPDF validation result",
+  "description": "What a validator returns (SPEC §22). valid is true if and only if errors is empty.",
+  "type": "object",
+  "required": [
+    "valid",
+    "version",
+    "profile",
+    "errors",
+    "warnings"
+  ],
+  "properties": {
+    "valid": {
+      "type": "boolean"
+    },
+    "version": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "profile": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/issue"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/issue"
+      }
+    }
+  },
+  "$defs": {
+    "issue": {
+      "type": "object",
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^[EW][0-9]{3}$"
+        },
+        "message": {
+          "type": "string"
+        },
+        "where": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

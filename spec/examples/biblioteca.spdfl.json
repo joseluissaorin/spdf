@@ -1,0 +1,20 @@
+{
+  "spdf_library": "1.0",
+  "name": "Fuentes de ejemplo",
+  "created": "2026-10-07T00:00:00Z",
+  "items": [
+    {
+      "sha256": "fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75",
+      "title": "El ingenioso hidalgo don Quijote de la Mancha",
+      "authors": "Cervantes Saavedra",
+      "year": 1605,
+      "url": "https://github.com/joseluissaorin/spdf/raw/main/conformance/files/quijote.spdf"
+    },
+    {
+      "sha256": "e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3",
+      "title": "On the Origin of Species by Means of Natural Selection",
+      "authors": "Darwin",
+      "year": 1859
+    }
+  ]
+}

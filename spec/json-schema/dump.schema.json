@@ -1,0 +1,668 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spdf.joseluissaorin.com/schema/5.0/dump.schema.json",
+  "title": "SPDF canonical dump",
+  "description": "The canonical JSON view of an SPDF file (SPEC §12). Legacy files add \"legacy\": true.",
+  "type": "object",
+  "required": [
+    "spdf_version",
+    "meta",
+    "fts",
+    "document",
+    "units",
+    "sections",
+    "fragments",
+    "figures",
+    "spaces",
+    "vectors",
+    "blobs",
+    "provenance",
+    "extensions"
+  ],
+  "properties": {
+    "spdf_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$"
+    },
+    "legacy": {
+      "const": true
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "fts": {
+      "type": "object",
+      "required": [
+        "tokenizer",
+        "trigram"
+      ],
+      "properties": {
+        "tokenizer": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "trigram": {
+          "type": "boolean"
+        }
+      }
+    },
+    "document": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "metadata",
+        "source_sha256",
+        "source_ref",
+        "mime",
+        "bytes",
+        "unit_count",
+        "duration",
+        "created",
+        "updated",
+        "title",
+        "authors",
+        "year",
+        "language",
+        "rights"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "metadata": {
+          "$ref": "https://spdf.joseluissaorin.com/schema/5.0/metadata.schema.json"
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "source_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "mime": {
+          "type": "string"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unit_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "duration": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "created": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string"
+        },
+        "title": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "authors": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "year": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "language": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rights": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/rights"
+            }
+          ]
+        }
+      }
+    },
+    "units": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "ord",
+          "anchor",
+          "text",
+          "notes",
+          "header",
+          "footer",
+          "image",
+          "thumbnail",
+          "reader",
+          "confidence",
+          "printed",
+          "t0",
+          "t1",
+          "words"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "ord": {
+            "type": "integer"
+          },
+          "anchor": {
+            "$ref": "https://spdf.joseluissaorin.com/schema/5.0/anchor.schema.json"
+          },
+          "text": {
+            "type": "string"
+          },
+          "notes": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "header": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "footer": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "image": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "thumbnail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reader": {
+            "type": "string"
+          },
+          "confidence": {
+            "type": "number"
+          },
+          "printed": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "t0": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "t1": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "words": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/$defs/words"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "parent",
+          "level",
+          "title",
+          "unit_from",
+          "unit_to",
+          "summary"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "parent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "level": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "title": {
+            "type": "string"
+          },
+          "unit_from": {
+            "type": "string"
+          },
+          "unit_to": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "summary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "fragments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "n",
+          "id",
+          "unit",
+          "ord",
+          "text",
+          "context",
+          "section",
+          "anchor",
+          "anchor_end",
+          "search_text"
+        ],
+        "properties": {
+          "n": {
+            "type": "integer"
+          },
+          "id": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "ord": {
+            "type": "integer"
+          },
+          "text": {
+            "type": "string"
+          },
+          "context": {
+            "type": "string"
+          },
+          "section": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "anchor": {
+            "$ref": "https://spdf.joseluissaorin.com/schema/5.0/anchor.schema.json"
+          },
+          "anchor_end": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "https://spdf.joseluissaorin.com/schema/5.0/anchor.schema.json"
+              }
+            ]
+          },
+          "search_text": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "figures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "unit",
+          "image",
+          "caption",
+          "description",
+          "anchor"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "image": {
+            "type": "string"
+          },
+          "caption": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "anchor": {
+            "$ref": "https://spdf.joseluissaorin.com/schema/5.0/anchor.schema.json"
+          }
+        }
+      }
+    },
+    "spaces": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "provider",
+          "model",
+          "version",
+          "dims",
+          "dtype",
+          "normalized",
+          "truncated_from",
+          "modalities",
+          "task_prefixes",
+          "created"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dims": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "dtype": {
+            "enum": [
+              "f32",
+              "f16",
+              "i8"
+            ]
+          },
+          "normalized": {
+            "enum": [
+              0,
+              1
+            ]
+          },
+          "truncated_from": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "modalities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "task_prefixes": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "created": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "vectors": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "count",
+          "sha256"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "blobs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "key",
+          "mime",
+          "bytes",
+          "sha256"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "mime": {
+            "type": "string"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "provenance": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "stage",
+          "provider",
+          "model",
+          "detail",
+          "ms",
+          "at"
+        ],
+        "properties": {
+          "stage": {
+            "type": "string"
+          },
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "model": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "detail": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "ms": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "at": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "extensions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "version",
+          "required"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "required": {
+            "enum": [
+              0,
+              1
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "rights": {
+      "type": "object",
+      "properties": {
+        "license": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "access": {
+          "enum": [
+            "open",
+            "restricted",
+            "private",
+            null
+          ]
+        },
+        "holder": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "words": {
+      "type": "object",
+      "required": [
+        "v",
+        "t0",
+        "cs"
+      ],
+      "properties": {
+        "v": {
+          "const": 1
+        },
+        "t0": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cs": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    }
+  }
+}

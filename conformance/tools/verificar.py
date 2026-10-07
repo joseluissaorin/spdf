@@ -182,6 +182,43 @@ def runner_report() -> dict:
     return {"impl": "conformance/tools (reference)", "version": manifest["suite_version"], "passed": passed, "failed": failed, "skipped": []}
 
 
+def schema_problems() -> list[str]:
+    """spec/json-schema/*.json must accept the corpus and the examples."""
+    import esquemas
+    folder = CONF.parent / "spec" / "json-schema"
+    if not folder.exists():
+        return []
+    S = esquemas.Schemas(folder)
+    out = []
+    def chk(instance, name, where):
+        out.extend(f"{where}: {e}" for e in S.errors(instance, S.get(name))[:3])
+    for p in sorted((CONF / "expected").glob("*.dump.json")):
+        chk(R.read_json(p), "dump.schema.json", f"expected/{p.name}")
+    for p in sorted((CONF / "cases").glob("*.json")):
+        c = R.read_json(p)
+        if c["kind"] == "validate":
+            chk(R.validate_file(CONF / c["input"]["file"]), "validation-result.schema.json", f"validate {c['id']}")
+        elif c["kind"] == "anchor_uri" and "anchor" in c["input"]:
+            chk(c["input"]["anchor"], "anchor.schema.json", c["id"])
+            if c["input"]["anchor_end"] is not None:
+                chk(c["input"]["anchor_end"], "anchor.schema.json", c["id"])
+        elif c["kind"] == "cite":
+            chk(c["input"]["metadata"], "metadata.schema.json", c["id"])
+            chk(c["input"]["anchor"], "anchor.schema.json", c["id"])
+    ex = CONF.parent / "spec" / "examples"
+    for p in sorted(ex.glob("*.spdfa.json")):
+        chk(R.read_json(p), "annotation.schema.json", f"spec/examples/{p.name}")
+    for p in sorted(ex.glob("*.spdfl.json")):
+        chk(R.read_json(p), "collection.schema.json", f"spec/examples/{p.name}")
+    # negative checks: the schemas must reject what the specification forbids
+    bad = [({"type": "chapter"}, "anchor.schema.json"), ({"type": "page", "printed": "3"}, "anchor.schema.json"),
+           ({"type": "book"}, "metadata.schema.json"), ({"valid": True}, "validation-result.schema.json")]
+    for inst, name in bad:
+        if not S.errors(inst, S.get(name)):
+            out.append(f"{name} accepts {inst}")
+    return out
+
+
 def generated_outputs(root: Path) -> dict[str, bytes]:
     out = {}
     for d in ("cases", "expected"):
@@ -243,6 +280,7 @@ def main() -> int:
     errs = problems_in_cases()
     errs += [f"reference fails {f['id']}: {f['reason']}" for f in report["failed"]]
     errs += determinism()
+    errs += schema_problems()
     for e in errs:
         print("ERROR", e)
     m = R.read_json(CONF / "manifest.json")
