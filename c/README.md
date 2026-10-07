@@ -77,8 +77,8 @@ Errors throw `spdf::Error` (with `status()` and the JSON of `spdf_last_error()`)
 
 `build/spdf_conformance ../conformance` runs every case through the ABI and prints the
 report of the specification; `ctest` runs it. CI publishes it as the `conformance-c`
-artifact. The `quantize` kind (writer-side quantization) is reported as skipped until
-the ABI exposes `spdf_quantize` (requested; see `NOTAS.md`).
+artifact. All kinds are claimed, including `roundtrip` (through `spdf_write_from_dump`)
+and `quantize` (through `spdf_quantize`).
 
 ## License
 

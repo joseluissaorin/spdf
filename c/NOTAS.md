@@ -16,14 +16,7 @@ Estado a 7-10-2026: la ABI existe (`rust/crates/spdf-ffi/include/spdf.h`, biblio
 | escribir | `spdf_write_from_dump` |
 | hash del contenido | `spdf_verify` (`computed_sha256`) |
 | liberar | `spdf_string_free`, `spdf_bytes_free` |
-
-Pendiente (pedido al agente rust el 7-10-2026): una función de cuantización del lado del
-escritor, para que el runner de C cubra el tipo de caso `quantize`:
-
-```c
-int spdf_quantize(const double *values, size_t n, const char *dtype,
-                  uint8_t **out_data, size_t *out_len);   /* bytes: spdf_bytes_free */
-```
+| cuantizar (escritor) | `spdf_quantize` (añadida a petición de esta carpeta, commit 01d15d3) |
 
 Lo que el runner de C no compara: `route` y `match` de la búsqueda léxica (la ABI
 devuelve solo los resultados; el README de la batería lo deja como SHOULD).

@@ -322,8 +322,25 @@ static const char *run_case(const char *dir, const sj *c, int *skipped) {
     }
 
     if (!strcmp(kind, "quantize")) {
-        *skipped = 1;
-        return "the C ABI exposes no writer-side quantization (spdf_quantize pending)";
+        const sj *vals = sj_get(in, "values");
+        size_t n = vals ? vals->count : 0;
+        double *v = (double *)malloc((n ? n : 1) * sizeof(double));
+        for (size_t i = 0; i < n; i++) v[i] = vals->items[i]->number;
+        uint8_t *data = NULL;
+        size_t len = 0;
+        int st = spdf_quantize(v, n, sj_str(sj_get(in, "dtype")), &data, &len);
+        free(v);
+        const sj *err = sj_get(ex, "error");
+        int want_error = err && err->type == SJ_BOOL && err->boolean;
+        if (st != SPDF_OK) return want_error ? NULL : abi_fail("spdf_quantize");
+        char *hex = (char *)malloc(len * 2 + 1);
+        for (size_t i = 0; i < len; i++) snprintf(hex + 2 * i, 3, "%02x", data[i]);
+        hex[len * 2] = '\0';
+        spdf_bytes_free(data, len);
+        if (want_error) r = fail("expected an error, got %s", hex);
+        else if (strcmp(hex, sj_str(sj_get(ex, "hex")))) r = fail("expected %s, got %s", sj_str(sj_get(ex, "hex")), hex);
+        free(hex);
+        return r;
     }
     return fail("unknown case kind %s", kind);
 }
