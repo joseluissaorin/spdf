@@ -156,14 +156,14 @@ jobs:
         env:
           NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.1.12297006
         run: npx tauri android build --apk
-      - name: Firmar (clave de depuración: la de publicación no vive en el repositorio)
+      - name: "Firmar con una clave de depuración (la de publicación no vive en el repositorio)"
         run: |
-          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          BT=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
           keytool -genkeypair -keystore depuracion.keystore -storepass android -keypass android -alias depuracion -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Lector SPDF (depuracion)"
           APK=$(find reader/src-tauri/gen/android/app/build/outputs/apk -name '*-unsigned.apk' | head -1)
           mkdir -p paquetes
           "$BT/zipalign" -f -p 4 "$APK" alineada.apk
-          "$BT/apksigner" sign --ks depuracion.keystore --ks-pass pass:android --key-pass pass:android --ks-key-alias depuracion --out paquetes/lector-spdf-${GITHUB_REF_NAME//\//-}-universal.apk alineada.apk
+          "$BT/apksigner" sign --ks depuracion.keystore --ks-pass pass:android --key-pass pass:android --ks-key-alias depuracion --out "paquetes/lector-spdf-${GITHUB_REF_NAME//\//-}-universal.apk" alineada.apk
           ls -la paquetes
       - uses: actions/upload-artifact@v4
         with:
