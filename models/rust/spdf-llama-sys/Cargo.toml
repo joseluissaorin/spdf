@@ -1,0 +1,23 @@
+[package]
+name = "spdf-llama-sys"
+description = "Raw bindings to llama.cpp (+ mtmd) pinned to the commit SPDF is measured against"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+links = "llama"
+build = "build.rs"
+
+[features]
+default = []
+# GPU backends. On macOS and iOS Metal is always on (it is the only GPU path there).
+vulkan = []
+cuda = []
+# Build for the host CPU (-march=native). Faster locally, not portable: never for releases.
+native = []
+# Dynamic OpenMP threadpool (Linux). Off by default: ggml's own threadpool is used.
+openmp = []
+
+[build-dependencies]
+bindgen = "0.72"
+cmake = "0.1"

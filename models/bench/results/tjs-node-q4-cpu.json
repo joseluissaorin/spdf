@@ -1,0 +1,67 @@
+{
+ "engine": "tjs-node-q4-cpu",
+ "machine": {
+  "chip": "Apple M4 Max",
+  "memory_gb": 36,
+  "os": "macOS-26.5-arm64-arm-64bit"
+ },
+ "date": "2026-10-07",
+ "latency": {
+  "text_short": {
+   "n": 2,
+   "median_ms": 102.18,
+   "p90_ms": 154.5,
+   "mean_ms": 102.18
+  },
+  "image": {
+   "n": 2,
+   "median_ms": 6921.63,
+   "p90_ms": 8023.5,
+   "mean_ms": 6921.63
+  },
+  "audio_10s": {
+   "n": 2,
+   "median_ms": 1918.6,
+   "p90_ms": 2294.82,
+   "mean_ms": 1918.6
+  }
+ },
+ "memory": {
+  "after_load_mb": null,
+  "peak_mb": 1391.3
+ },
+ "meta": {
+  "runtime": "node",
+  "device": "cpu",
+  "dtype": "q4",
+  "transformers": "4.3.1",
+  "node": "v26.4.0",
+  "load_s": 1.76,
+  "latency_model_only": {
+   "text_short": {
+    "n": 2,
+    "median_ms": 99.57,
+    "p90_ms": 149.64,
+    "mean_ms": 99.57
+   },
+   "image": {
+    "n": 2,
+    "median_ms": 6823.75,
+    "p90_ms": 7965.64,
+    "mean_ms": 6823.75
+   },
+   "audio_10s": {
+    "n": 2,
+    "median_ms": 1884.92,
+    "p90_ms": 2249.08,
+    "mean_ms": 1884.92
+   }
+  },
+  "note": "latency includes transformers.js preprocessing (latency_model_only excludes it)"
+ },
+ "counts": {
+  "text": 2,
+  "image": 2,
+  "audio": 2
+ }
+}

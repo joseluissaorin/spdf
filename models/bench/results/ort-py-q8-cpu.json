@@ -1,0 +1,66 @@
+{
+ "engine": "ort-py-q8-cpu",
+ "machine": {
+  "chip": "Apple M4 Max",
+  "memory_gb": 36,
+  "os": "macOS-26.5-arm64-arm-64bit"
+ },
+ "date": "2026-10-07",
+ "latency": {
+  "text_short": {
+   "n": 79,
+   "median_ms": 52.21,
+   "p90_ms": 61.87,
+   "mean_ms": 52.94
+  },
+  "text_medium": {
+   "n": 114,
+   "median_ms": 75.89,
+   "p90_ms": 98.93,
+   "mean_ms": 78.9
+  },
+  "text_long": {
+   "n": 97,
+   "median_ms": 138.2,
+   "p90_ms": 208.64,
+   "mean_ms": 152.64
+  },
+  "text_query": {
+   "n": 40,
+   "median_ms": 40.91,
+   "p90_ms": 46.33,
+   "mean_ms": 41.66
+  },
+  "image": {
+   "n": 54,
+   "median_ms": 1726.14,
+   "p90_ms": 2852.65,
+   "mean_ms": 1954.82
+  },
+  "audio_10s": {
+   "n": 24,
+   "median_ms": 316.36,
+   "p90_ms": 361.29,
+   "mean_ms": 310.71
+  }
+ },
+ "memory": {
+  "baseline_mb": 31.3,
+  "after_load_mb": 642.7,
+  "peak_mb": 2053.3,
+  "model_mb": 611.4
+ },
+ "meta": {
+  "load_s": 6.0,
+  "onnxruntime": "1.30.0",
+  "ep": "cpu",
+  "dtype": "q8",
+  "files": "model_quantized.onnx + vision_encoder_quantized + audio_encoder_quantized",
+  "note": "latency excludes preprocessing (done by the reference processor)"
+ },
+ "counts": {
+  "text": 330,
+  "image": 54,
+  "audio": 24
+ }
+}

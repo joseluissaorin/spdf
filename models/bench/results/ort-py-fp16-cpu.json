@@ -1,0 +1,66 @@
+{
+ "engine": "ort-py-fp16-cpu",
+ "machine": {
+  "chip": "Apple M4 Max",
+  "memory_gb": 36,
+  "os": "macOS-26.5-arm64-arm-64bit"
+ },
+ "date": "2026-10-07",
+ "latency": {
+  "text_short": {
+   "n": 79,
+   "median_ms": 51.06,
+   "p90_ms": 118.31,
+   "mean_ms": 70.73
+  },
+  "text_medium": {
+   "n": 114,
+   "median_ms": 153.63,
+   "p90_ms": 268.21,
+   "mean_ms": 162.85
+  },
+  "text_long": {
+   "n": 97,
+   "median_ms": 363.26,
+   "p90_ms": 614.36,
+   "mean_ms": 406.9
+  },
+  "text_query": {
+   "n": 40,
+   "median_ms": 26.9,
+   "p90_ms": 64.52,
+   "mean_ms": 35.2
+  },
+  "image": {
+   "n": 54,
+   "median_ms": 2991.44,
+   "p90_ms": 3747.45,
+   "mean_ms": 3104.52
+  },
+  "audio_10s": {
+   "n": 24,
+   "median_ms": 561.47,
+   "p90_ms": 849.72,
+   "mean_ms": 594.53
+  }
+ },
+ "memory": {
+  "baseline_mb": 31.3,
+  "after_load_mb": 1848.5,
+  "peak_mb": 3366.5,
+  "model_mb": 1817.3
+ },
+ "meta": {
+  "load_s": 6.9,
+  "onnxruntime": "1.30.0",
+  "ep": "cpu",
+  "dtype": "fp16",
+  "files": "model_fp16.onnx + vision_encoder_fp16 + audio_encoder_fp16",
+  "note": "latency excludes preprocessing (done by the reference processor)"
+ },
+ "counts": {
+  "text": 330,
+  "image": 54,
+  "audio": 24
+ }
+}

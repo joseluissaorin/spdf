@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>SPDF models bench (transformers.js)</title></head>
+<body>
+<pre id="log"></pre>
+<script type="module">
+import * as T from "/tjs/transformers.js";
+import { runBench, wavToFloat32 } from "/embed_core.mjs";
+
+const log = (msg) => { document.getElementById("log").textContent += msg + "\n"; fetch("/log", { method: "POST", body: JSON.stringify({ msg }) }); };
+const post = (r) => fetch("/result", { method: "POST", body: JSON.stringify(r) });
+
+try {
+  const cfg = await (await fetch("/config.json")).json();
+  T.env.localModelPath = "/models/";
+  T.env.allowLocalModels = true;
+  T.env.allowRemoteModels = false;
+  T.env.useBrowserCache = false;
+  T.env.backends.onnx.wasm.wasmPaths = "/ort/";
+  let adapter = null;
+  if (navigator.gpu) {
+    const ad = await navigator.gpu.requestAdapter();
+    adapter = ad ? { vendor: ad.info?.vendor, architecture: ad.info?.architecture, description: ad.info?.description } : null;
+  }
+  await post({ adapter: adapter ?? "none" });
+  log(`webgpu adapter: ${JSON.stringify(adapter)}`);
+  const DOC = "title: none | text: ", QUERY = "task: search result | query: ";
+  let texts = (await (await fetch("/corpus/texts.jsonl")).text()).trim().split("\n").map((l) => JSON.parse(l));
+  let images = await (await fetch("/corpus/images.json")).json();
+  let audio = await (await fetch("/corpus/audio.json")).json();
+  if (cfg.limit) [texts, images, audio] = [texts.slice(0, cfg.limit), images.slice(0, cfg.limit), audio.slice(0, cfg.limit)];
+  const items = [
+    ...texts.map((t) => ({ mod: "text", id: t.id, cls: "text_" + t.length, text: (t.kind === "query" ? QUERY : DOC) + t.text })),
+    ...images.map((im) => ({ mod: "image", id: im.id, cls: "image", image: () => T.RawImage.fromURL("/media/images/" + im.file) })),
+    ...audio.map((a) => ({ mod: "audio", id: a.id, cls: "audio_10s", audio: async () => wavToFloat32(new Uint8Array(await (await fetch("/media/audio/" + a.file)).arrayBuffer())) })),
+  ];
+  let buf = [];
+  const { loadMs } = await runBench(T, {
+    modelId: "onnx-community/embeddinggemma-2-ONNX", device: cfg.device, dtype: cfg.dtype, items, log,
+    emit: (r) => { buf.push(r); if (buf.length >= 20) { post(buf); buf = []; } },
+  });
+  if (buf.length) await post(buf);
+  await post({ done: true, loadMs, versions: { transformers: T.env.version, userAgent: navigator.userAgent } });
+} catch (e) {
+  log("ERROR " + (e?.stack ?? e));
+  await post({ error: String(e?.stack ?? e) });
+}
+</script>
+</body>
+</html>

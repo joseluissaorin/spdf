@@ -1,0 +1,40 @@
+[package]
+name = "spdf-infer"
+description = "Local inference for SPDF readers and producers: EmbeddingGemma 2 embeddings (text, image, audio), Gemma 4 generation and a Jev-style judge, on llama.cpp"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[features]
+default = []
+# GPU backends for Windows/Linux (Metal is always on for macOS and iOS)
+vulkan = ["spdf-llama-sys/vulkan"]
+cuda = ["spdf-llama-sys/cuda"]
+native = ["spdf-llama-sys/native"]
+# Gemini with the user's own key (embeddings and generation), over HTTPS
+gemini = []
+# Valen judge through onnxruntime (exported ONNX, see models/valen)
+valen-onnx = ["dep:ort", "dep:tokenizers", "dep:ndarray"]
+
+[dependencies]
+spdf-llama-sys = { path = "../spdf-llama-sys" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+sha2 = "0.10"
+ureq = { version = "3", default-features = false, features = ["rustls", "gzip"] }
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp", "gif", "bmp", "tiff"] }
+ort = { version = "=2.0.0-rc.13", optional = true, features = ["ndarray"] }
+tokenizers = { version = "0.22", optional = true, default-features = false, features = ["onig"] }
+ndarray = { version = "0.17", optional = true }
+
+[target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
+libc = "0.2"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_System_SystemInformation"] }
+
+[[bin]]
+name = "spdf-infer"
+path = "src/bin/spdf-infer.rs"

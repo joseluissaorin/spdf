@@ -1,0 +1,66 @@
+{
+ "engine": "llamacpp-bf16-mmbf16-metal-resizeref",
+ "machine": {
+  "chip": "Apple M4 Max",
+  "memory_gb": 36,
+  "os": "macOS-26.5-arm64-arm-64bit"
+ },
+ "date": "2026-10-07",
+ "latency": {
+  "text_short": {
+   "n": 79,
+   "median_ms": 19.03,
+   "p90_ms": 24.88,
+   "mean_ms": 23.26
+  },
+  "text_medium": {
+   "n": 114,
+   "median_ms": 23.69,
+   "p90_ms": 28.86,
+   "mean_ms": 27.7
+  },
+  "text_long": {
+   "n": 97,
+   "median_ms": 36.2,
+   "p90_ms": 71.34,
+   "mean_ms": 49.82
+  },
+  "text_query": {
+   "n": 40,
+   "median_ms": 17.18,
+   "p90_ms": 20.81,
+   "mean_ms": 17.79
+  },
+  "image": {
+   "n": 54,
+   "median_ms": 226.34,
+   "p90_ms": 240.23,
+   "mean_ms": 239.27
+  },
+  "audio_10s": {
+   "n": 24,
+   "median_ms": 78.72,
+   "p90_ms": 82.35,
+   "mean_ms": 79.31
+  }
+ },
+ "memory": {
+  "after_load_mb": 1113.8,
+  "peak_mb": 2671.1
+ },
+ "meta": {
+  "load_s": 1.82,
+  "llama.cpp": "36a73916e",
+  "gguf": "embeddinggemma-2-BF16.gguf",
+  "mmproj": "mmproj-embeddinggemma-2-BF16.gguf",
+  "resize": "ref",
+  "backend": "Metal",
+  "transport": "llama-server HTTP, batch 1",
+  "note": "image timings include PNG decode inside llama.cpp; audio = 10 s WAV 16 kHz"
+ },
+ "counts": {
+  "text": 330,
+  "image": 54,
+  "audio": 24
+ }
+}

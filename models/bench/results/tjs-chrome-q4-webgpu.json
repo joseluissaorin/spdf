@@ -1,0 +1,73 @@
+{
+ "engine": "tjs-chrome-q4-webgpu",
+ "machine": {
+  "chip": "Apple M4 Max",
+  "memory_gb": 36,
+  "os": "macOS-26.5-arm64-arm-64bit"
+ },
+ "date": "2026-10-07",
+ "latency": {
+  "text_short": {
+   "n": 2,
+   "median_ms": 24.99,
+   "p90_ms": 25.53,
+   "mean_ms": 24.99
+  },
+  "image": {
+   "n": 2,
+   "median_ms": 543.5,
+   "p90_ms": 578.85,
+   "mean_ms": 543.5
+  },
+  "audio_10s": {
+   "n": 2,
+   "median_ms": 151.37,
+   "p90_ms": 153.62,
+   "mean_ms": 151.37
+  }
+ },
+ "memory": {
+  "after_load_mb": null,
+  "peak_mb": 2475.7
+ },
+ "meta": {
+  "runtime": "chrome-headless",
+  "chrome": "Google Chrome 154.0.8037.98",
+  "device": "webgpu",
+  "dtype": "q4",
+  "adapter": {
+   "vendor": "apple",
+   "architecture": "metal-3",
+   "description": ""
+  },
+  "transformers": "4.3.1",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+  "load_s": 2.7,
+  "latency_model_only": {
+   "text_short": {
+    "n": 2,
+    "median_ms": 24.57,
+    "p90_ms": 25.38,
+    "mean_ms": 24.57
+   },
+   "image": {
+    "n": 2,
+    "median_ms": 511.28,
+    "p90_ms": 549.08,
+    "mean_ms": 511.28
+   },
+   "audio_10s": {
+    "n": 2,
+    "median_ms": 138.12,
+    "p90_ms": 139.43,
+    "mean_ms": 138.12
+   }
+  },
+  "note": "latency includes transformers.js preprocessing (latency_model_only excludes it)"
+ },
+ "counts": {
+  "text": 2,
+  "image": 2,
+  "audio": 2
+ }
+}

@@ -1,0 +1,47 @@
+{
+ "engine": "mlx-8bit",
+ "machine": {
+  "chip": "Apple M4 Max",
+  "memory_gb": 36,
+  "os": "macOS-26.5-arm64-arm-64bit"
+ },
+ "date": "2026-10-07",
+ "latency": {
+  "text_short": {
+   "n": 3,
+   "median_ms": 29.83,
+   "p90_ms": 93.55,
+   "mean_ms": 45.8
+  },
+  "image": {
+   "n": 3,
+   "median_ms": 231.24,
+   "p90_ms": 363.13,
+   "mean_ms": 270.81
+  },
+  "audio_10s": {
+   "n": 3,
+   "median_ms": 77.97,
+   "p90_ms": 81.71,
+   "mean_ms": 76.98
+  }
+ },
+ "memory": {
+  "baseline_mb": 349.0,
+  "after_load_mb": 1823.0,
+  "peak_mb": 4028.3,
+  "model_mb": 1474.0
+ },
+ "meta": {
+  "load_s": 2.19,
+  "mlx": "0.32.3",
+  "mlx_vlm": "0.7.4 @3d87e884",
+  "weights": "mlx-community/embeddinggemma-2-8bit",
+  "note": "latency excludes preprocessing (reference processor)"
+ },
+ "counts": {
+  "text": 3,
+  "image": 3,
+  "audio": 3
+ }
+}

@@ -398,7 +398,12 @@ def build_audio():
             name = mp3s[min(1, len(mp3s) - 1)]
             src = CACHE / "audio" / "src" / ident / name
             fetch(f"https://archive.org/download/{ident}/{urllib.parse.quote(name)}", src)
-            for k, offset in enumerate((40.0, 100.0)):
+            dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of",
+                                        "default=nw=1:nk=1", str(src)], capture_output=True, text=True).stdout or 0)
+            if dur < 40:
+                continue
+            offsets = (round(min(40.0, dur * 0.3), 1), round(min(100.0, dur - 15.0, max(dur * 0.6, 55.0)), 1))
+            for k, offset in enumerate(offsets):
                 clip = CACHE / "audio" / f"{ident}-{k}.wav"
                 if not clip.exists():
                     subprocess.run(["ffmpeg", "-nostdin", "-loglevel", "error", "-y", "-ss", str(offset), "-t", "10",

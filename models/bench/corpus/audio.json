@@ -42,10 +42,10 @@
   "url": "https://archive.org/download/fabulas_esopo_01_librivox/fabula_01_002_esopo_64kb.mp3",
   "page": "https://archive.org/details/fabulas_esopo_01_librivox",
   "license": "http://creativecommons.org/licenses/publicdomain/",
-  "offset_s": 100.0,
+  "offset_s": 90.6,
   "duration_s": 10.0,
   "file": "fabulas_esopo_01_librivox-1.wav",
-  "sha256": "7e682acb5f52733a6075446ba80e81e9850b8430f6f53b0ea674c0899f0ae406"
+  "sha256": "79aec12af392150e0c8e930672200dc613f0f3f7dbb4e4d3c8265eed81c2d643"
  },
  {
   "id": "art_of_war_librivox-0",
@@ -126,10 +126,10 @@
   "url": "https://archive.org/download/fables_lafontaine_01_librivox/fables_01_01_lafontaine_64kb.mp3",
   "page": "https://archive.org/details/fables_lafontaine_01_librivox",
   "license": "http://creativecommons.org/licenses/publicdomain/",
-  "offset_s": 40.0,
+  "offset_s": 21.3,
   "duration_s": 10.0,
   "file": "fables_lafontaine_01_librivox-0.wav",
-  "sha256": "2f55784e15aa40a3abd520541b42e0f0b29de395f9c3b4287377d1c3bac40925"
+  "sha256": "351a6fb9feddb3022ae548da43043fc23aaed523b73b31583a72e6d90fc4a6ef"
  },
  {
   "id": "fables_lafontaine_01_librivox-1",
@@ -138,10 +138,10 @@
   "url": "https://archive.org/download/fables_lafontaine_01_librivox/fables_01_01_lafontaine_64kb.mp3",
   "page": "https://archive.org/details/fables_lafontaine_01_librivox",
   "license": "http://creativecommons.org/licenses/publicdomain/",
-  "offset_s": 100.0,
+  "offset_s": 55.0,
   "duration_s": 10.0,
   "file": "fables_lafontaine_01_librivox-1.wav",
-  "sha256": "4d3ebfe7c59d21655afb788ddd1b95dc5ed8bee9db900220d240a571f01f5096"
+  "sha256": "d36a6b78ccd540426e3f58885d5235dcc4d49f7d8334ef949d5e89d5c38d4eeb"
  },
  {
   "id": "comte_monte_cristo_jg_librivox-0",

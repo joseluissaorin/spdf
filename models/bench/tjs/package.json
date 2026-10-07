@@ -1,0 +1,10 @@
+{
+  "name": "spdf-models-bench-tjs",
+  "private": true,
+  "type": "module",
+  "description": "transformers.js engines for the SPDF models bench (Node and Chromium WebGPU)",
+  "dependencies": {
+    "@huggingface/transformers": "4.3.1",
+    "puppeteer-core": "^24.0.0"
+  }
+}

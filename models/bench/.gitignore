@@ -1,2 +1,3 @@
 .venv/
 results/*.log
+results/logs/
