@@ -1,0 +1,10 @@
+node_modules/
+dist-web/
+dist-tauri/
+e2e/datos/
+e2e/locales/
+test-results/
+playwright-report/
+src-tauri/target/
+src-tauri/gen/schemas/
+*.log
