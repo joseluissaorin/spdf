@@ -75,6 +75,8 @@ public class ConformanceOnDeviceTest {
             failures.append('\n').append(f.getId()).append(": ").append(f.getReason());
         }
         assertEquals(where + ": " + rep.summary() + failures, 0, rep.getFailed().size());
+        // Every listed case ran and passed: nothing skipped on the device either.
+        assertEquals(where + ": " + rep.summary(), listed.length, rep.getPassed().size());
         delete(dir);
     }
 }
