@@ -127,6 +127,7 @@ export const es = {
   avisoSinVectores: 'Este documento no tiene vectores: la búsqueda ha sido léxica. Puedes revectorizarlo.',
   avisoSinModelo: 'Para buscar por significado hace falta un modelo de vectores (local o Gemini). Mientras, la búsqueda es léxica.',
   avisoIncompatible: 'Los vectores de este SPDF están en un espacio que no coincide con ningún modelo disponible: la búsqueda ha sido léxica. Revectorízalo con el modelo local.',
+  avisoUno: 'En un documento la búsqueda ha sido léxica (sin vectores compatibles).',
   avisoVarios: 'En {n} documentos la búsqueda ha sido léxica (sin vectores compatibles).',
   via: 'por {v}',
 

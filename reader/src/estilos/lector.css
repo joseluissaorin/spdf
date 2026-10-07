@@ -436,7 +436,7 @@ legend { padding: 0; margin-bottom: 6px; }
 .resultado .doc { font-style: italic; font-size: 14px; color: var(--tinta-2); }
 .resultado .fragmento { margin: 4px 0 4px; font-size: 15px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 .resultado .contexto { font-style: italic; font-size: 13.5px; color: var(--oro); line-height: 1.35; }
-:root:not(.oscuro) .resultado .contexto { color: #8a6a1f; }
+:root:not(.oscuro) .resultado .contexto { color: #765913; }
 .via { display: inline-flex; gap: 4px; margin-left: 6px; }
 .aviso-busqueda { font-size: 14px; padding: 10px 12px; border-left: 3px solid var(--amarillo); background: color-mix(in srgb, var(--amarillo) 10%, transparent); margin-bottom: 12px; }
 .navegador-resultados { display: flex; align-items: center; gap: 2px; padding: 0 4px; border: 1px solid var(--filete); }
@@ -577,3 +577,6 @@ kbd { font-family: var(--mono); font-size: 11.5px; padding: 1px 6px; border: 1px
 }
 .pestanas button[aria-selected='true'] { color: var(--tinta); border-bottom-color: var(--rojo); }
 .pestanas .cuenta { font-family: var(--mono); font-size: 11px; color: var(--tinta-2); }
+
+/* En papel oscuro el minio se aclara: el texto encima pasa a tinta oscura (contraste AA). */
+:root.oscuro .boton.minio, :root.oscuro .aviso.error { color: #1f1712; }

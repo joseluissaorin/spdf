@@ -1,23 +1,18 @@
 import { test, expect } from '@playwright/test';
-import { abrirLimpio, importar, DATOS, CAPTURAS } from './ayudas';
+import { abrirLimpio, importarYAbrir, dato, CAPTURAS } from './ayudas';
 import { resolve } from 'node:path';
 
-test('bienvenida, importar y leer', async ({ page }) => {
-  page.on('console', (m) => { if (m.type() === 'error') console.log('consola:', m.text()); });
-  page.on('pageerror', (e) => console.log('error de página:', e.message));
+test('bienvenida, importar y leer página a página', async ({ page }) => {
   await abrirLimpio(page);
   await expect(page.getByRole('heading', { name: /Lector/ })).toBeVisible();
-  await page.waitForTimeout(5500);
+  await page.waitForTimeout(5500); // que la pluma termine de dibujar
   await page.screenshot({ path: resolve(CAPTURAS, 'web-bienvenida.png') });
-  await importar(page, [resolve(DATOS, 'quijote-cap1.spdf')]);
-  // Un solo fichero: se abre directamente.
-  await expect(page.locator('.hoja article')).toBeVisible({ timeout: 30_000 });
-  await page.waitForTimeout(800);
+  await importarYAbrir(page, dato('quijote-cap1.spdf'));
+  await page.waitForTimeout(500);
   await page.screenshot({ path: resolve(CAPTURAS, 'web-lector-portada.png') });
-  await page.keyboard.press('ArrowRight');
-  await page.keyboard.press('ArrowRight');
-  await page.keyboard.press('ArrowRight');
+  for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowRight');
   await expect(page.locator('.hoja article')).toContainText('En un lugar de la Mancha');
-  await page.waitForTimeout(600);
+  await expect(page.locator('.hoja .margen .folio')).toHaveText('1');
+  await page.waitForTimeout(500);
   await page.screenshot({ path: resolve(CAPTURAS, 'web-lector-pagina.png') });
 });

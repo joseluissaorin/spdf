@@ -60,11 +60,11 @@
         "name": "Documento SPDF",
         "description": "Documento SPDF (Semantic Processed Document Format)",
         "role": "Viewer",
-        "mimeType": "application/vnd.spdf",
+        "mimeType": "application/vnd.spdf+sqlite3",
         "rank": "Owner",
         "exportedType": {
           "identifier": "com.joseluissaorin.spdf",
-          "conformsTo": ["public.data", "public.content"]
+          "conformsTo": ["public.data", "public.database"]
         }
       }
     ],
@@ -86,7 +86,8 @@
       "deb": { "section": "text" }
     },
     "windows": {
-      "nsis": { "languages": ["Spanish", "English"], "displayLanguageSelector": false }
+      "nsis": { "languages": ["Spanish", "English"], "displayLanguageSelector": false },
+      "wix": { "language": ["es-ES", "en-US"] }
     }
   }
 }

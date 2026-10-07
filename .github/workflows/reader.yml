@@ -1,0 +1,176 @@
+name: reader
+
+# Lector SPDF / SPDF Reader: la web (con pruebas de extremo a extremo en Chromium),
+# las apps de escritorio (macOS, Windows, Linux) y la APK de Android.
+# Al etiquetar `reader-v*`, los paquetes se publican como release de GitHub.
+
+on:
+  push:
+    branches: [main]
+    tags: ["reader-v*"]
+    paths: ["reader/**", "js/**", "rust/crates/spdf/**", "conformance/**", ".github/workflows/reader.yml"]
+  pull_request:
+    paths: ["reader/**", "js/**", "rust/crates/spdf/**", ".github/workflows/reader.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: reader-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "24"
+
+jobs:
+  web:
+    name: web (build + e2e en Chromium)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: spdf-format (js/)
+        working-directory: js
+        run: npm ci && npm run build
+      - name: Dependencias del lector
+        working-directory: reader
+        run: npm ci
+      - name: Tipos
+        working-directory: reader
+        run: npm run typecheck
+      - name: Build web (dist-web/)
+        working-directory: reader
+        run: npm run build:web
+      - name: Ficheros de prueba (dominio público)
+        working-directory: reader
+        run: npm run fixtures
+      - name: Chromium para Playwright
+        working-directory: reader
+        run: npx playwright install --with-deps chromium
+      - name: Pruebas de extremo a extremo
+        working-directory: reader
+        run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reader-web
+          path: reader/dist-web
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-e2e
+          path: |
+            reader/test-results
+            reader/capturas/e2e-*.png
+          if-no-files-found: ignore
+
+  escritorio:
+    name: escritorio (${{ matrix.nombre }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - nombre: macOS
+            os: macos-latest
+            paquetes: app,dmg
+          - nombre: Windows
+            os: windows-latest
+            paquetes: nsis,msi
+          - nombre: Linux
+            os: ubuntu-22.04
+            paquetes: deb,appimage
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependencias del sistema (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libdbus-1-dev pkg-config libssl-dev build-essential file
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: reader/src-tauri -> target
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: spdf-format (js/)
+        working-directory: js
+        shell: bash
+        run: npm ci && npm run build
+      - name: Dependencias del lector
+        working-directory: reader
+        run: npm ci
+      - name: Compilar y empaquetar
+        working-directory: reader
+        shell: bash
+        run: npx tauri build --bundles ${{ matrix.paquetes }}
+      - name: Recoger paquetes
+        shell: bash
+        run: |
+          mkdir -p paquetes
+          find reader/src-tauri/target/release/bundle -maxdepth 2 -type f \( -name '*.dmg' -o -name '*.exe' -o -name '*.msi' -o -name '*.deb' -o -name '*.AppImage' \) -exec cp {} paquetes/ \;
+          if [ -d "reader/src-tauri/target/release/bundle/macos" ]; then (cd reader/src-tauri/target/release/bundle/macos && zip -qry "$GITHUB_WORKSPACE/paquetes/Lector.SPDF_macOS.app.zip" "Lector SPDF.app"); fi
+          ls -la paquetes
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reader-${{ matrix.nombre }}
+          path: paquetes/*
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/reader-v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: paquetes/*
+
+  android:
+    name: Android (APK)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - name: NDK 27
+        run: sdkmanager --install "ndk;27.1.12297006"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: reader/src-tauri -> target
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: spdf-format (js/)
+        working-directory: js
+        run: npm ci && npm run build
+      - name: Dependencias del lector
+        working-directory: reader
+        run: npm ci
+      - name: APK
+        working-directory: reader
+        env:
+          NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.1.12297006
+        run: npx tauri android build --apk
+      - name: Firmar (clave de depuración: la de publicación no vive en el repositorio)
+        run: |
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          keytool -genkeypair -keystore depuracion.keystore -storepass android -keypass android -alias depuracion -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Lector SPDF (depuracion)"
+          APK=$(find reader/src-tauri/gen/android/app/build/outputs/apk -name '*-unsigned.apk' | head -1)
+          mkdir -p paquetes
+          "$BT/zipalign" -f -p 4 "$APK" alineada.apk
+          "$BT/apksigner" sign --ks depuracion.keystore --ks-pass pass:android --key-pass pass:android --ks-key-alias depuracion --out paquetes/lector-spdf-${GITHUB_REF_NAME//\//-}-universal.apk alineada.apk
+          ls -la paquetes
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reader-Android
+          path: paquetes/*
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/reader-v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: paquetes/*

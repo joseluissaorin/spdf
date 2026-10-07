@@ -125,6 +125,7 @@ export const en: Record<Claves, string> = {
   avisoSinVectores: 'This document has no vectors: the search was lexical. You can revectorize it.',
   avisoSinModelo: 'Searching by meaning needs an embedding model (local or Gemini). Meanwhile, the search is lexical.',
   avisoIncompatible: 'The vectors in this SPDF are in a space that no available model matches: the search was lexical. Revectorize it with the local model.',
+  avisoUno: 'In one document the search was lexical (no compatible vectors).',
   avisoVarios: 'In {n} documents the search was lexical (no compatible vectors).',
   via: 'via {v}',
 

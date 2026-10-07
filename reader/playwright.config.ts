@@ -17,11 +17,13 @@ export default defineConfig({
     trace: 'retain-on-failure',
     viewport: { width: 1440, height: 900 },
     locale: 'es-ES',
+    permissions: ['clipboard-read', 'clipboard-write'],
+    acceptDownloads: true,
     launchOptions: {
       args: ['--mute-audio', '--enable-unsafe-webgpu', '--enable-features=Vulkan,WebGPU', '--use-angle=metal', '--autoplay-policy=no-user-gesture-required'],
     },
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 }, locale: 'es-ES' } }],
+  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 }, locale: 'es-ES', permissions: ['clipboard-read', 'clipboard-write'] } }],
   webServer: {
     command: 'npx vite preview --mode web --port 4173 --strictPort',
     port: 4173,

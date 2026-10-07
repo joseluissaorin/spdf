@@ -281,7 +281,7 @@ export function Lector() {
               <li role="none"><button role="menuitem" onClick={async () => { const r = await nucleo.referencia(id, 'csl'); await nucleo.guardarComo(`${(entrada?.nombre ?? 'documento').replace(/\.spdf$/i, '')}.csl.json`, r, 'application/json'); }}><Exportar />{t('cslJson')}</button></li>
               <li role="none"><button role="menuitem" onClick={async () => { const r = await nucleo.referencia(id, 'bibtex'); await nucleo.guardarComo(`${(entrada?.nombre ?? 'documento').replace(/\.spdf$/i, '')}.bib`, r, 'application/x-bibtex'); }}><Exportar />{t('bibtex')}</button></li>
               {'leerFichero' in nucleo && (
-                <li role="none"><button role="menuitem" onClick={async () => { const b = await (nucleo as unknown as { leerFichero(id: string): Promise<Uint8Array | null> }).leerFichero(id); if (b) await nucleo.guardarComo(entrada?.nombre ?? 'documento.spdf', b, 'application/vnd.spdf'); }}><Exportar />{t('guardarCopia')}</button></li>
+                <li role="none"><button role="menuitem" onClick={async () => { const b = await (nucleo as unknown as { leerFichero(id: string): Promise<Uint8Array | null> }).leerFichero(id); if (b) await nucleo.guardarComo(entrada?.nombre ?? 'documento.spdf', b, 'application/vnd.spdf+sqlite3'); }}><Exportar />{t('guardarCopia')}</button></li>
               )}
             </ul>
           )}

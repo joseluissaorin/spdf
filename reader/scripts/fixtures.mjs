@@ -242,9 +242,11 @@ function libro() {
   ];
   for (const u of unidades) {
     const texto = u.pg.texto.normalize('NFC');
-    const partes = u.pg.pars ?? [texto.replace(/\n+/g, ' ')];
+    const partes = u.pg.pars ?? [texto];
     for (const par of partes) {
-      const desde = [...texto].length - [...texto.slice(texto.indexOf(par))].length;
+      const i = texto.indexOf(par);
+      if (i < 0) throw new Error(`fragmento no localizado en ${u.id}`);
+      const desde = [...texto.slice(0, i)].length;
       const c = [desde, desde + [...par].length];
       n++;
       const seccion = u.pg.pars ? ['Capítulo primero'] : ['Preliminares'];

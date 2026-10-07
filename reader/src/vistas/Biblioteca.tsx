@@ -26,6 +26,7 @@ export function Biblioteca() {
   const [filtro, setFiltro] = useState('');
   const [orden, setOrden] = useState<'reciente' | 'titulo' | 'autor' | 'anio'>('reciente');
   const [buscando, setBuscando] = useState(busqueda.ambito === 'biblioteca' && !!busqueda.resultado);
+  const consultaBiblioteca = busqueda.ambito === 'biblioteca' ? busqueda.consulta : '';
   const [nuevaColeccion, setNuevaColeccion] = useState(false);
   const [nombre, setNombre] = useState('');
   const [quitar, setQuitar] = useState<EntradaBiblioteca | null>(null);
@@ -89,7 +90,7 @@ export function Biblioteca() {
       <span className="separa" />
       <button className="boton tinta" onClick={elegir} aria-label={t('importar')}><Importar /><span className="solo-escritorio">{t('importar')}</span></button>
       <button className="icono" aria-label={t('ajustes')} onClick={() => ir({ vista: 'ajustes' })}><IconoAjustes /></button>
-      <input ref={entrada} type="file" accept=".spdf,.gz,application/vnd.spdf,application/x-sqlite3,application/gzip" multiple hidden
+      <input ref={entrada} type="file" accept=".spdf,.gz,application/vnd.spdf+sqlite3,application/x-sqlite3,application/gzip" multiple hidden
         onChange={(e) => { const fs = [...(e.target.files ?? [])]; e.target.value = ''; if (fs.length) void importar(fs); }} />
     </header>
   );
@@ -150,7 +151,7 @@ export function Biblioteca() {
 
             <form className="buscador-biblioteca" role="search" onSubmit={(e) => { e.preventDefault(); setBusqueda({ ambito: 'biblioteca' }); setBuscando(true); }}>
               <label className="oculto-visual" htmlFor="q-biblioteca">{t('buscarBiblioteca')}</label>
-              <input id="q-biblioteca" className="campo grande" placeholder={t('buscarBiblioteca')} value={busqueda.ambito === 'biblioteca' ? busqueda.consulta : ''}
+              <input id="q-biblioteca" className="campo grande" placeholder={t('buscarBiblioteca')} value={consultaBiblioteca}
                 onChange={(e) => setBusqueda({ consulta: e.target.value, ambito: 'biblioteca' })} />
               <button className="icono" type="submit" aria-label={t('buscar')}><Lupa /></button>
             </form>

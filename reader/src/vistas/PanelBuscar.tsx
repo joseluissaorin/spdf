@@ -23,11 +23,13 @@ export function PanelBuscar({ ambitoFijo, documento, titulo, alCerrar }: { ambit
   const campo = useRef<HTMLInputElement>(null);
   const lastQ = useRef(busqueda.resultado ? busqueda.consulta : '');
   const scroll = useRef(busqueda.scroll);
-  const ambito = ambitoFijo ?? (busqueda.ambito === 'biblioteca' ? 'biblioteca' : documento ?? 'biblioteca');
+  const ambito = ambitoFijo ?? (busqueda.ambito === 'biblioteca' && busqueda.resultado ? 'biblioteca' : documento ?? 'biblioteca');
 
   // Al abrir el panel dentro de un documento, el ámbito es ese documento (salvo que venga de la biblioteca).
   useEffect(() => {
-    if (!ambitoFijo && documento && busqueda.ambito !== 'biblioteca' && busqueda.ambito !== documento) setBusqueda({ ambito: documento, resultado: null, actual: -1 });
+    // (Si se viene de una búsqueda en toda la biblioteca, se respeta: la lista sigue en su sitio.)
+    const vieneDeBiblioteca = busqueda.ambito === 'biblioteca' && !!busqueda.resultado;
+    if (!ambitoFijo && documento && !vieneDeBiblioteca && busqueda.ambito !== documento) setBusqueda({ ambito: documento, resultado: null, actual: -1 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [documento]);
 
@@ -73,7 +75,7 @@ export function PanelBuscar({ ambitoFijo, documento, titulo, alCerrar }: { ambit
   const avisos = (r?.avisos ?? []).filter((a) => a.motivo);
   const aviso = !r || busqueda.modo === 'lexica' || !avisos.length ? null
     : ambito !== 'biblioteca' ? ({ 'sin-vectores': t('avisoSinVectores'), 'sin-modelo': t('avisoSinModelo'), incompatible: t('avisoIncompatible') } as Record<string, string>)[avisos[0].motivo] ?? avisos[0].motivo
-      : t('avisoVarios', { n: avisos.length });
+      : avisos.length === 1 ? t('avisoUno') : t('avisoVarios', { n: avisos.length });
 
   return (
     <aside className="panel" aria-labelledby="titulo-buscar">

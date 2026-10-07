@@ -22,7 +22,7 @@ export interface Aviso { id: number; texto: string; tipo?: 'error' | 'info'; acc
 export interface Busqueda {
   consulta: string;
   modo: ModoBusqueda;
-  ambito: string; // id o 'biblioteca'
+  ambito: string; // id, 'biblioteca' o '' (aún sin elegir: el documento abierto)
   resultado: ResultadoBusqueda | null;
   actual: number; // índice del resultado abierto
   scroll: number;
@@ -66,7 +66,7 @@ export function ProveedorApp({ nucleo, children }: { nucleo: Nucleo; children: R
   const [colecciones, setColecciones] = useState<Coleccion[]>([]);
   const [avisos, setAvisos] = useState<Aviso[]>([]);
   const [ruta, ir] = useRuta();
-  const [busqueda, setB] = useState<Busqueda>({ consulta: '', modo: 'lexica', ambito: 'biblioteca', resultado: null, actual: -1, scroll: 0 });
+  const [busqueda, setB] = useState<Busqueda>({ consulta: '', modo: 'lexica', ambito: '', resultado: null, actual: -1, scroll: 0 });
 
   useEffect(() => {
     const m = matchMedia('(prefers-color-scheme: dark)');
