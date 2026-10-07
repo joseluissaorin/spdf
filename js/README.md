@@ -20,7 +20,7 @@ and 4.1 formats (Scholaris).
 - **TypeScript first**: strict types, ESM only, declarations included.
 - **Conforming reader, semantic reader, writer and validator**, profiles `core`,
   `semantic` and `media`, with the ALTO, TEI and IIIF exports: it passes the whole SPDF
-  conformance suite (341 cases of suite 0.4.1, every kind, nothing skipped) with
+  conformance suite (347 cases of suite 0.4.2, every kind, nothing skipped) with
   `node:sqlite` (Node 22, 24 and 26), with `bun:sqlite`, and with `sqlite-wasm` in Node
   and in Chromium.
 - **Remote reading**: in the browser, `openRemote(url)` opens a file with HTTP Range

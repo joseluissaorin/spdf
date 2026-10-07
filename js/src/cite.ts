@@ -75,16 +75,30 @@ export function formatTime(t: number): string {
 
 type Loose = Record<string, unknown>;
 
-/** Page-like locator; ends without a printed folio never take part in a range (SPEC §18). */
-function pageLocator(anchor: Loose, end: Loose | null, es: boolean, single: string, plural: string): string {
+const SINGLE: Record<string, string> = { page: 'p.', leaf: 'fol.', column: 'col.' };
+const PLURAL: Record<string, string> = { page: 'pp.', leaf: 'fols.', column: 'cols.' };
+
+/** Foliation of a page anchor (`page` by default); sections and web pages count as pages. */
+function foliation(a: Loose): string {
+  const f = a.type === 'page' ? (a.foliation ?? 'page') : 'page';
+  return typeof f === 'string' && f in SINGLE ? f : 'page';
+}
+
+/**
+ * Page-like locator (SPEC §18.1): an end without a printed folio never takes part in a
+ * range, and every label comes from the foliation of the end(s) actually printed
+ * (`fol. Ir`, `pp. 12-13`, `p. xiv-fol. 1r`).
+ */
+function pageLocator(anchor: Loose, end: Loose | null, es: boolean): string {
   const lab = (a: Loose): string => (a.source === 'inferred' ? `[${String(a.printed)}]` : String(a.printed));
   const ends = [anchor, ...(end && end.type === anchor.type ? [end] : [])];
   const withFolio = ends.filter((x) => has(x.printed));
   const first = withFolio[0];
   const last = withFolio[withFolio.length - 1];
   if (!first || !last) return es ? 's. p.' : 'n. pag.';
-  if (last !== first && last.printed !== first.printed) return `${plural} ${lab(first)}-${lab(last)}`;
-  return `${single} ${lab(first)}`;
+  if (last === first || last.printed === first.printed) return `${SINGLE[foliation(first)]} ${lab(first)}`;
+  if (foliation(first) === foliation(last)) return `${PLURAL[foliation(first)]} ${lab(first)}-${lab(last)}`;
+  return `${SINGLE[foliation(first)]} ${lab(first)}-${SINGLE[foliation(last)]} ${lab(last)}`;
 }
 
 /** The locator of a citation (`p. 145`, `1:09:20`, `diap. 3`…), or null if there is none. */
@@ -93,12 +107,8 @@ export function locator(anchor: Anchor, locale: string = 'es', anchorEnd?: Ancho
   const a = anchor as unknown as Loose;
   const end = (anchorEnd ?? null) as unknown as Loose | null;
   switch (a.type) {
-    case 'page': {
-      const fol = (a.foliation ?? 'page') as string;
-      const single = ({ page: 'p.', leaf: 'fol.', column: 'col.' } as Record<string, string>)[fol] ?? 'p.';
-      const plural = ({ page: 'pp.', leaf: 'fols.', column: 'cols.' } as Record<string, string>)[fol] ?? 'pp.';
-      return pageLocator(a, end, es, single, plural);
-    }
+    case 'page':
+      return pageLocator(a, end, es);
     case 'time': {
       let s = formatTime(a.t0 as number);
       if (end && end.type === 'time') s += `-${formatTime(end.t1 as number)}`;
@@ -106,7 +116,7 @@ export function locator(anchor: Anchor, locale: string = 'es', anchorEnd?: Ancho
     }
     case 'section':
     case 'web': {
-      if (has(a.printed)) return pageLocator(a, end, es, 'p.', 'pp.');
+      if (has(a.printed)) return pageLocator(a, end, es);
       const parts: string[] = [];
       const path = a.path as string[] | undefined;
       if (Array.isArray(path) && path.length) parts.push(`§ ${path[path.length - 1]}`);
