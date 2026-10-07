@@ -1,0 +1,36 @@
+{
+    "name": "joseluissaorin/spdf",
+    "description": "Read, validate, search, cite and write SPDF (Semantic Processed Document Format) files: documents read once and citable forever.",
+    "type": "library",
+    "keywords": ["spdf", "citation", "csl-json", "bibtex", "sqlite", "fts5", "digital-humanities", "ojs", "omeka"],
+    "homepage": "https://spdf.joseluissaorin.com",
+    "license": ["MIT", "Apache-2.0"],
+    "authors": [
+        {"name": "José Luis Saorín Ferrer", "email": "jl@joseluissaorin.com"}
+    ],
+    "require": {
+        "php": ">=8.1",
+        "ext-pdo": "*",
+        "ext-pdo_sqlite": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "ext-intl": "*",
+        "ext-zlib": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5 || ^11.0"
+    },
+    "autoload": {
+        "psr-4": {"Spdf\\": "src/"}
+    },
+    "autoload-dev": {
+        "psr-4": {"Spdf\\Tests\\": "tests/"}
+    },
+    "bin": ["bin/spdf"],
+    "scripts": {
+        "test": "phpunit",
+        "conformance": "php bin/spdf conformance ../conformance"
+    },
+    "config": {"sort-packages": true},
+    "minimum-stability": "stable"
+}
