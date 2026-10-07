@@ -237,7 +237,11 @@ func RunCase(dir, kind string, in, exp map[string]any) string {
 		if err != nil {
 			return "search: " + err.Error()
 		}
-		return compareResults(hits, exp["results"], kind != "search_vector")
+		idKey := "fragment_id"
+		if kind == "search_vector" && str(in["target"]) != "" && str(in["target"]) != "fragment" {
+			idKey = str(in["target"]) + "_id"
+		}
+		return compareResults(hits, exp["results"], kind != "search_vector", idKey)
 	case "anchor_uri":
 		if _, ok := in["anchor"]; ok {
 			docref := str(in["docref"])
@@ -290,6 +294,67 @@ func RunCase(dir, kind string, in, exp map[string]any) string {
 			return fmt.Sprintf("got %s", spdf.CompactJSON(got))
 		}
 		return ""
+	case "locate":
+		f, err := spdf.Open(filepath.Join(dir, str(in["file"])), nil)
+		if err != nil {
+			return "open: " + err.Error()
+		}
+		defer f.Close()
+		r, err := f.Locate(str(in["reference"]))
+		if err != nil {
+			return "locate: " + err.Error()
+		}
+		if diff := spdf.JSONDiff(r.Generic(), exp); diff != "" {
+			return fmt.Sprintf("got %s (%s)", spdf.CompactJSON(r.Generic()), diff)
+		}
+		return ""
+	case "export_csl", "export_bibtex":
+		files, _ := in["files"].([]any)
+		var items []map[string]any
+		for _, p := range files {
+			f, err := spdf.Open(filepath.Join(dir, str(p)), nil)
+			if err != nil {
+				return "open: " + err.Error()
+			}
+			md, err := f.Metadata()
+			f.Close()
+			if err != nil {
+				return "metadata: " + err.Error()
+			}
+			items = append(items, md)
+		}
+		if kind == "export_csl" {
+			got := spdf.ExportCSLItems(items, anchorOf(in["anchor"]), anchorOf(in["anchor_end"]))
+			if diff := spdf.JSONDiff(got, exp["items"]); diff != "" {
+				return "items differ at " + diff
+			}
+			return ""
+		}
+		got := normalizeBibTeX(spdf.ExportBibTeXItems(items))
+		want := normalizeBibTeX(str(exp["text"]))
+		if strings.Join(got, "\n") != strings.Join(want, "\n") {
+			return fmt.Sprintf("got %q", strings.Join(got, "\n"))
+		}
+		return ""
+	case "export_structure":
+		f, err := spdf.Open(filepath.Join(dir, str(in["file"])), nil)
+		if err != nil {
+			return "open: " + err.Error()
+		}
+		defer f.Close()
+		pages, err := f.PageSequence(str(in["format"]))
+		if err != nil {
+			return err.Error()
+		}
+		l := make([]any, len(pages))
+		for i, p := range pages {
+			l[i] = p
+		}
+		got := map[string]any{"pages": l}
+		if diff := spdf.JSONDiff(got, exp); diff != "" {
+			return "pages differ at " + diff
+		}
+		return ""
 	case "cite":
 		md, _ := in["metadata"].(map[string]any)
 		t := spdf.Cite(anchorOf(in["anchor"]), anchorOf(in["anchor_end"]), md, str(in["locale"]))
@@ -325,7 +390,17 @@ func sortedStrings(v any) []any {
 	return stringsAny(out)
 }
 
-func compareResults(hits []spdf.Hit, expected any, withVia bool) string {
+func normalizeBibTeX(t string) []string {
+	var out []string
+	for _, line := range strings.Split(strings.ReplaceAll(t, "\r\n", "\n"), "\n") {
+		if l := strings.TrimSpace(line); l != "" {
+			out = append(out, l)
+		}
+	}
+	return out
+}
+
+func compareResults(hits []spdf.Hit, expected any, withVia bool, idKey string) string {
 	exp, _ := expected.([]any)
 	gotIDs := make([]string, len(hits))
 	for i, h := range hits {
@@ -333,7 +408,7 @@ func compareResults(hits []spdf.Hit, expected any, withVia bool) string {
 	}
 	wantIDs := make([]string, len(exp))
 	for i, e := range exp {
-		wantIDs[i] = str(e.(map[string]any)["fragment_id"])
+		wantIDs[i] = str(e.(map[string]any)[idKey])
 	}
 	if strings.Join(gotIDs, ",") != strings.Join(wantIDs, ",") {
 		return fmt.Sprintf("order %v != %v", gotIDs, wantIDs)

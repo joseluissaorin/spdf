@@ -24,9 +24,9 @@ go get github.com/joseluissaorin/spdf/go
 | Dump | canonical JSON (RFC 8785) of the whole file, `content_sha256` (§8) |
 | Validation | every code of the specification (E001–E090, W100–W110), Ed25519 signatures |
 | Search | lexical (FTS5 BM25, CJK route with `trigram` or substring), vector (`f32`, `f16`, `i8`), hybrid (reciprocal rank fusion, k = 10) |
-| Anchors | anchor ↔ URI (`spdf:sha256-…#p=29&f=21&char=118,301`), strict parser |
+| Anchors | anchor ↔ URI (`spdf:sha256-…#p=29&f=21&char=118,301`), strict parser; resolution of a URI or of a `.spdf` URL with a fragment to units and fragments (`Locate`, SPEC §5.4) |
 | Citation | short author-date citation in Spanish and English |
-| Export | CSL-JSON and BibTeX |
+| Export | CSL-JSON (also citations with `label`/`locator`) and BibTeX, one or several documents with the keys of SPEC §19 (`cervantessaavedra1605`, `lazarillo1554`, collision suffixes); the page sequence of the ALTO/TEI/IIIF exports (`PageSequence`; the full ALTO, TEI and IIIF exporters, optional in the spec, are not included) |
 | Writer | builds valid SPDF 5.0 files (FTS kept in sync, `VACUUM`, no triggers) |
 
 ## Reading and searching
@@ -92,6 +92,13 @@ text := spdf.Cite(a, nil, map[string]any{
 	"author": []any{map[string]any{"family": "Vega", "non-dropping-particle": "de", "given": "Lope"}},
 	"issued": map[string]any{"date-parts": []any{[]any{int64(1609)}}},
 }, "es")                                            // (de Vega, 1609, p. [21])
+```
+
+## Resolving references
+
+```go
+r, _ := f.Locate("spdf:sha256-…#f=1v")                   // or "https://example.org/quijote.spdf#p=7"
+fmt.Println(r.Document, r.Units, r.Fragments, r.Char)   // true [p6] [q4 q5] []
 ```
 
 ## Writing

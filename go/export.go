@@ -51,27 +51,42 @@ func (f *File) ExportCSL() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	item := CSLItem(md, CitationKey(md))
-	return CompactJSON([]any{item}), nil
+	return CompactJSON(ExportCSLItems([]map[string]any{md}, nil, nil)), nil
 }
 
-// CitationKey builds the BibTeX key of SPEC §19 (RFC 0002): the first
-// author's family (or literal), else the first word of the title, folded to
-// ASCII letters and lowercased ("anon" if nothing is left), plus the first
-// year of issued (or "nd"): cervantessaavedra1605, lazarillo1554, hookend.
+// ExportCSLCitation returns the CSL-JSON item of a citation of an anchor of
+// this file, with "label" and "locator".
+func (f *File) ExportCSLCitation(a, end Anchor) ([]byte, error) {
+	md, err := f.Metadata()
+	if err != nil {
+		return nil, err
+	}
+	return CompactJSON(ExportCSLItems([]map[string]any{md}, a, end)), nil
+}
+
+// CitationKey builds the base BibTeX key of SPEC §19.3: the first author's
+// family, literal or given name (the first present), else the first word of
+// title-short or title, folded to ASCII letters and lowercased ("anon" if
+// nothing is left), plus the first year of issued (with its sign) or "nd":
+// cervantessaavedra1605, lazarillo1554, anonnd. ExportKeys adds the
+// collision suffixes of a multi-document export.
 func CitationKey(md map[string]any) string {
 	base := ""
 	if list, ok := md["author"].([]any); ok && len(list) > 0 {
 		if m, ok := list[0].(map[string]any); ok {
-			name, _ := m["family"].(string)
-			if name == "" {
-				name, _ = m["literal"].(string)
+			for _, k := range []string{"family", "literal", "given"} {
+				if s, ok := m[k].(string); ok && s != "" {
+					base = asciiLetters(s)
+					break
+				}
 			}
-			base = asciiLetters(name)
 		}
 	}
 	if base == "" {
-		t, _ := md["title"].(string)
+		t, _ := md["title-short"].(string)
+		if t == "" {
+			t, _ = md["title"].(string)
+		}
 		if words := strings.Fields(t); len(words) > 0 {
 			base = asciiLetters(words[0])
 		}
@@ -83,6 +98,39 @@ func CitationKey(md map[string]any) string {
 		return base + y
 	}
 	return base + "nd"
+}
+
+// ExportKeys returns the keys of the items of one export: the base key, with
+// a, b, c… appended to every item whose base key occurs more than once.
+func ExportKeys(items []map[string]any) []string {
+	bases := make([]string, len(items))
+	count := map[string]int{}
+	for i, it := range items {
+		bases[i] = CitationKey(it)
+		count[bases[i]]++
+	}
+	seen := map[string]int{}
+	out := make([]string, len(items))
+	for i, b := range bases {
+		if count[b] == 1 {
+			out[i] = b
+			continue
+		}
+		out[i] = b + keySuffix(seen[b])
+		seen[b]++
+	}
+	return out
+}
+
+func keySuffix(n int) string {
+	out := ""
+	n++
+	for n > 0 {
+		r := (n - 1) % 26
+		n = (n - 1) / 26
+		out = string(rune('a'+r)) + out
+	}
+	return out
 }
 
 // asciiLetters: NFKD, keep only ASCII letters, lowercase.
@@ -104,9 +152,7 @@ func yearOf(md map[string]any) string {
 				case int64:
 					return fmt.Sprintf("%d", y)
 				case float64:
-					if y == float64(int64(y)) {
-						return fmt.Sprintf("%d", int64(y))
-					}
+					return fmt.Sprintf("%d", int64(y))
 				case string:
 					if n, err := strconv.ParseInt(strings.TrimSpace(y), 10, 64); err == nil {
 						return fmt.Sprintf("%d", n)
@@ -116,6 +162,120 @@ func yearOf(md map[string]any) string {
 		}
 	}
 	return ""
+}
+
+// CSLLabelLocator gives the CSL "label" and "locator" of a citation of an
+// anchor (SPEC §19.2); ok is false when the anchor has no locator.
+func CSLLabelLocator(a, end Anchor) (label, locator string, ok bool) {
+	if a == nil {
+		return "", "", false
+	}
+	t := a.Type()
+	folio := func(x Anchor) (string, bool) {
+		p, ok := x.Str("printed")
+		if !ok {
+			return "", false
+		}
+		if s, _ := x.Str("source"); s == "inferred" {
+			return "[" + p + "]", true
+		}
+		return p, true
+	}
+	switch {
+	case t == "page" || ((t == "section" || t == "web") && a["printed"] != nil):
+		f, ok := folio(a)
+		if !ok {
+			return "", "", false
+		}
+		label = "page"
+		if t == "page" {
+			switch fol, _ := a.Str("foliation"); fol {
+			case "leaf":
+				label = "folio"
+			case "column":
+				label = "column"
+			}
+		}
+		if end != nil && end.Type() == t {
+			if ep, ok := end.Str("printed"); ok {
+				if p, _ := a.Str("printed"); ep != p {
+					e, _ := folio(end)
+					return label, f + "-" + e, true
+				}
+			}
+		}
+		return label, f, true
+	case t == "section" || t == "web":
+		if p, ok := a["paragraph"]; ok && p != nil {
+			return "paragraph", string(CanonicalJSON(p)), true
+		}
+		if path, ok := a.Path(); ok && len(path) > 0 {
+			return "section", path[len(path)-1], true
+		}
+		return "", "", false
+	case t == "time":
+		t0, _ := a.Num("t0")
+		s := clock(t0)
+		if end != nil && end.Type() == "time" {
+			if t1, ok := end.Num("t1"); ok {
+				s += "-" + clock(t1)
+			}
+		}
+		return "timestamp", s, true
+	case t == "verse":
+		lf := a["line_from"]
+		lt, has := a["line_to"]
+		if !has || lt == nil || JSONEqual(lt, lf) {
+			return "verse", string(CanonicalJSON(lf)), true
+		}
+		return "verse", string(CanonicalJSON(lf)) + "-" + string(CanonicalJSON(lt)), true
+	case t == "canonical":
+		r, _ := a.Str("ref")
+		return "section", r, true
+	case t == "sheet":
+		rf, rt := a["row_from"], a["row_to"]
+		if JSONEqual(rf, rt) {
+			return "line", string(CanonicalJSON(rf)), true
+		}
+		return "line", string(CanonicalJSON(rf)) + "-" + string(CanonicalJSON(rt)), true
+	}
+	return "", "", false
+}
+
+// ExportCSLItems builds the CSL-JSON export of several documents' metadata
+// (SPEC §19.2): each item without the "spdf" member and with id = its key.
+// With an anchor and a single item, the item carries "label" and "locator".
+func ExportCSLItems(items []map[string]any, a, end Anchor) []any {
+	keys := ExportKeys(items)
+	out := make([]any, len(items))
+	for i, it := range items {
+		m := map[string]any{}
+		for k, v := range it {
+			if k != "spdf" {
+				m[k] = v
+			}
+		}
+		m["id"] = keys[i]
+		out[i] = m
+	}
+	if a != nil && len(out) == 1 {
+		if label, loc, ok := CSLLabelLocator(a, end); ok {
+			out[0].(map[string]any)["label"] = label
+			out[0].(map[string]any)["locator"] = loc
+		}
+	}
+	return out
+}
+
+// ExportBibTeXItems builds the BibTeX export of several documents' metadata
+// (SPEC §19.3), entries separated by a blank line.
+func ExportBibTeXItems(items []map[string]any) string {
+	keys := ExportKeys(items)
+	entries := make([]string, len(items))
+	for i, it := range items {
+		entries[i] = BibTeX(it, keys[i])
+	}
+	return strings.Join(entries, "\n")
 }
 
 var bibtexTypes = map[string]string{
@@ -141,7 +301,7 @@ func protectTitle(t string) string {
 		w := string(word)
 		upper := false
 		for _, r := range word {
-			if unicode.IsUpper(r) {
+			if unicode.Is(unicode.Lu, r) {
 				upper = true
 				break
 			}
