@@ -111,11 +111,12 @@ favicon. `cd muestras && npm run generar` rehace las muestras del validador.
 - `curl` a `/`, `/es`, `/spec`, `/validator`, `/llms.txt`, `/robots.txt`,
   `/sitemap.xml`, `/spec.md`, `/status.json`, `/reader/`, una muestra `.spdf`,
   `/zotero/spdf-zotero.xpi`, `/zotero/updates.json`, `/schema/5.0/*.schema.json`
-  y las doce obras de Commons (200 completas y 206 con `Range`): todo responde.
+  las doce obras de Commons (200 completas y 206 con `Range`) y los siete
+  binarios del lector 0.1.0 en `/download/files/0.1.0/`: todo responde.
   Una ruta inexistente da 404 con su hoja. `curl` a la raíz devuelve el
   Markdown de la portada.
 - Lighthouse 13, móvil: 100 · 100 · 100 · 100 en `/`, `/es`, `/spec`,
-  `/implementations`, `/validator`, `/es/citar`, `/es/commons` y `/docs/rust`;
+  `/implementations`, `/validator`, `/download`, `/es/citar`, `/es/commons` y `/docs/rust`;
   escritorio: 100 en las cuatro en `/` y `/validator`. Portada en móvil:
   LCP 1,2 s, TBT 0 ms, CLS 0.
 - Capturas con Chrome headless por CDP, en escritorio (1440 px) y en móvil
@@ -132,7 +133,8 @@ favicon. `cd muestras && npm run generar` rehace las muestras del validador.
 - Desplegar desde el CI: hace falta un token de API de Cloudflare con permiso
   de Workers en los secretos del repositorio (`CLOUDFLARE_API_TOKEN`). Mientras
   tanto, el workflow `site` construye y prueba, y el despliegue se hace en local.
-- Los binarios del lector (releases `reader-v…`): cuando existan,
-  `npx tsx scripts/subir-lector.ts reader-v<versión>` y desplegar.
+- Cada nueva versión del lector: `npx tsx scripts/subir-lector.ts reader-v<versión>`
+  (baja la release, sube a R2 y reescribe `descargas.json`) y desplegar. La 0.1.0
+  ya está publicada (macOS, Windows, Linux y Android); iOS espera a TestFlight.
 - El dataset de Hugging Face de SPDF Commons no se ha preparado: no hay token en
   `~/.cache/huggingface/token`.

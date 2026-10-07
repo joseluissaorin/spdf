@@ -310,10 +310,13 @@ p, li { text-wrap: pretty; }
 .barra i { display: block; height: 100%; background: var(--tinta); }
 
 /* Descargas */
-.descargas { list-style: none; margin: 0 0 2rem; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 1rem; }
+.cuerpo .descargas, .descargas { list-style: none; margin: 0 0 2rem; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 1rem; }
 .cuerpo .descargas li { margin: 0; padding: 1rem 1.1rem 1.1rem; background: var(--hoja); border: 1px solid var(--filete); box-shadow: var(--sombra); }
 .descargas strong { display: block; font-weight: normal; font-size: 1.15rem; }
 .descargas span { display: block; color: var(--apagado); font-size: 0.88rem; margin-bottom: 0.6rem; }
+.descargas a.descarga { display: block; margin-top: 0.5rem; font-size: 1rem; }
+.descargas span.fichero { font: 0.72rem/1.4 var(--mono); overflow-wrap: anywhere; margin: 0.1rem 0 0.4rem; }
+.descargas span.aviso-plat { font-size: 0.84rem; font-style: italic; color: var(--tinta-2); margin: 0.6rem 0 0; }
 
 /* La lámina al margen de cada hoja */
 .vineta { position: absolute; right: 0; top: -0.6rem; width: clamp(5.5rem, 15vw, 10rem); pointer-events: none; }

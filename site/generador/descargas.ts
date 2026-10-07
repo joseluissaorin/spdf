@@ -34,10 +34,16 @@ export function descargasBloque(l: Lengua, hayLector: boolean): Bloque {
   const pronto = l === 'es' ? 'En preparación' : 'Coming soon';
   const tarjetas = PLATAFORMAS.map((p) => {
     const fs = inv.files.filter((f) => f.plataforma === p.id);
+    const etiqueta = (f: Fichero) => {
+      const ext = /\.(AppImage|deb|dmg|msi|exe|apk)$/i.exec(f.nombre)?.[1] ?? '';
+      const idioma = /_(en-US|es-ES)\.msi$/.exec(f.nombre)?.[1];
+      const nombreExt = ext === 'exe' ? (l === 'es' ? 'instalador .exe' : '.exe installer') : `.${ext}${idioma ? ` (${idioma === 'es-ES' ? (l === 'es' ? 'castellano' : 'Spanish') : (l === 'es' ? 'inglés' : 'English')})` : ''}`;
+      return `${l === 'es' ? 'Descargar' : 'Download'} ${nombreExt}`;
+    };
     const enlaces = fs.length
-      ? fs.map((f) => `<a href="/download/files/${f.clave}" download>${esc(f.nombre)}</a> <span class="rotulo">${megas(f.bytes)}</span>`).join('<br>')
+      ? fs.map((f) => `<a class="descarga" href="/download/files/${f.clave}" download>${etiqueta(f)}</a><span class="fichero">${esc(f.nombre)} · ${megas(f.bytes)}</span>`).join('')
       : `<span class="estado">${pronto}</span>`;
-    const aviso = fs.length && AVISOS[p.id] ? `<span class="rotulo">${AVISOS[p.id]![l]}</span>` : '';
+    const aviso = fs.length && AVISOS[p.id] ? `<span class="aviso-plat">${AVISOS[p.id]![l]}</span>` : '';
     return `<li><strong>${p.nombre[l]}</strong><span>${p.detalle[l]}</span>${enlaces}${aviso}</li>`;
   });
   tarjetas.push(`<li><strong>Web</strong><span>${l === 'es' ? 'En cualquier navegador moderno' : 'In any modern browser'}</span>${hayLector ? `<a href="/reader/">${l === 'es' ? 'Abrir el lector web' : 'Open the web reader'}</a>` : `<span class="estado">${pronto}</span>`}</li>`);
