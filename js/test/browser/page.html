@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>spdf-format browser tests</title>
+<script type="importmap">
+{ "imports": {
+  "spdf-format": "/js/dist/entry/browser.js",
+  "@sqlite.org/sqlite-wasm": "/js/node_modules/@sqlite.org/sqlite-wasm/dist/index.mjs"
+} }
+</script>
+</head>
+<body>
+<p id="status">running</p>
+<script type="module">
+import * as spdf from 'spdf-format';
+import { runConformanceWith } from '/js/dist/conformance.js';
+
+async function conformance() {
+  const io = {
+    listCases: async () => (await fetch('/__cases')).json(),
+    read: async (p) => {
+      const r = await fetch(`/conformance/${p}`);
+      if (!r.ok) throw new Error(`GET ${p}: ${r.status}`);
+      return new Uint8Array(await r.arrayBuffer());
+    },
+  };
+  const report = await runConformanceWith(io);
+  return { ...report, engine: 'sqlite-wasm (Chromium, main thread)' };
+}
+
+async function remoteMainThread(url) {
+  const doc = await spdf.openRemote(url);
+  const opened = doc.source.stats();
+  const hits = await doc.searchLexical('molinos de viento', { limit: 10 });
+  const after = doc.source.stats();
+  const r = { opened, search: { requests: after.requests - opened.requests, bytes: after.bytesFetched - opened.bytesFetched }, hits: hits.map((h) => h.fragment_id), size: doc.source.size };
+  await doc.close();
+  return r;
+}
+
+function inWorker(task) {
+  return new Promise((resolve, reject) => {
+    const w = new Worker('/js/test/browser/worker.mjs', { type: 'module' });
+    w.onmessage = (e) => { resolve(e.data); w.terminate(); };
+    w.onerror = (e) => { reject(new Error(e.message)); w.terminate(); };
+    w.postMessage(task);
+  });
+}
+
+window.runAll = async (largeUrl) => {
+  const out = {};
+  out.conformance = await conformance();
+  out.remoteMain = await remoteMainThread(largeUrl);
+  out.worker = await inWorker({ largeUrl, smallUrl: '/conformance/files/quijote.spdf', legacyUrl: '/conformance/legacy/garcilaso-4.1.spdf' });
+  return out;
+};
+document.getElementById('status').textContent = 'ready';
+</script>
+</body>
+</html>

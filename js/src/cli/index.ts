@@ -123,7 +123,7 @@ export async function main(args: string[], out: Out = (s) => process.stdout.writ
                 ? await doc.searchHybrid(query, vector, space, { limit })
                 : await doc.searchVector(space, vector, { limit })
               : await doc.searchLexical(query, { limit });
-          out(`${JSON.stringify(hits.map(({ fragment: _f, ...h }: { fragment?: unknown } & Record<string, unknown>) => h), null, 2)}\n`);
+          out(`${JSON.stringify((hits as unknown as Array<Record<string, unknown>>).map(({ fragment: _f, ...h }) => h), null, 2)}\n`);
           if (!flags.has('--quiet')) {
             for (const h of hits as Array<{ fragment?: { text: string; anchor: never; anchor_end: never } }>) {
               if (h.fragment) errOut(`${doc.cite(h.fragment.anchor, String(flags.get('--locale') ?? 'es'), h.fragment.anchor_end)} ${h.fragment.text.slice(0, 160).replace(/\s+/g, ' ')}\n`);

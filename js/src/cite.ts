@@ -1,142 +1,146 @@
 /**
- * Short author-date citation (contract §10): `(names, year[, locator])`.
+ * Short author-date citation (contract §10): `(names, year[, locator])`, locales `es`
+ * and `en` (any other locale falls back to `en`). Same rules as the reference oracle.
  */
 
 import type { Anchor, CslItem, CslName, DocumentRecord } from './types.js';
 
-type Lang = 'es' | 'en';
+const VOWELS = new Set('aeiouáéíóúü');
 
-const T = {
-  es: { and: 'y', nd: 's. f.', np: 's. p.', slide: 'diap.', rows: 'filas', para: 'párr.', bc: 'a. C.' },
-  en: { and: 'and', nd: 'n.d.', np: 'n. pag.', slide: 'slide', rows: 'rows', para: 'para.', bc: 'BC' },
-} as const;
-
-function lang(locale: string | undefined): Lang {
-  return (locale ?? '').toLowerCase().split(/[-_]/)[0] === 'es' ? 'es' : 'en';
-}
+const isEs = (locale: string | undefined): boolean => (locale ?? '').split('-')[0]?.toLowerCase() === 'es';
+const has = (v: unknown): boolean => v !== undefined && v !== null;
+const truthy = (v: unknown): boolean => v !== undefined && v !== null && v !== '' && v !== 0 && v !== false;
 
 /** Name as cited: `literal`, or [non-dropping particle + space] + family, or given. */
 export function citedName(n: CslName): string {
-  if (n.literal) return n.literal;
-  if (n.family) return n['non-dropping-particle'] ? `${n['non-dropping-particle']} ${n.family}` : n.family;
+  if (truthy(n.literal)) return n.literal as string;
+  if (truthy(n.family)) {
+    const ndp = n['non-dropping-particle'];
+    return (truthy(ndp) ? `${ndp} ` : '') + (n.family as string);
+  }
   return n.given ?? '';
 }
 
 /** Short title: `title-short`, or the title up to the first colon (trimmed). */
 export function shortTitle(m: CslItem): string {
-  const ts = m['title-short'];
-  if (typeof ts === 'string' && ts.trim()) return ts.trim();
-  const t = typeof m.title === 'string' ? m.title : '';
-  const i = t.indexOf(':');
-  return (i >= 0 ? t.slice(0, i) : t).trim();
+  if (truthy(m['title-short'])) return String(m['title-short']);
+  const t = truthy(m.title) ? String(m.title) : '';
+  return (t.split(':')[0] ?? '').trim();
 }
 
-/** Spanish «y» becomes «e» before the sound /i/ (i-, í-, hi-, hí- not followed by a vowel). */
-function startsWithISound(word: string): boolean {
-  const w = word.toLowerCase();
-  const m = /^h?[ií](.?)/u.exec(w);
-  if (!m) return false;
-  return !/^[aeiouáéíóúü]$/u.test(m[1] ?? '');
+/** Spanish «y» becomes «e» before the sound /i/: i-, í-, hi-, hí- not followed by a vowel. */
+export function startsWithISound(s: string): boolean {
+  const low = s.toLowerCase();
+  const chars = Array.from(low);
+  let rest: string[];
+  const two = chars.slice(0, 2).join('');
+  if (two === 'hi' || two === 'hí') rest = chars.slice(2);
+  else if (chars[0] === 'i' || chars[0] === 'í') rest = chars.slice(1);
+  else return false;
+  return !(rest.length > 0 && VOWELS.has(rest[0] as string));
 }
 
 export function namesPart(m: CslItem, locale: string = 'es'): string {
-  const l = lang(locale);
-  const names = (Array.isArray(m.author) ? m.author : []).map(citedName).filter((x) => x !== '');
+  const es = isEs(locale);
+  const names = (Array.isArray(m.author) ? m.author : []).map(citedName).filter((n) => n !== '');
   if (names.length === 0) return shortTitle(m);
   if (names.length === 1) return names[0] as string;
   if (names.length === 2) {
-    const b = names[1] as string;
-    const and = l === 'es' && startsWithISound(b) ? 'e' : T[l].and;
-    return `${names[0]} ${and} ${b}`;
+    const conj = es ? (startsWithISound(names[1] as string) ? ' e ' : ' y ') : ' and ';
+    return `${names[0]}${conj}${names[1]}`;
   }
   return `${names[0]} et al.`;
 }
 
 export function yearPart(m: CslItem, locale: string = 'es'): string {
-  const l = lang(locale);
-  const y = m.issued?.['date-parts']?.[0]?.[0];
-  const n = typeof y === 'number' ? y : typeof y === 'string' && /^-?\d+$/.test(y.trim()) ? Number(y) : null;
-  if (n === null) return T[l].nd;
-  return n < 0 ? `${-n} ${T[l].bc}` : String(n);
+  const es = isEs(locale);
+  const issued = m.issued;
+  const dp = issued && typeof issued === 'object' ? issued['date-parts'] : undefined;
+  const first = Array.isArray(dp) && Array.isArray(dp[0]) && dp[0].length ? dp[0][0] : undefined;
+  if (first !== undefined && first !== null && `${first}`.trim() !== '' && Number.isFinite(Number(first))) {
+    const y = Math.trunc(Number(first));
+    return y > 0 ? String(y) : es ? `${-y} a. C.` : `${-y} BC`;
+  }
+  return es ? 's. f.' : 'n.d.';
 }
 
 /** `h:mm:ss` from one hour, else `m:ss`; seconds floored. */
-export function formatTime(seconds: number): string {
-  const s = Math.max(0, Math.floor(seconds));
+export function formatTime(t: number): string {
+  const s = Math.floor(t);
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
   const x = String(s % 60).padStart(2, '0');
   return h ? `${h}:${String(m).padStart(2, '0')}:${x}` : `${m}:${x}`;
 }
 
-type PageLike = { printed?: string | null | undefined; source?: string | undefined; foliation?: string | undefined };
+type Loose = Record<string, unknown>;
 
-function folio(a: PageLike): string | null {
-  if (a.printed === null || a.printed === undefined || a.printed === '') return null;
-  return a.source === 'inferred' ? `[${a.printed}]` : a.printed;
-}
-
-function pageLocator(a: PageLike, end: PageLike | null, l: Lang): string {
-  const first = folio(a);
-  if (first === null) return T[l].np;
-  const [one, many] = a.foliation === 'leaf' ? ['fol.', 'fols.'] : a.foliation === 'column' ? ['col.', 'cols.'] : ['p.', 'pp.'];
-  if (end && end.printed !== null && end.printed !== undefined && end.printed !== '' && end.printed !== a.printed) {
-    return `${many} ${first}-${folio(end)}`;
+function pageLocator(anchor: Loose, end: Loose | null, es: boolean, single: string, plural: string): string {
+  const lab = (a: Loose): string | null => {
+    if (!has(a.printed)) return null;
+    return a.source === 'inferred' ? `[${String(a.printed)}]` : String(a.printed);
+  };
+  const a = lab(anchor);
+  if (a === null) return es ? 's. p.' : 'n. pag.';
+  if (end && end.type === anchor.type) {
+    const b = lab(end);
+    if (b !== null && end.printed !== anchor.printed) return `${plural} ${a}-${b}`;
   }
-  return `${one} ${first}`;
+  return `${single} ${a}`;
 }
 
-/** The locator of a citation (`p. 145`, `1:09:20`, `diap. 3`…), or '' if there is none. */
-export function locator(anchor: Anchor, locale: string = 'es', anchorEnd?: Anchor | null): string {
-  const l = lang(locale);
-  const t = T[l];
-  const end = anchorEnd ?? null;
-  switch (anchor.type) {
-    case 'page':
-      return pageLocator(anchor, end && end.type === 'page' ? end : null, l);
+/** The locator of a citation (`p. 145`, `1:09:20`, `diap. 3`…), or null if there is none. */
+export function locator(anchor: Anchor, locale: string = 'es', anchorEnd?: Anchor | null): string | null {
+  const es = isEs(locale);
+  const a = anchor as unknown as Loose;
+  const end = (anchorEnd ?? null) as unknown as Loose | null;
+  switch (a.type) {
+    case 'page': {
+      const fol = (a.foliation ?? 'page') as string;
+      const single = ({ page: 'p.', leaf: 'fol.', column: 'col.' } as Record<string, string>)[fol] ?? 'p.';
+      const plural = ({ page: 'pp.', leaf: 'fols.', column: 'cols.' } as Record<string, string>)[fol] ?? 'pp.';
+      return pageLocator(a, end, es, single, plural);
+    }
     case 'time': {
-      const a = formatTime(anchor.t0);
-      if (end && end.type === 'time') return `${a}-${formatTime(end.t1 ?? end.t0)}`;
-      return a;
+      let s = formatTime(a.t0 as number);
+      if (end && end.type === 'time') s += `-${formatTime(end.t1 as number)}`;
+      return s;
     }
     case 'section':
     case 'web': {
-      const printed = 'printed' in anchor ? (anchor as { printed?: string | null }).printed : null;
-      if (printed !== null && printed !== undefined && printed !== '') {
-        const endPrinted = end && 'printed' in end ? (end as { printed?: string | null }).printed : null;
-        return pageLocator({ printed }, endPrinted ? { printed: endPrinted } : null, l);
-      }
-      const path = anchor.path ?? [];
-      const last = path[path.length - 1];
-      const para = anchor.paragraph !== undefined && anchor.paragraph !== null ? `${t.para} ${anchor.paragraph}` : '';
-      if (last !== undefined) return para ? `§ ${last}, ${para}` : `§ ${last}`;
-      return para;
+      if (has(a.printed)) return pageLocator(a, end, es, 'p.', 'pp.');
+      const parts: string[] = [];
+      const path = a.path as string[] | undefined;
+      if (Array.isArray(path) && path.length) parts.push(`§ ${path[path.length - 1]}`);
+      if (has(a.paragraph)) parts.push(`${es ? 'párr.' : 'para.'} ${String(a.paragraph)}`);
+      return parts.length ? parts.join(', ') : null;
     }
     case 'slide':
-      return `${t.slide} ${anchor.n}`;
-    case 'sheet':
-      return `${anchor.sheet}, ${t.rows} ${anchor.row_from}-${anchor.row_to}`;
+      return `${es ? 'diap.' : 'slide'} ${String(a.n)}`;
+    case 'sheet': {
+      const from = a.row_from;
+      const to = a.row_to;
+      if (from === to) return `${String(a.sheet)}, ${es ? 'fila' : 'row'} ${String(from)}`;
+      return `${String(a.sheet)}, ${es ? 'filas' : 'rows'} ${String(from)}-${String(to)}`;
+    }
     case 'verse': {
-      const to = anchor.line_to;
-      return to !== undefined && to !== null && to !== anchor.line_from ? `vv. ${anchor.line_from}-${to}` : `v. ${anchor.line_from}`;
+      const b = a.line_to;
+      return !has(b) || b === a.line_from ? `v. ${String(a.line_from)}` : `vv. ${String(a.line_from)}-${String(b)}`;
     }
     case 'canonical':
-      return anchor.ref;
-    case 'image':
-      return '';
+      return String(a.ref);
     default:
-      return '';
+      return null;
   }
 }
 
 /**
  * `(Family, Year, locator)` for an anchor of a document. `document` may be the document
- * row or its CSL metadata. Locales other than `es` fall back to `en`.
+ * row or its CSL metadata.
  */
 export function cite(anchor: Anchor, document: DocumentRecord | CslItem, locale: string = 'es', anchorEnd?: Anchor | null): string {
-  const isRow = (d: DocumentRecord | CslItem): d is DocumentRecord =>
-    'metadata' in d && typeof (d as DocumentRecord).metadata === 'object' && (d as DocumentRecord).metadata !== null && 'source_sha256' in d;
-  const m: CslItem = isRow(document) ? document.metadata : document;
+  const isRow = 'source_sha256' in document && typeof (document as DocumentRecord).metadata === 'object' && (document as DocumentRecord).metadata !== null;
+  const m: CslItem = isRow ? (document as DocumentRecord).metadata : (document as CslItem);
   const parts = [namesPart(m, locale), yearPart(m, locale)];
   const loc = locator(anchor, locale, anchorEnd);
   if (loc) parts.push(loc);

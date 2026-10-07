@@ -31,7 +31,7 @@ export interface WasmEngineOptions {
   storage?: 'memory' | 'opfs' | 'auto';
   /** OPFS directory for the `opfs-sahpool` VFS. Default `.spdf-format`. */
   opfsDirectory?: string;
-  /** Engine messages; default: errors to the console, the rest silent. */
+  /** Engine messages; default: silent (failures also surface as exceptions). */
   log?: (level: 'info' | 'error', ...args: unknown[]) => void;
 }
 
@@ -44,7 +44,8 @@ async function loadSqlite3(o: WasmEngineOptions): Promise<Sqlite3> {
   if (modulePromise) return modulePromise;
   modulePromise = (async () => {
     const mod = (await import('@sqlite.org/sqlite-wasm')) as unknown as { default: (m?: Record<string, unknown>) => Promise<Sqlite3> };
-    const log = o.log ?? ((level: 'info' | 'error', ...args: unknown[]) => (level === 'error' ? console.error(...args) : undefined));
+    // Silent by default: every failure also surfaces as an exception.
+    const log = o.log ?? (() => undefined);
     const m: Record<string, unknown> = {
       print: (...a: unknown[]) => log('info', ...a),
       printErr: (...a: unknown[]) => log('error', ...a),
@@ -64,7 +65,14 @@ async function loadSqlite3(o: WasmEngineOptions): Promise<Sqlite3> {
     const g = globalThis as { sqlite3ApiConfig?: unknown };
     const previous = g.sqlite3ApiConfig;
     // The COOP/COEP 'opfs' VFS and kvvfs are not used; opfs-sahpool stays available.
-    g.sqlite3ApiConfig = { ...(previous as object | undefined), disable: { vfs: { kvvfs: true, opfs: true, 'opfs-wl': true } } };
+    g.sqlite3ApiConfig = {
+      ...(previous as object | undefined),
+      disable: { vfs: { kvvfs: true, opfs: true, 'opfs-wl': true } },
+      log: (...a: unknown[]) => log('info', ...a),
+      debug: (...a: unknown[]) => log('info', ...a),
+      warn: (...a: unknown[]) => log('info', ...a),
+      error: (...a: unknown[]) => log('error', ...a),
+    };
     try {
       return await mod.default(m);
     } finally {

@@ -130,6 +130,23 @@ export interface ProvenanceInput {
   at?: string;
 }
 
+/** A full dump with vector values and blob bytes (`conformance/sources/*.json`). */
+export interface SpdfSource {
+  meta?: Record<string, string>;
+  fts?: { tokenizer?: string | null; trigram?: boolean };
+  document: Record<string, unknown>;
+  units?: Array<Record<string, unknown>>;
+  sections?: Array<Record<string, unknown>>;
+  fragments?: Array<Record<string, unknown>>;
+  figures?: Array<Record<string, unknown>>;
+  spaces?: Array<Record<string, unknown>>;
+  vectors?: Record<string, { count?: number; sha256?: string; items?: Array<{ target: VectorTarget; id: string; values: number[] }> }>;
+  blobs?: Array<{ key: string; mime: string; bytes?: number; sha256?: string; data_base64?: string }>;
+  provenance?: Array<Record<string, unknown>>;
+  extensions?: Array<{ name: string; version: string; required: number | boolean }>;
+  [key: string]: unknown;
+}
+
 export interface FinishOptions {
   /** Store `content_sha256` (default false). */
   contentHash?: boolean;
@@ -169,6 +186,8 @@ export class SpdfWriter {
   private finished = false;
   private hasTimeAnchor = false;
   private hasVectors = false;
+  /** Written from a source: `finish()` adds nothing. */
+  private verbatim = false;
 
   private constructor(
     private readonly conn: SqlConnection,
@@ -224,6 +243,53 @@ export class SpdfWriter {
       await w.addProvenance(p);
     }
     for (const e of await doc.extensions()) await w.addExtension(e.name, e.version, e.required);
+    return w;
+  }
+
+  /**
+   * A writer loaded from a "source": a canonical dump plus vector values
+   * (`vectors.<space>.items: [{target, id, values}]`, i8 values as integers −127…127) and
+   * blob bytes (`blobs[].data_base64`), the format of `conformance/sources/*.json`.
+   * Every value is written as given, so dumping the result gives the source back.
+   */
+  static async fromSource(source: SpdfSource, options: WriterOptions = {}): Promise<SpdfWriter> {
+    const fts = (source.fts ?? {}) as { trigram?: boolean };
+    const w = await SpdfWriter.create({ ...options, trigram: options.trigram ?? !!fts.trigram });
+    await w.conn.run('DELETE FROM spdf_meta', []);
+    w.meta.clear();
+    for (const [k, v] of Object.entries(source.meta ?? {})) await w.setMeta(k, String(v));
+    const d = source.document as unknown as DocumentInput & Record<string, unknown>;
+    await w.setDocument({ ...d, unit_count: d.unit_count as number });
+    if (!('document_id' in (source.meta ?? {}))) {
+      await w.conn.run("DELETE FROM spdf_meta WHERE key = 'document_id'", []);
+      w.meta.delete('document_id');
+    }
+    await w.addUnits((source.units ?? []) as unknown as UnitInput[]);
+    await w.addSections((source.sections ?? []) as unknown as SectionInput[]);
+    await w.addFragments((source.fragments ?? []) as unknown as FragmentInput[]);
+    await w.addFigures((source.figures ?? []) as unknown as FigureInput[]);
+    for (const sp of (source.spaces ?? []) as unknown as Array<SpaceInput & { normalized: number }>) await w.addSpace(sp);
+    for (const [space, v] of Object.entries(source.vectors ?? {})) {
+      const dtype = w.spaces.get(space)?.dtype ?? 'f32';
+      const items = (v.items ?? []).map((it) => ({
+        target: it.target,
+        id: it.id,
+        data: dtype === 'i8' ? new Uint8Array(Int8Array.from(it.values).buffer) : encodeVector(it.values, dtype),
+      }));
+      if (!w.spaces.has(space)) {
+        // Vectors of an unknown space (invalid sources): write them raw.
+        for (const it of items) await w.conn.run('INSERT INTO vectors (target, id, space, document, data) VALUES (?, ?, ?, ?, ?)', [it.target, it.id, space, w.doc(), it.data]);
+        continue;
+      }
+      await w.addVectors(space, items);
+    }
+    for (const b of source.blobs ?? []) {
+      const data = b.data_base64 !== undefined ? fromBase64(b.data_base64) : new Uint8Array(0);
+      await w.conn.run('INSERT INTO blobs (key, mime, sha256, data) VALUES (?, ?, ?, ?)', [b.key, b.mime, b.sha256 ?? (await sha256Hex(data)), data]);
+    }
+    for (const p of (source.provenance ?? []) as unknown as ProvenanceInput[]) await w.addProvenance(p);
+    for (const e of source.extensions ?? []) await w.addExtension(e.name, e.version, !!e.required);
+    w.verbatim = true;
     return w;
   }
 
@@ -444,14 +510,16 @@ export class SpdfWriter {
     this.check();
     this.doc();
     if (!this.documentHasUnitCount) await this.conn.run('UPDATE documents SET unit_count = (SELECT count(*) FROM units)', []);
-    if (!this.meta.has('profile')) {
+    if (this.verbatim) {
+      /* sources carry their own meta */
+    } else if (!this.meta.has('profile')) {
       const p = ['core'];
       if (this.hasVectors) p.push('semantic');
       if (this.hasTimeAnchor) p.push('media');
       await this.setMeta('profile', p.join(' '));
     }
-    if (!this.meta.has('created')) await this.setMeta('created', nowIso());
-    if (!this.meta.has('generator')) await this.setMeta('generator', this.options.generator ?? `spdf-format/${VERSION}`);
+    if (!this.verbatim && !this.meta.has('created')) await this.setMeta('created', nowIso());
+    if (!this.verbatim && !this.meta.has('generator')) await this.setMeta('generator', this.options.generator ?? `spdf-format/${VERSION}`);
     await this.conn.exec("INSERT INTO fragments_fts(fragments_fts) VALUES('rebuild');");
     const [tri] = await this.conn.all("SELECT count(*) AS n FROM sqlite_master WHERE name = 'fragments_fts_trigram'");
     if (Number(tri?.n ?? 0) > 0) await this.conn.exec("INSERT INTO fragments_fts_trigram(fragments_fts_trigram) VALUES('rebuild');");

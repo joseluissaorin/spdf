@@ -18,6 +18,8 @@ class NodeConnection implements SqlConnection {
   constructor(
     readonly db: DatabaseSync,
     private readonly cleanup?: () => Promise<void>,
+    /** File behind the database, for Node versions without `serialize()`. */
+    private readonly path?: string,
   ) {}
 
   private statement(sql: string): StatementSync {
@@ -51,7 +53,10 @@ class NodeConnection implements SqlConnection {
   async serialize(): Promise<Uint8Array> {
     const db = this.db as DatabaseSync & { serialize?: () => Uint8Array };
     if (typeof db.serialize === 'function') return db.serialize();
-    throw new Error('This Node version cannot serialize a database (node:sqlite serialize() needs a newer Node).');
+    if (!this.path) throw new Error('This Node version cannot serialize an in-memory database.');
+    const { readFile } = await import('node:fs/promises');
+    const b = await readFile(this.path);
+    return new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
   }
 
   async close(): Promise<void> {
@@ -92,7 +97,16 @@ export function nodeEngine(options: NodeEngineOptions = {}): SqlEngine {
     const { DatabaseSync } = await sqlite();
     const db = new DatabaseSync(path, { readOnly: ro.readOnly, allowExtension: false } as never);
     if (ro.readOnly) harden(db);
-    return new NodeConnection(db, cleanup);
+    return new NodeConnection(db, cleanup, path);
+  };
+
+  /** A temporary file (Node versions without serialize/deserialize). */
+  const tempFile = async (bytes?: Uint8Array): Promise<{ file: string; remove: () => Promise<void> }> => {
+    const [{ mkdtemp, writeFile, rm }, { tmpdir }, { join }] = await Promise.all([import('node:fs/promises'), import('node:os'), import('node:path')]);
+    const dir = await mkdtemp(join(options.tmpDir ?? tmpdir(), 'spdf-'));
+    const file = join(dir, 'db.sqlite');
+    if (bytes) await writeFile(file, bytes);
+    return { file, remove: () => rm(dir, { recursive: true, force: true }) };
   };
 
   return {
@@ -109,15 +123,8 @@ export function nodeEngine(options: NodeEngineOptions = {}): SqlEngine {
       }
       db.close();
       // Older Node: go through a temporary file.
-      const [{ mkdtemp, writeFile, rm }, { tmpdir }, { join }] = await Promise.all([
-        import('node:fs/promises'),
-        import('node:os'),
-        import('node:path'),
-      ]);
-      const dir = await mkdtemp(join(options.tmpDir ?? tmpdir(), 'spdf-'));
-      const file = join(dir, 'db.sqlite');
-      await writeFile(file, bytes);
-      return openFile(file, opts, () => rm(dir, { recursive: true, force: true }));
+      const t = await tempFile(bytes);
+      return openFile(t.file, opts, t.remove);
     },
 
     async openPath(path, opts) {
@@ -126,7 +133,11 @@ export function nodeEngine(options: NodeEngineOptions = {}): SqlEngine {
 
     async create() {
       const { DatabaseSync } = await sqlite();
-      return new NodeConnection(new DatabaseSync(':memory:', { allowExtension: false } as never));
+      if (typeof (DatabaseSync.prototype as { serialize?: unknown }).serialize === 'function') {
+        return new NodeConnection(new DatabaseSync(':memory:', { allowExtension: false } as never));
+      }
+      const t = await tempFile();
+      return new NodeConnection(new DatabaseSync(t.file, { allowExtension: false } as never), t.remove, t.file);
     },
 
     async gunzip(bytes, limit) {

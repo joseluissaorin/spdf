@@ -89,7 +89,7 @@ describe.each(engines)('SPDF 5.0 with %s', (_name, engine) => {
     expect(canonicalJson(strip(d2))).toBe(canonicalJson(strip(d1)));
   });
 
-  it('signs and detects tampering (E081, E082)', async () => {
+  it('signs and detects tampering (E081) and forged signers (E082)', async () => {
     const { privateKey, signer } = await generateSigningKey();
     const bytes = await buildQuijote50({ engine, signWith: privateKey });
     const doc = await openSpdf(bytes, { engine });
@@ -98,7 +98,7 @@ describe.each(engines)('SPDF 5.0 with %s', (_name, engine) => {
     await doc.close();
     expect((await validate(bytes, { engine })).valid).toBe(true);
     const tampered = mutate(bytes, "UPDATE units SET text = text || ' (sic)' WHERE id = 'u2'");
-    expect(codes(await validate(tampered, { engine }))).toEqual(['E081', 'E082']);
+    expect(codes(await validate(tampered, { engine }))).toEqual(['E081']); // E082 is only checked when the hash matches
     const other = await generateSigningKey();
     const forged = mutate(bytes, `UPDATE spdf_meta SET value = '${other.signer}' WHERE key = 'signer'`);
     expect(codes(await validate(forged, { engine }))).toEqual(['E082']);
@@ -133,7 +133,7 @@ describe.each(engines)('legacy 4.x with %s', (_name, engine) => {
     ]);
     expect(units[2]?.anchor).toEqual({ type: 'page', physical: 3, printed: '2', roman: false, source: 'inferred', confidence: 0.9 });
     expect((await doc.figures())[0]?.image).toBe('blob:pagina-1.webp');
-    expect((await doc.spaces())[0]).toMatchObject({ id: 'toy@2', dtype: 'f32', modalities: ['texto'] });
+    expect((await doc.spaces())[0]).toMatchObject({ id: 'toy@2', dtype: 'f32', modalities: ['text'] });
     expect((await doc.vectors('toy@2')).map((x) => x.target)).toEqual(['fragment', 'fragment']);
     expect((await doc.searchLexical('caballerías')).map((h) => h.fragment_id)).toEqual(['fr2']);
     expect((await doc.searchHybrid('hidalgo', [0, 1], 'toy@2')).map((h) => h.fragment_id)).toEqual(['fr0', 'fr1', 'fr2']);

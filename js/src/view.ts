@@ -8,7 +8,7 @@
 
 import type { SqlConnection, SqlRow, SqlValue } from './port.js';
 import { APPLICATION_ID, COLUMNS, LEGACY_COLUMNS, LEGACY_TABLES, LEGACY_TRIGGERS, type TableName } from './schema.js';
-import { mapLegacyAnchor, mapLegacyKind, mapLegacyMetaKey, mapLegacyMetadata, mapLegacyTarget } from './legacy.js';
+import { mapLegacyAnchor, mapLegacyKind, mapLegacyMetaKey, mapLegacyMetadata, mapLegacyModalities, mapLegacyTarget } from './legacy.js';
 
 export interface Inspection {
   /** '5.0', '4.0', '4.1', '3.0' or null if unknown. */
@@ -278,6 +278,7 @@ export class View {
         break;
       case 'spaces':
         if ('dtype' in row) row.dtype = 'f32';
+        if ('modalities' in row && !raw) row.modalities = mapLegacyModalities(row.modalities);
         break;
       case 'vectors':
         if (typeof row.target === 'string') row.target = mapLegacyTarget(row.target);

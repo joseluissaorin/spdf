@@ -22,59 +22,53 @@ export interface AnchorProblem {
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 const isInt = (v: unknown): v is number => Number.isInteger(v);
 const isStr = (v: unknown): v is string => typeof v === 'string';
-const optional = (v: unknown, test: (x: unknown) => boolean) => v === undefined || v === null || test(v);
 
-/** Checks a parsed anchor. `textLength` (code points of the unit text) enables the `chars` check. */
+/** Checks a parsed anchor (contract §3 required members). `textLength` (code points of the NFC unit text) enables the `chars` check. */
 export function checkAnchor(a: unknown, textLength?: number): AnchorProblem | null {
-  if (!a || typeof a !== 'object' || Array.isArray(a)) return { code: 'E040', message: 'anchor is not a JSON object' };
+  if (!a || typeof a !== 'object' || Array.isArray(a)) return { code: 'E040', message: 'anchor is not an object' };
   const o = a as Record<string, unknown>;
-  if (!isStr(o.type)) return { code: 'E040', message: 'anchor without "type"' };
-  if (!(ANCHOR_TYPES as readonly string[]).includes(o.type)) return { code: 'E041', message: `unknown anchor type "${o.type}"` };
-  const bad = (m: string): AnchorProblem => ({ code: 'E040', message: `${o.type} anchor: ${m}` });
+  if (!isStr(o.type)) return { code: 'E040', message: 'anchor without type' };
+  if (!(ANCHOR_TYPES as readonly string[]).includes(o.type)) return { code: 'E041', message: `unknown anchor type ${JSON.stringify(o.type)}` };
+  let ok: boolean;
   switch (o.type as AnchorType) {
     case 'page':
-      if (!isInt(o.physical) || (o.physical as number) < 1) return bad('"physical" must be an integer ≥ 1');
-      if (!('printed' in o) || !optional(o.printed, isStr)) return bad('"printed" must be a string or null');
+      ok = isInt(o.physical) && (o.physical as number) >= 1 && 'printed' in o && (o.printed === null || isStr(o.printed));
       break;
     case 'time':
-      if (!isNum(o.t0)) return bad('"t0" must be a number');
-      if (!isNum(o.t1)) return bad('"t1" must be a number');
+      ok = isNum(o.t0) && isNum(o.t1) && 0 <= (o.t0 as number) && (o.t0 as number) <= (o.t1 as number);
       break;
     case 'section':
-      if (!Array.isArray(o.path) || !o.path.every(isStr)) return bad('"path" must be an array of strings');
-      if (!optional(o.paragraph, isInt)) return bad('"paragraph" must be an integer');
+      ok = Array.isArray(o.path) && o.path.every(isStr);
       break;
     case 'slide':
-      if (!isInt(o.n)) return bad('"n" must be an integer');
+      ok = isInt(o.n) && (o.n as number) >= 1;
       break;
     case 'sheet':
-      if (!isStr(o.sheet)) return bad('"sheet" must be a string');
-      if (!isInt(o.row_from) || !isInt(o.row_to)) return bad('"row_from" and "row_to" must be integers');
+      ok = isStr(o.sheet) && isInt(o.row_from) && isInt(o.row_to);
       break;
     case 'web':
-      if (!isStr(o.url)) return bad('"url" must be a string');
-      if (!optional(o.path, (p) => Array.isArray(p) && p.every(isStr))) return bad('"path" must be an array of strings');
+      ok = isStr(o.url);
       break;
     case 'verse':
-      if (!isInt(o.line_from)) return bad('"line_from" must be an integer');
-      if (!optional(o.line_to, isInt)) return bad('"line_to" must be an integer');
+      ok = isInt(o.line_from);
       break;
     case 'canonical':
-      if (!isStr(o.scheme) || !isStr(o.ref)) return bad('"scheme" and "ref" must be strings');
+      ok = isStr(o.scheme) && isStr(o.ref);
       break;
-    case 'image':
-      break;
+    default:
+      ok = true;
   }
-  if (o.region !== undefined && o.region !== null) {
-    const r = o.region as Record<string, unknown>;
-    if (typeof r !== 'object' || !['x', 'y', 'w', 'h'].every((k) => isNum(r[k]))) return bad('"region" must be {x, y, w, h}');
+  if (!ok) return { code: 'E040', message: `${o.type} anchor misses or mistypes a required member` };
+  if ('region' in o) {
+    const r = o.region as Record<string, unknown> | null;
+    if (!r || typeof r !== 'object' || Array.isArray(r) || !['x', 'y', 'w', 'h'].every((k) => isNum(r[k]))) return { code: 'E040', message: 'bad region' };
   }
-  if (o.chars !== undefined && o.chars !== null) {
+  if ('chars' in o) {
     const c = o.chars;
-    if (!Array.isArray(c) || c.length !== 2 || !isInt(c[0]) || !isInt(c[1])) return bad('"chars" must be [start, end]');
+    if (!Array.isArray(c) || c.length !== 2 || !isInt(c[0]) || !isInt(c[1])) return { code: 'E040', message: 'bad chars' };
     const [s, e] = c as [number, number];
-    if (s < 0 || e < s || (textLength !== undefined && e > textLength)) {
-      return { code: 'E042', message: `chars [${s}, ${e}] out of range${textLength !== undefined ? ` (text has ${textLength} code points)` : ''}` };
+    if (textLength !== undefined && !(0 <= s && s <= e && e <= textLength)) {
+      return { code: 'E042', message: `chars [${s}, ${e}] out of range (unit text has ${textLength} code points)` };
     }
   }
   return null;
@@ -108,18 +102,25 @@ export function pctEncode(s: string): string {
   return out;
 }
 
-/** Lenient percent-decoding: malformed escapes are kept as they are. */
+/** Strict percent-decoding: a `%` not followed by two hex digits, or bytes that are not UTF-8, throw. */
 export function pctDecode(s: string): string {
+  if (/%(?![0-9A-Fa-f]{2})/.test(s)) throw new Error('bad percent-encoding');
+  const bytes: number[] = [];
+  for (let i = 0; i < s.length; ) {
+    if (s[i] === '%') {
+      bytes.push(parseInt(s.slice(i + 1, i + 3), 16));
+      i += 3;
+    } else {
+      const cp = s.codePointAt(i) as number;
+      const ch = String.fromCodePoint(cp);
+      for (const b of encoder.encode(ch)) bytes.push(b);
+      i += ch.length;
+    }
+  }
   try {
-    return decodeURIComponent(s);
+    return new TextDecoder('utf-8', { fatal: true }).decode(new Uint8Array(bytes));
   } catch {
-    return s.replace(/(%[0-9A-Fa-f]{2})+/g, (m) => {
-      try {
-        return decodeURIComponent(m);
-      } catch {
-        return m;
-      }
-    });
+    throw new Error('percent-encoding is not UTF-8');
   }
 }
 
@@ -129,7 +130,7 @@ export interface AnchorLocator {
   pe?: number;
   f?: string;
   fe?: string;
-  t?: [number, number];
+  t?: [number] | [number, number];
   s?: string[];
   para?: number;
   sl?: number;
@@ -146,6 +147,8 @@ export interface ParsedAnchorUri {
   locator: AnchorLocator;
 }
 
+const SHA_REF = /^sha256-[0-9a-f]{64}$/;
+
 /** The `docref` of a document: `sha256-<hex>` from its source hash, or its id. */
 export function docrefOf(doc: { source_sha256?: string | null; id: string }): string {
   const h = doc.source_sha256?.trim().toLowerCase();
@@ -154,164 +157,225 @@ export function docrefOf(doc: { source_sha256?: string | null; id: string }): st
 
 const present = <T>(v: T | null | undefined): v is T => v !== null && v !== undefined;
 
-/** The locator of an anchor (and its optional end anchor). */
+/** The locator of an anchor (and its optional end anchor), as in the reference. */
 export function anchorToLocator(anchor: Anchor, anchorEnd?: Anchor | null): AnchorLocator {
-  const loc: AnchorLocator = {};
-  const end = anchorEnd ?? null;
+  const L: AnchorLocator = {};
+  const a = anchor as Anchor & Record<string, unknown>;
+  const end = (anchorEnd ?? null) as (Anchor & Record<string, unknown>) | null;
   switch (anchor.type) {
-    case 'page': {
-      loc.p = anchor.physical;
-      if (end && end.type === 'page' && present(end.physical) && end.physical !== anchor.physical) loc.pe = end.physical;
-      if (present(anchor.printed)) loc.f = anchor.printed;
-      if (end && end.type === 'page' && present(end.printed) && end.printed !== anchor.printed) loc.fe = end.printed;
+    case 'page':
+      L.p = anchor.physical;
+      if (present(anchor.printed)) L.f = anchor.printed;
+      if (end && end.type === 'page') {
+        if (present(end.physical) && end.physical !== anchor.physical) L.pe = end.physical;
+        if (present(end.printed) && end.printed !== anchor.printed) L.fe = end.printed;
+      }
       break;
-    }
     case 'time': {
-      const t1 = end && end.type === 'time' && present(end.t1) ? end.t1 : (anchor.t1 ?? anchor.t0);
-      loc.t = [anchor.t0, t1];
+      const t1 = end && end.type === 'time' ? (end.t1 as number | null | undefined) : anchor.t1;
+      L.t = present(t1) ? [anchor.t0, t1] : [anchor.t0];
       break;
     }
     case 'section':
-    case 'web':
-      if (anchor.type === 'section' && present(anchor.printed)) loc.f = anchor.printed;
-      if (anchor.path) loc.s = [...anchor.path];
-      if (present(anchor.paragraph)) loc.para = anchor.paragraph;
+    case 'web': {
+      const path = a.path as string[] | undefined;
+      if (Array.isArray(path) && path.length) L.s = [...path];
+      if (present(a.paragraph)) L.para = a.paragraph as number;
+      if (present(a.printed)) {
+        L.f = a.printed as string;
+        if (end && present(end.printed) && end.printed !== a.printed) L.fe = end.printed as string;
+      }
       break;
-    case 'verse':
-      if (present(anchor.printed)) loc.f = anchor.printed;
-      loc.v = present(anchor.line_to) && anchor.line_to !== anchor.line_from ? [anchor.line_from, anchor.line_to] : [anchor.line_from];
-      break;
+    }
     case 'slide':
-      loc.sl = anchor.n;
+      L.sl = anchor.n;
       break;
     case 'sheet':
-      loc.sh = anchor.sheet;
-      if (present(anchor.row_from)) loc.rows = [anchor.row_from, anchor.row_to ?? anchor.row_from];
+      L.sh = anchor.sheet;
+      L.rows = [anchor.row_from, anchor.row_to];
       break;
+    case 'verse': {
+      const b = anchor.line_to;
+      L.v = !present(b) || b === anchor.line_from ? [anchor.line_from] : [anchor.line_from, b];
+      if (present(anchor.printed)) L.f = anchor.printed;
+      break;
+    }
     case 'canonical':
-      loc.ref = { scheme: anchor.scheme, ref: anchor.ref };
+      L.ref = { scheme: anchor.scheme, ref: anchor.ref };
       break;
-    case 'image':
+    default:
       break;
   }
-  const a = anchor as { chars?: [number, number] | null; region?: Region | null };
-  if (Array.isArray(a.chars) && a.chars.length === 2) loc.char = [a.chars[0], a.chars[1]];
-  if (a.region && typeof a.region === 'object') loc.xywh = [a.region.x, a.region.y, a.region.w, a.region.h];
-  return loc;
+  if (present(a.chars)) L.char = [...(a.chars as [number, number])] as [number, number];
+  if (present(a.region)) {
+    const r = a.region as Region;
+    L.xywh = [r.x, r.y, r.w, r.h];
+  }
+  return L;
 }
 
-/** Serializes a locator in canonical order. */
-export function formatLocator(loc: AnchorLocator): string {
+const PARAM_ORDER = ['p', 'pe', 'f', 'fe', 't', 's', 'para', 'sl', 'sh', 'rows', 'v', 'ref', 'char', 'xywh'] as const;
+
+/** `spdf:<docref>#<params>` from a docref and a locator, in canonical order. */
+export function formatLocator(docref: string, L: AnchorLocator): string {
+  const ref = SHA_REF.test(docref) ? docref : pctEncode(docref);
   const parts: string[] = [];
-  if (present(loc.p)) parts.push(`p=${loc.p}`);
-  if (present(loc.pe)) parts.push(`pe=${loc.pe}`);
-  if (present(loc.f)) parts.push(`f=${pctEncode(loc.f)}`);
-  if (present(loc.fe)) parts.push(`fe=${pctEncode(loc.fe)}`);
-  if (present(loc.t)) parts.push(`t=${loc.t.map((x) => shortNumber(roundTo(x, 6))).join(',')}`);
-  if (present(loc.s)) parts.push(`s=${loc.s.map(pctEncode).join('/')}`);
-  if (present(loc.para)) parts.push(`para=${loc.para}`);
-  if (present(loc.sl)) parts.push(`sl=${loc.sl}`);
-  if (present(loc.sh)) parts.push(`sh=${pctEncode(loc.sh)}`);
-  if (present(loc.rows)) parts.push(`rows=${loc.rows[0]}-${loc.rows[1]}`);
-  if (present(loc.v)) parts.push(`v=${loc.v.join('-')}`);
-  if (present(loc.ref)) parts.push(`ref=${pctEncode(loc.ref.scheme)}:${pctEncode(loc.ref.ref)}`);
-  if (present(loc.char)) parts.push(`char=${loc.char[0]},${loc.char[1]}`);
-  if (present(loc.xywh)) parts.push(`xywh=percent:${loc.xywh.map((x) => shortNumber(roundTo(x * 100, 4))).join(',')}`);
-  return parts.join('&');
+  for (const k of PARAM_ORDER) {
+    const v = L[k];
+    if (!present(v)) continue;
+    let s: string;
+    switch (k) {
+      case 'p':
+      case 'pe':
+      case 'para':
+      case 'sl':
+        s = String(v);
+        break;
+      case 'f':
+      case 'fe':
+      case 'sh':
+        s = pctEncode(v as string);
+        break;
+      case 't':
+        s = (v as number[]).map((x) => shortNumber(roundTo(x, 6))).join(',');
+        break;
+      case 's':
+        s = (v as string[]).map(pctEncode).join('/');
+        break;
+      case 'rows':
+        s = `${(v as number[])[0]}-${(v as number[])[1]}`;
+        break;
+      case 'v':
+        s = (v as number[]).join('-');
+        break;
+      case 'ref':
+        s = `${pctEncode((v as { scheme: string }).scheme)}:${pctEncode((v as { ref: string }).ref)}`;
+        break;
+      case 'char':
+        s = `${(v as number[])[0]},${(v as number[])[1]}`;
+        break;
+      case 'xywh':
+        s = `percent:${(v as number[]).map((x) => shortNumber(roundTo(roundTo(x * 100, 4), 6))).join(',')}`;
+        break;
+    }
+    parts.push(`${k}=${s}`);
+  }
+  return `spdf:${ref}${parts.length ? `#${parts.join('&')}` : ''}`;
 }
 
-/** `spdf:<docref>#<params>`. `docref` is a string or a document (its source hash is preferred). */
+/**
+ * The anchor URI of an anchor. `docref` is a string or a document (its source hash is
+ * preferred); a locator can be passed instead of an anchor.
+ */
 export function formatAnchorUri(
   docref: string | { source_sha256?: string | null; id: string },
   anchor: Anchor | AnchorLocator,
   anchorEnd?: Anchor | null,
 ): string {
   const ref = typeof docref === 'string' ? docref : docrefOf(docref);
-  const loc = 'type' in anchor && typeof (anchor as { type?: unknown }).type === 'string' ? anchorToLocator(anchor as Anchor, anchorEnd) : (anchor as AnchorLocator);
-  const frag = formatLocator(loc);
-  return `spdf:${pctEncode(ref)}${frag ? `#${frag}` : ''}`;
+  const isAnchor = typeof (anchor as { type?: unknown }).type === 'string';
+  return formatLocator(ref, isAnchor ? anchorToLocator(anchor as Anchor, anchorEnd) : (anchor as AnchorLocator));
 }
 
-const INT = /^-?\d+$/;
+const INT = /^(0|[1-9][0-9]*)$/;
+const DEC = /^[0-9]+(\.[0-9]+)?$/;
+const CLOCK = /^(?:([0-9]+):)?([0-5]?[0-9]):([0-5][0-9](?:\.[0-9]+)?)$/;
 
-/** Parses an anchor URI into its docref and locator. Throws on a URI that is not `spdf:`. */
+function int(s: string): number {
+  if (!INT.test(s)) throw new Error(`not an integer: ${JSON.stringify(s)}`);
+  return Number(s);
+}
+
+function npt(s: string): number {
+  if (DEC.test(s)) return Number(s);
+  const m = CLOCK.exec(s);
+  if (!m) throw new Error(`bad time: ${JSON.stringify(s)}`);
+  return roundTo(Number(m[1] ?? 0) * 3600 + Number(m[2]) * 60 + Number(m[3]), 6);
+}
+
+/** Parses an anchor URI (strictly: malformed values throw; unknown parameters are ignored). */
 export function parseAnchorUri(uri: string): ParsedAnchorUri {
-  const m = /^spdf:([^#]*)(?:#(.*))?$/s.exec(uri.trim());
-  if (!m || !m[1]) throw new Error(`Not an SPDF anchor URI: ${uri}`);
-  const docref = pctDecode(m[1]);
-  const loc: AnchorLocator = {};
-  const int = (v: string): number | undefined => (INT.test(v) ? Number(v) : undefined);
-  const num = (v: string): number | undefined => {
-    const x = Number(v);
-    return v.trim() !== '' && Number.isFinite(x) ? x : undefined;
-  };
-  for (const pair of (m[2] ?? '').split('&')) {
-    if (!pair) continue;
-    const eq = pair.indexOf('=');
-    if (eq < 0) continue;
-    const k = pair.slice(0, eq);
-    const raw = pair.slice(eq + 1);
+  if (!uri.startsWith('spdf:')) throw new Error('not an spdf: URI');
+  const rest = uri.slice(5);
+  const hash = rest.indexOf('#');
+  const docrefRaw = hash < 0 ? rest : rest.slice(0, hash);
+  const frag = hash < 0 ? '' : rest.slice(hash + 1);
+  if (!docrefRaw) throw new Error('empty document reference');
+  const docref = pctDecode(docrefRaw);
+  const L: AnchorLocator = {};
+  const seen = new Set<string>();
+  for (const part of frag ? frag.split('&') : []) {
+    if (!part) continue;
+    const eq = part.indexOf('=');
+    if (eq < 0) throw new Error(`parameter without value: ${JSON.stringify(part)}`);
+    const k = part.slice(0, eq);
+    const v = part.slice(eq + 1);
+    if (seen.has(k)) throw new Error(`duplicate parameter ${k}`);
+    seen.add(k);
     switch (k) {
       case 'p':
       case 'pe':
       case 'para':
       case 'sl': {
-        const n = int(pctDecode(raw));
-        if (n !== undefined) loc[k] = n;
+        const n = int(v);
+        if (k !== 'para' && n < 1) throw new Error(`${k} starts at 1`);
+        L[k] = n;
         break;
       }
       case 'f':
       case 'fe':
       case 'sh':
-        loc[k] = pctDecode(raw);
+        L[k] = pctDecode(v);
         break;
       case 't': {
-        const [a, b] = pctDecode(raw).replace(/^npt:/, '').split(',');
-        const t0 = num(a ?? '');
-        const t1 = b === undefined ? t0 : num(b);
-        if (t0 !== undefined && t1 !== undefined) loc.t = [t0, t1];
+        const body = v.startsWith('npt:') ? v.slice(4) : v;
+        const xs = body.split(',').map(npt);
+        if (xs.length > 2 || (xs.length === 2 && (xs[1] as number) < (xs[0] as number))) throw new Error('bad t');
+        L.t = xs as [number] | [number, number];
         break;
       }
       case 's':
-        loc.s = raw === '' ? [] : raw.split('/').map(pctDecode);
+        L.s = v.split('/').map(pctDecode);
         break;
       case 'rows': {
-        const mm = /^(\d+)-(\d+)$/.exec(pctDecode(raw));
-        if (mm) loc.rows = [Number(mm[1]), Number(mm[2])];
+        const dash = v.indexOf('-');
+        if (dash < 0) throw new Error('rows needs a-b');
+        L.rows = [int(v.slice(0, dash)), int(v.slice(dash + 1))];
         break;
       }
       case 'v': {
-        const mm = /^(\d+)(?:-(\d+))?$/.exec(pctDecode(raw));
-        if (mm) loc.v = mm[2] === undefined ? [Number(mm[1])] : [Number(mm[1]), Number(mm[2])];
+        const xs = v.split('-').map(int);
+        if (xs.length > 2) throw new Error('bad v');
+        L.v = xs as [number] | [number, number];
         break;
       }
       case 'ref': {
-        const i = raw.indexOf(':');
-        const i2 = i >= 0 ? i : raw.indexOf('%3A');
-        if (i >= 0) loc.ref = { scheme: pctDecode(raw.slice(0, i)), ref: pctDecode(raw.slice(i + 1)) };
-        else if (i2 >= 0) loc.ref = { scheme: pctDecode(raw.slice(0, i2)), ref: pctDecode(raw.slice(i2 + 3)) };
+        const colon = v.indexOf(':');
+        if (colon <= 0) throw new Error('ref needs scheme:ref');
+        L.ref = { scheme: pctDecode(v.slice(0, colon)), ref: pctDecode(v.slice(colon + 1)) };
         break;
       }
       case 'char': {
-        const mm = /^(\d+),(\d+)$/.exec(pctDecode(raw));
-        if (mm) loc.char = [Number(mm[1]), Number(mm[2])];
+        const xs = v.split(',');
+        if (xs.length !== 2) throw new Error('char needs start,end');
+        const a = int(xs[0] as string);
+        const b = int(xs[1] as string);
+        if (b < a) throw new Error('char end before start');
+        L.char = [a, b];
         break;
       }
       case 'xywh': {
-        const v = pctDecode(raw);
-        const pct = v.startsWith('percent:');
-        const xs = v.replace(/^(percent|pixel):/, '').split(',').map((x) => num(x));
-        if (xs.length === 4 && xs.every((x) => x !== undefined)) {
-          const f = (x: number) => (pct ? roundTo(x / 100, 6) : x);
-          loc.xywh = [f(xs[0] as number), f(xs[1] as number), f(xs[2] as number), f(xs[3] as number)];
-        }
+        if (!v.startsWith('percent:')) throw new Error('xywh must use percent:');
+        const xs = v.slice(8).split(',');
+        if (xs.length !== 4 || !xs.every((x) => DEC.test(x))) throw new Error('bad xywh');
+        L.xywh = xs.map((x) => roundTo(Number(x) / 100, 6)) as [number, number, number, number];
         break;
       }
       default:
         break; // unknown keys are ignored
     }
   }
-  return { docref, locator: loc };
+  return { docref, locator: L };
 }
 
 /** The anchor a locator describes, as far as a URI can tell. */
@@ -322,7 +386,7 @@ export function locatorToAnchor(loc: AnchorLocator): { anchor: Anchor; anchor_en
     anchor = { type: 'page', physical: loc.p, printed: loc.f ?? null };
     if (present(loc.pe) || present(loc.fe)) end = { type: 'page', physical: loc.pe ?? loc.p, printed: loc.fe ?? null };
   } else if (present(loc.t)) {
-    anchor = { type: 'time', t0: loc.t[0], t1: loc.t[1] };
+    anchor = { type: 'time', t0: loc.t[0], t1: loc.t[1] ?? loc.t[0] };
   } else if (present(loc.sl)) {
     anchor = { type: 'slide', n: loc.sl };
   } else if (present(loc.sh)) {
@@ -333,10 +397,11 @@ export function locatorToAnchor(loc: AnchorLocator): { anchor: Anchor; anchor_en
     if (present(loc.f)) anchor.printed = loc.f;
   } else if (present(loc.ref)) {
     anchor = { type: 'canonical', scheme: loc.ref.scheme, ref: loc.ref.ref };
-  } else if (present(loc.s) || present(loc.para)) {
+  } else if (present(loc.s) || present(loc.para) || present(loc.f)) {
     anchor = { type: 'section', path: loc.s ?? [] };
     if (present(loc.para)) anchor.paragraph = loc.para;
     if (present(loc.f)) anchor.printed = loc.f;
+    if (present(loc.fe)) end = { type: 'section', path: loc.s ?? [], printed: loc.fe };
   } else {
     anchor = { type: 'image' };
   }

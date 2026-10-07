@@ -58,153 +58,127 @@ export function mapLegacyTarget(target: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Metadata (MetadatosDocumento → CSL), contract §7
+// Metadata (MetadatosDocumento → CSL), contract §7 (same rules as conformance/tools/spdfref.py)
 // ---------------------------------------------------------------------------
 
 interface LegacyName {
-  nombre?: string;
-  apellidos?: string;
-  orcid?: string;
+  nombre?: unknown;
+  apellidos?: unknown;
+  orcid?: unknown;
 }
 
-function names(list: unknown, orcid?: Record<string, string>): CslName[] | undefined {
-  if (!Array.isArray(list) || list.length === 0) return undefined;
+const truthy = (v: unknown): boolean => v !== undefined && v !== null && v !== '' && v !== 0 && v !== false;
+
+/** Spanish metadata field → CSL field (keys of `spdf.provenance`). */
+const LEGACY_FIELD: Record<string, string> = {
+  titulo: 'title', subtitulo: 'subtitle', tituloOriginal: 'original-title', autores: 'author', editores: 'editor',
+  traductores: 'translator', entrevistadores: 'interviewer', anio: 'issued', anioOriginal: 'original-date',
+  editorial: 'publisher', lugar: 'publisher-place', revista: 'container-title', contenedor: 'container-title',
+  coleccion: 'collection-title', volumen: 'volume', numero: 'issue', paginas: 'page', edicion: 'edition', doi: 'DOI',
+  isbn: 'ISBN', url: 'URL', idioma: 'language', tipoCSL: 'type', resumen: 'abstract', idiomaOriginal: 'original_language',
+  fecha: 'issued', sinFecha: 'undated',
+};
+
+const LEGACY_PROVENANCE_SOURCE: Record<string, string> = { lectura: 'reading', usuario: 'user', colofon: 'colophon', impresores: 'printers' };
+
+function legacyNames(people: unknown): CslName[] {
   const out: CslName[] = [];
-  for (const raw of list as LegacyName[]) {
-    if (!raw || typeof raw !== 'object') continue;
+  for (const a of Array.isArray(people) ? (people as LegacyName[]) : []) {
+    if (!a || typeof a !== 'object') continue;
     const n: CslName = {};
-    const family = typeof raw.apellidos === 'string' ? raw.apellidos.trim() : '';
-    const given = typeof raw.nombre === 'string' ? raw.nombre.trim() : '';
-    if (family) n.family = family;
-    if (given) n.given = given;
-    if (!family && !given) continue;
-    out.push(n);
-    if (orcid && typeof raw.orcid === 'string' && raw.orcid.trim()) {
-      orcid[family && given ? `${family}, ${given}` : family || given] = raw.orcid.trim();
-    }
+    if (truthy(a.apellidos)) n.family = a.apellidos as string;
+    if (truthy(a.nombre)) n.given = a.nombre as string;
+    if (Object.keys(n).length) out.push(n);
   }
-  return out.length ? out : undefined;
+  return out;
 }
 
-function yearOf(y: unknown): number | undefined {
-  if (typeof y === 'number' && Number.isInteger(y)) return y;
-  if (typeof y === 'string' && /^-?\d+$/.test(y.trim())) return Number(y.trim());
-  return undefined;
+function dateParts(iso: string): number[] | null {
+  const m = /^(-?\d{1,4})(?:-(\d{1,2})(?:-(\d{1,2}))?)?/.exec(iso.trim());
+  if (!m) return null;
+  return [m[1], m[2], m[3]].filter((g): g is string => g !== undefined).map(Number);
 }
 
-function isoParts(s: unknown): number[] | undefined {
-  if (typeof s !== 'string') return undefined;
-  const m = /^(-?\d{1,4})(?:-(\d{1,2})(?:-(\d{1,2}))?)?/.exec(s.trim());
-  if (!m) return undefined;
-  const parts: number[] = [Number(m[1])];
-  if (m[2]) parts.push(Number(m[2]));
-  if (m[3]) parts.push(Number(m[3]));
-  return parts;
-}
-
-function str(v: unknown): string | undefined {
-  if (typeof v === 'number' && Number.isFinite(v)) return String(v);
-  if (typeof v !== 'string') return undefined;
-  const t = v.trim();
-  return t ? t : undefined;
-}
-
-/** CSL type when the legacy metadata has no `tipoCSL` (contract §7). `kind` is the legacy `tipo`. */
-export function defaultCslType(legacyKind: string | undefined, hasJournal: boolean): string {
-  switch (legacyKind) {
-    case 'audio':
-      return 'speech';
-    case 'video':
-      return 'motion_picture';
-    case 'web':
-      return 'webpage';
-    case 'presentacion':
-    case 'slides':
-      return 'speech';
-    case 'hoja':
-    case 'sheet':
-      return 'dataset';
-    case 'imagen':
-    case 'fotos':
-    case 'image':
-    case 'photos':
-      return 'graphic';
-    default:
-      return hasJournal ? 'article-journal' : 'book';
-  }
+/** CSL type for a legacy document without `tipoCSL` (`kind` = legacy `documentos.tipo`). */
+export function legacyDefaultType(kind: string | undefined, m: Record<string, unknown>): string {
+  if (truthy(m.tipoCSL)) return m.tipoCSL as string;
+  if (truthy(m.revista)) return 'article-journal';
+  const map: Record<string, string> = { audio: 'speech', video: 'motion_picture', web: 'webpage', presentacion: 'speech', hoja: 'dataset', imagen: 'graphic', fotos: 'graphic' };
+  return (kind !== undefined ? map[kind] : undefined) ?? 'book';
 }
 
 /** Legacy `metadatos` (parsed) → a CSL-JSON item with the `spdf` extension. `legacyKind` = `documentos.tipo`. */
 export function mapLegacyMetadata(raw: unknown, legacyKind?: string): CslItem {
   const m = (raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {}) as Record<string, unknown>;
+  const has = (k: string): boolean => {
+    const v = m[k];
+    return v !== undefined && v !== null && v !== '' && !(Array.isArray(v) && v.length === 0);
+  };
+  const item: Record<string, unknown> = { type: legacyDefaultType(legacyKind, m) };
   const spdf: Record<string, unknown> = {};
-  const orcid: Record<string, string> = {};
-  const title = str(m.titulo) ?? '';
-  const subtitle = str(m.subtitulo);
-  const journal = str(m.revista);
-  const item: CslItem = {
-    type: str(m.tipoCSL) ?? defaultCslType(legacyKind, journal !== undefined),
-    title: subtitle ? `${title}: ${subtitle}` : title,
-  };
-  if (subtitle) {
-    if (title) item['title-short'] = title;
-    spdf.subtitle = subtitle;
+  const title = truthy(m.titulo) ? m.titulo : '';
+  if (has('subtitulo')) {
+    item.title = `${String(title)}: ${String(m.subtitulo)}`;
+    item['title-short'] = title;
+    spdf.subtitle = m.subtitulo;
+  } else {
+    item.title = title;
   }
-  const set = (k: string, v: unknown) => {
-    if (v !== undefined) item[k] = v;
-  };
-  set('original-title', str(m.tituloOriginal));
-  set('author', names(m.autores, orcid));
-  set('editor', names(m.editores));
-  set('translator', names(m.traductores));
-  set('interviewer', names(m.entrevistadores));
-  const anio = yearOf(m.anio);
-  const fecha = isoParts(m.fecha);
-  if (fecha && (anio === undefined || fecha[0] === anio)) item.issued = { 'date-parts': [fecha] };
-  else if (anio !== undefined) item.issued = { 'date-parts': [[anio]] };
-  const original = yearOf(m.anioOriginal);
-  if (original !== undefined) item['original-date'] = { 'date-parts': [[original]] };
-  set('publisher', str(m.editorial));
-  set('publisher-place', str(m.lugar));
-  set('container-title', journal ?? str(m.contenedor));
-  set('collection-title', str(m.coleccion));
-  set('volume', str(m.volumen));
-  set('issue', str(m.numero));
-  set('page', str(m.paginas));
-  set('edition', str(m.edicion));
-  set('DOI', str(m.doi));
-  set('ISBN', str(m.isbn));
-  set('URL', str(m.url));
-  set('language', str(m.idioma));
-  set('abstract', str(m.resumen));
-  const originalLanguage = str(m.idiomaOriginal);
-  if (originalLanguage) spdf.original_language = originalLanguage;
-  if (Object.keys(orcid).length) spdf.orcid = orcid;
-  const sf = m.sinFecha as { desde?: unknown; hasta?: unknown; fundamento?: unknown } | undefined;
-  if (sf && typeof sf === 'object') {
+  if (has('tituloOriginal')) item['original-title'] = m.tituloOriginal;
+  const orcid: Record<string, unknown> = {};
+  for (const [src, dst] of [['autores', 'author'], ['editores', 'editor'], ['traductores', 'translator'], ['entrevistadores', 'interviewer']] as const) {
+    const names = legacyNames(m[src]);
+    if (names.length) item[dst] = names;
+    for (const a of Array.isArray(m[src]) ? (m[src] as LegacyName[]) : []) {
+      if (a && typeof a === 'object' && truthy(a.orcid)) {
+        const key = String(a.apellidos ?? '') + (truthy(a.nombre) ? `, ${String(a.nombre)}` : '');
+        orcid[key] = a.orcid;
+      }
+    }
+  }
+  const fecha = has('fecha') && typeof m.fecha === 'string' ? dateParts(m.fecha) : null;
+  if (fecha && (!has('anio') || fecha[0] === m.anio)) item.issued = { 'date-parts': [fecha] };
+  else if (has('anio')) item.issued = { 'date-parts': [[m.anio]] };
+  if (has('anioOriginal')) item['original-date'] = { 'date-parts': [[m.anioOriginal]] };
+  const simple: Array<[string, string]> = [
+    ['editorial', 'publisher'], ['lugar', 'publisher-place'], ['coleccion', 'collection-title'], ['volumen', 'volume'],
+    ['numero', 'issue'], ['paginas', 'page'], ['edicion', 'edition'], ['doi', 'DOI'], ['isbn', 'ISBN'], ['url', 'URL'],
+    ['idioma', 'language'], ['resumen', 'abstract'],
+  ];
+  for (const [src, dst] of simple) if (has(src)) item[dst] = m[src];
+  if (has('revista')) item['container-title'] = m.revista;
+  else if (has('contenedor')) item['container-title'] = m.contenedor;
+  if (has('idiomaOriginal')) spdf.original_language = m.idiomaOriginal;
+  if (has('sinFecha')) {
+    const sf = (m.sinFecha && typeof m.sinFecha === 'object' ? m.sinFecha : {}) as Record<string, unknown>;
     const u: Record<string, unknown> = {};
     if (sf.desde !== undefined && sf.desde !== null) u.from = sf.desde;
     if (sf.hasta !== undefined && sf.hasta !== null) u.to = sf.hasta;
-    if (sf.fundamento !== undefined && sf.fundamento !== null) u.basis = sf.fundamento;
+    if (truthy(sf.fundamento)) u.basis = sf.fundamento;
     spdf.undated = u;
   }
-  const proc = m.procedencia as Record<string, unknown> | undefined;
-  if (proc && typeof proc === 'object' && !Array.isArray(proc)) {
-    const p: Record<string, unknown> = {};
-    for (const [field, v] of Object.entries(proc)) {
-      if (v && typeof v === 'object' && !Array.isArray(v)) {
-        const o = v as Record<string, unknown>;
-        const e: Record<string, unknown> = {};
-        for (const [k, x] of Object.entries(o)) e[k === 'fuente' ? 'source' : k === 'confianza' ? 'confidence' : k] = x;
-        p[field] = e;
-      } else {
-        p[field] = v;
-      }
+  if (has('procedencia') && m.procedencia && typeof m.procedencia === 'object') {
+    const prov: Record<string, unknown> = {};
+    for (const [campo, v] of Object.entries(m.procedencia as Record<string, unknown>)) {
+      const key = LEGACY_FIELD[campo] ?? campo;
+      const o = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>;
+      const fuente = o.fuente;
+      prov[key] = {
+        source: typeof fuente === 'string' ? (LEGACY_PROVENANCE_SOURCE[fuente] ?? fuente) : (fuente ?? null),
+        confidence: o.confianza ?? null,
+      };
     }
-    if (Object.keys(p).length) spdf.provenance = p;
+    spdf.provenance = prov;
   }
+  if (Object.keys(orcid).length) spdf.orcid = orcid;
   if (Object.keys(spdf).length) item.spdf = spdf;
-  return item;
+  return item as CslItem;
+}
+
+/** Legacy modality names → 5.0 (`texto` → `text`…). */
+export function mapLegacyModalities(m: unknown): unknown {
+  const map: Record<string, string> = { texto: 'text', imagen: 'image', audio: 'audio', video: 'video', pdf: 'pdf' };
+  return Array.isArray(m) ? m.map((x) => (typeof x === 'string' ? (map[x] ?? x) : x)) : m;
 }
 
 /** Legacy `spdf` table keys → 5.0 `spdf_meta` keys. */

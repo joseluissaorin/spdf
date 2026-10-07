@@ -1,0 +1,94 @@
+name: js
+
+on:
+  push:
+    branches: [main]
+    paths: ["js/**", "conformance/**", ".github/workflows/js.yml"]
+  pull_request:
+    paths: ["js/**", "conformance/**", ".github/workflows/js.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  node:
+    name: node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ["22", "24", "26"]
+    defaults:
+      run:
+        working-directory: js
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+      - run: npm ci
+      - name: Typecheck (strict)
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      - name: Unit, file and conformance tests (node:sqlite and sqlite-wasm)
+        run: npx vitest run
+      - name: Conformance report (CLI)
+        if: always()
+        shell: bash
+        run: |
+          set -o pipefail
+          node dist/cli/main.js conformance ../conformance > conformance.json
+      - name: Upload conformance report
+        if: always() && matrix.node == '26'
+        uses: actions/upload-artifact@v4
+        with:
+          name: conformance-js
+          path: js/conformance.json
+          if-no-files-found: warn
+      - name: Package contents
+        if: matrix.node == '26'
+        run: npm pack --dry-run
+
+  bun:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: js
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile || bun install
+      - name: Conformance and round trip with bun:sqlite
+        run: bun test/bun/smoke.ts
+
+  browser:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: js
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "26"
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+      - run: npm ci
+      - name: Chromium for Playwright
+        run: npx playwright-core install --with-deps chromium
+      - run: npm run build
+      - name: Conformance in Chromium (sqlite-wasm), remote reading, OPFS
+        run: node test/browser/run.mjs
+      - name: Upload browser results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-js
+          path: |
+            js/test/browser/out/results.json
+            js/test/browser/out/conformance-browser.json
+          if-no-files-found: warn

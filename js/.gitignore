@@ -1,0 +1,6 @@
+dist/
+dist-check/
+node_modules/
+test/browser/out/
+conformance.json
+*.tgz

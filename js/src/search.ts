@@ -130,44 +130,53 @@ export interface LexicalOptions {
   limit?: number;
 }
 
-/** Raw lexical ranking: `[{n, score}]` in rank order. */
-export async function lexicalRanking(doc: SpdfDocument, query: string, limit: number): Promise<Array<{ n: number; score: number }>> {
+export type LexicalRoute = 'fts' | 'trigram' | 'substring';
+
+export interface LexicalRanking {
+  route: LexicalRoute;
+  /** The FTS5 MATCH string (null for the substring route or an empty query). */
+  match: string | null;
+  results: Array<{ n: number; id: string; score: number }>;
+}
+
+/** Raw lexical ranking (contract §6): route, MATCH string and `[{n, id, score}]` in rank order. */
+export async function lexicalRanking(doc: SpdfDocument, query: string, limit: number): Promise<LexicalRanking> {
   const parsed = parseQuery(query);
-  if (!parsed.terms.length || limit <= 0) return [];
+  if (!parsed.terms.length) return { route: 'fts', match: null, results: [] };
   const conn = doc.view.conn;
-  const info = doc.view.info;
+  const view = doc.view;
+  const info = view.info;
   const match = matchExpression(parsed);
+  const ft = view.tableName('fragments');
+  if (!ft) return { route: 'fts', match, results: [] };
+  const nCol = await view.expr('fragments', 'n');
+  const idCol = await view.expr('fragments', 'id');
+  const lim = Math.max(0, Math.floor(limit));
   if (isCjk(query.normalize('NFC'))) {
     if (info.trigram && parsed.terms.every((t) => cpLength(t) >= 3)) {
       const rows = await conn.all(
-        'SELECT rowid AS n, bm25(fragments_fts_trigram) AS r FROM fragments_fts_trigram WHERE fragments_fts_trigram MATCH ? ORDER BY r, rowid LIMIT ?',
-        [match, limit],
+        `SELECT f.${nCol} AS n, f.${idCol} AS id, bm25(fragments_fts_trigram) AS r FROM fragments_fts_trigram JOIN ${q(ft)} f ON f.${nCol} = fragments_fts_trigram.rowid WHERE fragments_fts_trigram MATCH ? ORDER BY r, f.${nCol} LIMIT ?`,
+        [match, lim],
       );
-      return rows.map((r) => ({ n: Number(r.n), score: -Number(r.r) }));
+      return { route: 'trigram', match, results: rows.map((r) => ({ n: Number(r.n), id: String(r.id), score: -Number(r.r) })) };
     }
-    // Substring fallback on fragments.text.
-    const table = doc.view.tableName('fragments');
-    if (!table) return [];
-    const textCol = await doc.view.expr('fragments', 'text');
-    const nCol = await doc.view.expr('fragments', 'n');
-    const hitsExpr = parsed.terms.map(() => `(instr(${textCol}, ?) > 0)`).join(' + ');
-    const params: SqlValue[] = [...parsed.terms];
-    let where = `hits > 0`;
-    if (parsed.phrases) where = `hits = ${parsed.terms.length}`;
+    const textCol = await view.expr('fragments', 'text');
+    const hitsSql = parsed.terms.map(() => `(instr(${textCol}, ?) > 0)`).join(' + ');
+    const need = parsed.phrases ? parsed.terms.length : 1;
     const rows = await conn.all(
-      `SELECT n, hits FROM (SELECT ${nCol} AS n, (${hitsExpr}) AS hits FROM ${q(table)}) WHERE ${where} ORDER BY hits DESC, n LIMIT ?`,
-      [...params, limit],
+      `SELECT ${nCol} AS n, ${idCol} AS id, (${hitsSql}) AS hits FROM ${q(ft)} WHERE (${hitsSql}) >= ? ORDER BY hits DESC, n LIMIT ?`,
+      [...parsed.terms, ...parsed.terms, need, lim],
     );
-    return rows.map((r) => ({ n: Number(r.n), score: Number(r.hits) }));
+    return { route: 'substring', match: null, results: rows.map((r) => ({ n: Number(r.n), id: String(r.id), score: Number(r.hits) })) };
   }
-  if (!info.fts) return [];
+  if (!info.fts) return { route: 'fts', match, results: [] };
   const fts = q(info.fts.table);
-  const weights = [1.0, 0.5, 0.5, 1.0].slice(0, Math.max(1, info.fts.columns.length || 4));
+  const weights = [1.0, 0.5, 0.5, 1.0].slice(0, Math.max(1, Math.min(4, info.fts.columns.length || 4)));
   const rows = await conn.all(
-    `SELECT rowid AS n, bm25(${fts}, ${weights.join(', ')}) AS r FROM ${fts} WHERE ${fts} MATCH ? ORDER BY r, rowid LIMIT ?`,
-    [match, limit],
+    `SELECT f.${nCol} AS n, f.${idCol} AS id, bm25(${fts}, ${weights.map((w) => w.toFixed(1)).join(', ')}) AS r FROM ${fts} JOIN ${q(ft)} f ON f.${nCol} = ${fts}.rowid WHERE ${fts} MATCH ? ORDER BY r, f.${nCol} LIMIT ?`,
+    [match, lim],
   );
-  return rows.map((r) => ({ n: Number(r.n), score: -Number(r.r) }));
+  return { route: 'fts', match, results: rows.map((r) => ({ n: Number(r.n), id: String(r.id), score: -Number(r.r) })) };
 }
 
 async function hydrate(doc: SpdfDocument, ranking: Array<{ n: number; score: number; via: Array<'lexical' | 'vector'> }>): Promise<SearchHit[]> {
@@ -183,7 +192,7 @@ async function hydrate(doc: SpdfDocument, ranking: Array<{ n: number; score: num
 
 export async function searchLexical(doc: SpdfDocument, query: string, options: LexicalOptions = {}): Promise<SearchHit[]> {
   const ranking = await lexicalRanking(doc, query, options.limit ?? 10);
-  return hydrate(doc, ranking.map((r) => ({ ...r, via: ['lexical'] })));
+  return hydrate(doc, ranking.results.map((r) => ({ n: r.n, score: r.score, via: ['lexical'] })));
 }
 
 // ---------------------------------------------------------------------------
@@ -195,7 +204,7 @@ export interface VectorOptions {
   limit?: number;
 }
 
-/** Raw vector ranking over one space and target. */
+/** Raw vector ranking over one space and target (contract §6), scores in f64. */
 export async function vectorRanking(
   doc: SpdfDocument,
   spaceId: string,
@@ -205,48 +214,47 @@ export async function vectorRanking(
 ): Promise<Array<{ id: string; score: number; tie: number | string }>> {
   const space = await doc.space(spaceId);
   if (!space) throw new Error(`Unknown vector space «${spaceId}».`);
+  if (query.length !== space.dims) throw new Error(`The query vector has ${query.length} dimensions; space «${spaceId}» has ${space.dims}.`);
   const view = doc.view;
   const vt = view.tableName('vectors');
-  if (!vt || limit <= 0) return [];
+  if (!vt) return [];
   const conn = view.conn;
   const rows = await conn.all(
     `SELECT ${await view.expr('vectors', 'id')} AS id, ${await view.expr('vectors', 'data')} AS data FROM ${q(vt)} WHERE ${await view.expr('vectors', 'space')} = ? AND ${await view.expr('vectors', 'target')} = ?`,
     [spaceId, doc.legacy ? legacyTarget(target) : target],
   );
-  // Tie-breakers: fragment n, unit ord, figure id.
-  const tieOf = new Map<string, number | string>();
+  const tieOf = new Map<string, number>();
   if (target === 'fragment') {
     const ft = view.tableName('fragments');
-    if (ft) for (const r of await conn.all(`SELECT ${await view.expr('fragments', 'id')} AS id, ${await view.expr('fragments', 'n')} AS n FROM ${q(ft)}`)) tieOf.set(String(r.id), Number(r.n));
+    if (ft) for (const r of await conn.all(`SELECT ${await view.expr('fragments', 'n')} AS n, ${await view.expr('fragments', 'id')} AS id FROM ${q(ft)}`)) tieOf.set(String(r.id), Number(r.n));
   } else if (target === 'unit') {
     for (const u of await view.rows('units', { columns: ['id', 'ord'] })) tieOf.set(String(u.id), Number(u.ord));
   }
-  const qv = Float64Array.from(query as ArrayLike<number>);
-  let qn = 0;
-  for (let i = 0; i < qv.length; i++) qn += (qv[i] as number) * (qv[i] as number);
-  qn = Math.sqrt(qn);
+  const qv = Array.from(query, Number);
+  let nq = 0;
+  for (const x of qv) nq += x * x;
+  nq = Math.sqrt(nq);
   const scored: Array<{ id: string; score: number; tie: number | string }> = [];
   for (const r of rows) {
     const v = decodeVector(r.data as Uint8Array, space.dtype);
-    let dot = 0;
-    let vn = 0;
+    let score = 0;
     const n = Math.min(v.length, qv.length);
-    for (let i = 0; i < n; i++) {
-      const x = v[i] as number;
-      dot += x * (qv[i] as number);
-      vn += x * x;
-    }
-    let score = dot;
+    for (let i = 0; i < n; i++) score += (qv[i] as number) * (v[i] as number);
     if (!space.normalized) {
-      const d = Math.sqrt(vn) * qn;
-      score = d === 0 ? 0 : dot / d;
+      let nv = 0;
+      for (let i = 0; i < v.length; i++) nv += (v[i] as number) * (v[i] as number);
+      nv = Math.sqrt(nv);
+      score = nq && nv ? score / (nq * nv) : 0;
     }
     const id = String(r.id);
-    const tie = target === 'figure' ? id : (tieOf.get(id) ?? Number.MAX_SAFE_INTEGER);
-    scored.push({ id, score, tie });
+    scored.push({ id, score, tie: target === 'figure' ? id : (tieOf.get(id) ?? Number.MAX_SAFE_INTEGER) });
   }
-  scored.sort((a, b) => b.score - a.score || (typeof a.tie === 'number' && typeof b.tie === 'number' ? a.tie - b.tie : String(a.tie) < String(b.tie) ? -1 : String(a.tie) > String(b.tie) ? 1 : 0));
-  return scored.slice(0, limit);
+  scored.sort((a, b) => {
+    if (a.score !== b.score) return b.score - a.score;
+    if (typeof a.tie === 'number' && typeof b.tie === 'number') return a.tie - b.tie;
+    return String(a.tie) < String(b.tie) ? -1 : String(a.tie) > String(b.tie) ? 1 : 0;
+  });
+  return scored.slice(0, Math.max(0, limit));
 }
 
 export async function searchVector(doc: SpdfDocument, spaceId: string, query: ArrayLike<number>, options: VectorOptions = {}): Promise<VectorHit[]> {
@@ -289,21 +297,26 @@ export async function searchHybrid(
   const limit = options.limit ?? 10;
   const k = options.k ?? 10;
   const depth = options.depth ?? Math.max(limit, 50);
-  const lexical = await lexicalRanking(doc, query, depth);
-  const vec = vector && spaceId ? await vectorRanking(doc, spaceId, vector, 'fragment', depth) : [];
-  const fused = new Map<number, { n: number; score: number; via: Array<'lexical' | 'vector'> }>();
-  lexical.forEach((r, i) => {
-    fused.set(r.n, { n: r.n, score: 1 / (k + i + 1), via: ['lexical'] });
-  });
-  vec.forEach((r, i) => {
-    const n = Number(r.tie);
-    if (!Number.isFinite(n) || n === Number.MAX_SAFE_INTEGER) return;
-    const e = fused.get(n);
-    if (e) {
-      e.score += 1 / (k + i + 1);
-      e.via.push('vector');
-    } else fused.set(n, { n, score: 1 / (k + i + 1), via: ['vector'] });
-  });
-  const ranked = [...fused.values()].sort((a, b) => b.score - a.score || a.n - b.n).slice(0, limit);
+  const lexical = (await lexicalRanking(doc, query, depth)).results.map((r) => r.id);
+  const vec = vector && spaceId ? (await vectorRanking(doc, spaceId, vector, 'fragment', depth)).map((r) => r.id) : [];
+  const scores = new Map<string, number>();
+  const via = new Map<string, Array<'lexical' | 'vector'>>();
+  for (const [name, list] of [['lexical', lexical], ['vector', vec]] as const) {
+    list.forEach((id, i) => {
+      scores.set(id, (scores.get(id) ?? 0) + 1 / (k + i + 1));
+      const v = via.get(id) ?? [];
+      v.push(name);
+      via.set(id, v);
+    });
+  }
+  const view = doc.view;
+  const ft = view.tableName('fragments');
+  const nOf = new Map<string, number>();
+  if (ft) for (const r of await view.conn.all(`SELECT ${await view.expr('fragments', 'n')} AS n, ${await view.expr('fragments', 'id')} AS id FROM ${q(ft)}`)) nOf.set(String(r.id), Number(r.n));
+  const ranked = [...scores.entries()]
+    .filter(([id]) => nOf.has(id))
+    .map(([id, score]) => ({ n: nOf.get(id) as number, score, via: via.get(id) as Array<'lexical' | 'vector'> }))
+    .sort((a, b) => b.score - a.score || a.n - b.n)
+    .slice(0, limit);
   return hydrate(doc, ranked);
 }

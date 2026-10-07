@@ -4,7 +4,7 @@
  */
 
 import { sha256Hex, concatBytes } from './bytes.js';
-import { canonicalize } from './canonical.js';
+import { canonicalize, canonicalJson } from './canonical.js';
 import { openSpdf, type OpenOptions, type SpdfDocument, type SpdfInput } from './document.js';
 import { tokenizerOf, q, type ViewRow } from './view.js';
 
@@ -23,6 +23,18 @@ const FRAGMENT_KEYS = ['n', 'id', 'unit', 'ord', 'text', 'context', 'section', '
 const FIGURE_KEYS = ['id', 'unit', 'image', 'caption', 'description', 'anchor'] as const;
 const SPACE_KEYS = ['id', 'provider', 'model', 'version', 'dims', 'dtype', 'normalized', 'truncated_from', 'modalities', 'task_prefixes', 'created'] as const;
 const PROVENANCE_KEYS = ['stage', 'provider', 'model', 'detail', 'ms', 'at'] as const;
+
+/** Provenance entries ordered by the UTF-8 bytes of their JCS form (contract draft 1.1). */
+export function sortProvenance(rows: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
+  const enc = new TextEncoder();
+  const keyed = rows.map((r) => ({ r, k: enc.encode(canonicalJson(r)) }));
+  keyed.sort((a, b) => {
+    const n = Math.min(a.k.length, b.k.length);
+    for (let i = 0; i < n; i++) if (a.k[i] !== b.k[i]) return (a.k[i] as number) - (b.k[i] as number);
+    return a.k.length - b.k.length;
+  });
+  return keyed.map((x) => x.r);
+}
 
 /** The canonical dump of an open document (numbers rounded, keys sorted). */
 export async function dumpDocument(doc: SpdfDocument): Promise<CanonicalDump> {
@@ -72,7 +84,7 @@ export async function dumpDocument(doc: SpdfDocument): Promise<CanonicalDump> {
     }
   }
   out.blobs = blobs;
-  out.provenance = (await view.rows('provenance', { orderBy: 'at, stage, provider, model, detail, ms', raw: false })).map((r) => pick(r, PROVENANCE_KEYS));
+  out.provenance = sortProvenance((await view.rows('provenance')).map((r) => pick(r, PROVENANCE_KEYS)));
   out.extensions = doc.legacy ? [] : (await view.rows('extensions', { orderBy: 'name' })).map((r) => pick(r, ['name', 'version', 'required']));
   return canonicalize(out);
 }

@@ -51,19 +51,23 @@ describe('anchor URIs', () => {
   it('encodes every parameter in canonical order', () => {
     const a: Anchor = { type: 'page', physical: 10, printed: 'xiv', region: { x: 0.125, y: 0.2, w: 0.3, h: 0.1 } };
     const end: Anchor = { type: 'page', physical: 11, printed: 'xv' };
-    expect(formatLocator(anchorToLocator(a, end))).toBe('p=10&pe=11&f=xiv&fe=xv&xywh=percent:12.5,20,30,10');
-    expect(formatLocator(anchorToLocator({ type: 'time', t0: 4160, t1: 4175.5 }))).toBe('t=4160,4175.5');
-    expect(formatLocator(anchorToLocator({ type: 'section', path: ['Chapter 3', '3.2 The panopticon/x'], paragraph: 4, printed: '145' }))).toBe(
-      'f=145&s=Chapter%203/3.2%20The%20panopticon%2Fx&para=4',
+    expect(formatLocator('x', anchorToLocator(a, end))).toBe('spdf:x#p=10&pe=11&f=xiv&fe=xv&xywh=percent:12.5,20,30,10');
+    expect(formatLocator('x', anchorToLocator({ type: 'time', t0: 4160, t1: 4175.5 }))).toBe('spdf:x#t=4160,4175.5');
+    expect(formatLocator('x', anchorToLocator({ type: 'section', path: ['Chapter 3', '3.2 The panopticon/x'], paragraph: 4, printed: '145' }))).toBe('spdf:x#f=145&s=Chapter%203/3.2%20The%20panopticon%2Fx&para=4',
     );
-    expect(formatLocator(anchorToLocator({ type: 'sheet', sheet: 'Datos 1', row_from: 4, row_to: 9 }))).toBe('sh=Datos%201&rows=4-9');
-    expect(formatLocator(anchorToLocator({ type: 'verse', line_from: 1234, line_to: 1240 }))).toBe('v=1234-1240');
-    expect(formatLocator(anchorToLocator({ type: 'verse', line_from: 7, line_to: 7 }))).toBe('v=7');
-    expect(formatLocator(anchorToLocator({ type: 'canonical', scheme: 'stephanus', ref: '514a' }))).toBe('ref=stephanus:514a');
-    expect(formatLocator(anchorToLocator({ type: 'slide', n: 3 }))).toBe('sl=3');
+    expect(formatLocator('x', anchorToLocator({ type: 'sheet', sheet: 'Datos 1', row_from: 4, row_to: 9 }))).toBe('spdf:x#sh=Datos%201&rows=4-9');
+    expect(formatLocator('x', anchorToLocator({ type: 'verse', line_from: 1234, line_to: 1240 }))).toBe('spdf:x#v=1234-1240');
+    expect(formatLocator('x', anchorToLocator({ type: 'verse', line_from: 7, line_to: 7 }))).toBe('spdf:x#v=7');
+    expect(formatLocator('x', anchorToLocator({ type: 'canonical', scheme: 'stephanus', ref: '514a' }))).toBe('spdf:x#ref=stephanus:514a');
+    expect(formatLocator('x', anchorToLocator({ type: 'slide', n: 3 }))).toBe('spdf:x#sl=3');
   });
   it('parses leniently and ignores unknown keys', () => {
     const p = parseAnchorUri('spdf:mi%20doc#zz=1&xywh=percent:10,20,30,40&f=%C3%B1');
+    expect(() => parseAnchorUri('spdf:x#xywh=1,2,3,4')).toThrow();
+    expect(() => parseAnchorUri('spdf:x#p=0')).toThrow();
+    expect(() => parseAnchorUri('spdf:x#p=1&p=2')).toThrow();
+    expect(() => parseAnchorUri('spdf:x#f=%FF')).toThrow();
+    expect(parseAnchorUri('spdf:x#t=npt:1:09:20,1:09:35.5').locator).toEqual({ t: [4160, 4175.5] });
     expect(p.docref).toBe('mi doc');
     expect(p.locator).toEqual({ f: 'ñ', xywh: [0.1, 0.2, 0.3, 0.4] });
     expect(locatorToAnchor({ t: [1, 2] }).anchor).toEqual({ type: 'time', t0: 1, t1: 2 });
@@ -71,7 +75,8 @@ describe('anchor URIs', () => {
 });
 
 describe('short citation', () => {
-  const m = (author: CslItem['author'], extra: Partial<CslItem> = {}): CslItem => ({ type: 'book', title: 'Vigilar y castigar: nacimiento de la prisión', author, issued: { 'date-parts': [[1975]] }, ...extra });
+  const m = (author?: CslItem['author'], extra: Record<string, unknown> = {}): CslItem =>
+    ({ type: 'book', title: 'Vigilar y castigar: nacimiento de la prisión', ...(author ? { author } : {}), issued: { 'date-parts': [[1975]] }, ...extra }) as CslItem;
   const page = (printed: string | null, extra: Record<string, unknown> = {}): Anchor => ({ type: 'page', physical: 9, printed, ...extra }) as Anchor;
   it('names, years and pages', () => {
     expect(cite(page('145'), m([{ family: 'Foucault', given: 'Michel' }]))).toBe('(Foucault, 1975, p. 145)');
@@ -82,8 +87,8 @@ describe('short citation', () => {
     expect(cite(page('1'), m([{ family: 'A' }, { family: 'B' }, { family: 'C' }]), 'en')).toBe('(A et al., 1975, p. 1)');
     expect(cite(page('1'), m([{ literal: 'UNESCO' }]))).toBe('(UNESCO, 1975, p. 1)');
     expect(cite(page('1'), m([{ family: 'Gogh', 'non-dropping-particle': 'van' }]))).toBe('(van Gogh, 1975, p. 1)');
-    expect(cite(page('1'), m(undefined, { issued: undefined }))).toBe('(Vigilar y castigar, s. f., p. 1)');
-    expect(cite(page('1'), m(undefined, { issued: undefined }), 'en')).toBe('(Vigilar y castigar, n.d., p. 1)');
+    expect(cite(page('1'), m(undefined, { issued: {} }))).toBe('(Vigilar y castigar, s. f., p. 1)');
+    expect(cite(page('1'), m(undefined, { issued: {} }), 'en')).toBe('(Vigilar y castigar, n.d., p. 1)');
     expect(cite(page('1'), m([{ family: 'Platón' }], { issued: { 'date-parts': [[-380]] } }))).toBe('(Platón, 380 a. C., p. 1)');
     expect(cite(page('1'), m([{ family: 'Plato' }], { issued: { 'date-parts': [[-380]] } }), 'en')).toBe('(Plato, 380 BC, p. 1)');
     expect(cite(page('xiv'), m([{ family: 'F' }]))).toBe('(F, 1975, p. xiv)');
@@ -102,6 +107,7 @@ describe('short citation', () => {
     expect(cite({ type: 'slide', n: 3 }, a)).toBe('(Cortázar, 1975, diap. 3)');
     expect(cite({ type: 'slide', n: 3 }, a, 'en')).toBe('(Cortázar, 1975, slide 3)');
     expect(cite({ type: 'sheet', sheet: 'Data', row_from: 4, row_to: 9 }, a)).toBe('(Cortázar, 1975, Data, filas 4-9)');
+    expect(cite({ type: 'sheet', sheet: 'Data', row_from: 4, row_to: 4 }, a, 'en')).toBe('(Cortázar, 1975, Data, row 4)');
     expect(cite({ type: 'verse', line_from: 1234, line_to: 1240 }, a)).toBe('(Cortázar, 1975, vv. 1234-1240)');
     expect(cite({ type: 'verse', line_from: 1234 }, a, 'en')).toBe('(Cortázar, 1975, v. 1234)');
     expect(cite({ type: 'canonical', scheme: 'stephanus', ref: '514a' }, a)).toBe('(Cortázar, 1975, 514a)');
@@ -184,7 +190,7 @@ describe('legacy mapping', () => {
         orcid: { 'Pérez, Ana': 'X' },
         original_language: 'fr',
         undated: { from: 1600, to: 1610, basis: 'impresor' },
-        provenance: { titulo: { source: 'colofon', confidence: 0.9 } },
+        provenance: { title: { source: 'colophon', confidence: 0.9 } },
       },
     });
     expect(mapLegacyMetadata({ titulo: 'T' }, 'video').type).toBe('motion_picture');

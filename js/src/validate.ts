@@ -1,14 +1,15 @@
 /**
- * Validation (contract §12), in the contract's order. `validate()` never throws on a bad
+ * Validation (contract §12), in the contract's order and with the same rules as the
+ * reference oracle (`conformance/tools/spdfref.py`). `validate()` never throws on a bad
  * file: problems become errors (`valid: false`) or warnings.
  */
 
-import type { RandomAccessSource, SqlValue } from './port.js';
+import type { RandomAccessSource, SqlConnection, SqlValue } from './port.js';
 import { SpdfError } from './errors.js';
 import { sha256Hex } from './bytes.js';
 import { openRaw, openSpdf, type OpenOptions, type RawOpen, type SpdfInput } from './document.js';
-import { View, q, parseJson } from './view.js';
-import { COLUMNS, DTYPE_SIZE, LEGACY_COLUMNS, LEGACY_TABLES, REQUIRED_META, TABLES, type TableName } from './schema.js';
+import { q, parseJson } from './view.js';
+import { COLUMNS, DTYPE_SIZE, LEGACY_TRIGGERS, REQUIRED_META } from './schema.js';
 import { checkAnchor, codePointLength } from './anchors.js';
 import { contentSha256OfDump, verifyContentHash } from './integrity.js';
 import { dumpDocument } from './dump.js';
@@ -34,14 +35,25 @@ export interface ValidateOptions extends OpenOptions {
   blobCheck?: boolean;
 }
 
-/** Legacy 4.0 columns (4.1 added `palabras` and `texto_busqueda`, which are optional). */
-const LEGACY_OPTIONAL = new Set(['units.words', 'fragments.search_text']);
+const REQUIRED_TABLES: Record<string, readonly string[]> = { ...COLUMNS, fragments_fts: [] };
+
+function jsonOk(s: SqlValue | undefined): boolean {
+  if (typeof s !== 'string') return false;
+  try {
+    JSON.parse(s);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 /** Validates a file (bytes, Blob, path, or `{source}` for random-access reading). */
 export async function validate(input: SpdfInput | { source: RandomAccessSource; head?: Uint8Array }, options: ValidateOptions = {}): Promise<ValidationReport> {
   const errors: ValidationIssue[] = [];
   const warnings: ValidationIssue[] = [];
-  const report = (version: string | null, profile: string[] = []): ValidationReport => ({ valid: errors.length === 0, version, profile, errors, warnings });
+  let version: string | null = null;
+  let profile: string[] = [];
+  const result = (): ValidationReport => ({ valid: errors.length === 0, version, profile, errors, warnings });
   const err = (code: string, message: string, where: string | null = null) => errors.push({ code, message, where });
   const warn = (code: string, message: string, where: string | null = null) => warnings.push({ code, message, where });
 
@@ -49,239 +61,197 @@ export async function validate(input: SpdfInput | { source: RandomAccessSource; 
   try {
     raw = await openRaw(input, options);
   } catch (e) {
-    if (e instanceof SpdfError) err(e.code, e.message.replace(/^E\d+: /, ''), e.where ?? null);
-    else err('E001', `cannot open: ${(e as Error).message}`);
-    return report(null);
+    err('E001', e instanceof SpdfError ? e.message.replace(/^E\d+: /, '') : `cannot open: ${(e as Error).message}`);
+    return result();
   }
   const { conn, info } = raw;
   try {
-    // gzip
-    if (raw.gzipped && !info.legacy && info.version) warn('E003', 'SPDF 5.0 files must not be gzip-wrapped');
-    // application_id / user_version
     if (!info.version || info.version === '3.0') {
-      err('E002', info.version === '3.0' ? 'SPDF 3.0 (Scholaris v1–v3) is not a 5.0 or 4.x file' : `unknown application_id ${info.applicationId} / user_version ${info.userVersion}`);
-      return report(info.version);
+      err('E002', 'unknown application_id or user_version');
+      return result();
     }
-    if (!info.legacy && info.version !== '5.0') warn('W105', `newer minor version ${info.version}`);
-    if (info.legacy) warn('W110', `legacy SPDF ${info.version} file`);
-    // triggers / views
-    for (const f of info.forbidden) err('E020', `${f.type} ${f.name} present`, f.name);
-
-    const view = new View(conn, info);
-    // required tables
-    const present = new Set<TableName>();
-    for (const t of TABLES) {
-      if (info.legacy && t === 'extensions') continue;
-      const name = info.legacy ? (LEGACY_TABLES[t] as string) : t;
-      if (info.tables.has(name.toLowerCase())) present.add(t);
-      else err('E010', `missing required table ${name}`, name);
-    }
-    const ftsName = info.legacy ? 'fragmentos_fts' : 'fragments_fts';
-    if (!info.tables.has(ftsName)) err('E010', `missing required table ${ftsName}`, ftsName);
-    // required columns
-    for (const t of present) {
-      const physical = view.tableName(t) as string;
-      const cols = await view.columnsOf(physical);
-      for (const c of COLUMNS[t]) {
-        let name: string | null = c;
-        if (info.legacy) {
-          const m = LEGACY_COLUMNS[t];
-          name = c in m ? (m[c] as string | null) : c;
-          if (name === null || LEGACY_OPTIONAL.has(`${t}.${c}`)) continue;
-        }
-        if (!cols.has(name)) err('E011', `missing column ${physical}.${name}`, `${physical}.${name}`);
+    version = info.version;
+    if (info.legacy) {
+      warn('W110', `legacy SPDF ${info.version} file`);
+      for (const t of ['spdf', 'documentos', 'unidades', 'fragmentos', 'fragmentos_fts']) if (!info.tables.has(t)) err('E010', `missing legacy table ${t}`, t);
+      for (const r of await conn.all("SELECT name, type FROM sqlite_master WHERE type IN ('trigger', 'view')")) {
+        if (!(r.type === 'trigger' && (LEGACY_TRIGGERS as readonly string[]).includes(String(r.name)))) err('E020', `${String(r.type)} ${String(r.name)} present`, String(r.name));
       }
+      return result();
     }
-    // spdf_meta keys
-    const meta: Record<string, string> = {};
-    if (present.has('spdf_meta')) {
-      try {
-        for (const r of await view.rows('spdf_meta')) meta[String(r.key)] = String(r.value);
-      } catch {
-        /* reported as E011 */
-      }
-      if (!info.legacy) for (const k of REQUIRED_META) if (meta[k] === undefined) err('E012', `missing spdf_meta key ${k}`, `spdf_meta.${k}`);
-    }
-    const version = info.legacy ? info.version : (meta.spdf_version ?? info.version);
-    const profile = (meta.profile ?? '').split(/\s+/).filter(Boolean);
-    if (!present.has('documents')) return report(version, profile);
+    if (raw.gzipped) warn('E003', 'SPDF 5.0 should not be gzip-wrapped');
+    if (version !== '5.0') warn('W105', `newer minor version ${version}`);
+    for (const r of await conn.all("SELECT name, type FROM sqlite_master WHERE type IN ('trigger', 'view')")) err('E020', `${String(r.type)} ${String(r.name)} present`, String(r.name));
 
-    const safe = async <T>(fn: () => Promise<T>, fallback: T): Promise<T> => {
-      try {
-        return await fn();
-      } catch (e) {
-        err('E011', `cannot read: ${(e as Error).message}`);
-        return fallback;
-      }
-    };
-
-    // exactly one document
-    const docs = await safe(() => view.rows('documents', { raw: true, orderBy: 'id' }), []);
-    if (docs.length !== 1) err('E013', `documents holds ${docs.length} rows`, 'documents');
-    // metadata / rights
-    for (const d of docs) {
-      const where = `documents/${String(d.id)}`;
-      let m: unknown;
-      try {
-        m = JSON.parse(String(d.metadata));
-      } catch {
-        err('E050', 'metadata is not valid JSON', `${where}/metadata`);
+    const present = new Map<string, Set<string>>();
+    for (const [t, cols] of Object.entries(REQUIRED_TABLES)) {
+      if (!info.tables.has(t)) {
+        err('E010', `missing table ${t}`, t);
         continue;
       }
-      if (!info.legacy) {
-        const o = m as Record<string, unknown> | null;
-        if (!o || typeof o !== 'object' || Array.isArray(o) || typeof o.type !== 'string' || typeof o.title !== 'string') {
-          err('E051', 'metadata has no string "type" and "title"', `${where}/metadata`);
-        }
-        if (d.rights !== null && d.rights !== undefined) {
-          try {
-            const r = JSON.parse(String(d.rights));
-            if (r !== null && (typeof r !== 'object' || Array.isArray(r))) err('E050', 'rights is not a JSON object', `${where}/rights`);
-          } catch {
-            err('E050', 'rights is not valid JSON', `${where}/rights`);
+      const have = new Set((await conn.all(`PRAGMA table_info(${q(t)})`)).map((r) => String(r.name)));
+      present.set(t, have);
+      for (const c of cols) if (!have.has(c)) err('E011', `missing column ${t}.${c}`, `${t}.${c}`);
+    }
+    const ok = (t: string, ...cols: string[]): boolean => {
+      const have = present.get(t);
+      return !!have && cols.every((c) => have.has(c));
+    };
+
+    const meta: Record<string, string> = {};
+    if (ok('spdf_meta', 'key', 'value')) {
+      for (const r of await conn.all('SELECT key, value FROM spdf_meta')) meta[String(r.key)] = String(r.value);
+      for (const k of REQUIRED_META) if (!(k in meta)) err('E012', `missing spdf_meta key ${k}`, k);
+      profile = (meta.profile ?? '').split(/\s+/).filter(Boolean);
+    }
+
+    let docs: Array<{ id: SqlValue; metadata: SqlValue; rights: SqlValue; unit_count: SqlValue }> = [];
+    if (ok('documents', 'id', 'metadata')) {
+      docs = ok('documents', 'rights', 'unit_count')
+        ? ((await conn.all('SELECT id, metadata, rights, unit_count FROM documents')) as typeof docs)
+        : (await conn.all('SELECT id, metadata FROM documents')).map((r) => ({ id: r.id ?? null, metadata: r.metadata ?? null, rights: null, unit_count: null }));
+      if (docs.length !== 1) err('E013', `documents has ${docs.length} rows`, 'documents');
+      for (const d of docs) {
+        const did = String(d.id);
+        try {
+          if (typeof d.metadata !== 'string') throw new Error('not text');
+          const o = JSON.parse(d.metadata) as Record<string, unknown> | null;
+          if (!(o && typeof o === 'object' && !Array.isArray(o) && typeof o.type === 'string' && typeof o.title === 'string')) {
+            err('E051', 'metadata needs a string type and title', did);
           }
+        } catch {
+          err('E050', 'metadata is not valid JSON', did);
         }
-      } else if (!m || typeof m !== 'object' || typeof (m as Record<string, unknown>).titulo !== 'string') {
-        err('E051', 'legacy metadata has no "titulo"', `${where}/metadata`);
+        if (d.rights !== null && d.rights !== undefined && !jsonOk(d.rights)) err('E050', 'rights is not valid JSON', did);
       }
     }
-    // extensions
-    if (!info.legacy && present.has('extensions')) {
-      const req = await safe(() => conn.all('SELECT name FROM extensions WHERE required <> 0 ORDER BY name'), []);
-      for (const r of req) err('E060', `unknown required extension ${String(r.name)}`, `extensions/${String(r.name)}`);
+
+    if (ok('extensions', 'name', 'required')) {
+      for (const r of await conn.all('SELECT name, required FROM extensions ORDER BY name')) {
+        if (Number(r.required)) err('E060', `unknown required extension ${String(r.name)}`, String(r.name));
+      }
     }
-    // units.ord
-    const units = present.has('units') ? await safe(() => view.rows('units', { orderBy: 'ord, id', columns: ['id', 'ord', 'anchor', 'text'] }), []) : [];
-    if (!info.legacy) {
-      let expected = 1;
+
+    const texts = new Map<string, string>();
+    if (ok('units', 'id', 'ord', 'anchor', 'text')) {
+      const units = await conn.all('SELECT id, ord, anchor, text FROM units ORDER BY ord, id');
+      if (!units.every((u, i) => typeof u.ord === 'number' && u.ord === i + 1)) err('E090', 'units.ord is not 1..N', 'units');
+      const d0 = docs[0];
+      if (docs.length === 1 && d0 && d0.unit_count !== null && d0.unit_count !== undefined && Number(d0.unit_count) !== units.length) {
+        warn('W102', `unit_count ${String(d0.unit_count)} but ${units.length} units`, 'documents.unit_count');
+      }
       for (const u of units) {
-        if (Number(u.ord) !== expected) {
-          err('E090', `units.ord is not contiguous from 1 (found ${String(u.ord)} where ${expected} was expected)`, `units/${String(u.id)}`);
-          break;
-        }
-        expected++;
+        const text = typeof u.text === 'string' ? u.text : String(u.text ?? '');
+        texts.set(String(u.id), text);
+        anchorError(err, u.anchor, text, `units/${String(u.id)}`);
       }
     }
-    // anchors
-    const textLength = new Map<string, number>();
-    let hasTime = false;
-    for (const u of units) {
-      const len = codePointLength(String(u.text ?? ''));
-      textLength.set(String(u.id), len);
-      const p = checkAnchor(u.anchor, len);
-      if (p) err(p.code, p.message, `units/${String(u.id)}/anchor`);
-      if (u.anchor && typeof u.anchor === 'object' && (u.anchor as { type?: unknown }).type === 'time') hasTime = true;
-    }
-    if (present.has('fragments')) {
-      const frags = await safe(() => view.rows('fragments', { orderBy: 'n', columns: ['n', 'id', 'unit', 'anchor', 'anchor_end'] }), []);
-      for (const f of frags) {
-        const p = checkAnchor(f.anchor, textLength.get(String(f.unit)));
-        if (p) err(p.code, p.message, `fragments/${String(f.id)}/anchor`);
-        if (f.anchor_end !== null && f.anchor_end !== undefined) {
-          const pe = checkAnchor(f.anchor_end);
-          if (pe) err(pe.code, pe.message, `fragments/${String(f.id)}/anchor_end`);
-        }
+    if (ok('fragments', 'id', 'unit', 'anchor')) {
+      const hasEnd = present.get('fragments')?.has('anchor_end') ?? false;
+      for (const f of await conn.all(`SELECT id, unit, anchor, ${hasEnd ? 'anchor_end' : 'NULL'} AS anchor_end FROM fragments ORDER BY n`)) {
+        anchorError(err, f.anchor, texts.get(String(f.unit)), `fragments/${String(f.id)}`);
+        if (f.anchor_end !== null && f.anchor_end !== undefined) anchorError(err, f.anchor_end, undefined, `fragments/${String(f.id)}/anchor_end`);
       }
     }
-    if (present.has('figures')) {
-      const figs = await safe(() => view.rows('figures', { orderBy: 'id', columns: ['id', 'unit', 'anchor'] }), []);
-      for (const f of figs) {
-        const p = checkAnchor(f.anchor, textLength.get(String(f.unit)));
-        if (p) err(p.code, p.message, `figures/${String(f.id)}/anchor`);
+    if (ok('figures', 'id', 'unit', 'anchor')) {
+      for (const g of await conn.all('SELECT id, unit, anchor FROM figures ORDER BY id')) anchorError(err, g.anchor, texts.get(String(g.unit)), `figures/${String(g.id)}`);
+    }
+
+    const spaces = new Map<string, { dims: number; dtype: string }>();
+    if (ok('spaces', 'id', 'dims', 'dtype')) {
+      for (const s of await conn.all('SELECT id, dims, dtype FROM spaces ORDER BY id')) {
+        const dtype = String(s.dtype);
+        spaces.set(String(s.id), { dims: Number(s.dims), dtype });
+        if (!(dtype in DTYPE_SIZE)) err('E032', `unknown dtype ${JSON.stringify(dtype)}`, String(s.id));
       }
     }
-    // spaces / vectors
-    let vectorCount = 0;
-    if (present.has('spaces') && present.has('vectors')) {
-      const spaces = await safe(() => view.rows('spaces', { orderBy: 'id', columns: ['id', 'dims', 'dtype'] }), []);
-      const byId = new Map<string, { dims: number; dtype: string }>();
-      for (const s of spaces) {
-        const dtype = String(s.dtype ?? 'f32');
-        if (!(dtype in DTYPE_SIZE)) err('E032', `space ${String(s.id)} has unknown dtype ${dtype}`, `spaces/${String(s.id)}`);
-        byId.set(String(s.id), { dims: Number(s.dims), dtype });
-      }
-      const vt = view.tableName('vectors') as string;
-      const rows = await safe(
-        () =>
-          view.expr('vectors', 'data').then(async (data) =>
-            conn.all(
-              `SELECT ${await view.expr('vectors', 'target')} AS target, ${await view.expr('vectors', 'id')} AS id, ${await view.expr('vectors', 'space')} AS space, length(${data}) AS len FROM ${q(vt)} ORDER BY 1, 2, 3`,
-            ),
-          ),
-        [],
-      );
-      vectorCount = rows.length;
-      const unknown = new Set<string>();
-      for (const r of rows) {
-        const sid = String(r.space);
-        const s = byId.get(sid);
-        const where = `vectors/${String(r.target)}/${String(r.id)}/${sid}`;
-        if (!s) {
-          if (!unknown.has(sid)) err('E031', `vector space ${sid} is not in spaces`, where);
-          unknown.add(sid);
+    let nvec = 0;
+    if (ok('vectors', 'target', 'id', 'space', 'data')) {
+      for (const v of await conn.all('SELECT target, id, space, typeof(data) AS t, length(data) AS len FROM vectors ORDER BY space, target, id')) {
+        nvec++;
+        const where = `vectors/${String(v.space)}/${String(v.target)}/${String(v.id)}`;
+        const sp = spaces.get(String(v.space));
+        if (!sp) {
+          err('E031', `unknown space ${String(v.space)}`, where);
           continue;
         }
-        const size = DTYPE_SIZE[s.dtype];
-        if (size && Number(r.len) !== s.dims * size) err('E030', `vector length ${String(r.len)} ≠ ${s.dims} × ${size}`, where);
+        const size = DTYPE_SIZE[sp.dtype];
+        if (!size) continue;
+        if (v.t !== 'blob' || Number(v.len) !== sp.dims * size) err('E030', `vector length ${v.t === 'blob' ? String(v.len) : '?'} != ${sp.dims} x ${size}`, where);
       }
     }
-    // FTS integrity on an in-memory copy
-    if (options.ftsCheck !== false && info.tables.has(ftsName)) {
+
+    if (info.tables.has('fragments_fts') && options.ftsCheck !== false) {
+      let copy: SqlConnection | null = null;
       try {
-        const bytes = await conn.serialize();
-        const copy = await raw.engine.openBytes(bytes, { readOnly: false });
-        try {
-          await copy.exec('PRAGMA trusted_schema = OFF;');
-          await copy.run(`INSERT INTO ${q(ftsName)}(${q(ftsName)}, rank) VALUES ('integrity-check', 1)`);
-          if (info.trigram && !info.legacy) await copy.run("INSERT INTO fragments_fts_trigram(fragments_fts_trigram, rank) VALUES ('integrity-check', 1)");
-        } finally {
-          await copy.close();
-        }
+        copy = await raw.engine.openBytes(await conn.serialize(), { readOnly: false });
+        await copy.run("INSERT INTO fragments_fts(fragments_fts, rank) VALUES ('integrity-check', 1)");
+        if (info.tables.has('fragments_fts_trigram')) await copy.run("INSERT INTO fragments_fts_trigram(fragments_fts_trigram, rank) VALUES ('integrity-check', 1)");
       } catch (e) {
-        err('E070', `FTS index out of sync: ${(e as Error).message}`, ftsName);
+        err('E070', `FTS index out of sync: ${(e as Error).message}`, 'fragments_fts');
+      } finally {
+        await copy?.close();
       }
     }
-    // blobs
-    if (!info.legacy && present.has('blobs') && options.blobCheck !== false) {
-      const keys = await safe(() => conn.all('SELECT key, sha256 FROM blobs ORDER BY key'), []);
-      for (const k of keys) {
-        const [d] = await conn.all('SELECT data FROM blobs WHERE key = ?', [k.key as SqlValue]);
+
+    if (ok('blobs', 'key', 'sha256', 'data') && options.blobCheck !== false) {
+      for (const k of await conn.all('SELECT key, sha256 FROM blobs ORDER BY key')) {
+        const [d] = await conn.all('SELECT data FROM blobs WHERE key = ?', [k.key ?? null]);
         const data = d?.data instanceof Uint8Array ? d.data : new TextEncoder().encode(String(d?.data ?? ''));
-        const h = await sha256Hex(data);
-        if (String(k.sha256 ?? '').toLowerCase() !== h) err('E080', `blob ${String(k.key)} sha256 mismatch`, `blobs/${String(k.key)}`);
+        if ((await sha256Hex(data)) !== k.sha256) err('E080', 'blob sha256 mismatch', String(k.key));
       }
     }
-    // integrity
-    if (!info.legacy && (meta.content_sha256 !== undefined || meta.signature !== undefined) && docs.length >= 1 && errors.every((e) => e.code !== 'E020')) {
+
+    if ('content_sha256' in meta && errors.length === 0) {
+      let actual: string;
       try {
-        const doc = await openSpdf(await conn.serialize(), { ...(options.engine ? { engine: options.engine } : { engine: raw.engine }) });
+        const doc = await openSpdf(await conn.serialize(), { engine: raw.engine });
         try {
-          const hash = await contentSha256OfDump(await dumpDocument(doc));
-          if (meta.content_sha256 !== undefined && meta.content_sha256 !== hash) err('E081', 'content_sha256 does not match the content', 'spdf_meta.content_sha256');
-          if (meta.signature !== undefined) {
-            const ok = meta.signer ? await verifyContentHash(hash, meta.signature, meta.signer) : false;
-            if (!ok) err('E082', meta.signer ? 'signature does not verify' : 'signature without signer', 'spdf_meta.signature');
-          }
+          actual = await contentSha256OfDump(await dumpDocument(doc));
         } finally {
           await doc.close();
         }
       } catch (e) {
-        if (e instanceof SpdfError) {
-          /* already reported */
-        } else err('E081', `cannot compute content_sha256: ${(e as Error).message}`, 'spdf_meta.content_sha256');
+        actual = `unavailable (${(e as Error).message})`;
+      }
+      if (actual !== meta.content_sha256) err('E081', 'content_sha256 does not match the canonical dump', 'spdf_meta.content_sha256');
+      else if ('signature' in meta) {
+        const signer = meta.signer ?? '';
+        const okSig = signer.startsWith('ed25519:') && (await verifyContentHash(meta.content_sha256 as string, meta.signature as string, signer));
+        if (!okSig) err('E082', 'signature does not verify', 'spdf_meta.signature');
       }
     }
-    // profile warnings
-    if (profile.includes('semantic') && vectorCount === 0) warn('W100', 'profile semantic without vectors');
-    if (profile.includes('media') && !hasTime) warn('W101', 'profile media without time anchors');
-    for (const d of docs) {
-      const uc = Number(info.legacy ? d.unit_count : d.unit_count);
-      if (Number.isFinite(uc) && uc !== units.length) warn('W102', `unit_count ${uc} ≠ ${units.length} units`, `documents/${String(d.id)}`);
+
+    if (profile.includes('semantic') && nvec === 0) warn('W100', 'profile semantic without vectors');
+    if (profile.includes('media') && ok('units', 'anchor')) {
+      let hasTime = false;
+      for (const r of await conn.all('SELECT anchor FROM units')) {
+        if (!jsonOk(r.anchor)) continue;
+        const a = JSON.parse(r.anchor as string) as { type?: unknown } | null;
+        if (a && typeof a === 'object' && a.type === 'time') hasTime = true;
+      }
+      if (!hasTime) warn('W101', 'profile media without time anchors');
     }
-    return report(version, profile);
+    return result();
+  } catch (e) {
+    err('E001', `unreadable database: ${(e as Error).message}`);
+    return result();
   } finally {
     await conn.close();
   }
+}
+
+function anchorError(err: (code: string, message: string, where: string | null) => void, raw: SqlValue | undefined, text: string | undefined, where: string): void {
+  let a: unknown;
+  try {
+    if (typeof raw !== 'string') throw new Error('not text');
+    a = JSON.parse(raw);
+  } catch {
+    err('E040', 'anchor is not valid JSON', where);
+    return;
+  }
+  const p = checkAnchor(a, text === undefined ? undefined : codePointLength(text.normalize('NFC')));
+  if (p) err(p.code, p.message, where);
 }
 
 export { parseJson };
