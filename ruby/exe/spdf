@@ -1,0 +1,65 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Command-line tool of the Ruby implementation of SPDF.
+require_relative "../lib/spdf"
+
+USAGE = <<~TXT
+  spdf (Ruby) - read, validate, search and cite SPDF files
+
+    spdf validate FILE                   validation report (JSON)
+    spdf dump FILE                       canonical dump (RFC 8785 JSON)
+    spdf search FILE QUERY [LIMIT]       reference lexical search
+    spdf cite FILE FRAGMENT_ID [LOCALE]  short citation of a fragment (es|en)
+    spdf uri FILE FRAGMENT_ID            anchor URI of a fragment
+    spdf parse-uri URI                   parse an anchor URI into its locator
+    spdf csl FILE                        CSL-JSON
+    spdf bibtex FILE                     BibTeX
+    spdf conformance [DIR]               run the conformance suite
+TXT
+
+cmd, *args = ARGV
+need = ->(i, what) { args[i] or abort("#{what} missing\n\n#{USAGE}") }
+begin
+  case cmd
+  when "validate"
+    r = Spdf::Validator.validate(need.call(0, "FILE"))
+    puts JSON.pretty_generate(r)
+    exit(r["valid"] ? 0 : 1)
+  when "dump" then Spdf::Document.open(need.call(0, "FILE")) { |d| puts d.dump_json }
+  when "search"
+    Spdf::Document.open(need.call(0, "FILE")) { |d| puts JSON.pretty_generate(d.search_lexical(args[1].to_s, limit: (args[2] || 10).to_i)) }
+  when "cite" then Spdf::Document.open(need.call(0, "FILE")) { |d| puts d.cite_fragment(need.call(1, "FRAGMENT_ID"), locale: args[2] || "es") }
+  when "uri"
+    Spdf::Document.open(need.call(0, "FILE")) do |d|
+      f = d.fragment(need.call(1, "FRAGMENT_ID")) or abort("unknown fragment")
+      puts d.anchor_uri(f["anchor"], f["anchor_end"].is_a?(Hash) ? f["anchor_end"] : nil)
+    end
+  when "parse-uri" then puts JSON.pretty_generate(Spdf::AnchorUri.parse(need.call(0, "URI")))
+  when "csl" then Spdf::Document.open(need.call(0, "FILE")) { |d| puts d.csl_json }
+  when "bibtex" then Spdf::Document.open(need.call(0, "FILE")) { |d| puts d.bibtex }
+  when "eval"
+    $stdout.sync = true
+    $stdin.each_line do |line|
+      next if line.strip.empty?
+
+      res = begin
+        { "ok" => Spdf::Conformance.evaluate(JSON.parse(line)) }
+      rescue StandardError => e
+        { "error" => e.message }
+      end
+      puts JSON.generate(res)
+    end
+  when "conformance"
+    dir = args[0] || File.expand_path("../../conformance", __dir__)
+    r = Spdf::Conformance.new(dir).run
+    puts JSON.pretty_generate(r)
+    exit(r["failed"].empty? ? 0 : 1)
+  else
+    puts USAGE
+    exit(%w[help -h --help].include?(cmd) || cmd.nil? ? 0 : 2)
+  end
+rescue Spdf::Error => e
+  warn e.message
+  exit 1
+end
