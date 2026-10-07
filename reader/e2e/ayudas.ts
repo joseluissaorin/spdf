@@ -37,7 +37,7 @@ export async function abrirLimpio(page: Page, q = '?pruebas') {
 }
 
 export async function importar(page: Page, rutas: string[]) {
-  await page.locator('input[type=file][accept*=".spdf"]').setInputFiles(rutas);
+  await page.locator('input[type=file][accept^=".spdf,"]').setInputFiles(rutas);
 }
 
 /** Importa uno y espera a que se abra (con un solo fichero, se abre solo). */

@@ -311,7 +311,7 @@ export function Lector() {
                     if (Math.abs(dx) > 70 && Math.abs(dx) > 2 * Math.abs(dy)) irA(actualRef.current + (dx < 0 ? 1 : -1));
                   }} onKeyUp={(e) => { if (e.shiftKey) leerSeleccion(); }} onScroll={() => seleccion && setSeleccion(null)}>
                   {unidad && (
-                    <div className="hoja" key={unidad.id}>
+                    <div className="hoja" key={unidad.id} data-unidad={unidad.id}>
                       <div className="margen" aria-hidden="true">
                         <span className="folio">{unidad.printed ? `${unidad.anchor.type === 'page' && unidad.anchor.source === 'inferred' ? `[${unidad.printed}]` : unidad.printed}` : t('sinFolio')}</span>
                         <span className="fisica">{unidad.ord}/{total}</span>
