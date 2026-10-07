@@ -1,0 +1,15 @@
+{
+  "expect": {
+    "char": null,
+    "document": false,
+    "fragments": [],
+    "units": [],
+    "xywh": null
+  },
+  "id": "locate-quijote-other-document",
+  "input": {
+    "file": "files/quijote.spdf",
+    "reference": "spdf:sha256-0000000000000000000000000000000000000000000000000000000000000000#p=1"
+  },
+  "kind": "locate"
+}

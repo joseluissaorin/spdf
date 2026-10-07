@@ -1,0 +1,42 @@
+{
+  "expect": {
+    "items": [
+      {
+        "author": [
+          {
+            "family": "Garcilaso de la Vega"
+          }
+        ],
+        "collection-title": "Prueba de conformidad SPDF",
+        "editor": [
+          {
+            "family": "Herrera",
+            "given": "Fernando de"
+          }
+        ],
+        "id": "garcilasodelavega1580",
+        "issued": {
+          "date-parts": [
+            [1580]
+          ]
+        },
+        "language": "es",
+        "original-date": {
+          "date-parts": [
+            [1543]
+          ]
+        },
+        "publisher": "Alonso de la Barrera",
+        "publisher-place": "Sevilla",
+        "title": "Obras de Garcilaso de la Vega: con anotaciones de Fernando de Herrera",
+        "title-short": "Obras de Garcilaso de la Vega",
+        "type": "book"
+      }
+    ]
+  },
+  "id": "export-csl-garcilaso-4.1-plain",
+  "input": {
+    "files": ["legacy/garcilaso-4.1.spdf"]
+  },
+  "kind": "export_csl"
+}

@@ -1,0 +1,15 @@
+{
+  "expect": {
+    "char": null,
+    "document": true,
+    "fragments": [],
+    "units": ["b1"],
+    "xywh": null
+  },
+  "id": "locate-lunyu-section-prefix",
+  "input": {
+    "file": "files/lunyu.spdf",
+    "reference": "spdf:sha256-c5fbea8e0b34b1011a7002b2d8a69fcec184055902fbcbc4b0c08b1813c70e4f#s=%E5%AD%B8%E8%80%8C%E7%AC%AC%E4%B8%80"
+  },
+  "kind": "locate"
+}

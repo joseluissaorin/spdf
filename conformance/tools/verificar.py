@@ -40,6 +40,10 @@ KINDS = {
     "anchor_uri": (set(), set()),
     "cite": ({"anchor", "anchor_end", "metadata", "locale"}, {"text"}),
     "quantize": ({"dtype", "values"}, set()),
+    "locate": ({"file", "reference"}, {"document", "units", "fragments", "char", "xywh"}),
+    "export_csl": ({"files"}, {"items"}),
+    "export_bibtex": ({"files"}, {"text"}),
+    "export_structure": ({"file", "format"}, {"pages"}),
 }
 TOL = 1e-6
 
@@ -83,16 +87,22 @@ def _close(a, b) -> bool:
     return abs(float(a) - float(b)) <= TOL
 
 
+def _rid(r: dict) -> str:
+    return r.get("fragment_id") or r.get("unit_id") or r.get("figure_id")
+
+
 def _results_equal(got: list[dict], exp: list[dict]) -> str | None:
-    if [g["fragment_id"] for g in got] != [e["fragment_id"] for e in exp]:
-        return f"order {[g['fragment_id'] for g in got]} != {[e['fragment_id'] for e in exp]}"
+    if [_rid(g) for g in got] != [_rid(e) for e in exp]:
+        return f"order {[_rid(g) for g in got]} != {[_rid(e) for e in exp]}"
     for g, e in zip(got, exp):
+        if set(g) - {"via"} != set(e) - {"via"}:
+            return f"{_rid(e)}: members {sorted(g)} != {sorted(e)}"
         if not _close(g["score"], e["score"]):
-            return f"{e['fragment_id']}: score {g['score']} != {e['score']}"
+            return f"{_rid(e)}: score {g['score']} != {e['score']}"
         if g.get("anchor_uri") != e.get("anchor_uri"):
-            return f"{e['fragment_id']}: anchor_uri {g.get('anchor_uri')} != {e.get('anchor_uri')}"
+            return f"{_rid(e)}: anchor_uri {g.get('anchor_uri')} != {e.get('anchor_uri')}"
         if "via" in e and g.get("via") != e["via"]:
-            return f"{e['fragment_id']}: via {g.get('via')} != {e['via']}"
+            return f"{_rid(e)}: via {g.get('via')} != {e['via']}"
     return None
 
 
@@ -130,8 +140,13 @@ def run_case(c: dict, base: Path = CONF) -> str | None:
                     return f"route/match {r['route']}/{r['match']!r}"
                 got = [{"fragment_id": f, "score": s, "via": ["lexical"], "anchor_uri": uri(f)} for _, f, s in r["results"]]
             elif k == "search_vector":
-                got = [{"fragment_id": f, "score": s, "anchor_uri": uri(f)}
-                       for _, f, s in R.vector_search(o.con, i["space"], i["query_vector"], i["limit"], i["target"])]
+                if i["target"] == "fragment":
+                    got = [{"fragment_id": f, "score": s, "anchor_uri": uri(f)}
+                           for _, f, s in R.vector_search(o.con, i["space"], i["query_vector"], i["limit"], i["target"])]
+                else:
+                    rows = {r["id"]: r for r in dump["units" if i["target"] == "unit" else "figures"]}
+                    got = [{f"{i['target']}_id": f, "score": s, "anchor_uri": R.format_uri(ref, rows[f]["anchor"])}
+                           for _, f, s in R.vector_search(o.con, i["space"], i["query_vector"], i["limit"], i["target"])]
             else:
                 top, _ = R.hybrid_search(o.con, i["query"], i["space"], i["query_vector"], i["limit"])
                 got = [{"fragment_id": f, "score": s, "via": via, "anchor_uri": uri(f)} for _, f, s, via in top]
@@ -157,6 +172,19 @@ def run_case(c: dict, base: Path = CONF) -> str | None:
         if R.jcs(p) != R.jcs(R.canon({"docref": e["docref"], "locator": e["locator"]})):
             return f"parse gives {p}"
         return None if R.format_locator(p["docref"], p["locator"]) == e["canonical"] else "canonical form differs"
+    if k == "locate":
+        got = R.locate(R.dump_file(base / i["file"]), i["reference"])
+        return None if R.jcs(got) == R.jcs(R.canon(e)) else f"got {got}"
+    if k in ("export_csl", "export_bibtex"):
+        items = [R.dump_file(base / f)["document"]["metadata"] for f in i["files"]]
+        if k == "export_csl":
+            got = R.export_csl(items, i.get("anchor"), i.get("anchor_end"))
+            return None if R.jcs(got) == R.jcs(R.canon(e["items"])) else f"got {got}"
+        got = R.export_bibtex(items)
+        return None if R.normalize_bibtex(got) == R.normalize_bibtex(e["text"]) else f"got {got!r}"
+    if k == "export_structure":
+        got = R.export_structure(R.dump_file(base / i["file"]), i["format"])
+        return None if R.jcs(got) == R.jcs(R.canon(e)) else f"got {got}"
     if k == "quantize":
         try:
             got = {"hex": R.quantize(i["values"], i["dtype"]).hex()}

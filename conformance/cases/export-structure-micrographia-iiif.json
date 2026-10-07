@@ -1,0 +1,18 @@
+{
+  "expect": {
+    "pages": [
+      {
+        "label": "210"
+      },
+      {
+        "label": "211"
+      }
+    ]
+  },
+  "id": "export-structure-micrographia-iiif",
+  "input": {
+    "file": "files/micrographia.spdf",
+    "format": "iiif"
+  },
+  "kind": "export_structure"
+}

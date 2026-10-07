@@ -618,14 +618,51 @@ ancla.
 
 ### 5.4 Resolución
 
-Para resolver una URI de ancla contra un fichero, un lector comprueba la referencia de
-documento (`sha256-` contra `source_sha256`, o el id contra `documents.id`) y después
-encuentra la unidad: por `p` (la unidad de página con ese `physical`), si no, por `f` (la
-unidad con ese `printed`, mediante `units_printed`), por `t` (la unidad cuyo intervalo de
-tiempo contiene `t0`), por `s` y `para`, por `sl`, `sh`, `v` o `ref` (cotejando las
-anclas de las unidades y de los fragmentos). Después, `char` y `xywh` acotan la unidad.
-Cuando coinciden varias unidades (dos páginas con el folio impreso «1»), `p` deshace la
-ambigüedad; los lectores DEBERÍAN preferir `p` a `f` cuando están presentes ambos.
+`locate(file, reference)` resuelve una URI de ancla, o la URL de un recurso SPDF con
+identificador de fragmento ([§24](#media-type)), contra un fichero, y devuelve:
+
+```json
+{"document": true, "units": ["p5", "p6"], "fragments": ["q4"], "char": [101, 278], "xywh": null}
+```
+
+1. **Referencia.** Una URI `spdf:` se analiza como en el [§5.3](#anchor-uri); `document`
+   es verdadero cuando su referencia de documento es `sha256-` seguido del
+   `source_sha256` del fichero, o el id de documento del fichero. Cualquier otra
+   referencia (una URL `https:`, una ruta de fichero) designa el propio fichero:
+   `document` es verdadero y el texto que sigue a su primer `#`, si lo hay, se analiza
+   como la lista de parámetros del §5.3. Cuando `document` es falso, `units` y
+   `fragments` están vacíos (las implementaciones PUEDEN notificarlo como un error; los
+   ejecutores de la batería traducen ese error a `document: false`).
+2. **Regla.** El primer parámetro presente en el orden `p`, `f`, `t`, `sl`, `v`, `ref`,
+   `s`, `sh` elige el predicado de abajo. Sin ninguno de ellos (sin fragmento, o solo con
+   `char` y `xywh`), la referencia designa el documento entero y `units` y `fragments`
+   están vacíos.
+3. **Predicado** sobre un ancla (los miembros ausentes del ancla nunca coinciden):
+   - `p`: un ancla `page` con `p ≤ physical ≤ pe` (`pe` vale `p` por defecto);
+   - `f`: `printed` igual a `f` (en las unidades, la columna `units.printed`);
+   - `t`: un ancla `time` con `t0 ≤ t < t1`, donde `t` es el primer valor del parámetro;
+     la última unidad con ancla de tiempo (en orden de `ord`) también coincide cuando `t`
+     es igual a su `t1`;
+   - `sl`: un ancla `slide` con `n = sl`;
+   - `v`: un ancla `verse` con `line_from ≤ v ≤ line_to` (`line_to` vale `line_from` por
+     defecto), donde `v` es el primer valor del parámetro;
+   - `ref`: un ancla `canonical` con el mismo `scheme` y el mismo `ref`;
+   - `s`: un ancla `section` o `web` cuya `path` empieza por los elementos de `s`; cuando
+     está presente `para`, la `path` debe ser igual a `s` y `paragraph` igual a `para`;
+   - `sh`: un ancla `sheet` con `sheet = sh` y, cuando está presente `rows`,
+     `row_from ≤ a ≤ row_to` para su primer valor `a`.
+4. **Coincidencias.** `units` son los id de las unidades cuya ancla coincide, en orden de
+   `ord`. `fragments` son los id de los fragmentos cuya `anchor` de inicio coincide, en
+   orden de `n`. Cuando no coincide ninguna unidad pero sí algunos fragmentos, `units` son
+   las unidades distintas de esos fragmentos, en orden de `ord`.
+5. **Caracteres.** Cuando está presente `char` = `[c, d]`, en `fragments` solo se
+   conservan los fragmentos que empiezan en alguna de las `units` y cuya ancla tiene
+   `chars` = `[a, b]` con `a < d` y `c < b` (si `c < d`), o con `a ≤ c < b` (si `c = d`).
+6. `char` y `xywh` se copian del localizador, o son null.
+
+Pueden coincidir varias unidades (dos páginas con el folio impreso «1», un número de verso
+repetido en dos poemas): `locate` las devuelve todas y el lector deja elegir al usuario;
+`p` siempre deshace la ambigüedad entre páginas, y por eso las URI formateadas lo llevan.
 
 Se prevé el registro provisional del esquema de URI `spdf` [RFC 7595]; la solicitud está
 redactada en `governance/drafts/uri-scheme-spdf.md`.
@@ -798,7 +835,9 @@ IEEE 754 binary64 (f32 y f16 de forma exacta; i8 como q/127). La consulta se usa
 se da, sin normalizar. Cuando el espacio tiene `normalized = 1`, la puntuación es el
 producto escalar; en caso contrario, es la similitud del coseno. Los resultados se ordenan
 por puntuación descendente y después por el `n` del fragmento, el `ord` de la unidad o el
-`id` de la figura. Los productos PUEDEN usar índices aproximados; la referencia es
+`id` de la figura. Un elemento de resultado cuyo objetivo es `unit` o `figure` lleva
+`unit_id` o `figure_id` en lugar de `fragment_id`, y la URI de ancla del ancla propia de la
+unidad o de la figura. Los productos PUEDEN usar índices aproximados; la referencia es
 exhaustiva.
 
 ### 8.3 Búsqueda híbrida
@@ -1184,42 +1223,116 @@ extremo inferido. El localizador se omite cuando quedaría vacío, lo que da
 <a id="exports"></a>
 ## 19. Exportaciones
 
-Las implementaciones DEBEN exportar CSL-JSON y BibTeX, y PUEDEN exportar los demás
-formatos que siguen. Las exportaciones nunca inventan datos: los campos ausentes del
-fichero están ausentes de la exportación.
+Las implementaciones DEBEN exportar CSL-JSON y BibTeX tal como definen los §19.1 a §19.3,
+y PUEDEN exportar los demás formatos del §19.4. Las exportaciones nunca inventan datos:
+los campos ausentes del fichero están ausentes de la exportación. Una exportación recibe
+uno o varios documentos, en orden.
 
-- **CSL-JSON**: el elemento `metadata` sin el miembro `spdf`, con `id` igual a la clave
-  BibTeX que se describe a continuación. Una cita de un fragmento añade el `locator` y el
-  `label` de CSL (`page`, `folio`, `column`, `verse`, `paragraph`, `section`,
-  `timestamp`…).
-- **BibTeX** (DEBE): tipo de entrada a partir del tipo CSL (`book` → `@book`;
-  `article-journal`, `article-magazine`, `article-newspaper` → `@article`; `chapter` →
-  `@incollection`; `paper-conference` → `@inproceedings`; `thesis` → `@phdthesis`;
-  `report` → `@techreport`; cualquier otro → `@misc`). Clave: el apellido del primer
-  autor (o la primera palabra del título), reducido a letras ASCII y pasado a minúsculas,
-  seguido del año (o de `nd`); las colisiones dentro de una misma exportación reciben `a`,
-  `b`, `c`… Campos: `author` y `editor` como `Family, Given` unidos con ` and ` (los
-  nombres literales, entre llaves), `title`, `year`, `publisher`, `address`
-  (publisher-place), `journal` o `booktitle` (container-title), `series`
-  (collection-title), `volume`, `number` (issue), `pages`, `edition`, `doi`, `isbn`,
-  `url`, `language`, `note`. Los valores van en UTF-8 con `{`, `}` y `\` escapados; las
-  mayúsculas de los títulos se protegen con llaves solo donde la fuente usa mayúsculas.
-- **ALTO** [ALTO] (PUEDE): ALTO 4, un `Page` por unidad de página
-  (`PHYSICAL_IMG_NR` = `physical`, `PRINTED_IMG_NR` = `printed`), un `TextBlock` por
-  párrafo y un `TextLine` por línea; coordenadas solo cuando el productor las tiene (de
-  una extensión), nunca inventadas.
-- **IIIF Presentation 3** [IIIF] (PUEDE): un `Manifest` con un `Canvas` por unidad
-  (`label` = folio impreso; la imagen de la unidad como anotación de pintado (painting);
-  el texto como anotación `supplementing`); el audio y el vídeo como un único lienzo
-  temporal con `duration` y un `Range` por unidad o sección; las secciones como
-  `structures`; las anclas con región como destinos `#xywh=percent:`.
-- **TEI** [TEI] (PUEDE, mínimo): `teiHeader` a partir de los metadatos (`titleStmt`,
-  `publicationStmt` con los derechos, `sourceDesc` con los campos CSL), y un `body` con
-  `<pb n="printed" facs="…"/>` antes de cada página (`n="[21]"` para los folios
-  inferidos, ausente para los no numerados), `<p>` para los párrafos, `<lg>`/`<l n>` para
-  el verso, `<u who>` para los turnos de palabra y `<note place="foot">` para las notas.
+### 19.1 Claves
+
+Cada documento exportado recibe una clave, que se usa como `id` de CSL y como clave de
+BibTeX:
+
+1. Se toma el primer nombre de la lista `author` de CSL: su `family`, si no su `literal`,
+   si no su `given`. Se pliega: se descompone con NFKD, se conservan solo las letras ASCII
+   `A`–`Z` y `a`–`z` y se pasa a minúsculas. (`Cervantes Saavedra` → `cervantessaavedra`.)
+2. Si queda vacía (sin autor, o sin ninguna letra ASCII en el nombre), se pliega del
+   mismo modo la primera palabra, separada por espacios, de `title-short`, o de `title`
+   cuando no hay `title-short`. (`Lazarillo de Tormes` → `lazarillo`.)
+3. Si sigue vacía, se usa `anon`.
+4. Se añade el primer año de `issued` en decimal (los años negativos conservan el signo),
+   o `nd` cuando no lo hay: `cervantessaavedra1605`, `anonnd`.
+5. Cuando la misma clave aparece más de una vez en una exportación, cada aparición recibe
+   un sufijo en el orden de la exportación: `a`, `b`, … `z`, `aa`, `ab`…
+
+### 19.2 CSL-JSON
+
+La exportación CSL-JSON es una matriz JSON con un elemento por documento: el elemento
+`metadata` sin su miembro `spdf`, con `id` igual a la clave. Se compara como JSON.
+
+La cita de un pasaje añade al elemento la `label` y el `locator` de CSL de un ancla y de
+un ancla final opcional, para que un procesador de CSL pueda imprimirla en cualquier
+estilo:
+
+| ancla | `label` | `locator` |
+|---|---|---|
+| `page`, foliación `page` / `leaf` / `column` | `page` / `folio` / `column` | el folio como en el [§18](#citation): `145`, `[21]`, `xiv`, `1r`, rangos `145-146`, `1r-[1v]`; sin `label` ni `locator` cuando `printed` es null |
+| `section` o `web` con `printed` | `page` | como en las páginas |
+| `section` o `web` con `paragraph` | `paragraph` | el número de párrafo |
+| otras `section` o `web` con ruta | `section` | el último elemento de la ruta |
+| `time` | `timestamp` | `1:09:20`, rangos `0:12-0:24` (como en el §18) |
+| `verse` | `verse` | `1234` o `1234-1240` |
+| `canonical` | `section` | el `ref` |
+| `sheet` | `line` | `4` o `4-9` |
+| `slide`, `image` | ninguna | ninguno (CSL no tiene localizador de diapositiva; la cita corta del §18 la imprime) |
+
+### 19.3 BibTeX
+
+La exportación BibTeX es texto con una entrada por documento, en el orden de la
+exportación, separadas por una línea vacía:
+
+```bibtex
+@book{cervantessaavedra1605,
+  author = {Cervantes Saavedra, Miguel de},
+  title = {{El} ingenioso hidalgo don {Quijote} de la {Mancha}},
+  year = {1605},
+  publisher = {Juan de la Cuesta},
+  address = {Madrid},
+  language = {es}
+}
+```
+
+- **Tipo de entrada** según el `type` de CSL: `book` → `book`; `article-journal`,
+  `article-magazine`, `article-newspaper` → `article`; `chapter` → `incollection`;
+  `paper-conference` → `inproceedings`; `thesis` → `phdthesis`; `report` →
+  `techreport`; cualquier otro → `misc`.
+- **Campos**, en este orden, cada uno solo cuando su origen está presente y no vacío:
+  `author` (`author` de CSL), `editor` (`editor`), `title`, `year` (primer año de
+  `issued`), `journal` en las entradas `article` o, si no, `booktitle`
+  (`container-title`), `publisher`, `address` (`publisher-place`), `series`
+  (`collection-title`), `volume`, `number` (`issue`), `pages` (`page`), `edition`, `doi`
+  (`DOI`), `isbn` (`ISBN`), `url` (`URL`), `language`, `note`.
+- **Valores**: se escriben `{…}` en UTF-8. En todos los valores, `\` pasa a ser
+  `\textbackslash{}`, `{` pasa a ser `\{` y `}` pasa a ser `\}`; no se escapa nada más.
+- **Nombres**: un nombre `literal` se escribe entre llaves, `{National Aeronautics and
+  Space Administration}`; si no, el apellido (precedido de la `non-dropping-particle` y
+  un espacio, si la hay) y el nombre de pila (`given`) se escriben `Apellido, Nombre`, o
+  entre llaves cuando solo existe uno de los dos. Los nombres se unen con ` and `.
+- **Mayúsculas**: en `title` y en `journal`/`booktitle`, toda palabra separada por
+  espacios que contiene una letra mayúscula (categoría general Unicode Lu) se encierra
+  entre llaves, después de escaparla, para que los estilos no la pasen a minúsculas:
+  `{El} ingenioso hidalgo don {Quijote}`.
+- **Comparación**: dos exportaciones son iguales cuando, después de quitar los espacios
+  iniciales y finales de cada línea y de eliminar las líneas vacías, sus líneas son
+  idénticas.
+
+### 19.4 Otros formatos
+
+- **ALTO** [ALTO] (PUEDE): ALTO 4, un `Page` por cada unidad de página, con
+  `PHYSICAL_IMG_NR` = `physical` y `PRINTED_IMG_NR` = `printed` solo cuando `printed` no
+  es null y su `source` no es `inferred` (ALTO registra números impresos, y un folio
+  deducido no está impreso); un `TextBlock` por párrafo y un `TextLine` por línea;
+  coordenadas solo cuando el productor las tiene (desde una extensión), nunca inventadas.
+- **TEI** [TEI] (PUEDE, mínima): `teiHeader` a partir de los metadatos (`titleStmt`,
+  `publicationStmt` con los derechos, `sourceDesc` con los campos de CSL), y un `body`
+  con un `<pb/>` antes de cada unidad de página, cuyo `n` es el folio tal como se cita en
+  el §18 sin su etiqueta (`n="ii"`, `n="[iv]"`, `n="1r"`; sin `n` en las páginas sin
+  numerar) y cuyo `facs` es la imagen de la unidad, si la hay; `<p>` para los párrafos,
+  `<lg>`/`<l n>` para el verso, `<u who>` para los turnos de palabra y
+  `<note place="foot">` para las notas.
+- **IIIF Presentation 3** [IIIF] (PUEDE): un `Manifest` con un `Canvas` por unidad, en
+  orden de `ord`; la `label` de un lienzo de página es `{"none": [n]}`, con `n` como el
+  `n` de TEI, y los lienzos de las páginas sin numerar no llevan `label`; la imagen de la
+  unidad es la anotación de pintado (*painting*) y el texto, una anotación
+  `supplementing`; el audio y el vídeo son un único lienzo temporal con `duration` y un
+  `Range` por unidad o sección; las secciones pasan a ser `structures`; las anclas con
+  región pasan a ser destinos `#xywh=percent:`.
 - **Web Annotation** (PUEDE): citas y resultados de búsqueda como anotaciones con los
-  selectores de [§17.1](#annotations).
+  selectores del [§17.1](#annotations).
+
+La batería de conformidad comprueba, en los documentos paginados, la secuencia de páginas
+de estas exportaciones: los pares `PHYSICAL_IMG_NR`/`PRINTED_IMG_NR` de ALTO, el `n` de
+cada `pb` de TEI y la `label` de cada lienzo de página de IIIF, en orden.
 
 <a id="legacy"></a>
 ## 20. Formatos legados
@@ -1332,10 +1445,11 @@ histórico en el repositorio de Scholaris; esta especificación no la define.
 Una implementación declara su clase y los perfiles que cubre, por ejemplo «lector y
 escritor, perfiles core y semantic». Su declaración se respalda con la batería de
 conformidad: supera todos los casos de los tipos que exige su clase (`dump`,
-`legacy_dump`, `anchor_uri`, `cite`, `search_lexical`, `validate` para los lectores;
-además, `search_vector` y `search_hybrid` para los lectores semánticos; además,
-`roundtrip` y `quantize` para los escritores), con la versión de la batería con la que se
-probó. PUEDEN existir implementaciones parciales, pero NO DEBEN llamarse conformes.
+`legacy_dump`, `anchor_uri`, `cite`, `search_lexical`, `validate`, `locate`, `export_csl`,
+`export_bibtex` para los lectores; además, `search_vector` y `search_hybrid` para los
+lectores semánticos; además, `roundtrip` y `quantize` para los escritores; y
+`export_structure` para las implementaciones que exportan ALTO, TEI o IIIF), con la
+versión de la batería con la que se probó. PUEDEN existir implementaciones parciales, pero NO DEBEN llamarse conformes.
 
 ### 21.3 La batería
 

@@ -1,0 +1,68 @@
+{
+  "expect": {
+    "items": [
+      {
+        "author": [
+          {
+            "family": "Cervantes Saavedra",
+            "given": "Miguel de"
+          }
+        ],
+        "id": "cervantessaavedra1605a",
+        "issued": {
+          "date-parts": [
+            [1605]
+          ]
+        },
+        "language": "es",
+        "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+        "publisher": "Juan de la Cuesta",
+        "publisher-place": "Madrid",
+        "title": "El ingenioso hidalgo don Quijote de la Mancha",
+        "title-short": "Don Quijote",
+        "type": "book"
+      },
+      {
+        "id": "lazarillo1554",
+        "issued": {
+          "date-parts": [
+            [1554]
+          ]
+        },
+        "language": "es",
+        "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+        "publisher": "Juan de Junta",
+        "publisher-place": "Burgos",
+        "title": "La vida de Lazarillo de Tormes y de sus fortunas y adversidades",
+        "title-short": "Lazarillo de Tormes",
+        "type": "book"
+      },
+      {
+        "author": [
+          {
+            "family": "Cervantes Saavedra",
+            "given": "Miguel de"
+          }
+        ],
+        "id": "cervantessaavedra1605b",
+        "issued": {
+          "date-parts": [
+            [1605]
+          ]
+        },
+        "language": "es",
+        "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+        "publisher": "Juan de la Cuesta",
+        "publisher-place": "Madrid",
+        "title": "El ingenioso hidalgo don Quijote de la Mancha",
+        "title-short": "Don Quijote",
+        "type": "book"
+      }
+    ]
+  },
+  "id": "export-csl-several",
+  "input": {
+    "files": ["files/quijote.spdf", "files/lazarillo.spdf", "files/quijote.spdf"]
+  },
+  "kind": "export_csl"
+}

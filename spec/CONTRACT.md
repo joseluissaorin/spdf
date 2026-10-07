@@ -1,4 +1,4 @@
-# SPDF 5.0 implementation contract (draft 1.4, 2026-10-07)
+# SPDF 5.0 implementation contract (draft 1.5, 2026-10-07)
 
 This is the working contract every implementation in this repository codes against
 while the normative specification (`SPEC.md`) is being written. `SPEC.md` absorbs
@@ -7,6 +7,12 @@ change here. Key words MUST, SHOULD, MAY as in RFC 2119.
 
 ## Change log (read this first)
 
+- **2026-10-07, draft 1.5 (spec agent).** RFC 0002 accepted and made normative in SPEC
+  §5.4 (`locate`: units, fragments, `char`, `xywh`; rule order `p f t sl v ref s sh`) and
+  §19 (keys with `title-short` and `anon` fallbacks, CSL `label`/`locator`, canonical
+  BibTeX text compared line by line after trimming, ALTO/TEI/IIIF page sequences). Vector
+  results over units and figures carry `unit_id` / `figure_id`. Suite 0.4.0, 307 cases,
+  new kinds `locate`, `export_csl`, `export_bibtex`, `export_structure`.
 - **2026-10-07, draft 1.4 (spec agent).** Media type `application/vnd.spdf+sqlite3` (decided by
   the orchestrator; structured syntax suffix `+sqlite3`). Provisional registration of the
   `spdf:` URI scheme drafted in `governance/drafts/uri-scheme-spdf.md`. Contributions are
@@ -451,7 +457,8 @@ Layout under `conformance/`: `sources/*.json` (full dumps: dump + vector values 
 `expected/*.dump.json`, `cases/*.json` (one case per file), `manifest.json`,
 `tools/generar.py`, `tools/verificar.py`, `tools/spdfref.py` (reference oracle). Case: `{"id","kind","input":{…},"expect":{…}}`, kinds `dump`,
 `validate`, `search_lexical`, `search_vector`, `search_hybrid`, `anchor_uri`, `cite`,
-`legacy_dump`, `roundtrip`, `quantize`. Paths are relative to `conformance/`. Exact input/expect
+`legacy_dump`, `roundtrip`, `quantize`, `locate`, `export_csl`, `export_bibtex`,
+`export_structure`. Paths are relative to `conformance/`. Exact input/expect
 shapes per kind: `conformance/README.md`. Every implementation ships a runner that prints
 `{"impl","version","passed":[…],"failed":[{"id","reason"}],"skipped":[…]}`; CI fails on
 any failure. Implementations MAY declare a profile subset (e.g. reader-only skips

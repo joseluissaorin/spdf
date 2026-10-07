@@ -1,0 +1,449 @@
+[
+ {
+  "id": "locate-quijote-leaf-range-chars",
+  "input": {
+   "file": "files/quijote.spdf",
+   "reference": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=5&pe=6&f=1r&fe=1v&char=101,278"
+  },
+  "expect": {
+   "document": true,
+   "units": [
+    "p5",
+    "p6"
+   ],
+   "fragments": [
+    "q4"
+   ],
+   "char": [
+    101,
+    278
+   ],
+   "xywh": null
+  }
+ },
+ {
+  "id": "locate-quijote-page",
+  "input": {
+   "file": "files/quijote.spdf",
+   "reference": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=2"
+  },
+  "expect": {
+   "document": true,
+   "units": [
+    "p2"
+   ],
+   "fragments": [
+    "q2"
+   ],
+   "char": null,
+   "xywh": null
+  }
+ },
+ {
+  "id": "locate-quijote-page-range",
+  "input": {
+   "file": "files/quijote.spdf",
+   "reference": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=3&pe=4"
+  },
+  "expect": {
+   "document": true,
+   "units": [
+    "p3",
+    "p4"
+   ],
+   "fragments": [
+    "q3"
+   ],
+   "char": null,
+   "xywh": null
+  }
+ },
+ {
+  "id": "locate-quijote-folio-only",
+  "input": {
+   "file": "files/quijote.spdf",
+   "reference": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#f=1v"
+  },
+  "expect": {
+   "document": true,
+   "units": [
+    "p6"
+   ],
+   "fragments": [],
+   "char": null,
+   "xywh": null
+  }
+ },
+ {
+  "id": "locate-quijote-folio-missing",
+  "input": {
+   "file": "files/quijote.spdf",
+   "reference": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#f=xyz"
+  },
+  "expect": {
+   "document": true,
+   "units": [],
+   "fragments": [],
+   "char": null,
+   "xywh": null
+  }
+ },
+ {
+  "id": "locate-quijote-url-fragment",
+  "input": {
+   "file": "files/quijote.spdf",
+   "reference": "https://example.org/biblioteca/quijote.spdf#p=7"
+  },
+  "expect": {
+   "document": true,
+   "units": [
+    "p7"
+   ],
+   "fragments": [
+    "q5"
+   ],
+   "char": null,
+   "xywh": null
+  }
+ },
+ {
+  "id": "locate-quijote-url-whole",
+  "input": {
+   "file": "files/quijote.spdf",
+   "reference": "https://example.org/biblioteca/quijote.spdf"
+  },
+  "expect": {
+   "document": true,
+   "units": [],
+   "fragments": [],
+   "char": null,
+   "xywh": null
+  }
+ },
+ {
+  "id": "locate-quijote-other-document",
+  "input": {
+   "file": "files/quijote.spdf",
+   "reference": "spdf:sha256-0000000000000000000000000000000000000000000000000000000000000000#p=1"
+  },
+  "expect": {
+   "document": false,
+   "units": [],
+   "fragments": [],
+   "char": null,
+   "xywh": null
+  }
+ },
+ {
+  "id": "locate-quijote-document-id",
+  "input": {
+   "file": "files/quijote.spdf",
+   "reference": "spdf:quijote-1605#p=1"
+  },
+  "expect": {
+   "document": true,
+   "units": [
+    "p1"
+   ],
+   "fragments": [
+    "q1"
+   ],
+   "char": null,
+   "xywh": null
+  }
+ },
+ {
+  "id": "locate-apolo11-time",
+  "input": {
+   "file": "files/apolo11.spdf",
+   "reference": "spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=4160,4175.5"
+  },
+  "expect": {
+   "document": true,
+   "units": [
+    "t3"
+   ],
+   "fragments": [
+    "a3"
+   ],
+   "char": null,
+   "xywh": null
+  }
+ },
+ {
+  "id": "locate-apolo11-time-start",
+  "input": {
+   "file": "files/apolo11.spdf",
+   "reference": "spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=12"
+  },
+  "expect": {
+   "document": true,
+   "units": [
+    "t1"
+   ],
+   "fragments": [
+    "a1"
+   ],
+   "char": null,
+   "xywh": null
+  }
+ },
+ {
+  "id": "locate-apolo11-time-end-of-recording",
+  "input": {
+   "file": "files/apolo11.spdf",
+   "reference": "spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=4186"
+  },
+  "expect": {
+   "document": true,
+   "units": [
+    "t6"
+   ],
+   "fragments": [],
+   "char": null,
+   "xywh": null
+  }
+ },
+ {
+  "id": "locate-apolo11-time-gap",
+  "input": {
+   "file": "files/apolo11.spdf",
+   "reference": "spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=5000"
+  },
+  "expect": {
+   "document": true,
+   "units": [],
+   "fragments": [],
+   "char": null,
+   "xywh": null
+  }
+ },
+ {
+  "id": "locate-apolo11-time-crossing-fragment",
+  "input": {
+   "file": "files/apolo11.spdf",
+   "reference": "spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=4177"
+  },
+  "expect": {
+   "document": true,
+   "units": [
+    "t4"
+   ],
+   "fragments": [
+    "a4-6"
+   ],
+   "char": null,
+   "xywh": null
+  }
+ },
+ {
+  "id": "locate-lunyu-canonical",
+  "input": {
+   "file": "files/lunyu.spdf",
+   "reference": "spdf:sha256-c5fbea8e0b34b1011a7002b2d8a69fcec184055902fbcbc4b0c08b1813c70e4f#ref=analects:1.4"
+  },
+  "expect": {
+   "document": true,
+   "units": [
+    "b1"
+   ],
+   "fragments": [
+    "lunyu-1.4"
+   ],
+   "char": null,
+   "xywh": null
+  }
+ },
+ {
+  "id": "locate-lunyu-section-prefix",
+  "input": {
+   "file": "files/lunyu.spdf",
+   "reference": "spdf:sha256-c5fbea8e0b34b1011a7002b2d8a69fcec184055902fbcbc4b0c08b1813c70e4f#s=%E5%AD%B8%E8%80%8C%E7%AC%AC%E4%B8%80"
+  },
+  "expect": {
+   "document": true,
+   "units": [
+    "b1"
+   ],
+   "fragments": [],
+   "char": null,
+   "xywh": null
+  }
+ },
+ {
+  "id": "locate-lunyu-section-paragraph",
+  "input": {
+   "file": "files/lunyu.spdf",
+   "reference": "spdf:sha256-c5fbea8e0b34b1011a7002b2d8a69fcec184055902fbcbc4b0c08b1813c70e4f#s=%E5%AD%B8%E8%80%8C%E7%AC%AC%E4%B8%80&para=1"
+  },
+  "expect": {
+   "document": true,
+   "units": [
+    "b1"
+   ],
+   "fragments": [],
+   "char": null,
+   "xywh": null
+  }
+ },
+ {
+  "id": "locate-lunyu-canonical-chars",
+  "input": {
+   "file": "files/lunyu.spdf",
+   "reference": "spdf:sha256-c5fbea8e0b34b1011a7002b2d8a69fcec184055902fbcbc4b0c08b1813c70e4f#ref=analects:1.1&char=0,10"
+  },
+  "expect": {
+   "document": true,
+   "units": [
+    "b1"
+   ],
+   "fragments": [
+    "lunyu-1.1"
+   ],
+   "char": [
+    0,
+    10
+   ],
+   "xywh": null
+  }
+ },
+ {
+  "id": "locate-lunyu-canonical-chars-outside",
+  "input": {
+   "file": "files/lunyu.spdf",
+   "reference": "spdf:sha256-c5fbea8e0b34b1011a7002b2d8a69fcec184055902fbcbc4b0c08b1813c70e4f#ref=analects:1.1&char=200,210"
+  },
+  "expect": {
+   "document": true,
+   "units": [
+    "b1"
+   ],
+   "fragments": [],
+   "char": [
+    200,
+    210
+   ],
+   "xywh": null
+  }
+ },
+ {
+  "id": "locate-minimo-verse-ambiguous",
+  "input": {
+   "file": "files/minimo.spdf",
+   "reference": "spdf:sha256-95ee321f7ae3a0e2d961614603703297425cf1e969b749599971e34fe69b7ba2#v=2"
+  },
+  "expect": {
+   "document": true,
+   "units": [
+    "u1",
+    "u2"
+   ],
+   "fragments": [
+    "f1",
+    "f2"
+   ],
+   "char": null,
+   "xywh": null
+  }
+ },
+ {
+  "id": "locate-minimo-section",
+  "input": {
+   "file": "files/minimo.spdf",
+   "reference": "spdf:sha256-95ee321f7ae3a0e2d961614603703297425cf1e969b749599971e34fe69b7ba2#s=XXI"
+  },
+  "expect": {
+   "document": true,
+   "units": [
+    "u1"
+   ],
+   "fragments": [],
+   "char": null,
+   "xywh": null
+  }
+ },
+ {
+  "id": "locate-micrographia-region",
+  "input": {
+   "file": "files/micrographia.spdf",
+   "reference": "spdf:sha256-4501ef3a079e09d5556746bba9fc26e261aa6cbc5d47b056382d400ec1523bfd#p=1&f=210&xywh=percent:10,25,80,50"
+  },
+  "expect": {
+   "document": true,
+   "units": [
+    "p1"
+   ],
+   "fragments": [
+    "m1"
+   ],
+   "char": null,
+   "xywh": [
+    0.1,
+    0.25,
+    0.8,
+    0.5
+   ]
+  }
+ },
+ {
+  "id": "locate-darwin-folio-two-fragments",
+  "input": {
+   "file": "files/darwin.spdf",
+   "reference": "spdf:sha256-e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3#f=61"
+  },
+  "expect": {
+   "document": true,
+   "units": [
+    "p3"
+   ],
+   "fragments": [
+    "d3",
+    "d4"
+   ],
+   "char": null,
+   "xywh": null
+  }
+ },
+ {
+  "id": "locate-darwin-chars-point",
+  "input": {
+   "file": "files/darwin.spdf",
+   "reference": "spdf:sha256-e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3#p=3&char=50,50"
+  },
+  "expect": {
+   "document": true,
+   "units": [
+    "p3"
+   ],
+   "fragments": [
+    "d3"
+   ],
+   "char": [
+    50,
+    50
+   ],
+   "xywh": null
+  }
+ },
+ {
+  "id": "locate-darwin-chars-range",
+  "input": {
+   "file": "files/darwin.spdf",
+   "reference": "spdf:sha256-e603e9932742d9df0b9b29aaf62e5681392c386a7750658ffccd1ad742c766c3#p=3&char=0,50"
+  },
+  "expect": {
+   "document": true,
+   "units": [
+    "p3"
+   ],
+   "fragments": [
+    "d3"
+   ],
+   "char": [
+    0,
+    50
+   ],
+   "xywh": null
+  }
+ }
+]

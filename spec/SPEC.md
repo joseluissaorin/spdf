@@ -566,13 +566,50 @@ conformance suite checks format, parse and round trip for every anchor type.
 
 ### 5.4 Resolution
 
-To resolve an anchor URI against a file, a reader checks the document reference
-(`sha256-` against `source_sha256`, or the id against `documents.id`), then finds the
-unit: by `p` (the page unit with that `physical`), else by `f` (the unit with that
-`printed`, via `units_printed`), by `t` (the unit whose time span contains `t0`), by `s`
-and `para`, by `sl`, `sh`, `v` or `ref` (matching the units' and fragments' anchors).
-`char` and `xywh` then narrow the unit. When several units match (two pages printed
-"1"), `p` disambiguates; readers SHOULD prefer `p` over `f` when both are present.
+`locate(file, reference)` resolves an anchor URI, or the URL of an SPDF resource with a
+fragment identifier ([§24](#media-type)), against a file, and returns:
+
+```json
+{"document": true, "units": ["p5", "p6"], "fragments": ["q4"], "char": [101, 278], "xywh": null}
+```
+
+1. **Reference.** An `spdf:` URI is parsed as in [§5.3](#anchor-uri); `document` is true
+   when its document reference is `sha256-` followed by the file's `source_sha256`, or the
+   file's document id. Any other reference (an `https:` URL, a file path) designates the
+   file itself: `document` is true and the text after its first `#`, if any, is parsed as
+   the parameter list of §5.3. When `document` is false, `units` and `fragments` are empty
+   (implementations MAY report this as an error instead; conformance runners map such an
+   error to `document: false`).
+2. **Rule.** The first parameter present in the order `p`, `f`, `t`, `sl`, `v`, `ref`,
+   `s`, `sh` selects the predicate below. Without any of them (no fragment, or only
+   `char` and `xywh`) the reference designates the whole document and `units` and
+   `fragments` are empty.
+3. **Predicate** on an anchor (members absent from the anchor never match):
+   - `p`: a `page` anchor with `p ≤ physical ≤ pe` (`pe` defaults to `p`);
+   - `f`: `printed` equal to `f` (for units, the `units.printed` column);
+   - `t`: a `time` anchor with `t0 ≤ t < t1`, where `t` is the first value of the
+     parameter; the last unit with a time anchor (in `ord` order) also matches when `t`
+     equals its `t1`;
+   - `sl`: a `slide` anchor with `n = sl`;
+   - `v`: a `verse` anchor with `line_from ≤ v ≤ line_to` (`line_to` defaults to
+     `line_from`), where `v` is the first value of the parameter;
+   - `ref`: a `canonical` anchor with the same `scheme` and `ref`;
+   - `s`: a `section` or `web` anchor whose `path` starts with the elements of `s`; when
+     `para` is present, the `path` must equal `s` and `paragraph` must equal `para`;
+   - `sh`: a `sheet` anchor with `sheet = sh` and, when `rows` is present,
+     `row_from ≤ a ≤ row_to` for its first value `a`.
+4. **Matches.** `units` are the ids of the units whose anchor matches, in `ord` order.
+   `fragments` are the ids of the fragments whose start `anchor` matches, in `n` order.
+   When no unit matches but some fragments do, `units` are the distinct units of those
+   fragments, in `ord` order.
+5. **Characters.** When `char` = `[c, d]` is present, only the fragments that start in
+   one of `units` and whose anchor has `chars` = `[a, b]` with `a < d` and `c < b` (for
+   `c < d`), or `a ≤ c < b` (for `c = d`), are kept in `fragments`.
+6. `char` and `xywh` are copied from the locator, or null.
+
+Several units may match (two pages printed "1", a verse number repeated in two poems):
+`locate` returns them all and the reader lets the user choose; `p` always disambiguates
+pages, which is why formatted URIs carry it.
 
 The `spdf` URI scheme is intended for provisional registration [RFC 7595]; the request is
 drafted in `governance/drafts/uri-scheme-spdf.md`.
@@ -731,7 +768,9 @@ by brute force. Every component is converted to an IEEE 754 binary64 number (f32
 exactly; i8 as q/127). The query is used as given, not normalized. When the space has
 `normalized = 1` the score is the dot product; otherwise it is the cosine similarity.
 Results are ordered by score descending, then by fragment `n`, unit `ord` or figure `id`.
-Products MAY use approximate indexes; the reference is exhaustive.
+A result item for the target `unit` or `figure` carries `unit_id` or `figure_id` instead
+of `fragment_id`, and the anchor URI of the unit's or figure's own anchor. Products MAY
+use approximate indexes; the reference is exhaustive.
 
 ### 8.3 Hybrid search
 
@@ -1087,38 +1126,110 @@ locator is omitted when it would be empty, giving `(Hooke, 1665)`.
 <a id="exports"></a>
 ## 19. Exports
 
-Implementations MUST export CSL-JSON and BibTeX, and MAY export the other formats below.
-Exports never invent data: fields absent from the file are absent from the export.
+Implementations MUST export CSL-JSON and BibTeX as defined in §19.1 to §19.3, and MAY
+export the other formats of §19.4. Exports never invent data: fields absent from the
+file are absent from the export. An export takes one or several documents, in order.
 
-- **CSL-JSON**: the `metadata` item without the `spdf` member, with `id` set to the
-  BibTeX key below. A citation of a fragment adds the CSL `locator` and `label`
-  (`page`, `folio`, `column`, `verse`, `paragraph`, `section`, `timestamp`…).
-- **BibTeX** (MUST): entry type from the CSL type (`book` → `@book`; `article-journal`,
-  `article-magazine`, `article-newspaper` → `@article`; `chapter` → `@incollection`;
-  `paper-conference` → `@inproceedings`; `thesis` → `@phdthesis`; `report` →
-  `@techreport`; anything else → `@misc`). Key: the first author's family name (or the
-  first word of the title), folded to ASCII letters and lowercased, followed by the year
-  (or `nd`); collisions inside one export get `a`, `b`, `c`… Fields: `author` and `editor`
-  as `Family, Given` joined with ` and ` (literal names in braces), `title`, `year`,
-  `publisher`, `address` (publisher-place), `journal` or `booktitle` (container-title),
-  `series` (collection-title), `volume`, `number` (issue), `pages`, `edition`, `doi`,
-  `isbn`, `url`, `language`, `note`. Values are UTF-8 with `{`, `}` and `\` escaped;
-  capitalization of titles is protected with braces only where the source capitalizes.
-- **ALTO** [ALTO] (MAY): ALTO 4, one `Page` per page unit (`PHYSICAL_IMG_NR` = `physical`,
-  `PRINTED_IMG_NR` = `printed`), one `TextBlock` per paragraph and one `TextLine` per
-  line; coordinates only when the producer has them (from an extension), never invented.
-- **IIIF Presentation 3** [IIIF] (MAY): a `Manifest` with one `Canvas` per unit (`label`
-  = printed folio; the unit image as painting annotation; the text as `supplementing`
-  annotation); audio and video as one time-based canvas with `duration` and a `Range` per
-  unit or section; sections as `structures`; anchors with a region as `#xywh=percent:`
-  targets.
+### 19.1 Keys
+
+Every exported document gets a key, used as the CSL `id` and as the BibTeX key:
+
+1. Take the first name of the CSL `author` list: its `family`, else its `literal`, else
+   its `given`. Fold it: decompose with NFKD, keep only the ASCII letters `A`–`Z` and
+   `a`–`z`, lowercase. (`Cervantes Saavedra` → `cervantessaavedra`.)
+2. If that is empty (no author, or no ASCII letter in the name), fold in the same way the
+   first whitespace-separated word of `title-short`, or of `title` when there is no
+   `title-short`. (`Lazarillo de Tormes` → `lazarillo`.)
+3. If that is still empty, use `anon`.
+4. Append the first year of `issued` in decimal (negative years keep their sign), or
+   `nd` when there is none: `cervantessaavedra1605`, `anonnd`.
+5. When the same key occurs more than once in one export, every occurrence gets a
+   suffix in export order: `a`, `b`, … `z`, `aa`, `ab`…
+
+### 19.2 CSL-JSON
+
+The CSL-JSON export is a JSON array with one item per document: the `metadata` item
+without its `spdf` member, with `id` set to the key. It is compared as JSON.
+
+A citation of a passage adds to the item the CSL `label` and `locator` of an anchor and
+optional end anchor, so that a CSL processor can print it in any style:
+
+| anchor | `label` | `locator` |
+|---|---|---|
+| `page`, foliation `page` / `leaf` / `column` | `page` / `folio` / `column` | the folio as in [§18](#citation): `145`, `[21]`, `xiv`, `1r`, ranges `145-146`, `1r-[1v]`; no label or locator when `printed` is null |
+| `section` or `web` with `printed` | `page` | as for pages |
+| `section` or `web` with `paragraph` | `paragraph` | the paragraph number |
+| other `section` or `web` with a path | `section` | the last element of the path |
+| `time` | `timestamp` | `1:09:20`, ranges `0:12-0:24` (as in §18) |
+| `verse` | `verse` | `1234` or `1234-1240` |
+| `canonical` | `section` | the `ref` |
+| `sheet` | `line` | `4` or `4-9` |
+| `slide`, `image` | none | none (CSL has no slide locator; the short citation of §18 prints it) |
+
+### 19.3 BibTeX
+
+The BibTeX export is text with one entry per document, in export order, separated by
+one empty line:
+
+```bibtex
+@book{cervantessaavedra1605,
+  author = {Cervantes Saavedra, Miguel de},
+  title = {{El} ingenioso hidalgo don {Quijote} de la {Mancha}},
+  year = {1605},
+  publisher = {Juan de la Cuesta},
+  address = {Madrid},
+  language = {es}
+}
+```
+
+- **Entry type** from the CSL `type`: `book` → `book`; `article-journal`,
+  `article-magazine`, `article-newspaper` → `article`; `chapter` → `incollection`;
+  `paper-conference` → `inproceedings`; `thesis` → `phdthesis`; `report` →
+  `techreport`; anything else → `misc`.
+- **Fields**, in this order, each only when its source is present and not empty:
+  `author` (CSL `author`), `editor` (`editor`), `title`, `year` (first year of `issued`),
+  `journal` for `article` entries or else `booktitle` (`container-title`), `publisher`,
+  `address` (`publisher-place`), `series` (`collection-title`), `volume`, `number`
+  (`issue`), `pages` (`page`), `edition`, `doi` (`DOI`), `isbn` (`ISBN`), `url` (`URL`),
+  `language`, `note`.
+- **Values** are written `{…}` in UTF-8. In every value, `\` becomes `\textbackslash{}`,
+  `{` becomes `\{` and `}` becomes `\}`; nothing else is escaped.
+- **Names**: a `literal` name is written in braces, `{National Aeronautics and Space
+  Administration}`; otherwise the family name (preceded by the `non-dropping-particle`
+  and a space, if any) and the `given` name are written `Family, Given`, or in braces
+  when only one of them exists. Names are joined with ` and `.
+- **Capitals**: in `title` and in `journal`/`booktitle`, every whitespace-separated word
+  that contains an uppercase letter (Unicode general category Lu) is wrapped in braces,
+  after escaping, so that styles cannot lowercase it: `{El} ingenioso hidalgo don
+  {Quijote}`.
+- **Comparison**: two exports are equal when, after removing leading and trailing
+  whitespace from every line and dropping empty lines, their lines are identical.
+
+### 19.4 Other formats
+
+- **ALTO** [ALTO] (MAY): ALTO 4, one `Page` per page unit, with `PHYSICAL_IMG_NR` =
+  `physical` and `PRINTED_IMG_NR` = `printed` only when `printed` is not null and its
+  `source` is not `inferred` (ALTO records printed numbers, and an inferred folio is not
+  printed); one `TextBlock` per paragraph and one `TextLine` per line; coordinates only
+  when the producer has them (from an extension), never invented.
 - **TEI** [TEI] (MAY, minimal): `teiHeader` from the metadata (`titleStmt`,
   `publicationStmt` with the rights, `sourceDesc` with the CSL fields), and a `body` with
-  `<pb n="printed" facs="…"/>` before each page (`n="[21]"` for inferred folios, absent
-  for unnumbered ones), `<p>` for paragraphs, `<lg>`/`<l n>` for verse, `<u who>` for
-  speaker turns, and `<note place="foot">` for notes.
+  a `<pb/>` before each page unit, whose `n` is the folio as cited in §18 without its
+  label (`n="ii"`, `n="[iv]"`, `n="1r"`; no `n` for unnumbered pages) and whose `facs`
+  is the unit image, if any; `<p>` for paragraphs, `<lg>`/`<l n>` for verse, `<u who>`
+  for speaker turns, and `<note place="foot">` for notes.
+- **IIIF Presentation 3** [IIIF] (MAY): a `Manifest` with one `Canvas` per unit, in
+  `ord` order; the `label` of a page canvas is `{"none": [n]}` with `n` as the TEI `n`,
+  and page canvases of unnumbered pages have no `label`; the unit image is the painting
+  annotation and the text a `supplementing` annotation; audio and video are one
+  time-based canvas with `duration` and a `Range` per unit or section; sections become
+  `structures`; anchors with a region become `#xywh=percent:` targets.
 - **Web Annotation** (MAY): citations and search results as annotations with the selectors
   of [§17.1](#annotations).
+
+The conformance suite checks, for paged documents, the page sequence of these exports:
+the `PHYSICAL_IMG_NR`/`PRINTED_IMG_NR` pairs of ALTO, the `n` of each TEI `pb` and the
+`label` of each IIIF page canvas, in order.
 
 <a id="legacy"></a>
 ## 20. Legacy formats
@@ -1225,8 +1336,10 @@ historically in the Scholaris repository; this specification does not define it.
 An implementation states its class and the profiles it covers, for example "reader and
 writer, profiles core and semantic". Its claim is backed by the conformance suite: it
 passes every case of the kinds its class requires (`dump`, `legacy_dump`, `anchor_uri`,
-`cite`, `search_lexical`, `validate` for readers; plus `search_vector` and
-`search_hybrid` for semantic readers; plus `roundtrip` and `quantize` for writers), with the suite
+`cite`, `search_lexical`, `validate`, `locate`, `export_csl`, `export_bibtex` for
+readers; plus `search_vector` and `search_hybrid` for semantic readers; plus `roundtrip`
+and `quantize` for writers; `export_structure` for implementations that export ALTO, TEI
+or IIIF), with the suite
 version it was tested against. Partial implementations MAY exist but MUST NOT call
 themselves conforming.
 

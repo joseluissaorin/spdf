@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "errors": ["E010"],
+    "valid": false,
+    "version": "5.0",
+    "warnings": []
+  },
+  "id": "validate-E010-missing-documents",
+  "input": {
+    "file": "invalid/E010-missing-documents.spdf"
+  },
+  "kind": "validate"
+}

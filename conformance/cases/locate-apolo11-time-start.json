@@ -1,0 +1,15 @@
+{
+  "expect": {
+    "char": null,
+    "document": true,
+    "fragments": ["a1"],
+    "units": ["t1"],
+    "xywh": null
+  },
+  "id": "locate-apolo11-time-start",
+  "input": {
+    "file": "files/apolo11.spdf",
+    "reference": "spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=12"
+  },
+  "kind": "locate"
+}

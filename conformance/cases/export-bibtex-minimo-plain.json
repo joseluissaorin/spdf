@@ -1,0 +1,10 @@
+{
+  "expect": {
+    "text": "@book{becquer1871,\n  author = {Bécquer, Gustavo Adolfo},\n  title = {{Rimas}},\n  year = {1871},\n  language = {es},\n  note = {SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.}\n}\n"
+  },
+  "id": "export-bibtex-minimo-plain",
+  "input": {
+    "files": ["files/minimo.spdf"]
+  },
+  "kind": "export_bibtex"
+}

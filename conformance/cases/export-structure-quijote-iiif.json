@@ -1,0 +1,36 @@
+{
+  "expect": {
+    "pages": [
+      {
+        "label": null
+      },
+      {
+        "label": "ii"
+      },
+      {
+        "label": "iii"
+      },
+      {
+        "label": "[iv]"
+      },
+      {
+        "label": "1r"
+      },
+      {
+        "label": "[1v]"
+      },
+      {
+        "label": "2r"
+      },
+      {
+        "label": "[2v]"
+      }
+    ]
+  },
+  "id": "export-structure-quijote-iiif",
+  "input": {
+    "file": "files/quijote.spdf",
+    "format": "iiif"
+  },
+  "kind": "export_structure"
+}

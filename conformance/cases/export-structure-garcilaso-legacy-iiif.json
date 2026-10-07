@@ -1,0 +1,21 @@
+{
+  "expect": {
+    "pages": [
+      {
+        "label": null
+      },
+      {
+        "label": "ix"
+      },
+      {
+        "label": "[x]"
+      }
+    ]
+  },
+  "id": "export-structure-garcilaso-legacy-iiif",
+  "input": {
+    "file": "legacy/garcilaso-4.1.spdf",
+    "format": "iiif"
+  },
+  "kind": "export_structure"
+}

@@ -1,0 +1,10 @@
+{
+  "expect": {
+    "text": "@book{garcilasodelavega1580,\n  author = {{Garcilaso de la Vega}},\n  editor = {Herrera, Fernando de},\n  title = {{Obras} de {Garcilaso} de la {Vega:} con anotaciones de {Fernando} de {Herrera}},\n  year = {1580},\n  publisher = {Alonso de la Barrera},\n  address = {Sevilla},\n  series = {Prueba de conformidad SPDF},\n  language = {es}\n}\n"
+  },
+  "id": "export-bibtex-garcilaso-4.1-plain",
+  "input": {
+    "files": ["legacy/garcilaso-4.1.spdf"]
+  },
+  "kind": "export_bibtex"
+}

@@ -2,6 +2,32 @@
 
 Newest first. Implementers: read this before updating your runner.
 
+## 0.4.0 (2026-10-07)
+
+RFC 0002 made normative (SPEC §5.4 and §19). 309 cases.
+
+- New kind `locate` (25 cases): resolution of `spdf:` URIs and of `.spdf` URLs with a
+  fragment against a file: units, fragments, `char` and `xywh`, by page, page range,
+  folio, time (with the end of the recording), slide, verse, canonical reference,
+  section path and paragraph, sheet rows; references to another document.
+- New kinds `export_csl` (18) and `export_bibtex` (16): keys (`cervantessaavedra1605`,
+  `lazarillo1554` from `title-short`, `anonnd`), collision suffixes, literal names,
+  protected capitals, CSL `label`/`locator` of citations. Hand-written expectations for
+  the representative cases; the rest computed by the oracle from the explicit metadata.
+- New kind `export_structure` (15): the page sequence of ALTO (`PHYSICAL_IMG_NR`,
+  `PRINTED_IMG_NR`, absent for inferred and unnumbered folios), TEI (`pb/@n`, `[iv]` for
+  inferred) and IIIF (canvas `label`).
+- `search_vector` over units (`darwin`, new unit vectors in `toy-embedding@8`) and over
+  units, figures and fragments in a non-normalized space with cosine scores
+  (`micrographia`, new space `toy-clip@4`, profile `core semantic`). Result items carry
+  `unit_id` / `figure_id`.
+- Changed sources: `darwin` (unit vectors) and `micrographia` (space, vectors, profile,
+  provenance); their dumps changed accordingly.
+- Oracle fixes reported by langs-a (C# port): i8 quantization of values whose product by
+  127 overflows now clamps to ±127 (new case `quantize-i8-overflow-clamps`); the reference
+  validator no longer crashes when `documents` is missing (new case
+  `validate-E010-missing-documents`).
+
 ## 0.3.0 (2026-10-07)
 
 - `invalid/W105-newer-minor-new-anchor-type.spdf`: in a file of a newer minor version

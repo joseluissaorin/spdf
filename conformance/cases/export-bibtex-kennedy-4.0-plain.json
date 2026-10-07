@@ -1,0 +1,10 @@
+{
+  "expect": {
+    "text": "@misc{kennedy1962,\n  author = {Kennedy, John F.},\n  title = {{Address} at {Rice} {University} on the {Nation's} {Space} {Effort}},\n  year = {1962},\n  address = {Houston},\n  language = {en}\n}\n"
+  },
+  "id": "export-bibtex-kennedy-4.0-plain",
+  "input": {
+    "files": ["legacy/kennedy-4.0.spdf"]
+  },
+  "kind": "export_bibtex"
+}

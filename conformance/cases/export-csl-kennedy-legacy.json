@@ -1,0 +1,29 @@
+{
+  "expect": {
+    "items": [
+      {
+        "author": [
+          {
+            "family": "Kennedy",
+            "given": "John F."
+          }
+        ],
+        "id": "kennedy1962",
+        "issued": {
+          "date-parts": [
+            [1962, 9, 12]
+          ]
+        },
+        "language": "en",
+        "publisher-place": "Houston",
+        "title": "Address at Rice University on the Nation's Space Effort",
+        "type": "speech"
+      }
+    ]
+  },
+  "id": "export-csl-kennedy-legacy",
+  "input": {
+    "files": ["legacy/kennedy-4.0.spdf"]
+  },
+  "kind": "export_csl"
+}

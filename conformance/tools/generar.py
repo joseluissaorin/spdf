@@ -40,7 +40,7 @@ import spdfref as R  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 CONF = HERE.parent
-SUITE_VERSION = "0.3.0"
+SUITE_VERSION = "0.4.0"
 # Public test key. NEVER use it for anything but this suite.
 TEST_SECRET = hashlib.sha256(b"SPDF conformance test key: public, never use it for real signatures").digest()
 SIGNED = {"quijote"}
@@ -160,6 +160,8 @@ def build_invalid(out: Path, sources: dict) -> list[tuple[str, dict]]:
 
     _mutate(fresh("E010-missing-table"), "DROP TABLE sections")
     expect("E010-missing-table", ["E010"])
+    _mutate(fresh("E010-missing-documents"), "DROP TABLE documents")
+    expect("E010-missing-documents", ["E010"])
     _mutate(fresh("E011-missing-column"), "ALTER TABLE units DROP COLUMN words")
     expect("E011-missing-column", ["E011"])
     _mutate(fresh("E012-missing-meta-key"), "DELETE FROM spdf_meta WHERE key = 'document_id'")
@@ -245,9 +247,13 @@ def frag_index(dump: dict) -> dict[str, dict]:
     return {f["id"]: f for f in dump["fragments"]}
 
 
-def result_item(dump, fid, score, via=None):
-    f = frag_index(dump)[fid]
-    item = {"fragment_id": fid, "score": R.canon(float(score)), "anchor_uri": R.format_uri(docref(dump), f["anchor"], f["anchor_end"])}
+def result_item(dump, fid, score, via=None, target="fragment"):
+    if target == "fragment":
+        f = frag_index(dump)[fid]
+        item = {"fragment_id": fid, "score": R.canon(float(score)), "anchor_uri": R.format_uri(docref(dump), f["anchor"], f["anchor_end"])}
+    else:
+        rows = {r["id"]: r for r in dump["units" if target == "unit" else "figures"]}
+        item = {f"{target}_id": fid, "score": R.canon(float(score)), "anchor_uri": R.format_uri(docref(dump), rows[fid]["anchor"])}
     if via is not None:
         item["via"] = via
     return item
@@ -303,13 +309,14 @@ def build_cases(out: Path, dumps: dict, legacy: dict, invalid: list) -> list[dic
         name = v["file"]
         o = R.open_file(out / "files" / f"{name}.spdf")
         try:
-            exact = R.vector_search(o.con, v["space"], v["query_vector"], 10**6, exact=True)
+            target = v.get("target", "fragment")
+            exact = R.vector_search(o.con, v["space"], v["query_vector"], 10**6, target=target, exact=True)
             assert_gaps([s for _, _, s in exact], f"vector case {i}")
-            approx = R.vector_search(o.con, v["space"], v["query_vector"], v["limit"])
+            approx = R.vector_search(o.con, v["space"], v["query_vector"], v["limit"], target=target)
             check([x[1] for x in approx] == [x[1] for x in exact[: v["limit"]]], f"vector case {i}: float order differs from exact order")
-            exp = {"results": [result_item(dumps[name], fid, score) for _, fid, score in approx]}
+            exp = {"results": [result_item(dumps[name], fid, score, target=target) for _, fid, score in approx]}
             add(f"search-vector-{name}-{i:02d}", "search_vector",
-                {"file": f"files/{name}.spdf", "space": v["space"], "target": "fragment", "query_vector": v["query_vector"], "limit": v["limit"]}, exp)
+                {"file": f"files/{name}.spdf", "space": v["space"], "target": target, "query_vector": v["query_vector"], "limit": v["limit"]}, exp)
         finally:
             o.close()
     for i, h in enumerate(q["hybrid"], start=1):
@@ -358,6 +365,35 @@ def build_cases(out: Path, dumps: dict, legacy: dict, invalid: list) -> list[dic
             got = {"error": True}
         check(got == e, f"{c['id']}: reference quantizes to {got}, the hand-written case says {e}")
         add(c["id"], "quantize", i, e)
+
+    all_dumps = {f"files/{k}.spdf": v for k, v in dumps.items()} | {f"legacy/{k}.spdf": v for k, v in legacy.items()}
+
+    for c in R.read_json(HERE / "manual" / "locate.json"):
+        i, e = R.canon(c["input"]), R.canon(c["expect"])
+        got = R.locate(all_dumps[i["file"]], i["reference"])
+        check(same(got, e), f"{c['id']}: reference locates {got}, the hand-written case says {e}")
+        add(c["id"], "locate", i, e)
+
+    ex = R.read_json(HERE / "manual" / "export.json")
+    def run_export(kind, i):
+        if kind == "export_structure":
+            return R.export_structure(all_dumps[i["file"]], i["format"])
+        items = [all_dumps[f]["document"]["metadata"] for f in i["files"]]
+        if kind == "export_csl":
+            return {"items": R.export_csl(items, i.get("anchor"), i.get("anchor_end"))}
+        return {"text": R.export_bibtex(items)}
+    for c in ex["manual"]:
+        i, e = R.canon(c["input"]), R.canon(c["expect"])
+        got = run_export(c["kind"], i)
+        if c["kind"] == "export_bibtex":
+            check(R.normalize_bibtex(got["text"]) == R.normalize_bibtex(e["text"]) and got["text"] == e["text"],
+                  f"{c['id']}: reference exports\n{got['text']}\nthe hand-written case says\n{e['text']}")
+        else:
+            check(same(got, e), f"{c['id']}: reference exports {got}, the hand-written case says {e}")
+        add(c["id"], c["kind"], i, e)
+    for c in ex["computed"]:
+        i = R.canon(c["input"])
+        add(c["id"], c["kind"], i, run_export(c["kind"], i))
 
     for c in R.read_json(HERE / "manual" / "cite.json"):
         i = R.canon(c["input"])

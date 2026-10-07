@@ -1,0 +1,18 @@
+{
+  "expect": {
+    "pages": [
+      {
+        "n": "210"
+      },
+      {
+        "n": "211"
+      }
+    ]
+  },
+  "id": "export-structure-micrographia-tei",
+  "input": {
+    "file": "files/micrographia.spdf",
+    "format": "tei"
+  },
+  "kind": "export_structure"
+}

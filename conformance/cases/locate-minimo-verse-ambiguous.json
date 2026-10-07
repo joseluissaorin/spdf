@@ -1,0 +1,15 @@
+{
+  "expect": {
+    "char": null,
+    "document": true,
+    "fragments": ["f1", "f2"],
+    "units": ["u1", "u2"],
+    "xywh": null
+  },
+  "id": "locate-minimo-verse-ambiguous",
+  "input": {
+    "file": "files/minimo.spdf",
+    "reference": "spdf:sha256-95ee321f7ae3a0e2d961614603703297425cf1e969b749599971e34fe69b7ba2#v=2"
+  },
+  "kind": "locate"
+}

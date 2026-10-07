@@ -1,0 +1,44 @@
+{
+  "expect": {
+    "pages": [
+      {
+        "physical": 1,
+        "printed": null
+      },
+      {
+        "physical": 2,
+        "printed": "ii"
+      },
+      {
+        "physical": 3,
+        "printed": "iii"
+      },
+      {
+        "physical": 4,
+        "printed": null
+      },
+      {
+        "physical": 5,
+        "printed": "1r"
+      },
+      {
+        "physical": 6,
+        "printed": null
+      },
+      {
+        "physical": 7,
+        "printed": "2r"
+      },
+      {
+        "physical": 8,
+        "printed": null
+      }
+    ]
+  },
+  "id": "export-structure-quijote-alto",
+  "input": {
+    "file": "files/quijote.spdf",
+    "format": "alto"
+  },
+  "kind": "export_structure"
+}

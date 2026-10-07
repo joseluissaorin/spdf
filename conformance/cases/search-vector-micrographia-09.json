@@ -1,0 +1,25 @@
+{
+  "expect": {
+    "results": [
+      {
+        "anchor_uri": "spdf:sha256-4501ef3a079e09d5556746bba9fc26e261aa6cbc5d47b056382d400ec1523bfd#p=2&f=211&char=26,198",
+        "fragment_id": "m2",
+        "score": 0.952381
+      },
+      {
+        "anchor_uri": "spdf:sha256-4501ef3a079e09d5556746bba9fc26e261aa6cbc5d47b056382d400ec1523bfd#p=1&f=210&char=26,142",
+        "fragment_id": "m1",
+        "score": 0.052926
+      }
+    ]
+  },
+  "id": "search-vector-micrographia-09",
+  "input": {
+    "file": "files/micrographia.spdf",
+    "limit": 2,
+    "query_vector": [0, 0.25, 1, 0.5],
+    "space": "toy-clip@4",
+    "target": "fragment"
+  },
+  "kind": "search_vector"
+}

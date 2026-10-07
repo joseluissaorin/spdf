@@ -1,0 +1,21 @@
+{
+  "expect": {
+    "pages": [
+      {
+        "n": null
+      },
+      {
+        "n": "ix"
+      },
+      {
+        "n": "[x]"
+      }
+    ]
+  },
+  "id": "export-structure-garcilaso-legacy-tei",
+  "input": {
+    "file": "legacy/garcilaso-4.1.spdf",
+    "format": "tei"
+  },
+  "kind": "export_structure"
+}

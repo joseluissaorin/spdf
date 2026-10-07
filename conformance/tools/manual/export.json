@@ -1,0 +1,888 @@
+{
+ "manual": [
+  {
+   "id": "export-bibtex-quijote",
+   "kind": "export_bibtex",
+   "input": {
+    "files": [
+     "files/quijote.spdf"
+    ]
+   },
+   "expect": {
+    "text": "@book{cervantessaavedra1605,\n  author = {Cervantes Saavedra, Miguel de},\n  title = {{El} ingenioso hidalgo don {Quijote} de la {Mancha}},\n  year = {1605},\n  publisher = {Juan de la Cuesta},\n  address = {Madrid},\n  language = {es},\n  note = {SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.}\n}\n"
+   }
+  },
+  {
+   "id": "export-bibtex-apolo11-literal-author",
+   "kind": "export_bibtex",
+   "input": {
+    "files": [
+     "files/apolo11.spdf"
+    ]
+   },
+   "expect": {
+    "text": "@misc{nationalaeronauticsandspaceadministration1969,\n  author = {{National Aeronautics and Space Administration}},\n  title = {{Apollo} 11 air-to-ground voice transmissions (excerpts)},\n  year = {1969},\n  language = {en},\n  note = {SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.}\n}\n"
+   }
+  },
+  {
+   "id": "export-bibtex-lazarillo-no-author",
+   "kind": "export_bibtex",
+   "input": {
+    "files": [
+     "files/lazarillo.spdf"
+    ]
+   },
+   "expect": {
+    "text": "@book{lazarillo1554,\n  title = {{La} vida de {Lazarillo} de {Tormes} y de sus fortunas y adversidades},\n  year = {1554},\n  publisher = {Juan de Junta},\n  address = {Burgos},\n  language = {es},\n  note = {SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.}\n}\n"
+   }
+  },
+  {
+   "id": "export-bibtex-lunyu-anon-undated",
+   "kind": "export_bibtex",
+   "input": {
+    "files": [
+     "files/lunyu.spdf"
+    ]
+   },
+   "expect": {
+    "text": "@book{anonnd,\n  author = {{孔子}},\n  title = {論語},\n  language = {lzh},\n  note = {SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.}\n}\n"
+   }
+  },
+  {
+   "id": "export-bibtex-garcilaso-legacy",
+   "kind": "export_bibtex",
+   "input": {
+    "files": [
+     "legacy/garcilaso-4.1.spdf"
+    ]
+   },
+   "expect": {
+    "text": "@book{garcilasodelavega1580,\n  author = {{Garcilaso de la Vega}},\n  editor = {Herrera, Fernando de},\n  title = {{Obras} de {Garcilaso} de la {Vega:} con anotaciones de {Fernando} de {Herrera}},\n  year = {1580},\n  publisher = {Alonso de la Barrera},\n  address = {Sevilla},\n  series = {Prueba de conformidad SPDF},\n  language = {es}\n}\n"
+   }
+  },
+  {
+   "id": "export-bibtex-collision-suffixes",
+   "kind": "export_bibtex",
+   "input": {
+    "files": [
+     "files/quijote.spdf",
+     "files/quijote.spdf"
+    ]
+   },
+   "expect": {
+    "text": "@book{cervantessaavedra1605a,\n  author = {Cervantes Saavedra, Miguel de},\n  title = {{El} ingenioso hidalgo don {Quijote} de la {Mancha}},\n  year = {1605},\n  publisher = {Juan de la Cuesta},\n  address = {Madrid},\n  language = {es},\n  note = {SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.}\n}\n\n@book{cervantessaavedra1605b,\n  author = {Cervantes Saavedra, Miguel de},\n  title = {{El} ingenioso hidalgo don {Quijote} de la {Mancha}},\n  year = {1605},\n  publisher = {Juan de la Cuesta},\n  address = {Madrid},\n  language = {es},\n  note = {SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.}\n}\n"
+   }
+  },
+  {
+   "id": "export-csl-lazarillo",
+   "kind": "export_csl",
+   "input": {
+    "files": [
+     "files/lazarillo.spdf"
+    ]
+   },
+   "expect": {
+    "items": [
+     {
+      "id": "lazarillo1554",
+      "type": "book",
+      "title": "La vida de Lazarillo de Tormes y de sus fortunas y adversidades",
+      "title-short": "Lazarillo de Tormes",
+      "issued": {
+       "date-parts": [
+        [
+         1554
+        ]
+       ]
+      },
+      "publisher": "Juan de Junta",
+      "publisher-place": "Burgos",
+      "language": "es",
+      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy."
+     }
+    ]
+   }
+  },
+  {
+   "id": "export-csl-kennedy-legacy",
+   "kind": "export_csl",
+   "input": {
+    "files": [
+     "legacy/kennedy-4.0.spdf"
+    ]
+   },
+   "expect": {
+    "items": [
+     {
+      "id": "kennedy1962",
+      "type": "speech",
+      "title": "Address at Rice University on the Nation's Space Effort",
+      "author": [
+       {
+        "family": "Kennedy",
+        "given": "John F."
+       }
+      ],
+      "issued": {
+       "date-parts": [
+        [
+         1962,
+         9,
+         12
+        ]
+       ]
+      },
+      "publisher-place": "Houston",
+      "language": "en"
+     }
+    ]
+   }
+  },
+  {
+   "id": "export-csl-citation-leaf-range",
+   "kind": "export_csl",
+   "input": {
+    "files": [
+     "files/quijote.spdf"
+    ],
+    "anchor": {
+     "chars": [
+      101,
+      278
+     ],
+     "confidence": 0.98,
+     "foliation": "leaf",
+     "physical": 5,
+     "printed": "1r",
+     "roman": false,
+     "source": "read",
+     "type": "page"
+    },
+    "anchor_end": {
+     "confidence": 0.92,
+     "foliation": "leaf",
+     "physical": 6,
+     "printed": "1v",
+     "roman": false,
+     "source": "inferred",
+     "type": "page"
+    }
+   },
+   "expect": {
+    "items": [
+     {
+      "author": [
+       {
+        "family": "Cervantes Saavedra",
+        "given": "Miguel de"
+       }
+      ],
+      "issued": {
+       "date-parts": [
+        [
+         1605
+        ]
+       ]
+      },
+      "language": "es",
+      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+      "publisher": "Juan de la Cuesta",
+      "publisher-place": "Madrid",
+      "title": "El ingenioso hidalgo don Quijote de la Mancha",
+      "title-short": "Don Quijote",
+      "type": "book",
+      "id": "cervantessaavedra1605",
+      "label": "folio",
+      "locator": "1r-[1v]"
+     }
+    ]
+   }
+  },
+  {
+   "id": "export-csl-citation-unnumbered",
+   "kind": "export_csl",
+   "input": {
+    "files": [
+     "files/quijote.spdf"
+    ],
+    "anchor": {
+     "chars": [
+      0,
+      89
+     ],
+     "confidence": 1,
+     "foliation": "page",
+     "physical": 1,
+     "printed": null,
+     "roman": false,
+     "source": "none",
+     "type": "page"
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "items": [
+     {
+      "author": [
+       {
+        "family": "Cervantes Saavedra",
+        "given": "Miguel de"
+       }
+      ],
+      "issued": {
+       "date-parts": [
+        [
+         1605
+        ]
+       ]
+      },
+      "language": "es",
+      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+      "publisher": "Juan de la Cuesta",
+      "publisher-place": "Madrid",
+      "title": "El ingenioso hidalgo don Quijote de la Mancha",
+      "title-short": "Don Quijote",
+      "type": "book",
+      "id": "cervantessaavedra1605"
+     }
+    ]
+   }
+  },
+  {
+   "id": "export-csl-citation-timestamp",
+   "kind": "export_csl",
+   "input": {
+    "files": [
+     "files/apolo11.spdf"
+    ],
+    "anchor": {
+     "chars": [
+      0,
+      78
+     ],
+     "speaker": "Neil Armstrong",
+     "t0": 4160,
+     "t1": 4175.5,
+     "type": "time"
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "items": [
+     {
+      "author": [
+       {
+        "literal": "National Aeronautics and Space Administration"
+       }
+      ],
+      "issued": {
+       "date-parts": [
+        [
+         1969,
+         7,
+         20
+        ]
+       ]
+      },
+      "language": "en",
+      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+      "title": "Apollo 11 air-to-ground voice transmissions (excerpts)",
+      "title-short": "Apollo 11 air-to-ground",
+      "type": "broadcast",
+      "id": "nationalaeronauticsandspaceadministration1969",
+      "label": "timestamp",
+      "locator": "1:09:20"
+     }
+    ]
+   }
+  },
+  {
+   "id": "export-csl-citation-canonical",
+   "kind": "export_csl",
+   "input": {
+    "files": [
+     "files/lunyu.spdf"
+    ],
+    "anchor": {
+     "chars": [
+      0,
+      41
+     ],
+     "ref": "1.1",
+     "scheme": "analects",
+     "type": "canonical"
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "items": [
+     {
+      "author": [
+       {
+        "literal": "孔子"
+       }
+      ],
+      "language": "lzh",
+      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+      "title": "論語",
+      "type": "book",
+      "id": "anonnd",
+      "label": "section",
+      "locator": "1.1"
+     }
+    ]
+   }
+  },
+  {
+   "id": "export-csl-citation-page",
+   "kind": "export_csl",
+   "input": {
+    "files": [
+     "files/darwin.spdf"
+    ],
+    "anchor": {
+     "chars": [
+      0,
+      349
+     ],
+     "confidence": 0.99,
+     "foliation": "page",
+     "physical": 3,
+     "printed": "61",
+     "roman": false,
+     "source": "read",
+     "type": "page"
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "items": [
+     {
+      "author": [
+       {
+        "family": "Darwin",
+        "given": "Charles"
+       }
+      ],
+      "issued": {
+       "date-parts": [
+        [
+         1859
+        ]
+       ]
+      },
+      "language": "en",
+      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+      "publisher": "John Murray",
+      "publisher-place": "London",
+      "title": "On the Origin of Species by Means of Natural Selection",
+      "title-short": "On the Origin of Species",
+      "type": "book",
+      "id": "darwin1859",
+      "label": "page",
+      "locator": "61"
+     }
+    ]
+   }
+  },
+  {
+   "id": "export-csl-citation-verse",
+   "kind": "export_csl",
+   "input": {
+    "files": [
+     "files/minimo.spdf"
+    ],
+    "anchor": {
+     "chars": [
+      0,
+      125
+     ],
+     "line_from": 1,
+     "line_to": 4,
+     "type": "verse"
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "items": [
+     {
+      "author": [
+       {
+        "family": "Bécquer",
+        "given": "Gustavo Adolfo"
+       }
+      ],
+      "issued": {
+       "date-parts": [
+        [
+         1871
+        ]
+       ]
+      },
+      "language": "es",
+      "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+      "title": "Rimas",
+      "type": "book",
+      "id": "becquer1871",
+      "label": "verse",
+      "locator": "1-4"
+     }
+    ]
+   }
+  },
+  {
+   "id": "export-structure-quijote-tei",
+   "kind": "export_structure",
+   "input": {
+    "file": "files/quijote.spdf",
+    "format": "tei"
+   },
+   "expect": {
+    "pages": [
+     {
+      "n": null
+     },
+     {
+      "n": "ii"
+     },
+     {
+      "n": "iii"
+     },
+     {
+      "n": "[iv]"
+     },
+     {
+      "n": "1r"
+     },
+     {
+      "n": "[1v]"
+     },
+     {
+      "n": "2r"
+     },
+     {
+      "n": "[2v]"
+     }
+    ]
+   }
+  },
+  {
+   "id": "export-structure-quijote-iiif",
+   "kind": "export_structure",
+   "input": {
+    "file": "files/quijote.spdf",
+    "format": "iiif"
+   },
+   "expect": {
+    "pages": [
+     {
+      "label": null
+     },
+     {
+      "label": "ii"
+     },
+     {
+      "label": "iii"
+     },
+     {
+      "label": "[iv]"
+     },
+     {
+      "label": "1r"
+     },
+     {
+      "label": "[1v]"
+     },
+     {
+      "label": "2r"
+     },
+     {
+      "label": "[2v]"
+     }
+    ]
+   }
+  },
+  {
+   "id": "export-structure-quijote-alto",
+   "kind": "export_structure",
+   "input": {
+    "file": "files/quijote.spdf",
+    "format": "alto"
+   },
+   "expect": {
+    "pages": [
+     {
+      "physical": 1,
+      "printed": null
+     },
+     {
+      "physical": 2,
+      "printed": "ii"
+     },
+     {
+      "physical": 3,
+      "printed": "iii"
+     },
+     {
+      "physical": 4,
+      "printed": null
+     },
+     {
+      "physical": 5,
+      "printed": "1r"
+     },
+     {
+      "physical": 6,
+      "printed": null
+     },
+     {
+      "physical": 7,
+      "printed": "2r"
+     },
+     {
+      "physical": 8,
+      "printed": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "export-structure-lazarillo-tei",
+   "kind": "export_structure",
+   "input": {
+    "file": "files/lazarillo.spdf",
+    "format": "tei"
+   },
+   "expect": {
+    "pages": [
+     {
+      "n": null
+     },
+     {
+      "n": "3"
+     },
+     {
+      "n": "4"
+     },
+     {
+      "n": "5"
+     },
+     {
+      "n": "[6]"
+     }
+    ]
+   }
+  },
+  {
+   "id": "export-structure-lazarillo-alto",
+   "kind": "export_structure",
+   "input": {
+    "file": "files/lazarillo.spdf",
+    "format": "alto"
+   },
+   "expect": {
+    "pages": [
+     {
+      "physical": 1,
+      "printed": null
+     },
+     {
+      "physical": 2,
+      "printed": "3"
+     },
+     {
+      "physical": 3,
+      "printed": "4"
+     },
+     {
+      "physical": 4,
+      "printed": "5"
+     },
+     {
+      "physical": 5,
+      "printed": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "export-structure-garcilaso-legacy-tei",
+   "kind": "export_structure",
+   "input": {
+    "file": "legacy/garcilaso-4.1.spdf",
+    "format": "tei"
+   },
+   "expect": {
+    "pages": [
+     {
+      "n": null
+     },
+     {
+      "n": "ix"
+     },
+     {
+      "n": "[x]"
+     }
+    ]
+   }
+  }
+ ],
+ "computed": [
+  {
+   "id": "export-csl-minimo-plain",
+   "kind": "export_csl",
+   "input": {
+    "files": [
+     "files/minimo.spdf"
+    ]
+   }
+  },
+  {
+   "id": "export-bibtex-minimo-plain",
+   "kind": "export_bibtex",
+   "input": {
+    "files": [
+     "files/minimo.spdf"
+    ]
+   }
+  },
+  {
+   "id": "export-csl-quijote-plain",
+   "kind": "export_csl",
+   "input": {
+    "files": [
+     "files/quijote.spdf"
+    ]
+   }
+  },
+  {
+   "id": "export-bibtex-quijote-plain",
+   "kind": "export_bibtex",
+   "input": {
+    "files": [
+     "files/quijote.spdf"
+    ]
+   }
+  },
+  {
+   "id": "export-csl-apolo11-plain",
+   "kind": "export_csl",
+   "input": {
+    "files": [
+     "files/apolo11.spdf"
+    ]
+   }
+  },
+  {
+   "id": "export-bibtex-apolo11-plain",
+   "kind": "export_bibtex",
+   "input": {
+    "files": [
+     "files/apolo11.spdf"
+    ]
+   }
+  },
+  {
+   "id": "export-csl-lazarillo-plain",
+   "kind": "export_csl",
+   "input": {
+    "files": [
+     "files/lazarillo.spdf"
+    ]
+   }
+  },
+  {
+   "id": "export-bibtex-lazarillo-plain",
+   "kind": "export_bibtex",
+   "input": {
+    "files": [
+     "files/lazarillo.spdf"
+    ]
+   }
+  },
+  {
+   "id": "export-csl-micrographia-plain",
+   "kind": "export_csl",
+   "input": {
+    "files": [
+     "files/micrographia.spdf"
+    ]
+   }
+  },
+  {
+   "id": "export-bibtex-micrographia-plain",
+   "kind": "export_bibtex",
+   "input": {
+    "files": [
+     "files/micrographia.spdf"
+    ]
+   }
+  },
+  {
+   "id": "export-csl-darwin-plain",
+   "kind": "export_csl",
+   "input": {
+    "files": [
+     "files/darwin.spdf"
+    ]
+   }
+  },
+  {
+   "id": "export-bibtex-darwin-plain",
+   "kind": "export_bibtex",
+   "input": {
+    "files": [
+     "files/darwin.spdf"
+    ]
+   }
+  },
+  {
+   "id": "export-csl-lunyu-plain",
+   "kind": "export_csl",
+   "input": {
+    "files": [
+     "files/lunyu.spdf"
+    ]
+   }
+  },
+  {
+   "id": "export-bibtex-lunyu-plain",
+   "kind": "export_bibtex",
+   "input": {
+    "files": [
+     "files/lunyu.spdf"
+    ]
+   }
+  },
+  {
+   "id": "export-csl-garcilaso-4.1-plain",
+   "kind": "export_csl",
+   "input": {
+    "files": [
+     "legacy/garcilaso-4.1.spdf"
+    ]
+   }
+  },
+  {
+   "id": "export-bibtex-garcilaso-4.1-plain",
+   "kind": "export_bibtex",
+   "input": {
+    "files": [
+     "legacy/garcilaso-4.1.spdf"
+    ]
+   }
+  },
+  {
+   "id": "export-csl-kennedy-4.0-plain",
+   "kind": "export_csl",
+   "input": {
+    "files": [
+     "legacy/kennedy-4.0.spdf"
+    ]
+   }
+  },
+  {
+   "id": "export-bibtex-kennedy-4.0-plain",
+   "kind": "export_bibtex",
+   "input": {
+    "files": [
+     "legacy/kennedy-4.0.spdf"
+    ]
+   }
+  },
+  {
+   "id": "export-bibtex-several",
+   "kind": "export_bibtex",
+   "input": {
+    "files": [
+     "files/darwin.spdf",
+     "files/micrographia.spdf",
+     "legacy/kennedy-4.0.spdf"
+    ]
+   }
+  },
+  {
+   "id": "export-csl-several",
+   "kind": "export_csl",
+   "input": {
+    "files": [
+     "files/quijote.spdf",
+     "files/lazarillo.spdf",
+     "files/quijote.spdf"
+    ]
+   }
+  },
+  {
+   "id": "export-structure-micrographia-tei",
+   "kind": "export_structure",
+   "input": {
+    "file": "files/micrographia.spdf",
+    "format": "tei"
+   }
+  },
+  {
+   "id": "export-structure-micrographia-alto",
+   "kind": "export_structure",
+   "input": {
+    "file": "files/micrographia.spdf",
+    "format": "alto"
+   }
+  },
+  {
+   "id": "export-structure-micrographia-iiif",
+   "kind": "export_structure",
+   "input": {
+    "file": "files/micrographia.spdf",
+    "format": "iiif"
+   }
+  },
+  {
+   "id": "export-structure-darwin-tei",
+   "kind": "export_structure",
+   "input": {
+    "file": "files/darwin.spdf",
+    "format": "tei"
+   }
+  },
+  {
+   "id": "export-structure-darwin-alto",
+   "kind": "export_structure",
+   "input": {
+    "file": "files/darwin.spdf",
+    "format": "alto"
+   }
+  },
+  {
+   "id": "export-structure-darwin-iiif",
+   "kind": "export_structure",
+   "input": {
+    "file": "files/darwin.spdf",
+    "format": "iiif"
+   }
+  },
+  {
+   "id": "export-structure-lazarillo-iiif",
+   "kind": "export_structure",
+   "input": {
+    "file": "files/lazarillo.spdf",
+    "format": "iiif"
+   }
+  },
+  {
+   "id": "export-structure-garcilaso-legacy-alto",
+   "kind": "export_structure",
+   "input": {
+    "file": "legacy/garcilaso-4.1.spdf",
+    "format": "alto"
+   }
+  },
+  {
+   "id": "export-structure-garcilaso-legacy-iiif",
+   "kind": "export_structure",
+   "input": {
+    "file": "legacy/garcilaso-4.1.spdf",
+    "format": "iiif"
+   }
+  }
+ ]
+}

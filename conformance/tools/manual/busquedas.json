@@ -128,6 +128,58 @@
     0
    ],
    "limit": 3
+  },
+  {
+   "file": "darwin",
+   "space": "toy-embedding@8",
+   "target": "unit",
+   "query_vector": [
+    0.5,
+    0.25,
+    0.5,
+    0.25,
+    0,
+    0.25,
+    0.25,
+    0.5
+   ],
+   "limit": 5
+  },
+  {
+   "file": "micrographia",
+   "space": "toy-clip@4",
+   "target": "unit",
+   "query_vector": [
+    1,
+    0.5,
+    0.25,
+    0
+   ],
+   "limit": 2
+  },
+  {
+   "file": "micrographia",
+   "space": "toy-clip@4",
+   "target": "figure",
+   "query_vector": [
+    1,
+    0.5,
+    0.25,
+    0
+   ],
+   "limit": 2
+  },
+  {
+   "file": "micrographia",
+   "space": "toy-clip@4",
+   "target": "fragment",
+   "query_vector": [
+    0,
+    0.25,
+    1,
+    0.5
+   ],
+   "limit": 2
   }
  ],
  "hybrid": [

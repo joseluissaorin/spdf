@@ -80,9 +80,15 @@ How expectations are made, so nobody has to trust a single implementation:
 | `anchor_uri` (error) | `uri` | `{"error": true}` | `parse(uri)` fails |
 | `cite` | `anchor`, `anchor_end`, `metadata` (CSL-JSON item), `locale` | `text` | `cite(...) == text`, byte for byte |
 | `quantize` | `dtype` (`f32`, `f16`, `i8`), `values` | `hex` or `{"error": true}` | encoding the values as a writer would gives these little-endian bytes (lowercase hex), or fails for out-of-range values |
+| `locate` | `file`, `reference` (an `spdf:` URI or the URL of a `.spdf` with a fragment) | `document`, `units`, `fragments`, `char`, `xywh` | `locate(file, reference)` (SPEC §5.4) gives exactly this object; an implementation that raises for a reference to another document maps it to `document: false` with empty lists and nulls |
+| `export_csl` | `files` (in order), optional `anchor`, `anchor_end` | `items` | the CSL-JSON export of those files (SPEC §19.1, §19.2), compared as JSON; with an anchor, the single item carries `label` and `locator` (or neither) |
+| `export_bibtex` | `files` (in order) | `text` | the BibTeX export (SPEC §19.1, §19.3) equals `text` after trimming every line and dropping empty lines |
+| `export_structure` | `file`, `format` (`alto`, `tei`, `iiif`) | `pages` | the page sequence of that export (SPEC §19.4): `{"physical", "printed"}` per ALTO `Page` (`PRINTED_IMG_NR` absent → null), `{"n"}` per TEI `pb` (no `n` → null), `{"label"}` per IIIF page canvas (no label → null) |
 
 A search result item is `{"fragment_id", "score", "anchor_uri"}` plus `"via"` for lexical
-and hybrid searches. JSON values compare structurally: numbers as IEEE doubles (`1` and
+and hybrid searches; vector searches over units or figures (`target` `unit` or `figure`)
+give `unit_id` or `figure_id` instead of `fragment_id`, with the anchor URI of the unit's or
+figure's own anchor. JSON values compare structurally: numbers as IEEE doubles (`1` and
 `1.0` are equal), object key order irrelevant, arrays in order.
 
 ## The runner
@@ -99,8 +105,8 @@ cases and prints one JSON object on standard output, also saved as `conformance.
 
 - A case that throws is a failure, never a pass.
 - `skipped` is allowed only for a whole kind the implementation does not claim (a
-  reader-only library skips `roundtrip` and `quantize`); say which kinds in the
-  implementation README.
+  reader-only library skips `roundtrip` and `quantize`; a library without ALTO, TEI or
+  IIIF export skips `export_structure`); say which kinds in the implementation README.
 - The process exits non-zero if `failed` is not empty. CI fails on any failure.
 - New cases appear over time: a runner MUST discover them by listing `cases/*.json`,
   never from a hard-coded list.

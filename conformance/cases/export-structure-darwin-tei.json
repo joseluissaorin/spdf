@@ -1,0 +1,27 @@
+{
+  "expect": {
+    "pages": [
+      {
+        "n": "1"
+      },
+      {
+        "n": "5"
+      },
+      {
+        "n": "61"
+      },
+      {
+        "n": "84"
+      },
+      {
+        "n": "490"
+      }
+    ]
+  },
+  "id": "export-structure-darwin-tei",
+  "input": {
+    "file": "files/darwin.spdf",
+    "format": "tei"
+  },
+  "kind": "export_structure"
+}

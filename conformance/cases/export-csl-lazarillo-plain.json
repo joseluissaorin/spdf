@@ -1,0 +1,26 @@
+{
+  "expect": {
+    "items": [
+      {
+        "id": "lazarillo1554",
+        "issued": {
+          "date-parts": [
+            [1554]
+          ]
+        },
+        "language": "es",
+        "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+        "publisher": "Juan de Junta",
+        "publisher-place": "Burgos",
+        "title": "La vida de Lazarillo de Tormes y de sus fortunas y adversidades",
+        "title-short": "Lazarillo de Tormes",
+        "type": "book"
+      }
+    ]
+  },
+  "id": "export-csl-lazarillo-plain",
+  "input": {
+    "files": ["files/lazarillo.spdf"]
+  },
+  "kind": "export_csl"
+}

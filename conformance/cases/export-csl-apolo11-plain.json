@@ -1,0 +1,29 @@
+{
+  "expect": {
+    "items": [
+      {
+        "author": [
+          {
+            "literal": "National Aeronautics and Space Administration"
+          }
+        ],
+        "id": "nationalaeronauticsandspaceadministration1969",
+        "issued": {
+          "date-parts": [
+            [1969, 7, 20]
+          ]
+        },
+        "language": "en",
+        "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+        "title": "Apollo 11 air-to-ground voice transmissions (excerpts)",
+        "title-short": "Apollo 11 air-to-ground",
+        "type": "broadcast"
+      }
+    ]
+  },
+  "id": "export-csl-apolo11-plain",
+  "input": {
+    "files": ["files/apolo11.spdf"]
+  },
+  "kind": "export_csl"
+}

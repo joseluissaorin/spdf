@@ -1,0 +1,27 @@
+{
+  "expect": {
+    "pages": [
+      {
+        "label": null
+      },
+      {
+        "label": "3"
+      },
+      {
+        "label": "4"
+      },
+      {
+        "label": "5"
+      },
+      {
+        "label": "[6]"
+      }
+    ]
+  },
+  "id": "export-structure-lazarillo-iiif",
+  "input": {
+    "file": "files/lazarillo.spdf",
+    "format": "iiif"
+  },
+  "kind": "export_structure"
+}

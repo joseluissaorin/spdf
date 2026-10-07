@@ -1,0 +1,32 @@
+{
+  "expect": {
+    "items": [
+      {
+        "author": [
+          {
+            "family": "Hooke",
+            "given": "Robert"
+          }
+        ],
+        "id": "hooke1665",
+        "issued": {
+          "date-parts": [
+            [1665]
+          ]
+        },
+        "language": "en",
+        "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+        "publisher": "Jo. Martyn and Ja. Allestry",
+        "publisher-place": "London",
+        "title": "Micrographia: or some physiological descriptions of minute bodies made by magnifying glasses",
+        "title-short": "Micrographia",
+        "type": "book"
+      }
+    ]
+  },
+  "id": "export-csl-micrographia-plain",
+  "input": {
+    "files": ["files/micrographia.spdf"]
+  },
+  "kind": "export_csl"
+}

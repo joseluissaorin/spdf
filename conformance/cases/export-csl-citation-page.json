@@ -1,0 +1,45 @@
+{
+  "expect": {
+    "items": [
+      {
+        "author": [
+          {
+            "family": "Darwin",
+            "given": "Charles"
+          }
+        ],
+        "id": "darwin1859",
+        "issued": {
+          "date-parts": [
+            [1859]
+          ]
+        },
+        "label": "page",
+        "language": "en",
+        "locator": "61",
+        "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+        "publisher": "John Murray",
+        "publisher-place": "London",
+        "title": "On the Origin of Species by Means of Natural Selection",
+        "title-short": "On the Origin of Species",
+        "type": "book"
+      }
+    ]
+  },
+  "id": "export-csl-citation-page",
+  "input": {
+    "anchor": {
+      "chars": [0, 349],
+      "confidence": 0.99,
+      "foliation": "page",
+      "physical": 3,
+      "printed": "61",
+      "roman": false,
+      "source": "read",
+      "type": "page"
+    },
+    "anchor_end": null,
+    "files": ["files/darwin.spdf"]
+  },
+  "kind": "export_csl"
+}

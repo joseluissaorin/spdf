@@ -1,0 +1,39 @@
+{
+  "expect": {
+    "items": [
+      {
+        "author": [
+          {
+            "literal": "National Aeronautics and Space Administration"
+          }
+        ],
+        "id": "nationalaeronauticsandspaceadministration1969",
+        "issued": {
+          "date-parts": [
+            [1969, 7, 20]
+          ]
+        },
+        "label": "timestamp",
+        "language": "en",
+        "locator": "1:09:20",
+        "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+        "title": "Apollo 11 air-to-ground voice transmissions (excerpts)",
+        "title-short": "Apollo 11 air-to-ground",
+        "type": "broadcast"
+      }
+    ]
+  },
+  "id": "export-csl-citation-timestamp",
+  "input": {
+    "anchor": {
+      "chars": [0, 78],
+      "speaker": "Neil Armstrong",
+      "t0": 4160,
+      "t1": 4175.5,
+      "type": "time"
+    },
+    "anchor_end": null,
+    "files": ["files/apolo11.spdf"]
+  },
+  "kind": "export_csl"
+}

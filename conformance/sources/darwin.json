@@ -377,7 +377,7 @@
   ],
   "vectors": {
     "toy-embedding@8": {
-      "count": 6,
+      "count": 11,
       "items": [
         {
           "id": "d1",
@@ -408,9 +408,34 @@
           "id": "d6",
           "target": "fragment",
           "values": [0.25, 0, 0.25, 0, 0, 0.75, 0.5, 0.25]
+        },
+        {
+          "id": "p1",
+          "target": "unit",
+          "values": [0, 0, 0, 0, 1, 0, 0, 0]
+        },
+        {
+          "id": "p2",
+          "target": "unit",
+          "values": [0.25, 0.5, 0, 0.75, 0, 0, 0.25, 0.25]
+        },
+        {
+          "id": "p3",
+          "target": "unit",
+          "values": [0.5, 0.5, 0.5, 0.25, 0.25, 0.25, 0, 0.25]
+        },
+        {
+          "id": "p4",
+          "target": "unit",
+          "values": [0.5, 0.5, 0.5, 0.25, 0, 0.25, 0.25, 0.25]
+        },
+        {
+          "id": "p5",
+          "target": "unit",
+          "values": [0.25, 0, 0.25, 0, 0, 0.75, 0.5, 0.25]
         }
       ],
-      "sha256": "8349e68ef6a75388be30334b8ce3310fe3d83fc95370bdda5cd483adbc0a4a5b"
+      "sha256": "1e5a4a7ed795e216f647be4320ed40af92284884b52e21563808879078c8a37c"
     },
     "toy-embedding@8:f16": {
       "count": 6,

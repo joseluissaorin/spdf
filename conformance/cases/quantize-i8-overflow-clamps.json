@@ -1,0 +1,11 @@
+{
+  "expect": {
+    "hex": "7f81"
+  },
+  "id": "quantize-i8-overflow-clamps",
+  "input": {
+    "dtype": "i8",
+    "values": [1e+308, -1e+308]
+  },
+  "kind": "quantize"
+}

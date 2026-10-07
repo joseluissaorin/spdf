@@ -1,6 +1,7 @@
 # RFC 0002: Conformance cases for exports and anchor resolution
 
-- **Status:** Draft
+- **Status:** Accepted (2026-10-07); normative text in SPEC §5.4 and §19; cases in
+  conformance 0.4.0. Implemented when two independent implementations pass them.
 - **Author:** spec agent, for the editor (José Luis Saorín Ferrer)
 - **Created:** 2026-10-07
 - **Affects:** SPEC §5.4, §19, §21; `conformance/`
@@ -95,3 +96,24 @@ None beyond SPEC §14: exports copy metadata the file already exposes.
 
 None yet. Accepting this RFC requires the cases in `conformance/` and two independent
 implementations passing them (`governance/RFC-PROCESS.md`).
+
+## Decision (2026-10-07)
+
+Accepted, with these changes from the draft above; the normative text is SPEC §5.4 and
+§19, which prevail:
+
+- Keys: when the first author yields no ASCII letter, the first word of `title-short` is
+  used before that of `title` (`lazarillo1554`, not `la1554`); `anon` stays the last
+  fallback; negative years keep their sign.
+- BibTeX is compared as canonical text, line by line after trimming each line and
+  dropping empty lines; protection braces count (they follow a deterministic rule).
+  `@misc` is the default type; a biblatex profile with `@online` is left for a later RFC.
+- `locate` returns lists, not a single unit: all matching units (in `ord` order) and all
+  matching fragments (in `n` order), plus `char` and `xywh`. The rule order is `p`, `f`,
+  `t`, `sl`, `v`, `ref`, `s`, `sh`; `s` matches by path prefix unless `para` is given;
+  `v` and `rows` match when their first value falls inside the anchor's range; a time
+  equal to the end of the last timed unit matches it. Fragments are filtered by `char`.
+  A reference to another document yields `document: false`.
+- Added in the same release: vector search over units and figures (result items carry
+  `unit_id` or `figure_id`) and page-sequence checks for ALTO, TEI and IIIF exports
+  (`export_structure`).

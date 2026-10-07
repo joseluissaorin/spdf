@@ -1,0 +1,23 @@
+{
+  "expect": {
+    "items": [
+      {
+        "author": [
+          {
+            "literal": "孔子"
+          }
+        ],
+        "id": "anonnd",
+        "language": "lzh",
+        "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+        "title": "論語",
+        "type": "book"
+      }
+    ]
+  },
+  "id": "export-csl-lunyu-plain",
+  "input": {
+    "files": ["files/lunyu.spdf"]
+  },
+  "kind": "export_csl"
+}

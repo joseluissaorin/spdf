@@ -1,0 +1,10 @@
+{
+  "expect": {
+    "text": "@misc{nationalaeronauticsandspaceadministration1969,\n  author = {{National Aeronautics and Space Administration}},\n  title = {{Apollo} 11 air-to-ground voice transmissions (excerpts)},\n  year = {1969},\n  language = {en},\n  note = {SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.}\n}\n"
+  },
+  "id": "export-bibtex-apolo11-literal-author",
+  "input": {
+    "files": ["files/apolo11.spdf"]
+  },
+  "kind": "export_bibtex"
+}

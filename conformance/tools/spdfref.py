@@ -616,6 +616,9 @@ def quantize(values, dtype: str) -> bytes:
         out = []
         for v in values:
             x = float(v) * 127
+            if abs(x) >= 127:  # also catches v * 127 overflowing to infinity
+                out.append(127 if x > 0 else -127)
+                continue
             q = math.floor(abs(x) + 0.5) * (1 if x >= 0 else -1)
             out.append(max(-127, min(127, int(q))))
         return struct.pack(f"<{len(out)}b", *out)
@@ -925,7 +928,14 @@ def vector_search(con, space: str, query: list[float], limit: int = 10, target: 
             qs = [Fraction(x) for x in query]
             score = sum(a * b for a, b in zip(qs, vals))
             if not normalized:
-                raise SpdfError("exact cosine is not supported by the oracle")
+                import decimal
+                with decimal.localcontext() as ctx:
+                    ctx.prec = 60
+                    num = Decimal(score.numerator) / Decimal(score.denominator)
+                    nq = sum(x * x for x in qs)
+                    nv = sum(x * x for x in vals)
+                    den = (Decimal(nq.numerator) / Decimal(nq.denominator)).sqrt() * (Decimal(nv.numerator) / Decimal(nv.denominator)).sqrt()
+                    score = Fraction(num / den) if den else Fraction(0)
         else:
             vals = unpack_vector(data, dtype)
             score = 0.0
@@ -1412,6 +1422,7 @@ def validate_file(path: Path) -> dict:
                     err("E012", f"missing spdf_meta key {k}", k)
             profile = (meta.get("profile") or "").split()
         ok = lambda t, *cols: t in present and all(c in present[t] for c in cols)
+        docs = []
         if ok("documents", "id", "metadata"):
             docs = con.execute("SELECT id, metadata, rights, unit_count FROM documents").fetchall() if ok("documents", "rights", "unit_count") else \
                 [(i, m, None, None) for i, m in con.execute("SELECT id, metadata FROM documents")]
@@ -1555,3 +1566,279 @@ def sign_dump_meta(source: dict, secret: bytes) -> dict:
     meta["signer"] = "ed25519:" + base64.b64encode(ed25519.public_key(secret)).decode("ascii")
     meta["signature"] = base64.b64encode(ed25519.sign(secret, SIGN_PREFIX + h.encode("ascii"))).decode("ascii")
     return source
+
+
+# ---------------------------------------------------------------------------
+# Resolution of anchor URIs and resource URLs (SPEC §5.4)
+# ---------------------------------------------------------------------------
+
+RULE_ORDER = ("p", "f", "t", "sl", "v", "ref", "s", "sh")
+
+
+def _anchor_matches(rule: str, L: dict, a: dict | None, printed=None) -> bool:
+    if not isinstance(a, dict):
+        return False
+    t = a.get("type")
+    if rule == "p":
+        return t == "page" and _is_int(a.get("physical")) and L["p"] <= a["physical"] <= L.get("pe", L["p"])
+    if rule == "f":
+        return (printed if printed is not None else a.get("printed")) == L["f"]
+    if rule == "t":
+        x = L["t"][0]
+        return t == "time" and _is_num(a.get("t0")) and _is_num(a.get("t1")) and a["t0"] <= x < a["t1"]
+    if rule == "sl":
+        return t == "slide" and a.get("n") == L["sl"]
+    if rule == "v":
+        x = L["v"][0]
+        lf = a.get("line_from")
+        lt = a.get("line_to") if a.get("line_to") is not None else lf
+        return t == "verse" and _is_int(lf) and lf <= x <= lt
+    if rule == "ref":
+        return t == "canonical" and a.get("scheme") == L["ref"]["scheme"] and a.get("ref") == L["ref"]["ref"]
+    if rule == "s":
+        path = a.get("path")
+        if t not in ("section", "web") or not isinstance(path, list):
+            return False
+        if "para" in L:
+            return path == L["s"] and a.get("paragraph") == L["para"]
+        return path[: len(L["s"])] == L["s"]
+    if rule == "sh":
+        if t != "sheet" or a.get("sheet") != L["sh"]:
+            return False
+        if "rows" in L:
+            x = L["rows"][0]
+            return _is_int(a.get("row_from")) and _is_int(a.get("row_to")) and a["row_from"] <= x <= a["row_to"]
+        return True
+    return False
+
+
+def locate(dump: dict, reference: str) -> dict:
+    """SPEC §5.4 on a canonical dump."""
+    empty = {"document": False, "units": [], "fragments": [], "char": None, "xywh": None}
+    doc = dump["document"]
+    if reference.startswith("spdf:"):
+        parsed = parse_uri(reference)
+        if parsed["docref"] not in ("sha256-" + doc["source_sha256"], doc["id"]):
+            return empty
+        L = parsed["locator"]
+    else:
+        _, hash_, frag = reference.partition("#")
+        L = parse_uri("spdf:x#" + frag)["locator"] if hash_ and frag else {}
+    out = {"document": True, "units": [], "fragments": [], "char": L.get("char"), "xywh": L.get("xywh")}
+    rule = next((r for r in RULE_ORDER if r in L), None)
+    if rule is None:
+        return canon(out)
+    units = [u["id"] for u in dump["units"] if _anchor_matches(rule, L, u["anchor"], u["printed"] if rule == "f" else None)]
+    if rule == "t" and not units:
+        timed = [u for u in dump["units"] if isinstance(u["anchor"], dict) and u["anchor"].get("type") == "time"]
+        if timed and _is_num(timed[-1]["anchor"].get("t1")) and timed[-1]["anchor"]["t1"] == L["t"][0]:
+            units = [timed[-1]["id"]]
+    frags = [f for f in dump["fragments"] if _anchor_matches(rule, L, f["anchor"])]
+    if not units and frags:
+        order = {u["id"]: u["ord"] for u in dump["units"]}
+        units = sorted({f["unit"] for f in frags}, key=lambda i: order.get(i, 0))
+    if "char" in L:
+        c, d = L["char"]
+        def keep(f):
+            ch = f["anchor"].get("chars") if isinstance(f["anchor"], dict) else None
+            if f["unit"] not in units or not (isinstance(ch, list) and len(ch) == 2):
+                return False
+            a, b = ch
+            return (a < d and c < b) if c < d else (a <= c < b)
+        frags = [f for f in frags if keep(f)]
+    out["units"] = units
+    out["fragments"] = [f["id"] for f in frags]
+    return canon(out)
+
+
+# ---------------------------------------------------------------------------
+# Exports (SPEC §19)
+# ---------------------------------------------------------------------------
+
+
+def _fold_ascii(s: str) -> str:
+    return re.sub(r"[^A-Za-z]", "", unicodedata.normalize("NFKD", s)).lower()
+
+
+def _first_year(item: dict):
+    dp = (item.get("issued") or {}).get("date-parts") if isinstance(item.get("issued"), dict) else None
+    if dp and dp[0]:
+        return int(dp[0][0])
+    return None
+
+
+def base_key(item: dict) -> str:
+    base = ""
+    authors = item.get("author") or []
+    if authors:
+        a = authors[0]
+        base = _fold_ascii(a.get("family") or a.get("literal") or a.get("given") or "")
+    if not base:
+        title = item.get("title-short") or item.get("title") or ""
+        words = title.split()
+        base = _fold_ascii(words[0]) if words else ""
+    base = base or "anon"
+    y = _first_year(item)
+    return base + (str(y) if y is not None else "nd")
+
+
+def _suffix(n: int) -> str:
+    out = ""
+    n += 1
+    while n:
+        n, r = divmod(n - 1, 26)
+        out = chr(97 + r) + out
+    return out
+
+
+def export_keys(items: list[dict]) -> list[str]:
+    bases = [base_key(i) for i in items]
+    seen: dict[str, int] = {}
+    out = []
+    for b in bases:
+        if bases.count(b) == 1:
+            out.append(b)
+        else:
+            n = seen.get(b, 0)
+            seen[b] = n + 1
+            out.append(b + _suffix(n))
+    return out
+
+
+def csl_label_locator(anchor: dict | None, end: dict | None):
+    if not isinstance(anchor, dict):
+        return None
+    t = anchor.get("type")
+    def folio(a):
+        p = a.get("printed")
+        if p is None:
+            return None
+        return f"[{p}]" if a.get("source") == "inferred" else p
+    if t == "page" or (t in ("section", "web") and anchor.get("printed") is not None):
+        a = folio(anchor)
+        if a is None:
+            return None
+        label = {"leaf": "folio", "column": "column"}.get(anchor.get("foliation", "page"), "page") if t == "page" else "page"
+        if end and end.get("type") == t and end.get("printed") is not None and end.get("printed") != anchor.get("printed"):
+            return label, f"{a}-{folio(end)}"
+        return label, a
+    if t in ("section", "web"):
+        if anchor.get("paragraph") is not None:
+            return "paragraph", str(anchor["paragraph"])
+        if anchor.get("path"):
+            return "section", anchor["path"][-1]
+        return None
+    if t == "time":
+        s = _hms(anchor["t0"])
+        if end and end.get("type") == "time":
+            s += "-" + _hms(end["t1"])
+        return "timestamp", s
+    if t == "verse":
+        a, b = anchor["line_from"], anchor.get("line_to")
+        return "verse", str(a) if b is None or b == a else f"{a}-{b}"
+    if t == "canonical":
+        return "section", anchor["ref"]
+    if t == "sheet":
+        a, b = anchor["row_from"], anchor["row_to"]
+        return "line", str(a) if a == b else f"{a}-{b}"
+    return None
+
+
+def export_csl(items: list[dict], anchor: dict | None = None, end: dict | None = None) -> list[dict]:
+    out = []
+    for item, key in zip(items, export_keys(items)):
+        it = {k: v for k, v in item.items() if k != "spdf"}
+        it["id"] = key
+        out.append(it)
+    if anchor is not None and len(out) == 1:
+        ll = csl_label_locator(anchor, end)
+        if ll:
+            out[0]["label"], out[0]["locator"] = ll
+    return canon(out)
+
+
+BIBTEX_TYPES = {"book": "book", "article-journal": "article", "article-magazine": "article", "article-newspaper": "article",
+                "chapter": "incollection", "paper-conference": "inproceedings", "thesis": "phdthesis", "report": "techreport"}
+BIBTEX_SIMPLE = (("publisher", "publisher"), ("publisher-place", "address"), ("collection-title", "series"), ("volume", "volume"),
+                 ("issue", "number"), ("page", "pages"), ("edition", "edition"), ("DOI", "doi"), ("ISBN", "isbn"), ("URL", "url"),
+                 ("language", "language"), ("note", "note"))
+
+
+def bib_escape(s: str) -> str:
+    return "".join({"\\": "\\textbackslash{}", "{": "\\{", "}": "\\}"}.get(c, c) for c in s)
+
+
+def bib_protect(s: str) -> str:
+    return "".join("{" + bib_escape(tok) + "}" if any(unicodedata.category(c) == "Lu" for c in tok) else bib_escape(tok)
+                   for tok in re.split(r"(\s+)", s))
+
+
+def bib_names(people) -> str | None:
+    out = []
+    for p in people or []:
+        if p.get("literal"):
+            out.append("{" + bib_escape(p["literal"]) + "}")
+            continue
+        fam = p.get("family") or ""
+        if fam and p.get("non-dropping-particle"):
+            fam = p["non-dropping-particle"] + " " + fam
+        given = p.get("given") or ""
+        if fam and given:
+            out.append(f"{bib_escape(fam)}, {bib_escape(given)}")
+        elif fam or given:
+            out.append("{" + bib_escape(fam or given) + "}")
+    return " and ".join(out) or None
+
+
+def export_bibtex(items: list[dict]) -> str:
+    entries = []
+    for item, key in zip(items, export_keys(items)):
+        etype = BIBTEX_TYPES.get(item.get("type", ""), "misc")
+        fields = []
+        for src, dst in (("author", "author"), ("editor", "editor")):
+            n = bib_names(item.get(src))
+            if n:
+                fields.append((dst, n))
+        if item.get("title"):
+            fields.append(("title", bib_protect(item["title"])))
+        y = _first_year(item)
+        if y is not None:
+            fields.append(("year", str(y)))
+        if item.get("container-title"):
+            fields.append(("journal" if etype == "article" else "booktitle", bib_protect(item["container-title"])))
+        for src, dst in BIBTEX_SIMPLE:
+            v = item.get(src)
+            if v not in (None, "", []):
+                fields.append((dst, bib_escape(str(v))))
+        body = ",\n".join(f"  {k} = {{{v}}}" for k, v in fields)
+        entries.append(f"@{etype}{{{key},\n{body}\n}}\n")
+    return "\n".join(entries)
+
+
+def normalize_bibtex(text: str) -> list[str]:
+    return [line.strip() for line in text.replace("\r\n", "\n").split("\n") if line.strip()]
+
+
+def _pb_n(a: dict):
+    p = a.get("printed")
+    if p is None:
+        return None
+    return f"[{p}]" if a.get("source") == "inferred" else p
+
+
+def export_structure(dump: dict, fmt: str) -> dict:
+    pages = []
+    for u in dump["units"]:
+        a = u["anchor"]
+        if not (isinstance(a, dict) and a.get("type") == "page"):
+            continue
+        if fmt == "alto":
+            printed = a.get("printed") if a.get("printed") is not None and a.get("source") != "inferred" else None
+            pages.append({"physical": a["physical"], "printed": printed})
+        elif fmt == "tei":
+            pages.append({"n": _pb_n(a)})
+        elif fmt == "iiif":
+            pages.append({"label": _pb_n(a)})
+        else:
+            raise SpdfError(f"unknown format {fmt}")
+    return canon({"pages": pages})

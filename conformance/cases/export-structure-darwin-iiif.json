@@ -1,0 +1,27 @@
+{
+  "expect": {
+    "pages": [
+      {
+        "label": "1"
+      },
+      {
+        "label": "5"
+      },
+      {
+        "label": "61"
+      },
+      {
+        "label": "84"
+      },
+      {
+        "label": "490"
+      }
+    ]
+  },
+  "id": "export-structure-darwin-iiif",
+  "input": {
+    "file": "files/darwin.spdf",
+    "format": "iiif"
+  },
+  "kind": "export_structure"
+}

@@ -377,8 +377,8 @@
   ],
   "vectors": {
     "toy-embedding@8": {
-      "count": 6,
-      "sha256": "8349e68ef6a75388be30334b8ce3310fe3d83fc95370bdda5cd483adbc0a4a5b"
+      "count": 11,
+      "sha256": "1e5a4a7ed795e216f647be4320ed40af92284884b52e21563808879078c8a37c"
     },
     "toy-embedding@8:f16": {
       "count": 6,

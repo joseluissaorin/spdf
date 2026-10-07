@@ -1,0 +1,15 @@
+{
+  "expect": {
+    "char": null,
+    "document": true,
+    "fragments": [],
+    "units": [],
+    "xywh": null
+  },
+  "id": "locate-apolo11-time-gap",
+  "input": {
+    "file": "files/apolo11.spdf",
+    "reference": "spdf:sha256-704f8c86caeca8d546f43d77ef92efc077c9d8c49a1cce25876ae5fa199879c1#t=5000"
+  },
+  "kind": "locate"
+}

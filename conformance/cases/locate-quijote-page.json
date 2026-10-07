@@ -1,0 +1,15 @@
+{
+  "expect": {
+    "char": null,
+    "document": true,
+    "fragments": ["q2"],
+    "units": ["p2"],
+    "xywh": null
+  },
+  "id": "locate-quijote-page",
+  "input": {
+    "file": "files/quijote.spdf",
+    "reference": "spdf:sha256-fa38e514734b173a8084219c6eaf761ab534b0e44216730e9d7f6fd5b5e14c75#p=2"
+  },
+  "kind": "locate"
+}

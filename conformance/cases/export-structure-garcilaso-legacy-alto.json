@@ -1,0 +1,24 @@
+{
+  "expect": {
+    "pages": [
+      {
+        "physical": 1,
+        "printed": null
+      },
+      {
+        "physical": 2,
+        "printed": "ix"
+      },
+      {
+        "physical": 3,
+        "printed": null
+      }
+    ]
+  },
+  "id": "export-structure-garcilaso-legacy-alto",
+  "input": {
+    "file": "legacy/garcilaso-4.1.spdf",
+    "format": "alto"
+  },
+  "kind": "export_structure"
+}

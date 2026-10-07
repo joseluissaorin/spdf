@@ -1,0 +1,32 @@
+{
+  "expect": {
+    "pages": [
+      {
+        "physical": 1,
+        "printed": "1"
+      },
+      {
+        "physical": 2,
+        "printed": "5"
+      },
+      {
+        "physical": 3,
+        "printed": "61"
+      },
+      {
+        "physical": 4,
+        "printed": "84"
+      },
+      {
+        "physical": 5,
+        "printed": "490"
+      }
+    ]
+  },
+  "id": "export-structure-darwin-alto",
+  "input": {
+    "file": "files/darwin.spdf",
+    "format": "alto"
+  },
+  "kind": "export_structure"
+}

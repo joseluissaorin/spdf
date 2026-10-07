@@ -109,6 +109,39 @@ Two independent producers (`spdf build` and Scholaris) writing files that every 
 accepts is a requirement for calling the format 1.0-stable in practice; the specification
 version (5.0) and the library versions are numbered independently.
 
+## Product classes and status
+
+Conformance classes are defined in [SPEC §21](spec/SPEC.md#conformance): a **reader**
+passes `dump`, `legacy_dump`, `anchor_uri`, `cite`, `search_lexical`, `validate`,
+`locate`, `export_csl` and `export_bibtex`; a **semantic reader** also passes
+`search_vector` and `search_hybrid`; a **writer** passes `roundtrip` and `quantize`; a
+**validator** passes `validate`; `export_structure` covers the ALTO, TEI and IIIF exports.
+The table is built from the CI artifacts `conformance-<folder>` (state on 2026-10-07).
+The class columns give the result against suite 0.3.0, whose reader class did not yet
+include `locate` and the exports; suite 0.4.0, which adds them, is pending everywhere
+until each folder's CI runs it.
+
+<!-- product-status:start -->
+| Implementation | Folder | Reader | Semantic reader | Writer | Validator | ALTO / TEI / IIIF | Suite 0.3.0 | Suite 0.4.0 |
+|---|---|---|---|---|---|---|---|---|
+| Rust (reference) | `rust` | yes | yes | yes | yes | untested | 229/229 | pending |
+| TypeScript | `js` | yes | yes | yes | yes | untested | 229/229 | pending |
+| Python | `python` | yes | yes | yes | yes | untested | 229/229 | pending |
+| Swift | `swift` | yes | yes | yes | yes | untested | 229/229 | pending |
+| Kotlin / JVM | `kotlin` | yes | yes | yes | yes | untested | 229/229 | pending |
+| Go | `go` | yes | yes | yes | yes | untested | 229/229 | pending |
+| C# | `dotnet` | yes | yes | yes | yes | untested | 229/229 | pending |
+| PHP | `php` | yes | yes | yes | yes | untested | 229/229 | pending |
+| Ruby | `ruby` | yes | yes | yes | yes | untested | 229/229 | pending |
+| R | `r` | yes | yes | yes | yes | untested | 229/229 | pending |
+| Julia | `julia` | yes | yes | yes | yes | untested | 229/229 | pending |
+| C (Rust C ABI) | `c` | yes | yes | yes | yes | untested | 229/229 | pending |
+| Producer `spdf build` | `producer` | n/a | n/a | outputs validate | n/a | n/a | own checks 16/16 | pending |
+<!-- product-status:end -->
+
+Values: `yes` (every case of the class passes), `untested` (no case yet), `pending`
+(the suite version has not run yet), `no`, `n/a`. A cell changes only when the CI artifact of that folder says so.
+
 ## Legacy
 
 Every conforming reader also reads the Scholaris 4.0 and 4.1 files (gzip-wrapped SQLite

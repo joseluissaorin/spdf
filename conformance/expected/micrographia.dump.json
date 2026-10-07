@@ -166,10 +166,21 @@
     "created": "2026-10-07T00:00:00Z",
     "document_id": "micrographia-1665",
     "generator": "spdf-conformance/1.0",
-    "profile": "core",
+    "profile": "core semantic",
     "spdf_version": "5.0"
   },
   "provenance": [
+    {
+      "at": "2026-10-07T00:00:00Z",
+      "detail": {
+        "dims": 4,
+        "targets": ["fragment", "unit", "figure"]
+      },
+      "model": "toy-clip",
+      "ms": 1,
+      "provider": "spdf-conformance",
+      "stage": "embedding"
+    },
     {
       "at": "2026-10-07T00:00:00Z",
       "detail": {
@@ -182,7 +193,21 @@
     }
   ],
   "sections": [],
-  "spaces": [],
+  "spaces": [
+    {
+      "created": "2026-10-07T00:00:00Z",
+      "dims": 4,
+      "dtype": "f32",
+      "id": "toy-clip@4",
+      "modalities": ["text", "image"],
+      "model": "toy-clip",
+      "normalized": 0,
+      "provider": "spdf-conformance",
+      "task_prefixes": null,
+      "truncated_from": null,
+      "version": "1"
+    }
+  ],
   "spdf_version": "5.0",
   "units": [
     {
@@ -236,5 +261,10 @@
       "words": null
     }
   ],
-  "vectors": {}
+  "vectors": {
+    "toy-clip@4": {
+      "count": 6,
+      "sha256": "938fc056a3affe83f09f1a00db5c936df0904a35f87ddb8b08525ef260c71bf7"
+    }
+  }
 }

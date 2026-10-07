@@ -1,0 +1,15 @@
+{
+  "expect": {
+    "char": null,
+    "document": true,
+    "fragments": [],
+    "units": [],
+    "xywh": null
+  },
+  "id": "locate-quijote-url-whole",
+  "input": {
+    "file": "files/quijote.spdf",
+    "reference": "https://example.org/biblioteca/quijote.spdf"
+  },
+  "kind": "locate"
+}

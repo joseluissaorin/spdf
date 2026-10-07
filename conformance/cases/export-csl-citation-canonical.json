@@ -1,0 +1,32 @@
+{
+  "expect": {
+    "items": [
+      {
+        "author": [
+          {
+            "literal": "孔子"
+          }
+        ],
+        "id": "anonnd",
+        "label": "section",
+        "language": "lzh",
+        "locator": "1.1",
+        "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+        "title": "論語",
+        "type": "book"
+      }
+    ]
+  },
+  "id": "export-csl-citation-canonical",
+  "input": {
+    "anchor": {
+      "chars": [0, 41],
+      "ref": "1.1",
+      "scheme": "analects",
+      "type": "canonical"
+    },
+    "anchor_end": null,
+    "files": ["files/lunyu.spdf"]
+  },
+  "kind": "export_csl"
+}

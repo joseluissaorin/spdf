@@ -83,5 +83,18 @@
   "expect": {
    "error": true
   }
+ },
+ {
+  "id": "quantize-i8-overflow-clamps",
+  "input": {
+   "dtype": "i8",
+   "values": [
+    1e+308,
+    -1e+308
+   ]
+  },
+  "expect": {
+   "hex": "7f81"
+  }
  }
 ]

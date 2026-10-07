@@ -1,0 +1,38 @@
+{
+  "expect": {
+    "items": [
+      {
+        "author": [
+          {
+            "family": "Bécquer",
+            "given": "Gustavo Adolfo"
+          }
+        ],
+        "id": "becquer1871",
+        "issued": {
+          "date-parts": [
+            [1871]
+          ]
+        },
+        "label": "verse",
+        "language": "es",
+        "locator": "1-4",
+        "note": "SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.",
+        "title": "Rimas",
+        "type": "book"
+      }
+    ]
+  },
+  "id": "export-csl-citation-verse",
+  "input": {
+    "anchor": {
+      "chars": [0, 125],
+      "line_from": 1,
+      "line_to": 4,
+      "type": "verse"
+    },
+    "anchor_end": null,
+    "files": ["files/minimo.spdf"]
+  },
+  "kind": "export_csl"
+}

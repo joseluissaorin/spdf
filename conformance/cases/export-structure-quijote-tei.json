@@ -1,0 +1,36 @@
+{
+  "expect": {
+    "pages": [
+      {
+        "n": null
+      },
+      {
+        "n": "ii"
+      },
+      {
+        "n": "iii"
+      },
+      {
+        "n": "[iv]"
+      },
+      {
+        "n": "1r"
+      },
+      {
+        "n": "[1v]"
+      },
+      {
+        "n": "2r"
+      },
+      {
+        "n": "[2v]"
+      }
+    ]
+  },
+  "id": "export-structure-quijote-tei",
+  "input": {
+    "file": "files/quijote.spdf",
+    "format": "tei"
+  },
+  "kind": "export_structure"
+}

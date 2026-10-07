@@ -1,0 +1,10 @@
+{
+  "expect": {
+    "text": "@book{darwin1859,\n  author = {Darwin, Charles},\n  title = {{On} the {Origin} of {Species} by {Means} of {Natural} {Selection}},\n  year = {1859},\n  publisher = {John Murray},\n  address = {London},\n  language = {en},\n  note = {SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.}\n}\n\n@book{hooke1665,\n  author = {Hooke, Robert},\n  title = {{Micrographia:} or some physiological descriptions of minute bodies made by magnifying glasses},\n  year = {1665},\n  publisher = {Jo. Martyn and Ja. Allestry},\n  address = {London},\n  language = {en},\n  note = {SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.}\n}\n\n@misc{kennedy1962,\n  author = {Kennedy, John F.},\n  title = {{Address} at {Rice} {University} on the {Nation's} {Space} {Effort}},\n  year = {1962},\n  address = {Houston},\n  language = {en}\n}\n"
+  },
+  "id": "export-bibtex-several",
+  "input": {
+    "files": ["files/darwin.spdf", "files/micrographia.spdf", "legacy/kennedy-4.0.spdf"]
+  },
+  "kind": "export_bibtex"
+}

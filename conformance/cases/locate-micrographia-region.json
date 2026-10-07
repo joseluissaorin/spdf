@@ -1,0 +1,15 @@
+{
+  "expect": {
+    "char": null,
+    "document": true,
+    "fragments": ["m1"],
+    "units": ["p1"],
+    "xywh": [0.1, 0.25, 0.8, 0.5]
+  },
+  "id": "locate-micrographia-region",
+  "input": {
+    "file": "files/micrographia.spdf",
+    "reference": "spdf:sha256-4501ef3a079e09d5556746bba9fc26e261aa6cbc5d47b056382d400ec1523bfd#p=1&f=210&xywh=percent:10,25,80,50"
+  },
+  "kind": "locate"
+}

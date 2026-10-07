@@ -1,0 +1,27 @@
+{
+  "expect": {
+    "pages": [
+      {
+        "n": null
+      },
+      {
+        "n": "3"
+      },
+      {
+        "n": "4"
+      },
+      {
+        "n": "5"
+      },
+      {
+        "n": "[6]"
+      }
+    ]
+  },
+  "id": "export-structure-lazarillo-tei",
+  "input": {
+    "file": "files/lazarillo.spdf",
+    "format": "tei"
+  },
+  "kind": "export_structure"
+}

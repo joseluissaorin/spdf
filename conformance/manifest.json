@@ -3,18 +3,22 @@
     "anchor_uri": 40,
     "cite": 79,
     "dump": 7,
+    "export_bibtex": 16,
+    "export_csl": 18,
+    "export_structure": 15,
     "legacy_dump": 2,
-    "quantize": 6,
+    "locate": 25,
+    "quantize": 7,
     "roundtrip": 7,
     "search_hybrid": 2,
     "search_lexical": 39,
-    "search_vector": 5,
-    "validate": 42
+    "search_vector": 9,
+    "validate": 43
   },
-  "cases": 229,
-  "cases_sha256": "b8af7a461336c568549c22a2026a748f12de92c190ad885e437d771d881685ac",
+  "cases": 309,
+  "cases_sha256": "231af9f787af9b25c416d465b8f7f8e9cfba659bfc5693104dcad68f03fe7959",
   "spdf_version": "5.0",
   "suite": "spdf-conformance",
-  "suite_version": "0.3.0",
+  "suite_version": "0.4.0",
   "test_public_key": "ed25519:zTT6Bhc+ydufqk04cT9bPz9jDlHiRgXyOJ/VBgKzpv4="
 }

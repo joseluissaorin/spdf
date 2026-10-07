@@ -1,0 +1,10 @@
+{
+  "expect": {
+    "text": "@book{lazarillo1554,\n  title = {{La} vida de {Lazarillo} de {Tormes} y de sus fortunas y adversidades},\n  year = {1554},\n  publisher = {Juan de Junta},\n  address = {Burgos},\n  language = {es},\n  note = {SPDF conformance document: short public-domain excerpts arranged on synthetic units; folios, timings and source hash illustrate SPDF cases and do not describe any real copy.}\n}\n"
+  },
+  "id": "export-bibtex-lazarillo-no-author",
+  "input": {
+    "files": ["files/lazarillo.spdf"]
+  },
+  "kind": "export_bibtex"
+}

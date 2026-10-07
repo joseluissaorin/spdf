@@ -1,0 +1,20 @@
+{
+  "expect": {
+    "pages": [
+      {
+        "physical": 1,
+        "printed": "210"
+      },
+      {
+        "physical": 2,
+        "printed": "211"
+      }
+    ]
+  },
+  "id": "export-structure-micrographia-alto",
+  "input": {
+    "file": "files/micrographia.spdf",
+    "format": "alto"
+  },
+  "kind": "export_structure"
+}
