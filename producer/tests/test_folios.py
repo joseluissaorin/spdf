@@ -213,3 +213,13 @@ def test_inserted_leaves_with_running_text_keep_the_verso_only():
                 truth.append(None)
     got = [p.printed for p in deduce_folios(pages).pages]
     assert got == truth, [(i + 1, g, t) for i, (g, t) in enumerate(zip(got, truth)) if g != t]
+
+
+def test_page_labels_that_contradict_what_is_seen_are_not_followed():
+    # labels shifted by one on a stretch of 10 pages (an inserted plate the labels forgot)
+    pages = [{"physical": i, "text": TEXT, "footer": str(i), "label": str(i)} for i in range(1, 41)]
+    for p in pages[20:30]:
+        p["label"] = str(int(p["label"]) + 1)
+    r = deduce_folios(pages)
+    assert r.origin == "sequence"
+    assert [p.printed for p in r.pages[20:30]] == [str(i) for i in range(21, 31)]

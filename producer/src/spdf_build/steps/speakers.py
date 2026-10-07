@@ -24,10 +24,36 @@ MAP_SCHEMA = {"type": "object", "properties": {"speakers": {"type": "array", "it
 GENERIC = re.compile(r"^(speaker|hablante|locutor|voz|voice|spk)[\s_-]*\d+$", re.I)
 
 
-def _said(name: str, transcript: str) -> bool:
+def _said(name: str, transcript: str, catalogue: list[str] | None = None) -> bool:
     f = fold(transcript)
     parts = [p for p in fold(name).split() if len(p) > 2]
-    return bool(parts) and any(p in f for p in parts[-2:])
+    if bool(parts) and any(p in f for p in parts[-2:]):
+        return True
+    joined = fold(name).replace(" ", "")
+    return any(joined and joined == fold(c).replace(" ", "") for c in catalogue or [])
+
+
+def _from_catalogue(name: str, catalogue: list[str] | None) -> str:
+    """The transcript hears «Eva Folk»; the catalogue lists the reader as «evafolch»: same first name, a username
+    that starts with it and a surname that sounds alike → «Eva Folch»."""
+    if not name or not catalogue:
+        return name
+    toks = fold(name).split()
+    if len(toks) < 2:
+        return name
+    first = toks[0]
+    for c in catalogue:
+        u = fold(c).replace(" ", "")
+        if u.startswith(first) and len(u) > len(first) + 2:
+            rest = u[len(first):]
+            heard = "".join(toks[1:])
+            if rest == heard:
+                return name
+            import difflib
+
+            if rest[0] == heard[0] and difflib.SequenceMatcher(None, rest, heard).ratio() >= 0.6:
+                return " ".join([name.split()[0], rest.capitalize()])
+    return name
 
 
 def name_speakers(units, llm, hints: dict) -> dict:
@@ -40,7 +66,11 @@ def name_speakers(units, llm, hints: dict) -> dict:
                      "said in the recording (e.g. «read by …», «grabado por …»)? speaker = \"\" if not said.", SINGLE_SCHEMA,
                      max_tokens=300, temperature=0.0)
         name = (r.get("speaker") or "").strip()
-        if r.get("single_speaker") and name and _said(name, transcript):
+        cat = hints.get("catalogue_readers")
+        if r.get("single_speaker") and name and _said(name, transcript, cat):
+            fixed = _from_catalogue(name, cat)
+            if fixed != name:
+                name = fixed
             for u in units:
                 u.speaker = name
                 u.anchor["speaker"] = name

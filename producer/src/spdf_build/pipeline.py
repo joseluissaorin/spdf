@@ -457,13 +457,29 @@ def build(inputs: list[str], out: str, engines: Engines, opts: Options) -> Repor
     if lang:
         lang = lang.split("_")[0] if "_" in lang else lang
 
+    # archive.org item referenced by the file (LibriVox recordings, IA scans): readers, date, licence
+    if not opts.offline:
+        from .steps.metadata import ia_identifier, internet_archive
+
+        ident = ia_identifier(src.hints)
+        if ident:
+            try:
+                ia = internet_archive(ident)
+                if ia:
+                    src.hints["_ia"], src.hints["_ia_id"] = ia, ident
+                    if ia.get("readers"):
+                        src.hints["catalogue_readers"] = ia["readers"]
+            except Exception as e:
+                warnings.append(f"internet archive lookup failed: {str(e)[:120]}")
+
     # speakers of a recording
     if src.kind in ("audio", "video") and engines.llm is not None and units:
         t = time.time()
         from .steps.speakers import name_speakers
 
         try:
-            det = name_speakers(units, engines.llm, {k: v for k, v in src.hints.items() if k in ("title", "performer", "container")})
+            det = name_speakers(units, engines.llm, {k: v for k, v in src.hints.items() if k in ("title", "performer", "container",
+                                                                                                    "catalogue_readers")})
         except Exception as e:
             det = {"error": str(e)[:200]}
         prov.append(Provenance("speakers", provider=getattr(engines.llm, "name", "llm"), model=getattr(engines.llm, "model", None),

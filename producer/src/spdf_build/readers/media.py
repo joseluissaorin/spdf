@@ -210,6 +210,8 @@ def read_media(data: bytes, path: str, kind: str, transcriber, language: Optiona
         hints["date"] = tags.get("date") or tags.get("year")
     if tags.get("language"):
         hints["language"] = tags["language"]
+    if tags.get("comment"):
+        hints["comment"] = tags["comment"]
     mime = {"audio": "audio/mpeg", "video": "video/mp4"}[kind]
     ext = os.path.splitext(path)[1].lower()
     mime = {".mp3": "audio/mpeg", ".wav": "audio/wav", ".ogg": "audio/ogg", ".opus": "audio/ogg", ".flac": "audio/flac",

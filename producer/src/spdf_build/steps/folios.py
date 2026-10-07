@@ -1060,6 +1060,18 @@ def folios_from_labels(prep: _Prep) -> Optional[FolioResult]:
             agree += 1
     if compared > 0 and agree / compared < 0.5:
         return None
+    # A list of labels is the editor's bookkeeping; when a strong reading (header, footer or reader) on a page
+    # contradicts its label on several pages, the labels are not followed at all.
+    strong_against = 0
+    for i, p in enumerate(ps):
+        e = _read_label(p.get("label"))
+        cs = prep.cands[i]
+        if not e or any(c.value == e[0] and c.roman == e[1] for c in cs):
+            continue
+        if any(c.weight >= 0.85 and c.source in ("header", "footer", "reader") for c in cs):
+            strong_against += 1
+    if compared and strong_against >= max(3, 0.1 * compared):
+        return None
     # Runs of labels that advance by one in the same style. A run that no page confirms with what
     # is seen (while other runs are confirmed) is the editor's bookkeeping, not a printed folio:
     # NIST SP 800-63B-4 labels its unnumbered cover pages «I, I, I, II».

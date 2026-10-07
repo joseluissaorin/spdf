@@ -189,6 +189,28 @@ def openalex(doi: Optional[str], title: Optional[str]) -> Optional[dict]:
     return None
 
 
+def internet_archive(identifier: str) -> Optional[dict]:
+    """Item metadata of archive.org (LibriVox recordings, scans): creator, date, licence, readers."""
+    r = net.get_json(f"https://archive.org/metadata/{urllib.parse.quote(identifier)}/metadata", timeout=10)
+    m = (r or {}).get("result") or {}
+    if not m:
+        return None
+    out = {k: m.get(k) for k in ("title", "creator", "date", "licenseurl", "language")}
+    d = re.sub(r"<[^>]+>", " ", str(m.get("description") or ""))
+    rd = re.search(r"\bRead(?:\s+in\s+\w+)?\s+by\s+(.+?)(?:\s{2,}|$|\.\s)", d)
+    if rd:
+        out["readers"] = [x.strip() for x in re.split(r";|,|\band\b", rd.group(1)) if x.strip()][:40]
+    return out
+
+
+def ia_identifier(hints: dict) -> Optional[str]:
+    for v in (hints.get("comment"), hints.get("url"), hints.get("source_note")):
+        m = re.search(r"archive\.org/(?:details|download)/([\w.\-]+)", str(v or ""))
+        if m:
+            return m.group(1)
+    return None
+
+
 def openlibrary_isbn(isbn: str) -> Optional[dict]:
     r = net.get_json(f"https://openlibrary.org/isbn/{isbn}.json", timeout=10)
     return r
@@ -398,6 +420,13 @@ def build_metadata(source, units, kind: str, language: Optional[str], llm=None, 
                     rec.put("original-date", {"date-parts": [[int(ol["first_publish_year"])]]}, "openlibrary", 0.75)
         except Exception as e:
             events.append({"stage": "metadata", "provider": "openlibrary", "detail": {"error": str(e)[:200]}})
+        ia = h.get("_ia")
+        if ia:
+            tried.append("internet-archive")
+            y = _year(ia.get("date"))
+            if y and kind in ("audio", "video"):
+                rec.put("issued", {"date-parts": [[int(x) for x in str(ia["date"])[:10].split("-") if x.isdigit()]]}, "internet-archive", 0.85)
+            rec.put("URL", f"https://archive.org/details/{h.get('_ia_id')}", "internet-archive", 0.8)
         events.append({"stage": "metadata", "provider": "catalogues", "detail": {"tried": tried}})
     # 5. user overrides
     for k, v in (user or {}).items():
@@ -426,6 +455,9 @@ def build_metadata(source, units, kind: str, language: Optional[str], llm=None, 
             rec.prov.pop("original-date", None)
     except (KeyError, IndexError, TypeError):
         pass
+    if not rec.fields.get("author") and "title-short" not in item:
+        # export keys come from the first author or from title-short (spec): give works without author a short title
+        item["title-short"] = re.split(r"\s*[:.;]\s+", item["title"], maxsplit=1)[0][:80]
     for k in ("author", "editor", "translator", "issued", "original-date", "publisher", "publisher-place", "container-title",
               "collection-title", "edition", "DOI", "ISBN", "URL", "language", "accessed"):
         if k in rec.fields:
