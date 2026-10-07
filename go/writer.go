@@ -168,7 +168,7 @@ func Create(path string, opts *WriterOptions) (*Writer, error) {
 	tmp := tf.Name()
 	tf.Close()
 	os.Remove(tmp)
-	db, err := sql.Open("sqlite", "file:"+tmp+"?_pragma=journal_mode(DELETE)&_pragma=trusted_schema(0)&_defensive=1")
+	db, err := sql.Open("sqlite", sqliteURI(tmp)+"?_pragma=journal_mode(DELETE)&_pragma=trusted_schema(0)&_defensive=1")
 	if err != nil {
 		return nil, err
 	}

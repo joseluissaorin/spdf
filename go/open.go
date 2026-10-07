@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -201,7 +202,20 @@ func readOnlyDSN(path string) string {
 	q.Set("_defensive", "1")
 	q.Add("_pragma", "query_only(1)")
 	q.Add("_pragma", "trusted_schema(0)")
-	return "file:" + (&url.URL{Path: path}).EscapedPath() + "?" + q.Encode()
+	return sqliteURI(path) + "?" + q.Encode()
+}
+
+// sqliteURI turns a filesystem path into an SQLite URI filename
+// ("file:///abs/path", "file:///C:/abs/path" on Windows).
+func sqliteURI(path string) string {
+	if abs, err := filepath.Abs(path); err == nil {
+		path = abs
+	}
+	p := filepath.ToSlash(path)
+	if !strings.HasPrefix(p, "/") {
+		p = "/" + p // Windows drive letter: /C:/...
+	}
+	return "file://" + (&url.URL{Path: p}).EscapedPath()
 }
 
 func openSQLite(physical, display string, o *Options) (*File, error) {

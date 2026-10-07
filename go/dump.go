@@ -217,14 +217,11 @@ func (f *File) Dump() (map[string]any, error) {
 	}
 	out["blobs"] = blobs
 
-	provOrder := "ORDER BY at, stage, provider, model, detail, ms"
-	if f.legacy {
-		provOrder = "ORDER BY cuando, fase, proveedor, detalle, ms"
-	}
-	prov, err := f.rowsForDump("provenance", provOrder)
+	prov, err := f.rowsForDump("provenance", "")
 	if err != nil {
 		return nil, err
 	}
+	sortProvenance(prov)
 	out["provenance"] = prov
 	out["fts"] = f.ftsInfo()
 
@@ -391,7 +388,7 @@ func legacyRef(v any, keys map[string]bool, keepEmpty bool) any {
 }
 
 // ContentSHA256 computes the integrity hash of §8: SHA-256 over the canonical
-// dump with meta.content_sha256 and meta.signature removed.
+// dump with meta.content_sha256, meta.signature and meta.signer removed.
 func (f *File) ContentSHA256() (string, error) {
 	d, err := f.Dump()
 	if err != nil {
@@ -400,7 +397,27 @@ func (f *File) ContentSHA256() (string, error) {
 	if m, ok := d["meta"].(map[string]any); ok {
 		delete(m, "content_sha256")
 		delete(m, "signature")
+		delete(m, "signer")
 	}
 	sum := sha256.Sum256(CanonicalJSON(d))
 	return hex.EncodeToString(sum[:]), nil
+}
+
+// sortProvenance orders provenance entries by the UTF-8 bytes of their JCS
+// serialization (contract §5, draft 1.1).
+func sortProvenance(entries []any) {
+	keys := make([]string, len(entries))
+	for i, e := range entries {
+		keys[i] = string(CanonicalJSON(e))
+	}
+	idx := make([]int, len(entries))
+	for i := range idx {
+		idx[i] = i
+	}
+	sort.SliceStable(idx, func(a, b int) bool { return keys[idx[a]] < keys[idx[b]] })
+	sorted := make([]any, len(entries))
+	for i, j := range idx {
+		sorted[i] = entries[j]
+	}
+	copy(entries, sorted)
 }

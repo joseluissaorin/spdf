@@ -266,6 +266,28 @@ func (f *File) fragmentHits(ns []int64, scores []float64, via string) ([]Hit, er
 	return hits, nil
 }
 
+// LexicalRoute reports how a compiled query is executed on this file:
+// route "fts", "trigram" or "substring", and the FTS5 MATCH string ("" for
+// the substring route or when there are no terms).
+func (f *File) LexicalRoute(lq LexicalQuery, query string) (string, string) {
+	if lq.Match == "" {
+		return "fts", ""
+	}
+	if hasCJK(norm.NFC.String(query)) {
+		all3 := true
+		for _, t := range lq.Terms {
+			if len([]rune(t)) < 3 {
+				all3 = false
+			}
+		}
+		if f.tables[f.table("fragments_fts")+"_trigram"] && all3 {
+			return "trigram", lq.Match
+		}
+		return "substring", ""
+	}
+	return "fts", lq.Match
+}
+
 // SearchLexical runs the reference lexical search (contract §6).
 func (f *File) SearchLexical(query string, limit int) ([]Hit, error) {
 	if f.db == nil {
@@ -280,34 +302,24 @@ func (f *File) SearchLexical(query string, limit int) ([]Hit, error) {
 	}
 	var ns []int64
 	var scores []float64
-	if hasCJK(norm.NFC.String(query)) {
+	var err error
+	route, match := f.LexicalRoute(lq, query)
+	switch route {
+	case "trigram":
 		trigram := f.table("fragments_fts") + "_trigram"
-		all3 := true
-		for _, t := range lq.Terms {
-			if len([]rune(t)) < 3 {
-				all3 = false
-			}
-		}
-		var err error
-		if f.tables[trigram] && all3 {
-			ns, scores, err = f.ftsQuery(trigram, "bm25("+quoteIdent(trigram)+")", lq.Match, limit)
-		} else {
-			ns, scores, err = f.substringQuery(lq, limit)
-		}
-		if err != nil {
-			return nil, err
-		}
-	} else {
+		ns, scores, err = f.ftsQuery(trigram, "bm25("+quoteIdent(trigram)+")", match, limit)
+	case "substring":
+		ns, scores, err = f.substringQuery(lq, limit)
+	default:
 		fts := f.table("fragments_fts")
 		weights := "1.0, 0.5, 0.5, 1.0"
 		if f.ftsColumnCount(fts) == 3 {
 			weights = "1.0, 0.5, 0.5"
 		}
-		var err error
-		ns, scores, err = f.ftsQuery(fts, "bm25("+quoteIdent(fts)+", "+weights+")", lq.Match, limit)
-		if err != nil {
-			return nil, err
-		}
+		ns, scores, err = f.ftsQuery(fts, "bm25("+quoteIdent(fts)+", "+weights+")", match, limit)
+	}
+	if err != nil {
+		return nil, err
 	}
 	return f.fragmentHits(ns, scores, "lexical")
 }
@@ -587,6 +599,9 @@ func (f *File) SearchVector(query []float64, space, target string, limit int) ([
 	}
 	if sp == nil {
 		return nil, errf("E031", space, "unknown vector space")
+	}
+	if int64(len(query)) != sp.Dims {
+		return nil, fmt.Errorf("spdf: query vector has %d dimensions, space %s has %d", len(query), space, sp.Dims)
 	}
 	storedTarget := target
 	if f.legacy {
