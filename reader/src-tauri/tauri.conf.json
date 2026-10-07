@@ -76,7 +76,8 @@
       }
     },
     "iOS": {
-      "minimumSystemVersion": "15.0"
+      "minimumSystemVersion": "16.4",
+      "developmentTeam": "9LYNY2477X"
     },
     "android": {
       "minSdkVersion": 26,

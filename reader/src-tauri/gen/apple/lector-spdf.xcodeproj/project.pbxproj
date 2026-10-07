@@ -18,6 +18,7 @@
 		98C52EBF2A254C3B6FCA573A /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0C4A3E7AEF44881C10C88C18 /* CoreGraphics.framework */; };
 		BA57090DEAC4179F31478D8F /* libapp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93B73724BC8CE6F1B1F12FB1 /* libapp.a */; };
 		BB9078894D3B1404654534C9 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9FCD102DCE0B7F1E368974DC /* main.mm */; };
+		DB0447EE13772E63F12CC0C5 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CD9853699980932238B098DA /* Accelerate.framework */; };
 		EEE83D1F7B0A1D3FAF2A0BAC /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2922C90F6F494AEA8750CABE /* Security.framework */; };
 /* End PBXBuildFile section */
 
@@ -44,6 +45,7 @@
 		AB01004401C148ADF00CBD99 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		B2423B451353C86297FA2DB3 /* lector-spdf_iOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "lector-spdf_iOS.entitlements"; sourceTree = "<group>"; };
 		B9966DF65757B7CFE4D0EAC1 /* ia.rs */ = {isa = PBXFileReference; path = ia.rs; sourceTree = "<group>"; };
+		CD9853699980932238B098DA /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		D9F1ACE4C0DF565CDB2F336A /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		ECF1CF4B0DAF95B2F80DE94E /* estado.rs */ = {isa = PBXFileReference; path = estado.rs; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -54,6 +56,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BA57090DEAC4179F31478D8F /* libapp.a in Frameworks */,
+				DB0447EE13772E63F12CC0C5 /* Accelerate.framework in Frameworks */,
 				98C52EBF2A254C3B6FCA573A /* CoreGraphics.framework in Frameworks */,
 				3385048EA40755D6B13081B2 /* Metal.framework in Frameworks */,
 				094821F235EC3C454A9F3D52 /* MetalKit.framework in Frameworks */,
@@ -108,6 +111,7 @@
 		3ECF0EBF899F93EAA2D70E26 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				CD9853699980932238B098DA /* Accelerate.framework */,
 				0C4A3E7AEF44881C10C88C18 /* CoreGraphics.framework */,
 				93B73724BC8CE6F1B1F12FB1 /* libapp.a */,
 				24B0EA9EE955C7849DB352BE /* Metal.framework */,
@@ -160,6 +164,20 @@
 				C68106FECEECFE585D3AA883 /* bindings */,
 			);
 			path = "lector-spdf";
+			sourceTree = "<group>";
+		};
+		"TEMP_35B75C2C-2028-4FBE-9CAE-176699B13101" /* arm64 */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = arm64;
+			sourceTree = "<group>";
+		};
+		"TEMP_7FDD4A7C-80FF-498C-86FD-6A5270C0F386" /* x86_64 */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = x86_64;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -292,6 +310,7 @@
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
+				DEVELOPMENT_TEAM = "9LYNY2477X";
 			};
 			name = debug;
 		};
@@ -442,6 +461,7 @@
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
+				DEVELOPMENT_TEAM = "9LYNY2477X";
 			};
 			name = release;
 		};

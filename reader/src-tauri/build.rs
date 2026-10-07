@@ -1,5 +1,9 @@
 fn main() {
     enlazar_runtime_de_clang();
+    // llama.cpp (ggml) usa vDSP de Accelerate también en iOS; spdf-llama-sys solo lo enlaza en macOS.
+    if std::env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("ios") {
+        println!("cargo:rustc-link-lib=framework=Accelerate");
+    }
     tauri_build::build()
 }
 
@@ -7,8 +11,10 @@ fn main() {
 /// `__isPlatformVersionAtLeast` de compiler-rt; rustc enlaza con `-nodefaultlibs` y no lo
 /// trae. Se enlaza aquí la biblioteca del runtime de clang de la plataforma de destino.
 fn enlazar_runtime_de_clang() {
+    // Solo macOS: en iOS el enlace final lo hace Xcode con clang, que ya trae compiler-rt (y rustc no
+    // sabe meter el .a universal de compiler-rt dentro de la biblioteca estática).
     let os = std::env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
-    if os != "macos" && os != "ios" {
+    if os != "macos" {
         return;
     }
     let simulador = std::env::var("TARGET").map(|t| t.ends_with("-sim") || t.starts_with("x86_64-apple-ios")).unwrap_or(false);
