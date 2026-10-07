@@ -50,6 +50,9 @@ enum Cmd {
         /// End anchor JSON (ranges).
         #[arg(long)]
         end: Option<String>,
+        /// With --fragment: cite this quotation by the unit it lies in (SPEC §18.2).
+        #[arg(long, requires = "fragment")]
+        quote: Option<String>,
         /// es | en
         #[arg(long, default_value = "es")]
         locale: String,
@@ -289,9 +292,15 @@ fn run(cli: Cli) -> Res<ExitCode> {
             fragment,
             anchor,
             end,
+            quote,
             locale,
         } => {
             let doc = open(&file)?;
+            if let (Some(id), Some(q)) = (&fragment, &quote) {
+                let c = doc.cite_passage(id, q, Locale::parse(&locale))?;
+                println!("{}\n{}", c.text, c.uri);
+                return Ok(ExitCode::SUCCESS);
+            }
             let d = doc.document()?;
             let (a, e) = if let Some(id) = fragment {
                 let f = doc.fragment(&id)?.ok_or("no such fragment")?;

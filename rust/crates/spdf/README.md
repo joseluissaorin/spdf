@@ -22,8 +22,10 @@ An SPDF file is an SQLite 3 database. This crate bundles SQLite (with FTS5) thro
   f64, in-memory cache for repeated queries) and hybrid (reciprocal rank fusion, k = 10).
 - **Anchors**: typed anchors, `spdf:` URIs (parse and format, canonical form), offsets in
   Unicode code points over NFC text with UTF-8/UTF-16 conversions.
-- **Citation**: short author-date citations in Spanish and English; CSL-JSON and BibTeX
-  export.
+- **Citation**: short author-date citations in Spanish and English, citation of a
+  quoted passage by the unit it lies in (`cite_passage`); CSL-JSON and BibTeX export, and
+  ALTO, TEI and IIIF exports.
+- **Resolution** of anchor URIs and `.spdf#p=…` URLs to units and fragments (`locate`).
 - **Writing**: a `Writer` that produces valid 5.0 files (FTS rebuilt, no triggers,
   `VACUUM`, `application_id`, `user_version`), conversion of legacy files, and
   `Writer::from_dump` for conformance sources.
@@ -31,7 +33,7 @@ An SPDF file is an SQLite 3 database. This crate bundles SQLite (with FTS5) thro
 - **Remote reading** (feature `http`, experimental): a read-only SQLite VFS that reads an
   SPDF over HTTP range requests without downloading it.
 
-It passes the whole conformance suite of the repository (`conformance/`).
+It passes the whole conformance suite of the repository (`conformance/`, 341 cases in 0.4.1).
 
 ## Example
 

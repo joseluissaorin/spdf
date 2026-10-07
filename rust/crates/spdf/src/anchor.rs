@@ -441,6 +441,24 @@ impl Anchor {
         Value::Object(m)
     }
 
+    /// The `matter` of the anchor's unit (SPEC §4.1): `body` when absent or
+    /// not a string; unknown values are kept (readers treat them as `body`).
+    pub fn matter(&self) -> &str {
+        self.extra
+            .get("matter")
+            .and_then(Value::as_str)
+            .unwrap_or("body")
+    }
+
+    /// True unless the unit is front or back matter, a plate, a cover, a
+    /// library page or a blank (unknown values count as body).
+    pub fn is_body(&self) -> bool {
+        !matches!(
+            self.matter(),
+            "front" | "back" | "plate" | "cover" | "library" | "blank"
+        )
+    }
+
     /// Printed folio of page, section and verse anchors.
     pub fn printed(&self) -> Option<&str> {
         match &self.kind {

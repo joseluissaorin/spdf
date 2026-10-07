@@ -14,6 +14,7 @@ use serde::de::DeserializeOwned;
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 
+use crate::anchor::AnchorUri;
 use crate::error::{Error, Result};
 use crate::legacy;
 use crate::model::*;
@@ -1278,7 +1279,14 @@ impl Spdf {
         }
         let mut matched: Vec<&Map<String, Value>> = frags
             .iter()
-            .filter(|f| locate_matches(rule, &l, f.get("anchor").unwrap_or(&Value::Null), None))
+            .filter(|f| {
+                let start = f.get("anchor").unwrap_or(&Value::Null);
+                let end = f.get("anchor_end").filter(|v| !v.is_null());
+                locate_matches(rule, &l, start, None)
+                    || end
+                        .map(|e| locate_matches(rule, &l, e, None))
+                        .unwrap_or(false)
+            })
             .collect();
         if unit_ids.is_empty() && !matched.is_empty() {
             let order: HashMap<String, i64> = units
@@ -1302,22 +1310,31 @@ impl Spdf {
             unit_ids = set;
         }
         if let Some([c, d]) = l.chars {
-            matched.retain(|f| {
-                let in_unit = s(f, "unit").map(|u| unit_ids.contains(&u)).unwrap_or(false);
-                let ch = f
-                    .get("anchor")
+            // `char` refers to the text of the first unit of `units`.
+            let first = unit_ids.first().cloned();
+            let overlaps = |x: Option<&Value>| -> bool {
+                let ch = x
                     .and_then(|a| a.get("chars"))
                     .and_then(Value::as_array)
                     .filter(|a| a.len() == 2)
                     .and_then(|a| Some((a[0].as_f64()?, a[1].as_f64()?)));
-                match (in_unit, ch) {
-                    (true, Some((a, b))) => {
-                        let (c, d) = (c as f64, d as f64);
-                        if c < d {
-                            a < d && c < b
-                        } else {
-                            a <= c && c < b
-                        }
+                let Some((a, b)) = ch else { return false };
+                let (c, d) = (c as f64, d as f64);
+                if c < d {
+                    a < d && c < b
+                } else {
+                    a <= c && c < b
+                }
+            };
+            matched.retain(|f| {
+                let Some(first) = &first else { return false };
+                if s(f, "unit").as_ref() == Some(first) && overlaps(f.get("anchor")) {
+                    return true;
+                }
+                let end = f.get("anchor_end").filter(|v| !v.is_null());
+                match (s(f, "unit"), end) {
+                    (Some(u), Some(e)) => {
+                        end_unit_of(&units, &u, e).as_ref() == Some(first) && overlaps(Some(e))
                     }
                     _ => false,
                 }
@@ -1326,6 +1343,105 @@ impl Spdf {
         out.units = unit_ids;
         out.fragments = matched.iter().filter_map(|f| s(f, "id")).collect();
         Ok(out)
+    }
+
+    /// The unit where a fragment ends (SPEC §4.4): the first unit after its
+    /// start unit, in `ord` order, whose anchor equals `anchor_end` once
+    /// `chars` and `region` are removed. `None` for fragments that do not
+    /// cross units.
+    pub fn end_unit(&self, f: &Fragment) -> Result<Option<Unit>> {
+        let Some(end) = f.anchor_end.as_ref().filter(|v| !v.is_null()) else {
+            return Ok(None);
+        };
+        let units = self.units()?;
+        let mut after = false;
+        let key = anchor_identity(end);
+        for u in units {
+            if u.id == f.unit {
+                after = true;
+                continue;
+            }
+            if after && anchor_identity(&u.anchor) == key {
+                return Ok(Some(u));
+            }
+        }
+        Ok(None)
+    }
+
+    /// Cites a quotation taken from a fragment (SPEC §18.2): by the unit the
+    /// quotation lies in, with `chars`, or by the range of both units when it
+    /// spans them; never by the fragment's start anchor when the quotation
+    /// is not in the start unit.
+    ///
+    /// ```no_run
+    /// let doc = spdf::Spdf::open("micrographia.spdf")?;
+    /// let c = doc.cite_passage("m4", "tube N N", spdf::Locale::En)?;
+    /// println!("{}  {}", c.text, c.uri);
+    /// # Ok::<(), spdf::Error>(())
+    /// ```
+    pub fn cite_passage(
+        &self,
+        fragment_id: &str,
+        quote: &str,
+        locale: crate::cite::Locale,
+    ) -> Result<PassageCitation> {
+        let f = self
+            .fragment(fragment_id)?
+            .ok_or_else(|| Error::NotFound(format!("fragment `{fragment_id}`")))?;
+        let q = crate::text::nfc(quote);
+        let u1 = self
+            .unit(&f.unit)?
+            .ok_or_else(|| Error::NotFound(format!("unit `{}`", f.unit)))?;
+        let part = |text: &str, chars: Option<&Value>| -> (usize, String) {
+            let n = crate::text::cp_len(text);
+            let (a, b) = chars
+                .and_then(Value::as_array)
+                .filter(|c| c.len() == 2)
+                .and_then(|c| Some((c[0].as_u64()? as usize, c[1].as_u64()? as usize)))
+                .unwrap_or((0, n));
+            let (a, b) = (a.min(n), b.min(n).max(a.min(n)));
+            (
+                a,
+                crate::text::cp_slice(text, a, b).unwrap_or("").to_string(),
+            )
+        };
+        let (c1, seg1) = part(&u1.text, f.anchor.get("chars"));
+        let u2 = self.end_unit(&f)?;
+        let end_chars = f.anchor_end.as_ref().and_then(|e| e.get("chars"));
+        let (c2, seg2) = match &u2 {
+            Some(u) => part(&u.text, end_chars),
+            None => (0, String::new()),
+        };
+        let find = |seg: &str, offset: usize| -> Option<Value> {
+            let byte = seg.find(q.as_str())?;
+            let i = offset + crate::text::byte_to_cp(seg, byte)?;
+            Some(Value::from(vec![i, i + crate::text::cp_len(&q)]))
+        };
+        let with_chars = |anchor: &Value, chars: Value| -> Value {
+            let mut a = strip_position(anchor);
+            if let Value::Object(m) = &mut a {
+                m.insert("chars".into(), chars);
+            }
+            a
+        };
+        let (anchor, end) = if let Some(ch) = find(&seg1, c1) {
+            (with_chars(&u1.anchor, ch), None)
+        } else if let (Some(u), Some(ch)) = (&u2, u2.as_ref().and_then(|_| find(&seg2, c2))) {
+            (with_chars(&u.anchor, ch), None)
+        } else if let (Some(u), true) = (&u2, f.text.contains(q.as_str())) {
+            (strip_position(&u1.anchor), Some(strip_position(&u.anchor)))
+        } else {
+            return Err(Error::NotFound(format!(
+                "the quotation is not in fragment `{fragment_id}`"
+            )));
+        };
+        let d = self.document()?;
+        Ok(PassageCitation {
+            text: crate::cite::cite_value(&anchor, end.as_ref(), &d.metadata, locale),
+            uri: AnchorUri::from_anchor_value(&d.docref(), &anchor, end.as_ref()).to_string(),
+            anchor,
+            anchor_end: end,
+        })
     }
 
     /// The units [`Spdf::locate`] finds for a reference, as full rows.
@@ -1350,6 +1466,46 @@ impl Spdf {
             Flavor::Legacy => "fragmentos_fts",
         }
     }
+}
+
+/// An anchor without its position members (`chars`, `region`), as a
+/// canonical string: the identity used to find the end unit of a fragment.
+pub(crate) fn anchor_identity(a: &Value) -> String {
+    crate::canon::to_string(&crate::canon::normalize(&strip_position(a)))
+}
+
+/// A copy of an anchor without `chars` and `region`.
+pub(crate) fn strip_position(a: &Value) -> Value {
+    match a {
+        Value::Object(m) => {
+            let mut m = m.clone();
+            m.remove("chars");
+            m.remove("region");
+            Value::Object(m)
+        }
+        other => other.clone(),
+    }
+}
+
+/// End unit id among unit rows (in `ord` order) for a fragment starting at `start`.
+pub(crate) fn end_unit_of(
+    units: &[Map<String, Value>],
+    start: &str,
+    end: &Value,
+) -> Option<String> {
+    let key = anchor_identity(end);
+    let mut after = false;
+    for u in units {
+        let id = u.get("id").and_then(Value::as_str).unwrap_or("");
+        if id == start {
+            after = true;
+            continue;
+        }
+        if after && u.get("anchor").map(anchor_identity).as_deref() == Some(key.as_str()) {
+            return Some(id.to_string());
+        }
+    }
+    None
 }
 
 fn is_integral(v: Option<&Value>) -> bool {

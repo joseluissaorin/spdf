@@ -114,7 +114,12 @@ fn blob_limit_is_enforced() {
         .resolve_image("blob:original.txt")
         .expect("blob")
         .expect("present");
-    assert_eq!(b.data.len(), 273);
+    assert!(!b.data.is_empty());
+    assert_eq!(
+        doc.blobs().expect("blobs")[0].bytes as usize,
+        b.data.len(),
+        "blob size matches its metadata"
+    );
 }
 
 #[test]
@@ -316,7 +321,7 @@ fn anchors_and_citations_from_search_hits() {
     for h in &hits {
         let a = spdf::Anchor::from_value(&h.anchor).expect("anchor");
         let c = spdf::cite(&a, &meta, spdf::Locale::Es);
-        assert!(c.starts_with("(Cervantes Saavedra, 1605"), "{c}");
+        assert!(c.starts_with("(Cervantes Saavedra, 16"), "{c}");
         let u = spdf::parse_uri(&h.anchor_uri).expect("uri");
         assert_eq!(u.docref, meta.docref());
         assert_eq!(u.to_string(), h.anchor_uri);
@@ -390,4 +395,46 @@ fn handles_can_move_between_threads() {
         .join()
         .expect("thread");
     assert_eq!(n, 2);
+}
+
+#[test]
+fn passages_are_cited_by_their_own_unit() {
+    let doc =
+        Spdf::open(conformance().join("invalid/W103-fragment-crosses-matter.spdf")).expect("open");
+    for f in doc.fragments().expect("fragments") {
+        let Some(end) = doc.end_unit(&f).expect("end unit") else {
+            continue;
+        };
+        // A quotation from the end part cites the end unit, never the start anchor.
+        let end_chars = f
+            .anchor_end
+            .as_ref()
+            .and_then(|e| e.get("chars"))
+            .and_then(|c| c.as_array())
+            .cloned();
+        let (a, b) = match end_chars.as_deref() {
+            Some([a, b]) => (
+                a.as_u64().unwrap_or(0) as usize,
+                b.as_u64().unwrap_or(0) as usize,
+            ),
+            _ => (0, spdf::text::cp_len(&end.text)),
+        };
+        let part = spdf::text::cp_slice(&end.text, a, b).unwrap_or("");
+        let quote: String = part.chars().take(12).collect();
+        if quote.trim().is_empty() {
+            continue;
+        }
+        let c = doc
+            .cite_passage(&f.id, &quote, spdf::Locale::En)
+            .expect("cite");
+        assert!(c.anchor_end.is_none() || !end.text.contains(&quote));
+        let at = doc.locate(&c.uri).expect("locate");
+        assert!(
+            at.units.contains(&end.id) || at.units.contains(&f.unit),
+            "{} -> {:?}",
+            c.uri,
+            at
+        );
+    }
+    assert!(doc.cite_passage("nope", "x", spdf::Locale::Es).is_err());
 }

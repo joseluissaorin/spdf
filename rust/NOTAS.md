@@ -2,7 +2,7 @@
 
 Decisiones que tomé donde el contrato o la especificación no bajaban al detalle, y
 observaciones sobre la batería. Todas están implementadas y la referencia en Rust pasa
-los 309 casos de la conformidad 0.4.0.
+los 341 casos de la conformidad 0.4.1.
 
 ## Decisiones propias (no las prueba la batería)
 
@@ -58,6 +58,20 @@ los 309 casos de la conformidad 0.4.0.
     `Spdf::locate_units`. El lector Tauri no usaba `locate`.
 13. **Apertura**: además de lo obligatorio, `PRAGMA mmap_size = 0` y
     `PRAGMA cell_size_check = ON`, como recomienda §2.4.
+15. **Conformidad 0.4.1** (SPEC §4.1, §4.4, §5.4, §18, §18.2, §22). Todo aditivo salvo
+    una corrección de comportamiento:
+    - `Spdf::cite_passage(fragmento, cita, locale) -> PassageCitation {text, uri,
+      anchor, anchor_end}` cita la unidad donde está el pasaje (con `chars`) o el rango
+      de las dos unidades; `Spdf::end_unit(&Fragment)` da la unidad final (§4.4).
+    - Los rangos de páginas ya no cuentan un extremo sin folio: «p. 211», nunca
+      «pp. s. p.-211». Es un cambio de salida de `cite`/`cite_value`, no de firma.
+    - `locate` encuentra fragmentos también por `anchor_end`, y `char` se refiere a la
+      primera unidad de `units`.
+    - `matter` se conserva en las anclas (`Anchor::matter()`, `Anchor::is_body()`) y el
+      validador da W103 cuando un fragmento cruza de materia o entre una página con folio
+      y otra sin él (comparando `matter` tal cual, como la referencia).
+    - CLI: `spdf cite FICHERO --fragment ID --quote "…"`. ABI de C: `spdf_cite_passage`.
+    - Comprobado con `cargo check` del lector Tauri contra esta versión: compila.
 14. **Compatibilidad hacia delante** (SPEC §23): en un 5.x más reciente (W105), E041 y
     E032 van a los avisos. Para la URL de un recurso con fragmento (§24) están
     `anchor::split_resource_url` y `Locator::parse_fragment`/`to_fragment`;

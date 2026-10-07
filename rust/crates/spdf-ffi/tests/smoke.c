@@ -33,9 +33,13 @@ int main(int argc, char **argv) {
   printf("locate: %s\n", out);
   spdf_string_free(out);
 
+  CHECK(spdf_cite_passage(doc, "q1", "Desocvpado Lector", "es", &out));
+  printf("passage: %s\n", out);
+  spdf_string_free(out);
+
   SpdfDoc *docs[2] = { doc, doc };
   CHECK(spdf_export_bibtex_multi((const SpdfDoc *const *)docs, 2, &out));
-  if (!strstr(out, "cervantessaavedra1605a") || !strstr(out, "cervantessaavedra1605b")) {
+  if (!strstr(out, "cervantessaavedra1608a") || !strstr(out, "cervantessaavedra1608b")) {
     fprintf(stderr, "bibtex: %s\n", out); return 1;
   }
   spdf_string_free(out);

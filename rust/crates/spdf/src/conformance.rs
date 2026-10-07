@@ -423,6 +423,23 @@ fn run_locate(dir: &Path, case: &Value) -> CaseResult {
     }
 }
 
+fn run_cite_passage(dir: &Path, case: &Value) -> CaseResult {
+    let input = &case["input"];
+    let doc = open(dir, s(input, "file")?)?;
+    let locale = Locale::parse(input.get("locale").and_then(Value::as_str).unwrap_or("en"));
+    let c = doc
+        .cite_passage(s(input, "fragment")?, s(input, "quote")?, locale)
+        .map_err(|e| format!("cite_passage: {e}"))?;
+    let (want_text, want_uri) = (s(&case["expect"], "text")?, s(&case["expect"], "uri")?);
+    if c.text != want_text {
+        return Err(format!("text {:?}, expected {want_text:?}", c.text));
+    }
+    if c.uri != want_uri {
+        return Err(format!("uri {}, expected {want_uri}", c.uri));
+    }
+    Ok(())
+}
+
 fn documents(
     dir: &Path,
     input: &Value,
@@ -506,6 +523,7 @@ pub fn run_case(dir: &Path, case: &Value) -> CaseResult {
         "cite" => run_cite(case),
         "quantize" => run_quantize(case),
         "locate" => run_locate(dir, case),
+        "cite_passage" => run_cite_passage(dir, case),
         "export_csl" => run_export_csl(dir, case),
         "export_bibtex" => run_export_bibtex(dir, case),
         "export_structure" => run_export_structure(dir, case),

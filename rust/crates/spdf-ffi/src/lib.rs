@@ -703,6 +703,28 @@ pub unsafe extern "C" fn spdf_doc_cite(
     })
 }
 
+/// Cites a quotation taken from a fragment by the unit it lies in (SPEC
+/// §18.2): writes `{"text","uri","anchor","anchor_end"}`. `locale` is a BCP 47
+/// tag (NULL = `en`). `SPDF_ERR_NOT_FOUND` if the fragment does not exist or
+/// the quotation is not in it.
+#[no_mangle]
+pub unsafe extern "C" fn spdf_cite_passage(
+    doc: *const SpdfDoc,
+    fragment_id: *const c_char,
+    quote: *const c_char,
+    locale: *const c_char,
+    out_json: *mut *mut c_char,
+) -> c_int {
+    guard(|| {
+        let d = unsafe { doc_ref(doc) }?;
+        let id = unsafe { str_arg(fragment_id, "fragment_id") }?;
+        let q = unsafe { str_arg(quote, "quote") }?;
+        let loc = spdf::Locale::parse(unsafe { opt_str_arg(locale, "locale") }?.unwrap_or("en"));
+        let c = d.cite_passage(id, q, loc)?;
+        unsafe { put_string(out_json, serde_json::to_string(&c)?) }
+    })
+}
+
 /// CSL-JSON (array with one item) of the document.
 #[no_mangle]
 pub unsafe extern "C" fn spdf_export_csl_json(doc: *const SpdfDoc, out: *mut *mut c_char) -> c_int {

@@ -167,6 +167,8 @@ fn printed_label(a: &Value) -> Option<String> {
     })
 }
 
+/// Page locator (SPEC §18): an end without a printed folio never takes part
+/// in a range; `s. p.` / `n. pag.` only when neither end has a folio.
 fn page_locator(
     anchor: &Value,
     end: Option<&Value>,
@@ -174,17 +176,20 @@ fn page_locator(
     single: &str,
     plural: &str,
 ) -> String {
-    let Some(a) = printed_label(anchor) else {
+    let mut ends = vec![anchor];
+    if let Some(e) = end.filter(|e| e.get("type") == anchor.get("type")) {
+        ends.push(e);
+    }
+    let with_folio: Vec<&Value> = ends
+        .into_iter()
+        .filter(|x| x.get("printed").map(|p| !p.is_null()).unwrap_or(false))
+        .collect();
+    let (Some(first), Some(last)) = (with_folio.first(), with_folio.last()) else {
         return if es { "s. p." } else { "n. pag." }.to_string();
     };
-    if let Some(e) = end {
-        if e.get("type") == anchor.get("type") {
-            if let Some(b) = printed_label(e) {
-                if e.get("printed") != anchor.get("printed") {
-                    return format!("{plural} {a}-{b}");
-                }
-            }
-        }
+    let a = printed_label(first).unwrap_or_default();
+    if with_folio.len() > 1 && last.get("printed") != first.get("printed") {
+        return format!("{plural} {a}-{}", printed_label(last).unwrap_or_default());
     }
     format!("{single} {a}")
 }

@@ -282,6 +282,18 @@ int spdf_doc_cite(const struct SpdfDoc *doc,
                   char **out);
 
 /*
+ Cites a quotation taken from a fragment by the unit it lies in (SPEC
+ §18.2): writes `{"text","uri","anchor","anchor_end"}`. `locale` is a BCP 47
+ tag (NULL = `en`). `SPDF_ERR_NOT_FOUND` if the fragment does not exist or
+ the quotation is not in it.
+ */
+int spdf_cite_passage(const struct SpdfDoc *doc,
+                      const char *fragment_id,
+                      const char *quote,
+                      const char *locale,
+                      char **out_json);
+
+/*
  CSL-JSON (array with one item) of the document.
  */
 int spdf_export_csl_json(const struct SpdfDoc *doc, char **out);

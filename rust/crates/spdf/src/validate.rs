@@ -14,7 +14,7 @@ use std::path::Path;
 
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::{Map, Value};
 
 use crate::anchor::ANCHOR_TYPES;
 use crate::error::Error;
@@ -637,6 +637,13 @@ fn validate_connection(
         }
     }
 
+    // W103: a fragment crosses matter, or between a page with a folio and one without.
+    if ok("units", &["id", "ord", "anchor"])
+        && ok("fragments", &["id", "unit", "anchor", "anchor_end"])
+    {
+        w103(&doc, &mut c);
+    }
+
     // Warnings
     if profile.iter().any(|p| p == "semantic") && nvec == 0 {
         c.warn(
@@ -666,6 +673,88 @@ fn validate_connection(
         }
     }
     finish(c, version, profile)
+}
+
+fn matter_of(a: &Value) -> &str {
+    a.get("matter").and_then(Value::as_str).unwrap_or("body")
+}
+
+fn w103(doc: &Spdf, c: &mut Collector) {
+    let units: Vec<Map<String, Value>> = {
+        let Ok(mut st) = doc
+            .conn
+            .prepare("SELECT id, anchor FROM units ORDER BY ord, id")
+        else {
+            return;
+        };
+        let Ok(rows) = st.query_map([], |r| {
+            Ok((
+                r.get::<_, Option<String>>(0)?,
+                r.get::<_, Option<String>>(1)?,
+            ))
+        }) else {
+            return;
+        };
+        let mut out = Vec::new();
+        for (id, a) in rows.flatten() {
+            // Like the reference: any unparsable anchor skips this check.
+            let Some(a) = a.and_then(|a| serde_json::from_str::<Value>(&a).ok()) else {
+                return;
+            };
+            let mut m = Map::new();
+            m.insert("id".into(), Value::from(id.unwrap_or_default()));
+            m.insert("anchor".into(), a);
+            out.push(m);
+        }
+        out
+    };
+    let anchor_of = |id: &str| -> Option<&Value> {
+        units
+            .iter()
+            .find(|u| u.get("id").and_then(Value::as_str) == Some(id))
+            .and_then(|u| u.get("anchor"))
+    };
+    let Ok(mut st) = doc.conn.prepare(
+        "SELECT id, unit, anchor_end FROM fragments WHERE anchor_end IS NOT NULL ORDER BY n",
+    ) else {
+        return;
+    };
+    let Ok(rows) = st.query_map([], |r| {
+        Ok((
+            r.get::<_, Option<String>>(0)?.unwrap_or_default(),
+            r.get::<_, Option<String>>(1)?.unwrap_or_default(),
+            r.get::<_, Option<String>>(2)?.unwrap_or_default(),
+        ))
+    }) else {
+        return;
+    };
+    for (fid, unit, end) in rows.flatten() {
+        let Ok(end) = serde_json::from_str::<Value>(&end) else {
+            return;
+        };
+        if !end.is_object() {
+            continue;
+        }
+        let Some(a1) = anchor_of(&unit) else { continue };
+        let Some(u2) = crate::reader::end_unit_of(&units, &unit, &end) else {
+            continue;
+        };
+        let Some(a2) = anchor_of(&u2) else { continue };
+        let page = |a: &Value| a.get("type").and_then(Value::as_str) == Some("page");
+        let folio = |a: &Value| a.get("printed").map(|p| !p.is_null()).unwrap_or(false);
+        let folio_change = page(a1) && page(a2) && folio(a1) != folio(a2);
+        if matter_of(a1) != matter_of(a2) || folio_change {
+            c.warn(
+                "W103",
+                format!(
+                    "fragment crosses from {} to {} matter, or between a page with a folio and one without",
+                    matter_of(a1),
+                    matter_of(a2)
+                ),
+                format!("fragments/{fid}"),
+            );
+        }
+    }
 }
 
 fn check_anchor_text(c: &mut Collector, raw: Option<&str>, unit_text: Option<&str>, at: &str) {

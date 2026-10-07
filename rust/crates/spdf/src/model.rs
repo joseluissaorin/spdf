@@ -516,3 +516,16 @@ pub struct Location {
     /// `xywh` region of the locator (fractions), if any.
     pub xywh: Option<[f64; 4]>,
 }
+
+/// Result of [`crate::Spdf::cite_passage`] (SPEC §18.2).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct PassageCitation {
+    /// Short citation, e.g. `(Hooke, 1665, p. 211)`.
+    pub text: String,
+    /// Anchor URI of the cited unit or range.
+    pub uri: String,
+    /// Anchor cited (the unit's anchor, with `chars` when the quotation lies in one unit).
+    pub anchor: Value,
+    /// End anchor when the quotation spans two units.
+    pub anchor_end: Option<Value>,
+}
