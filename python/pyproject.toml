@@ -1,0 +1,87 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "spdf-format"
+version = "0.1.0"
+description = "Read, validate, search, cite and write SPDF (Semantic Processed Document Format) files"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT OR Apache-2.0"
+license-files = ["LICENSE-MIT", "LICENSE-APACHE"]
+authors = [{ name = "José Luis Saorín Ferrer", email = "jl@joseluissaorin.com" }]
+keywords = ["spdf", "citation", "csl-json", "bibtex", "sqlite", "fts5", "rag", "iiif", "alto", "digital-humanities"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Database",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Text Processing :: Indexing",
+    "Typing :: Typed",
+]
+dependencies = []
+
+[project.optional-dependencies]
+numpy = ["numpy>=1.24"]
+crypto = ["cryptography>=42"]
+pandas = ["pandas>=2.0", "numpy>=1.24"]
+arrow = ["pyarrow>=14"]
+all = ["numpy>=1.24", "cryptography>=42", "pandas>=2.0", "pyarrow>=14"]
+
+[project.scripts]
+spdf = "spdf.cli:main"
+
+[project.urls]
+Homepage = "https://spdf.joseluissaorin.com"
+Source = "https://github.com/joseluissaorin/spdf"
+Issues = "https://github.com/joseluissaorin/spdf/issues"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "mypy>=1.11",
+    "ruff>=0.6",
+    "numpy>=1.24",
+    "cryptography>=42",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/spdf"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/spdf", "tests", "README.md", "PUBLICAR.md", "LICENSE-MIT", "LICENSE-APACHE"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+files = ["src/spdf"]
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = ["numpy.*", "pandas.*", "pyarrow.*", "cryptography.*", "pysqlite3.*"]
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "PT", "C4", "PIE", "RET", "TID"]
+ignore = ["RUF001", "RUF002", "RUF003", "SIM108", "RET505"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["PT011"]
