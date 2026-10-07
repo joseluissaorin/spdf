@@ -41,14 +41,14 @@ conf_compare <- function(want, got, path = "$") {
 
 conf_results <- function(want, got, via) {
   if (length(want) != length(got)) {
-    return(sprintf("results: expected %d (%s), got %d (%s)", length(want),
-                   paste(vapply(want, function(w) w$fragment_id, character(1)), collapse = ","), length(got),
-                   paste(vapply(got, function(g) g$fragment_id, character(1)), collapse = ",")))
+    return(sprintf("results: expected %d, got %d", length(want), length(got)))
   }
   for (i in seq_along(want)) {
     w <- want[[i]]
     g <- got[[i]]
-    if (!identical(w$fragment_id, g$fragment_id)) return(sprintf("results[%d].fragment_id: expected %s, got %s", i - 1, w$fragment_id, g$fragment_id))
+    for (k in c("fragment_id", "unit_id", "figure_id")) {
+      if (!is.null(w[[k]]) && !identical(w[[k]], g[[k]])) return(sprintf("results[%d].%s: expected %s, got %s", i - 1, k, w[[k]], format(g[[k]])))
+    }
     if (abs(w$score - g$score) > 1e-6) return(sprintf("results[%d].score: expected %s, got %s", i - 1, w$score, g$score))
     if (!identical(w$anchor_uri, g$anchor_uri)) return(sprintf("results[%d].anchor_uri: expected %s, got %s", i - 1, w$anchor_uri, g$anchor_uri))
     if (via && !is.null(w$via) && !identical(unlist(w$via), unlist(g$via))) {
@@ -140,6 +140,41 @@ conf_case <- function(dir, c) {
     text <- spdf_cite(input$metadata %||% list(), input$anchor, input$anchor_end, input$locale %||% "en")
     return(if (identical(text, ex$text)) NULL else paste("expected", ex$text, "got", text))
   }
+  if (kind == "locate") {
+    doc <- spdf_open(p(input$file))
+    on.exit(spdf_close(doc))
+    got <- tryCatch(spdf_locate(doc, input$reference), spdf_error = function(e) {
+      list(document = FALSE, units = list(), fragments = list(), char = NULL, xywh = NULL)
+    })
+    return(conf_compare(ex, got, "locate"))
+  }
+  if (kind %in% c("export_csl", "export_bibtex")) {
+    metas <- lapply(input$files, function(f) {
+      d <- spdf_open(p(f))
+      on.exit(spdf_close(d))
+      spdf_metadata(d)
+    })
+    if (kind == "export_csl") {
+      return(conf_compare(ex$items, csl_export(metas, input$anchor, input$anchor_end), "items"))
+    }
+    items <- lapply(metas, csl_base)
+    keys <- bib_keys(items)
+    text <- paste(vapply(seq_along(items), function(i) bibtex_entry(items[[i]], keys[i]), character(1)), collapse = "\n")
+    lines <- function(t) {
+      x <- trimws(strsplit(gsub("\r\n", "\n", t, fixed = TRUE), "\n", fixed = TRUE)[[1]])
+      x[nzchar(x)]
+    }
+    want <- lines(ex$text)
+    got <- lines(text)
+    if (!identical(want, got)) {
+      i <- which(want[seq_len(min(length(want), length(got)))] != got[seq_len(min(length(want), length(got)))])
+      return(if (length(i) > 0) paste0("line ", i[1], ": expected ", want[i[1]], ", got ", got[i[1]]) else "line count differs")
+    }
+    return(NULL)
+  }
+  if (kind == "export_structure") {
+    return(structure("ALTO, TEI and IIIF exports (SPEC 19.4, optional) are not implemented", class = "conf_skip"))
+  }
   if (kind == "quantize") {
     hex <- tryCatch(paste(as.character(spdf_vector_encode(unlist(input$values), input$dtype)), collapse = ""), spdf_error = function(e) NULL)
     if (isTRUE(ex$error)) return(if (is.null(hex)) NULL else paste("expected an error, got", hex))
@@ -162,13 +197,20 @@ spdf_conformance <- function(dir) {
   files <- sort(list.files(file.path(dir, "cases"), pattern = "\\.json$", full.names = TRUE), method = "radix")
   passed <- character(0)
   failed <- list()
+  skipped <- list()
   for (f in files) {
     c <- json_parse(paste(readLines(f, encoding = "UTF-8", warn = FALSE), collapse = "\n"))
     id <- c$id %||% sub("\\.json$", "", basename(f))
     reason <- tryCatch(conf_case(dir, c), error = function(e) paste("error:", conditionMessage(e)))
-    if (is.null(reason)) passed <- c(passed, id) else failed[[length(failed) + 1]] <- list(id = id, reason = reason)
+    if (is.null(reason)) {
+      passed <- c(passed, id)
+    } else if (inherits(reason, "conf_skip")) {
+      skipped[[length(skipped) + 1]] <- list(id = id, reason = as.character(unclass(reason)))
+    } else {
+      failed[[length(failed) + 1]] <- list(id = id, reason = reason)
+    }
   }
-  list(impl = "spdf (R)", version = as.character(utils::packageVersion("spdf")), passed = as.list(passed), failed = failed, skipped = list())
+  list(impl = "spdf (R)", version = as.character(utils::packageVersion("spdf")), passed = as.list(passed), failed = failed, skipped = skipped)
 }
 
 # One request of the `eval` test protocol (inst/scripts/eval.R).

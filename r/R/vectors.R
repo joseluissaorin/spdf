@@ -86,7 +86,7 @@ spdf_vector_encode <- function(values, dtype = "f32") {
     i8 = {
       y <- values * 127
       q <- floor(abs(y) + 0.5) * ifelse(y >= 0, 1, -1)
-      q <- pmax(-127, pmin(127, q))
+      q <- pmax(-127, pmin(127, q)) # also clamps v * 127 overflowing to infinity
       writeBin(as.integer(q), raw(), size = 1)
     },
     spdf_abort("E032", paste("unknown dtype", dtype))

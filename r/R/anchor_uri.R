@@ -218,54 +218,120 @@ spdf_parse_uri <- function(uri) {
 
 #' Resolve an anchor URI
 #'
-#' The units an anchor URI points at (specification section 5.4): by physical page
-#' (and end page), else by printed folio, time, slide, verse, canonical reference or
-#' section path. A URI that designates another document gives no rows.
+#' Resolves an anchor URI, or the URL of a `.spdf` resource with a fragment, against a
+#' file (specification section 5.4). The first parameter present among `p`, `f`, `t`,
+#' `sl`, `v`, `ref`, `s` and `sh` selects the rule; `units` are the matching units in
+#' reading order, `fragments` the matching fragments (narrowed by `char`), and `char` and
+#' `xywh` are copied from the reference.
 #'
 #' @param doc A `spdf_document`.
-#' @param uri An anchor URI.
-#' @return A tibble of units (as [spdf_units()]).
+#' @param reference An anchor URI, or a URL or path with a fragment.
+#' @return A list with `document` (logical), `units`, `fragments` (character vectors),
+#'   `char` and `xywh`.
 #' @examples
 #' doc <- spdf_open(system.file("extdata", "quijote.spdf", package = "spdf"))
 #' uri <- spdf_search(doc, "\"lugar de la Mancha\"")$anchor_uri[1]
-#' spdf_locate(doc, uri)[, c("ord", "printed")]
+#' str(spdf_locate(doc, uri))
 #' spdf_close(doc)
 #' @export
-spdf_locate <- function(doc, uri) {
+spdf_locate <- function(doc, reference) {
   check_open(doc)
-  parsed <- spdf_parse_uri(uri)
-  ref <- parsed$docref
+  empty <- list(document = FALSE, units = list(), fragments = list(), char = NULL, xywh = NULL)
   d <- doc_document(doc)
-  units <- strip_document(doc_units(doc))
-  cols <- setdiff(spdf_columns$units, "document")
-  none <- rows_to_tibble(list(), cols, c("anchor", "notes", "words"))
-  if (startsWith(ref, "sha256-")) {
-    if (substring(ref, 8) != tolower(d$source_sha256 %||% "")) return(none)
-  } else if (ref != as.character(d$id)) {
-    return(none)
-  }
-  l <- parsed$locator
-  hit <- vapply(units, function(u) {
-    a <- if (json_is_object(u$anchor)) u$anchor else list()
-    if (!is.null(l$p)) {
-      !is.null(a$physical) && l$p <= a$physical && a$physical <= (l$pe %||% l$p)
-    } else if (!is.null(l$f)) {
-      identical(u$printed, l$f) || identical(a$printed, l$f)
-    } else if (!is.null(l$t)) {
-      t <- l$t[[1]]
-      !is.null(a$t0) && !is.null(a$t1) && a$t0 <= t && t < a$t1
-    } else if (!is.null(l$sl)) {
-      isTRUE(a$n == l$sl)
-    } else if (!is.null(l$v)) {
-      !is.null(a$line_from) && a$line_from <= l$v[[1]] && l$v[[1]] <= (a$line_to %||% a$line_from)
-    } else if (!is.null(l$ref)) {
-      identical(a$scheme, l$ref$scheme) && identical(a$ref, l$ref$ref)
-    } else if (!is.null(l$s)) {
-      is.list(a$path) && length(a$path) >= length(l$s) && identical(unlist(a$path[seq_along(l$s)]), unlist(l$s))
-    } else {
-      FALSE
+  if (startsWith(reference, "spdf:")) {
+    parsed <- spdf_parse_uri(reference)
+    if (!(parsed$docref %in% c(paste0("sha256-", d$source_sha256), as.character(d$id)))) {
+      return(empty)
     }
-  }, logical(1))
-  if (!any(hit)) return(none)
-  rows_to_tibble(units[hit], cols, c("anchor", "notes", "words"))
+    l <- parsed$locator
+  } else {
+    hash <- regexpr("#", reference, fixed = TRUE)
+    frag <- if (hash > 0) substring(reference, hash + 1) else ""
+    l <- if (nzchar(frag)) spdf_parse_uri(paste0("spdf:x#", frag))$locator else list()
+  }
+  out <- list(document = TRUE, units = list(), fragments = list(), char = l$char, xywh = l$xywh)
+  if (is.null(out$char)) out["char"] <- list(NULL)
+  if (is.null(out$xywh)) out["xywh"] <- list(NULL)
+  rule <- intersect(c("p", "f", "t", "sl", "v", "ref", "s", "sh"), names(l))
+  if (length(rule) == 0) {
+    return(out)
+  }
+  rule <- rule[1]
+  units <- doc_units(doc)
+  hits <- character(0)
+  for (u in units) {
+    if (locate_match(rule, l, u$anchor, if (rule == "f") u$printed else NULL)) hits <- c(hits, u$id)
+  }
+  if (rule == "t" && length(hits) == 0) {
+    timed <- Filter(function(u) json_is_object(u$anchor) && identical(u$anchor$type, "time"), units)
+    if (length(timed) > 0) {
+      last <- timed[[length(timed)]]
+      if (is.numeric(last$anchor$t1) && last$anchor$t1 == l$t[[1]]) hits <- last$id
+    }
+  }
+  frags <- Filter(function(f) locate_match(rule, l, f$anchor, NULL), doc_rows(doc, "fragments", "ORDER BY {n}"))
+  if (length(hits) == 0 && length(frags) > 0) {
+    wanted <- vapply(frags, function(f) f$unit, character(1))
+    hits <- unlist(lapply(units, function(u) if (u$id %in% wanted) u$id else NULL))
+  }
+  if (!is.null(l$char)) {
+    cc <- l$char[[1]]
+    dd <- l$char[[2]]
+    frags <- Filter(function(f) {
+      ch <- if (json_is_object(f$anchor)) f$anchor$chars else NULL
+      if (!(f$unit %in% hits) || !is.list(ch) || length(ch) != 2) return(FALSE)
+      a <- ch[[1]]
+      b <- ch[[2]]
+      if (cc < dd) a < dd && cc < b else a <= cc && cc < b
+    }, frags)
+  }
+  out$units <- as.list(hits)
+  out$fragments <- lapply(frags, function(f) f$id)
+  out
+}
+
+locate_match <- function(rule, l, a, printed) {
+  if (!json_is_object(a)) {
+    return(FALSE)
+  }
+  t <- a$type %||% ""
+  isint <- function(v) is.numeric(v) && length(v) == 1 && is.finite(v) && v == floor(v)
+  isnum <- function(v) is.numeric(v) && length(v) == 1
+  switch(rule,
+    p = t == "page" && isint(a$physical) && l$p <= a$physical && a$physical <= (l$pe %||% l$p),
+    f = identical(as.character(printed %||% a$printed %||% NA), as.character(l$f)),
+    t = {
+      x <- l$t[[1]]
+      t == "time" && isnum(a$t0) && isnum(a$t1) && a$t0 <= x && x < a$t1
+    },
+    sl = t == "slide" && !is.null(a$n) && isTRUE(a$n == l$sl),
+    v = {
+      x <- l$v[[1]]
+      lf <- a$line_from
+      lt <- a$line_to %||% lf
+      t == "verse" && isint(lf) && lf <= x && x <= lt
+    },
+    ref = t == "canonical" && identical(a$scheme, l$ref$scheme) && identical(a$ref, l$ref$ref),
+    s = {
+      path <- a$path
+      if (!(t %in% c("section", "web")) || !is.list(path)) {
+        FALSE
+      } else if (!is.null(l$para)) {
+        identical(unlist(path), unlist(l$s)) && length(path) == length(l$s) && !is.null(a$paragraph) && isTRUE(a$paragraph == l$para)
+      } else {
+        length(path) >= length(l$s) && identical(unlist(path[seq_along(l$s)]), unlist(l$s))
+      }
+    },
+    sh = {
+      if (t != "sheet" || !identical(a$sheet, l$sh)) {
+        FALSE
+      } else if (!is.null(l$rows)) {
+        x <- l$rows[[1]]
+        isint(a$row_from) && isint(a$row_to) && a$row_from <= x && x <= a$row_to
+      } else {
+        TRUE
+      }
+    },
+    FALSE
+  )
 }

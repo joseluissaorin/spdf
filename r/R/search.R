@@ -112,10 +112,20 @@ vector_raw <- function(doc, query, space, limit, target) {
     if (target == "fragment") {
       fragment_item(doc, tie[i], scores[i], list("vector"))
     } else {
-      list(target = target, fragment_id = ids[i], id = ids[i], score = scores[i], via = list("vector"), anchor = NULL, anchor_uri = NULL)
+      anchor <- other_anchor(doc, target, ids[i])
+      item <- list(score = scores[i], via = list("vector"), anchor = anchor,
+                   anchor_uri = if (json_is_object(anchor)) spdf_anchor_uri(spdf_docref(doc), anchor) else NULL)
+      item[[if (target == "unit") "unit_id" else "figure_id"]] <- ids[i]
+      item
     }
   })
   Filter(Negate(is.null), items)
+}
+
+other_anchor <- function(doc, target, id) {
+  rows <- if (target == "unit") doc_rows(doc, "units", "WHERE {id} = ?", params = list(id), only = c("id", "anchor"))
+          else doc_rows(doc, "figures", "WHERE {id} = ?", params = list(id), only = c("id", "anchor"))
+  if (length(rows) == 0) NULL else rows[[1]]$anchor
 }
 
 #' Search a SPDF document
@@ -151,10 +161,15 @@ spdf_search_vector <- function(doc, vector, space, limit = 10, target = "fragmen
   check_open(doc)
   items <- vector_raw(doc, vector, space, limit, target)
   if (target != "fragment") {
-    return(tibble::tibble(
-      id = vapply(items, function(i) i$id, character(1)),
-      score = vapply(items, function(i) i$score, numeric(1))
-    ))
+    key <- if (target == "unit") "unit_id" else "figure_id"
+    out <- tibble::tibble(
+      id = vapply(items, function(i) i[[key]], character(1)),
+      score = vapply(items, function(i) i$score, numeric(1)),
+      anchor = lapply(items, function(i) i$anchor),
+      anchor_uri = vapply(items, function(i) i$anchor_uri %||% NA_character_, character(1))
+    )
+    names(out)[1] <- key
+    return(out)
   }
   results_tibble(items)
 }

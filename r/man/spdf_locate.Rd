@@ -4,24 +4,27 @@
 \alias{spdf_locate}
 \title{Resolve an anchor URI}
 \usage{
-spdf_locate(doc, uri)
+spdf_locate(doc, reference)
 }
 \arguments{
 \item{doc}{A \code{spdf_document}.}
 
-\item{uri}{An anchor URI.}
+\item{reference}{An anchor URI, or a URL or path with a fragment.}
 }
 \value{
-A tibble of units (as \code{\link[=spdf_units]{spdf_units()}}).
+A list with \code{document} (logical), \code{units}, \code{fragments} (character vectors),
+\code{char} and \code{xywh}.
 }
 \description{
-The units an anchor URI points at (specification section 5.4): by physical page
-(and end page), else by printed folio, time, slide, verse, canonical reference or
-section path. A URI that designates another document gives no rows.
+Resolves an anchor URI, or the URL of a \code{.spdf} resource with a fragment, against a
+file (specification section 5.4). The first parameter present among \code{p}, \code{f}, \code{t},
+\code{sl}, \code{v}, \code{ref}, \code{s} and \code{sh} selects the rule; \code{units} are the matching units in
+reading order, \code{fragments} the matching fragments (narrowed by \code{char}), and \code{char} and
+\code{xywh} are copied from the reference.
 }
 \examples{
 doc <- spdf_open(system.file("extdata", "quijote.spdf", package = "spdf"))
 uri <- spdf_search(doc, "\"lugar de la Mancha\"")$anchor_uri[1]
-spdf_locate(doc, uri)[, c("ord", "printed")]
+str(spdf_locate(doc, uri))
 spdf_close(doc)
 }

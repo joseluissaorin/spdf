@@ -18,13 +18,14 @@ ascii_letters <- function(s) {
   tolower(gsub("[^A-Za-z]", "", d))
 }
 
+# First year of "issued" in decimal (negative years keep their sign), or NULL.
 bib_year <- function(item) {
   y <- tryCatch(item$issued[["date-parts"]][[1]][[1]], error = function(e) NULL)
-  if (is.null(y) || is.logical(y)) {
+  if (is.null(y) || is.logical(y) || is.list(y)) {
     return(NULL)
   }
-  if (is.numeric(y) && y == floor(y)) {
-    return(format(y, scientific = FALSE))
+  if (is.numeric(y)) {
+    return(format(trunc(y), scientific = FALSE))
   }
   if (is.character(y) && grepl("^\\s*-?[0-9]+\\s*$", y)) {
     return(as.character(as.integer(trimws(y))))
@@ -32,15 +33,17 @@ bib_year <- function(item) {
   NULL
 }
 
+nz <- function(x) if (is.null(x) || identical(x, "") || identical(x, FALSE)) NULL else x
+
+# Key (SPEC 19.1): first author's family, literal or given name, else the first word of
+# title-short or title, folded to ASCII letters; "anon" if empty; then the year or "nd".
 bib_key <- function(item) {
   base <- ""
   a <- if (is.list(item$author) && length(item$author) > 0) item$author[[1]] else NULL
-  if (is.list(a)) {
-    who <- Filter(function(x) !is.null(x) && !identical(x, ""), list(a$family, a$literal))
-    base <- ascii_letters(if (length(who) > 0) who[[1]] else "")
-  }
+  if (is.list(a)) base <- ascii_letters(nz(a$family) %||% nz(a$literal) %||% nz(a$given) %||% "")
   if (base == "") {
-    w <- strsplit(trimws(as.character(item$title %||% "")), "\\s+")[[1]]
+    title <- nz(item[["title-short"]]) %||% nz(item$title) %||% ""
+    w <- strsplit(trimws(as.character(title)), "\\s+")[[1]]
     base <- if (length(w) > 0 && nzchar(w[1])) ascii_letters(w[1]) else ""
   }
   paste0(if (base == "") "anon" else base, bib_year(item) %||% "nd")
@@ -151,6 +154,8 @@ bibtex_entry <- function(item, key = bib_key(item)) {
 #' with `a`, `b`, `c`...
 #'
 #' @param ... `spdf_document` objects or paths to SPDF files.
+#' @param anchor,anchor_end Optional anchor (and end anchor) of a cited passage: the single
+#'   exported item then carries the CSL `label` and `locator`.
 #' @return A list (`spdf_csl()`) or a string.
 #' @examples
 #' doc <- spdf_open(system.file("extdata", "quijote.spdf", package = "spdf"))
@@ -158,11 +163,57 @@ bibtex_entry <- function(item, key = bib_key(item)) {
 #' spdf_csl(doc)$id
 #' spdf_close(doc)
 #' @export
-spdf_csl <- function(...) {
-  items <- lapply(as_metadata_list(list(...)), csl_base)
+spdf_csl <- function(..., anchor = NULL, anchor_end = NULL) {
+  out <- csl_export(as_metadata_list(list(...)), anchor, anchor_end)
+  if (length(out) == 1) out[[1]] else out
+}
+
+csl_export <- function(metas, anchor = NULL, anchor_end = NULL) {
+  items <- lapply(metas, csl_base)
   keys <- bib_keys(items)
   out <- lapply(seq_along(items), function(i) c(list(id = keys[i]), items[[i]][names(items[[i]]) != "id"]))
-  if (length(out) == 1) out[[1]] else out
+  if (!is.null(anchor) && length(out) == 1) {
+    ll <- csl_label_locator(anchor, anchor_end)
+    if (!is.null(ll)) {
+      out[[1]]$label <- ll[1]
+      out[[1]]$locator <- ll[2]
+    }
+  }
+  out
+}
+
+# CSL label and locator of an anchor (SPEC 19.2), or NULL.
+csl_label_locator <- function(a, e = NULL) {
+  t <- a$type %||% ""
+  folio <- function(x) if (is.null(x$printed)) NULL else if (identical(x$source, "inferred")) paste0("[", x$printed, "]") else as.character(x$printed)
+  if (t == "page" || (t %in% c("section", "web") && !is.null(a$printed))) {
+    f <- folio(a)
+    if (is.null(f)) return(NULL)
+    label <- if (t == "page") switch(a$foliation %||% "page", leaf = "folio", column = "column", "page") else "page"
+    if (!is.null(e) && identical(e$type, t) && !is.null(e$printed) && !identical(e$printed, a$printed)) {
+      return(c(label, paste0(f, "-", folio(e))))
+    }
+    return(c(label, f))
+  }
+  if (t %in% c("section", "web")) {
+    if (!is.null(a$paragraph)) return(c("paragraph", ntext(a$paragraph)))
+    if (is.list(a$path) && length(a$path) > 0) return(c("section", as.character(a$path[[length(a$path)]])))
+    return(NULL)
+  }
+  if (t == "time") {
+    s <- cite_hms(a$t0)
+    if (!is.null(e) && identical(e$type, "time")) s <- paste0(s, "-", cite_hms(e$t1))
+    return(c("timestamp", s))
+  }
+  if (t == "verse") {
+    to <- a$line_to
+    return(c("verse", if (is.null(to) || isTRUE(to == a$line_from)) ntext(a$line_from) else paste0(ntext(a$line_from), "-", ntext(to))))
+  }
+  if (t == "canonical") return(c("section", as.character(a$ref)))
+  if (t == "sheet") {
+    return(c("line", if (isTRUE(a$row_from == a$row_to)) ntext(a$row_from) else paste0(ntext(a$row_from), "-", ntext(a$row_to))))
+  }
+  NULL
 }
 
 #' @rdname spdf_csl

@@ -6,7 +6,7 @@
 \alias{spdf_bibtex}
 \title{Bibliographic exports}
 \usage{
-spdf_csl(...)
+spdf_csl(..., anchor = NULL, anchor_end = NULL)
 
 spdf_csl_json(...)
 
@@ -14,6 +14,9 @@ spdf_bibtex(...)
 }
 \arguments{
 \item{...}{\code{spdf_document} objects or paths to SPDF files.}
+
+\item{anchor, anchor_end}{Optional anchor (and end anchor) of a cited passage: the single
+exported item then carries the CSL \code{label} and \code{locator}.}
 }
 \value{
 A list (\code{spdf_csl()}) or a string.
