@@ -282,8 +282,14 @@ mod tests {
 
     #[test]
     fn query_parsing() {
-        assert_eq!(fts_query("\"unclosed phrase"), Some("\"unclosed\" OR \"phrase\"".into()));
-        assert_eq!(fts_query("a \"b c\" d \"e\""), Some("\"b c\" AND \"e\"".into()));
+        assert_eq!(
+            fts_query("\"unclosed phrase"),
+            Some("\"unclosed\" OR \"phrase\"".into())
+        );
+        assert_eq!(
+            fts_query("a \"b c\" d \"e\""),
+            Some("\"b c\" AND \"e\"".into())
+        );
         assert_eq!(fts_query("„uno dos“ x"), Some("\"uno dos\"".into()));
         assert_eq!(fts_query("“” solo"), Some("\"solo\"".into()));
         assert_eq!(fts_query("Straße ﬁn"), Some("\"Straße\" OR \"ﬁn\"".into()));

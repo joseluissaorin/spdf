@@ -15,8 +15,10 @@ fn obj<'a>(v: &'a Value, what: &str) -> Result<&'a Map<String, Value>> {
         .ok_or_else(|| Error::invalid(format!("`{what}` must be an object")))
 }
 
-fn arr<'a>(v: Option<&'a Value>) -> &'a [Value] {
-    v.and_then(Value::as_array).map(Vec::as_slice).unwrap_or(&[])
+fn arr(v: Option<&Value>) -> &[Value] {
+    v.and_then(Value::as_array)
+        .map(Vec::as_slice)
+        .unwrap_or(&[])
 }
 
 fn with_document(row: &Value, doc_id: &str) -> Result<Map<String, Value>> {
@@ -129,10 +131,16 @@ pub(crate) fn writer_from_dump(src: &Value) -> Result<Writer> {
                             v.as_i64()
                                 .filter(|q| (-127..=127).contains(q))
                                 .map(|q| q as i8 as u8)
-                                .ok_or_else(|| Error::invalid(format!("i8 values are integers in [-127, 127], got {v}")))
+                                .ok_or_else(|| {
+                                    Error::invalid(format!(
+                                        "i8 values are integers in [-127, 127], got {v}"
+                                    ))
+                                })
                         })
                         .collect::<Result<Vec<u8>>>()?,
-                    d => crate::vector::encode(&values_of(&items_value(vals)).unwrap_or_default(), d),
+                    d => {
+                        crate::vector::encode(&values_of(&items_value(vals)).unwrap_or_default(), d)
+                    }
                 };
                 w.add_vector_raw(target, id, &space, &data)?;
             } else {
@@ -147,20 +155,29 @@ pub(crate) fn writer_from_dump(src: &Value) -> Result<Writer> {
             .get("key")
             .and_then(Value::as_str)
             .ok_or_else(|| Error::invalid("blob without key"))?;
-        let mime = b.get("mime").and_then(Value::as_str).unwrap_or("application/octet-stream");
+        let mime = b
+            .get("mime")
+            .and_then(Value::as_str)
+            .unwrap_or("application/octet-stream");
         let b64 = b
             .get("data_base64")
             .and_then(Value::as_str)
             .or_else(|| blob_data.and_then(|m| m.get(key)).and_then(Value::as_str));
         let Some(b64) = b64 else {
-            return Err(Error::invalid(format!("blob `{key}` has no bytes in the input")));
+            return Err(Error::invalid(format!(
+                "blob `{key}` has no bytes in the input"
+            )));
         };
         let data = B64
             .decode(b64)
             .map_err(|e| Error::invalid(format!("bad blob base64: {e}")))?;
         w.add_blob(key, mime, &data)?;
     }
-    if let Some(true) = d.get("fts").and_then(|f| f.get("trigram")).and_then(Value::as_bool) {
+    if let Some(true) = d
+        .get("fts")
+        .and_then(|f| f.get("trigram"))
+        .and_then(Value::as_bool)
+    {
         w.enable_trigram(true);
     }
     Ok(w)
@@ -179,8 +196,14 @@ fn insert(w: &Writer, t: &schema::TableDef, row: &Map<String, Value>) -> Result<
     let sql = format!(
         "INSERT INTO {} ({}) VALUES ({})",
         t.name,
-        cols.iter().map(|c| format!("\"{c}\"")).collect::<Vec<_>>().join(", "),
-        (1..=cols.len()).map(|i| format!("?{i}")).collect::<Vec<_>>().join(", ")
+        cols.iter()
+            .map(|c| format!("\"{c}\""))
+            .collect::<Vec<_>>()
+            .join(", "),
+        (1..=cols.len())
+            .map(|i| format!("?{i}"))
+            .collect::<Vec<_>>()
+            .join(", ")
     );
     let json_cols = [
         "metadata",

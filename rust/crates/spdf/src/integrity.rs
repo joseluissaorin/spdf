@@ -71,7 +71,9 @@ impl KeyPair {
             .ok()
             .filter(|b| b.len() == 32)
             .or_else(|| decode_hex(s).filter(|b| b.len() == 32))
-            .ok_or_else(|| Error::Signature("secret key must be 32 bytes in base64 or hex".into()))?;
+            .ok_or_else(|| {
+                Error::Signature("secret key must be 32 bytes in base64 or hex".into())
+            })?;
         let mut seed = [0u8; 32];
         seed.copy_from_slice(&bytes);
         Ok(Self::from_seed(&seed))
@@ -84,7 +86,10 @@ impl KeyPair {
 
     /// The `signer` value: `ed25519:<base64 public key>`.
     pub fn signer(&self) -> String {
-        format!("ed25519:{}", B64.encode(self.key.verifying_key().to_bytes()))
+        format!(
+            "ed25519:{}",
+            B64.encode(self.key.verifying_key().to_bytes())
+        )
     }
 
     /// Signs a content hash; returns the base64 signature.
@@ -122,8 +127,11 @@ pub fn verify_signature(content_sha256: &str, signature_b64: &str, signer: &str)
     let sig: [u8; 64] = sig
         .try_into()
         .map_err(|_| Error::Signature("signature must be 64 bytes".into()))?;
-    vk.verify(&signed_message(content_sha256), &Signature::from_bytes(&sig))
-        .map_err(|_| Error::Signature("signature does not verify".into()))
+    vk.verify(
+        &signed_message(content_sha256),
+        &Signature::from_bytes(&sig),
+    )
+    .map_err(|_| Error::Signature("signature does not verify".into()))
 }
 
 /// Result of [`Spdf::verify_integrity`].
@@ -175,10 +183,16 @@ impl Spdf {
 
 /// Writes a copy of a 5.0 file at `dst` with `content_sha256` and, if a key
 /// is given, `signature` and `signer` set in `spdf_meta`.
-pub fn seal(src: impl AsRef<Path>, dst: impl AsRef<Path>, key: Option<&KeyPair>) -> Result<IntegrityReport> {
+pub fn seal(
+    src: impl AsRef<Path>,
+    dst: impl AsRef<Path>,
+    key: Option<&KeyPair>,
+) -> Result<IntegrityReport> {
     let doc = Spdf::open(src.as_ref())?;
     if doc.is_legacy() {
-        return Err(Error::invalid("convert legacy files to 5.0 before sealing them"));
+        return Err(Error::invalid(
+            "convert legacy files to 5.0 before sealing them",
+        ));
     }
     let mut w = crate::writer::Writer::from_spdf(&doc)?;
     drop(doc);

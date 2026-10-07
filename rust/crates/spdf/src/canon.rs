@@ -166,7 +166,9 @@ pub fn normalize(v: &Value) -> Value {
             if x.fract() == 0.0 && x.abs() < 9.007_199_254_740_992e15 {
                 Value::Number(Number::from(x as i64))
             } else {
-                Number::from_f64(x).map(Value::Number).unwrap_or(Value::Null)
+                Number::from_f64(x)
+                    .map(Value::Number)
+                    .unwrap_or(Value::Null)
             }
         }
         Value::Array(a) => Value::Array(a.iter().map(normalize).collect()),
@@ -227,6 +229,9 @@ mod tests {
     #[test]
     fn strings_and_keys() {
         let v = json!({"z": "a\"b\\c\n\u{1}", "a": null, "é": true});
-        assert_eq!(to_string(&v), "{\"a\":null,\"z\":\"a\\\"b\\\\c\\n\\u0001\",\"é\":true}");
+        assert_eq!(
+            to_string(&v),
+            "{\"a\":null,\"z\":\"a\\\"b\\\\c\\n\\u0001\",\"é\":true}"
+        );
     }
 }

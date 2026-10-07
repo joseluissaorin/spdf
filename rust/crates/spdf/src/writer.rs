@@ -175,7 +175,10 @@ impl Writer {
         let sql = format!(
             "INSERT INTO {} ({}) VALUES ({})",
             t.name,
-            cols.iter().map(|c| format!("\"{c}\"")).collect::<Vec<_>>().join(", "),
+            cols.iter()
+                .map(|c| format!("\"{c}\""))
+                .collect::<Vec<_>>()
+                .join(", "),
             placeholders.join(", ")
         );
         let vals: Vec<rusqlite::types::Value> = cols
@@ -230,7 +233,8 @@ impl Writer {
         if Dtype::parse(&s.dtype).is_none() {
             return Err(Error::Vector(format!("unknown dtype `{}`", s.dtype)));
         }
-        self.conn.execute("DELETE FROM spaces WHERE id = ?1", [&s.id])?;
+        self.conn
+            .execute("DELETE FROM spaces WHERE id = ?1", [&s.id])?;
         let mut m = match serde_json::to_value(s)? {
             Value::Object(m) => m,
             _ => Map::new(),
@@ -250,13 +254,20 @@ impl Writer {
                 |r| Ok((r.get(0)?, r.get(1)?)),
             )
             .map_err(|_| Error::Vector(format!("unknown space `{space}`; add it first")))?;
-        let dt = Dtype::parse(&dtype).ok_or_else(|| Error::Vector(format!("unknown dtype `{dtype}`")))?;
+        let dt = Dtype::parse(&dtype)
+            .ok_or_else(|| Error::Vector(format!("unknown dtype `{dtype}`")))?;
         Ok((dt, usize::try_from(dims).unwrap_or(0)))
     }
 
     /// Adds a vector, encoded in the space's dtype (i8 and f16 quantized as
     /// the contract says).
-    pub fn add_vector(&mut self, target: Target, id: &str, space: &str, values: &[f32]) -> Result<()> {
+    pub fn add_vector(
+        &mut self,
+        target: Target,
+        id: &str,
+        space: &str,
+        values: &[f32],
+    ) -> Result<()> {
         let (dtype, dims) = self.space_shape(space)?;
         if values.len() != dims {
             return Err(Error::Vector(format!(
@@ -268,7 +279,13 @@ impl Writer {
     }
 
     /// Adds a vector already encoded (little-endian, dims × dtype size).
-    pub fn add_vector_raw(&mut self, target: Target, id: &str, space: &str, data: &[u8]) -> Result<()> {
+    pub fn add_vector_raw(
+        &mut self,
+        target: Target,
+        id: &str,
+        space: &str,
+        data: &[u8],
+    ) -> Result<()> {
         let (dtype, dims) = self.space_shape(space)?;
         if data.len() != dims * dtype.size() {
             return Err(Error::Vector(format!(
@@ -313,8 +330,10 @@ impl Writer {
             w.meta.insert(k.clone(), v.clone());
         }
         if doc.is_legacy() {
-            w.meta.insert("spdf_version".into(), schema::SPDF_VERSION.into());
-            w.meta.insert("converted_from".into(), doc.version().to_string());
+            w.meta
+                .insert("spdf_version".into(), schema::SPDF_VERSION.into());
+            w.meta
+                .insert("converted_from".into(), doc.version().to_string());
             if let Some(g) = w.meta.remove("generator") {
                 w.meta.insert("source_generator".into(), g);
             }
@@ -385,7 +404,9 @@ impl Writer {
 
     fn default_profile(&self) -> Result<String> {
         let mut p = vec!["core"];
-        let vectors: i64 = self.conn.query_row("SELECT count(*) FROM vectors", [], |r| r.get(0))?;
+        let vectors: i64 = self
+            .conn
+            .query_row("SELECT count(*) FROM vectors", [], |r| r.get(0))?;
         if vectors > 0 {
             p.push("semantic");
         }
@@ -421,18 +442,18 @@ impl Writer {
         }
         self.conn.execute("DELETE FROM spdf_meta", [])?;
         for (k, v) in &self.meta {
-            self.conn.execute(
-                "INSERT INTO spdf_meta (key, value) VALUES (?1, ?2)",
-                [k, v],
-            )?;
+            self.conn
+                .execute("INSERT INTO spdf_meta (key, value) VALUES (?1, ?2)", [k, v])?;
         }
         Ok(())
     }
 
     fn finalize(&mut self) -> Result<Vec<u8>> {
         self.write_meta()?;
-        self.conn
-            .execute("INSERT INTO fragments_fts(fragments_fts) VALUES('rebuild')", [])?;
+        self.conn.execute(
+            "INSERT INTO fragments_fts(fragments_fts) VALUES('rebuild')",
+            [],
+        )?;
         let has_tri: bool = self.conn.query_row(
             "SELECT count(*) FROM sqlite_master WHERE name = 'fragments_fts_trigram'",
             [],
@@ -442,7 +463,8 @@ impl Writer {
             self.conn.execute_batch(schema::TRIGRAM_SQL)?;
         }
         if !self.trigram && has_tri {
-            self.conn.execute_batch("DROP TABLE fragments_fts_trigram")?;
+            self.conn
+                .execute_batch("DROP TABLE fragments_fts_trigram")?;
         }
         if self.trigram {
             self.conn.execute(

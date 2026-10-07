@@ -214,12 +214,18 @@ pub fn map_metadata(v: &Value, legacy_kind: &str) -> Value {
     let mut ext = Map::new();
     item.insert("type".into(), default_csl_type(legacy_kind, m));
     let title = match m.get("titulo") {
-        Some(t) if truthy(Some(t)) => t.as_str().map(str::to_string).unwrap_or_else(|| t.to_string()),
+        Some(t) if truthy(Some(t)) => t
+            .as_str()
+            .map(str::to_string)
+            .unwrap_or_else(|| t.to_string()),
         _ => String::new(),
     };
     if has(m, "subtitulo") {
         let sub = &m["subtitulo"];
-        let sub_s = sub.as_str().map(str::to_string).unwrap_or_else(|| sub.to_string());
+        let sub_s = sub
+            .as_str()
+            .map(str::to_string)
+            .unwrap_or_else(|| sub.to_string());
         item.insert("title".into(), Value::from(format!("{title}: {sub_s}")));
         item.insert("title-short".into(), Value::from(title));
         ext.insert("subtitle".into(), sub.clone());
@@ -245,7 +251,10 @@ pub fn map_metadata(v: &Value, legacy_kind: &str) -> Value {
                 if truthy(a.get("orcid")) {
                     let fam = a.get("apellidos").and_then(Value::as_str).unwrap_or("");
                     let key = if truthy(a.get("nombre")) {
-                        format!("{fam}, {}", a.get("nombre").and_then(Value::as_str).unwrap_or(""))
+                        format!(
+                            "{fam}, {}",
+                            a.get("nombre").and_then(Value::as_str).unwrap_or("")
+                        )
                     } else {
                         fam.to_string()
                     };
@@ -268,12 +277,18 @@ pub fn map_metadata(v: &Value, legacy_kind: &str) -> Value {
             item.insert("issued".into(), json!({"date-parts": [parts]}));
         }
         _ if has(m, "anio") => {
-            item.insert("issued".into(), json!({"date-parts": [[m["anio"].clone()]]}));
+            item.insert(
+                "issued".into(),
+                json!({"date-parts": [[m["anio"].clone()]]}),
+            );
         }
         _ => {}
     }
     if has(m, "anioOriginal") {
-        item.insert("original-date".into(), json!({"date-parts": [[m["anioOriginal"].clone()]]}));
+        item.insert(
+            "original-date".into(),
+            json!({"date-parts": [[m["anioOriginal"].clone()]]}),
+        );
     }
     for (src, dst) in [
         ("editorial", "publisher"),
@@ -364,10 +379,18 @@ mod tests {
 
     #[test]
     fn anchors() {
-        let a = map_anchor(&json!({"tipo":"pagina","fisica":3,"impresa":"xiv","romana":true,"origen":"deducido","confianza":0.5}));
-        assert_eq!(a, json!({"type":"page","physical":3,"printed":"xiv","roman":true,"source":"inferred","confidence":0.5}));
+        let a = map_anchor(
+            &json!({"tipo":"pagina","fisica":3,"impresa":"xiv","romana":true,"origen":"deducido","confianza":0.5}),
+        );
+        assert_eq!(
+            a,
+            json!({"type":"page","physical":3,"printed":"xiv","roman":true,"source":"inferred","confidence":0.5})
+        );
         let h = map_anchor(&json!({"tipo":"hoja","hoja":"Datos","filaDesde":1,"filaHasta":4}));
-        assert_eq!(h, json!({"type":"sheet","sheet":"Datos","row_from":1,"row_to":4}));
+        assert_eq!(
+            h,
+            json!({"type":"sheet","sheet":"Datos","row_from":1,"row_to":4})
+        );
     }
 
     #[test]

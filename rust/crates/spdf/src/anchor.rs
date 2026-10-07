@@ -165,7 +165,9 @@ fn take_str(m: &mut Map<String, Value>, k: &str) -> Result<Option<String>> {
         None | Some(Value::Null) => Ok(None),
         Some(Value::String(s)) => Ok(Some(s)),
         Some(Value::Number(n)) => Ok(Some(n.to_string())),
-        Some(v) => Err(Error::InvalidAnchor(format!("`{k}` must be a string, got {v}"))),
+        Some(v) => Err(Error::InvalidAnchor(format!(
+            "`{k}` must be a string, got {v}"
+        ))),
     }
 }
 
@@ -173,7 +175,9 @@ fn take_f64(m: &mut Map<String, Value>, k: &str) -> Result<Option<f64>> {
     match m.remove(k) {
         None | Some(Value::Null) => Ok(None),
         Some(Value::Number(n)) => Ok(n.as_f64()),
-        Some(v) => Err(Error::InvalidAnchor(format!("`{k}` must be a number, got {v}"))),
+        Some(v) => Err(Error::InvalidAnchor(format!(
+            "`{k}` must be a number, got {v}"
+        ))),
     }
 }
 
@@ -185,10 +189,14 @@ fn take_u32(m: &mut Map<String, Value>, k: &str) -> Result<Option<u32>> {
             if f >= 0.0 && f.fract() == 0.0 && f <= u32::MAX as f64 {
                 Ok(Some(f as u32))
             } else {
-                Err(Error::InvalidAnchor(format!("`{k}` must be a non-negative integer, got {n}")))
+                Err(Error::InvalidAnchor(format!(
+                    "`{k}` must be a non-negative integer, got {n}"
+                )))
             }
         }
-        Some(v) => Err(Error::InvalidAnchor(format!("`{k}` must be an integer, got {v}"))),
+        Some(v) => Err(Error::InvalidAnchor(format!(
+            "`{k}` must be an integer, got {v}"
+        ))),
     }
 }
 
@@ -196,7 +204,9 @@ fn take_bool(m: &mut Map<String, Value>, k: &str) -> Result<Option<bool>> {
     match m.remove(k) {
         None | Some(Value::Null) => Ok(None),
         Some(Value::Bool(b)) => Ok(Some(b)),
-        Some(v) => Err(Error::InvalidAnchor(format!("`{k}` must be a boolean, got {v}"))),
+        Some(v) => Err(Error::InvalidAnchor(format!(
+            "`{k}` must be a boolean, got {v}"
+        ))),
     }
 }
 
@@ -207,10 +217,14 @@ fn take_path(m: &mut Map<String, Value>, k: &str) -> Result<Vec<String>> {
             .into_iter()
             .map(|v| match v {
                 Value::String(s) => Ok(s),
-                other => Err(Error::InvalidAnchor(format!("`{k}` must be an array of strings, got {other}"))),
+                other => Err(Error::InvalidAnchor(format!(
+                    "`{k}` must be an array of strings, got {other}"
+                ))),
             })
             .collect(),
-        Some(v) => Err(Error::InvalidAnchor(format!("`{k}` must be an array, got {v}"))),
+        Some(v) => Err(Error::InvalidAnchor(format!(
+            "`{k}` must be an array, got {v}"
+        ))),
     }
 }
 
@@ -273,7 +287,11 @@ impl Anchor {
                 let e = a[1].as_u64();
                 match (s, e) {
                     (Some(s), Some(e)) if s <= e => Some((s, e)),
-                    _ => return Err(Error::InvalidAnchor("`chars` must be [start,end] with start <= end".into())),
+                    _ => {
+                        return Err(Error::InvalidAnchor(
+                            "`chars` must be [start,end] with start <= end".into(),
+                        ))
+                    }
                 }
             }
             Some(_) => return Err(Error::InvalidAnchor("`chars` must be [start,end]".into())),
@@ -524,9 +542,12 @@ fn parse_f64(s: &str, what: &str) -> Result<f64> {
 }
 
 fn parse_int<T: FromStr>(s: &str, what: &str) -> Result<T> {
-    let ok = !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit()) && (s == "0" || !s.starts_with('0'));
+    let ok =
+        !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit()) && (s == "0" || !s.starts_with('0'));
     if !ok {
-        return Err(Error::InvalidUri(format!("`{what}` is not a canonical integer: `{s}`")));
+        return Err(Error::InvalidUri(format!(
+            "`{what}` is not a canonical integer: `{s}`"
+        )));
     }
     s.parse()
         .map_err(|_| Error::InvalidUri(format!("`{what}` out of range: `{s}`")))
@@ -540,7 +561,8 @@ fn is_decimal(s: &str) -> bool {
     };
     !a.is_empty()
         && a.bytes().all(|c| c.is_ascii_digit())
-        && b.map(|b| !b.is_empty() && b.bytes().all(|c| c.is_ascii_digit())).unwrap_or(true)
+        && b.map(|b| !b.is_empty() && b.bytes().all(|c| c.is_ascii_digit()))
+            .unwrap_or(true)
 }
 
 /// A Media Fragments NPT value: seconds (`4160.5`) or clock (`1:09:20.5`, `9:20`).
@@ -641,7 +663,13 @@ pub struct Locator {
 }
 
 fn json_u64(v: Option<&Value>) -> Option<u64> {
-    v.and_then(|x| x.as_u64().or_else(|| x.as_f64().filter(|f| *f >= 0.0 && f.fract() == 0.0).map(|f| f as u64)))
+    v.and_then(|x| {
+        x.as_u64().or_else(|| {
+            x.as_f64()
+                .filter(|f| *f >= 0.0 && f.fract() == 0.0)
+                .map(|f| f as u64)
+        })
+    })
 }
 
 fn json_string(v: Option<&Value>) -> Option<String> {
@@ -690,7 +718,11 @@ impl Locator {
             "section" | "web" => {
                 if let Some(p) = anchor.get("path").and_then(Value::as_array) {
                     if !p.is_empty() {
-                        l.section = Some(p.iter().map(|x| x.as_str().unwrap_or("").to_string()).collect());
+                        l.section = Some(
+                            p.iter()
+                                .map(|x| x.as_str().unwrap_or("").to_string())
+                                .collect(),
+                        );
                     }
                 }
                 l.paragraph = json_u64(anchor.get("paragraph"));
@@ -705,7 +737,10 @@ impl Locator {
             "slide" => l.slide = json_u64(anchor.get("n")),
             "sheet" => {
                 l.sheet = json_string(anchor.get("sheet"));
-                if let (Some(a), Some(b)) = (json_u64(anchor.get("row_from")), json_u64(anchor.get("row_to"))) {
+                if let (Some(a), Some(b)) = (
+                    json_u64(anchor.get("row_from")),
+                    json_u64(anchor.get("row_to")),
+                ) {
                     l.rows = Some([a, b]);
                 }
             }
@@ -720,7 +755,10 @@ impl Locator {
                 l.printed = printed;
             }
             "canonical" => {
-                if let (Some(sc), Some(r)) = (json_string(anchor.get("scheme")), json_string(anchor.get("ref"))) {
+                if let (Some(sc), Some(r)) = (
+                    json_string(anchor.get("scheme")),
+                    json_string(anchor.get("ref")),
+                ) {
                     l.reference = Some(CanonicalRef {
                         scheme: sc,
                         reference: r,
@@ -867,7 +905,8 @@ impl AnchorUri {
                     if parts.len() != 2 {
                         return Err(Error::InvalidUri("`char` needs start,end".into()));
                     }
-                    let (a, b): (u64, u64) = (parse_int(parts[0], "char")?, parse_int(parts[1], "char")?);
+                    let (a, b): (u64, u64) =
+                        (parse_int(parts[0], "char")?, parse_int(parts[1], "char")?);
                     if b < a {
                         return Err(Error::InvalidUri("`char` end before start".into()));
                     }
@@ -1057,23 +1096,31 @@ mod tests {
 
     #[test]
     fn json_roundtrip_keeps_unknown_members() {
-        let v = json!({"type":"time","t0":4160.0,"t1":4175.5,"speaker":"Julio Cortázar","x_note":"y"});
+        let v =
+            json!({"type":"time","t0":4160.0,"t1":4175.5,"speaker":"Julio Cortázar","x_note":"y"});
         let a = Anchor::from_value(&v).unwrap();
         assert_eq!(a.to_value(), v);
     }
 
     #[test]
     fn uri_examples() {
-        let a = Anchor::from_value(&json!({"type":"section","path":["Chapter 3","3.2 The/panopticon"],"paragraph":4})).unwrap();
+        let a = Anchor::from_value(
+            &json!({"type":"section","path":["Chapter 3","3.2 The/panopticon"],"paragraph":4}),
+        )
+        .unwrap();
         let s = AnchorUri::from_anchor("doc-1", &a, None).to_string();
         assert_eq!(s, "spdf:doc-1#s=Chapter%203/3.2%20The%2Fpanopticon&para=4");
         let back = AnchorUri::parse(&s).unwrap();
         assert_eq!(back.to_anchor().unwrap(), a);
 
         let t = Anchor::from_value(&json!({"type":"time","t0":4160.0,"t1":4175.5})).unwrap();
-        assert_eq!(AnchorUri::from_anchor("d", &t, None).to_string(), "spdf:d#t=4160,4175.5");
+        assert_eq!(
+            AnchorUri::from_anchor("d", &t, None).to_string(),
+            "spdf:d#t=4160,4175.5"
+        );
 
-        let c = Anchor::from_value(&json!({"type":"canonical","scheme":"bible","ref":"John 3:16"})).unwrap();
+        let c = Anchor::from_value(&json!({"type":"canonical","scheme":"bible","ref":"John 3:16"}))
+            .unwrap();
         let s = AnchorUri::from_anchor("d", &c, None).to_string();
         assert_eq!(s, "spdf:d#ref=bible:John%203%3A16");
         assert_eq!(AnchorUri::parse(&s).unwrap().to_anchor().unwrap(), c);
@@ -1081,15 +1128,29 @@ mod tests {
         let p = Anchor::from_value(&json!({"type":"page","physical":29,"printed":"21","chars":[118,301],"region":{"x":0.125,"y":0.2,"w":0.5,"h":0.1}})).unwrap();
         let e = Anchor::from_value(&json!({"type":"page","physical":30,"printed":"22"})).unwrap();
         let s = AnchorUri::from_anchor("sha256-ab", &p, Some(&e)).to_string();
-        assert_eq!(s, "spdf:sha256-ab#p=29&pe=30&f=21&fe=22&char=118,301&xywh=percent:12.5,20,50,10");
+        assert_eq!(
+            s,
+            "spdf:sha256-ab#p=29&pe=30&f=21&fe=22&char=118,301&xywh=percent:12.5,20,50,10"
+        );
         let u = AnchorUri::parse(&s).unwrap();
         assert_eq!(u.to_string(), s);
-        assert_eq!(serde_json::to_value(&u).unwrap(), json!({"docref":"sha256-ab","locator":{"p":29,"pe":30,"f":"21","fe":"22","char":[118,301],"xywh":[0.125,0.2,0.5,0.1]}}));
+        assert_eq!(
+            serde_json::to_value(&u).unwrap(),
+            json!({"docref":"sha256-ab","locator":{"p":29,"pe":30,"f":"21","fe":"22","char":[118,301],"xywh":[0.125,0.2,0.5,0.1]}})
+        );
     }
 
     #[test]
     fn rejects_bad_uris() {
-        for bad in ["http://x", "spdf:", "spdf:d#p=x", "spdf:d#char=5,2", "spdf:d#xywh=percent:1,2", "spdf:d#f=%G1", "spdf:d#xywh=1,2,3,4"] {
+        for bad in [
+            "http://x",
+            "spdf:",
+            "spdf:d#p=x",
+            "spdf:d#char=5,2",
+            "spdf:d#xywh=percent:1,2",
+            "spdf:d#f=%G1",
+            "spdf:d#xywh=1,2,3,4",
+        ] {
             assert!(AnchorUri::parse(bad).is_err(), "{bad}");
         }
         assert!(AnchorUri::parse("spdf:d#zz=1&p=3").is_ok());

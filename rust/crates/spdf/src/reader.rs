@@ -74,7 +74,8 @@ pub(crate) struct SchemaInfo {
 impl SchemaInfo {
     pub fn read(conn: &Connection) -> Result<Self> {
         let mut info = SchemaInfo::default();
-        let mut st = conn.prepare("SELECT type, name, tbl_name, COALESCE(sql, '') FROM sqlite_master")?;
+        let mut st =
+            conn.prepare("SELECT type, name, tbl_name, COALESCE(sql, '') FROM sqlite_master")?;
         let mut rows = st.query([])?;
         while let Some(r) = rows.next()? {
             let t: String = r.get(0)?;
@@ -111,13 +112,25 @@ impl SchemaInfo {
         for (name, tbl) in &self.triggers {
             let tolerated = flavor == Some(Flavor::Legacy)
                 && tbl == "fragmentos"
-                && matches!(name.as_str(), "fragmentos_ai" | "fragmentos_ad" | "fragmentos_au");
+                && matches!(
+                    name.as_str(),
+                    "fragmentos_ai" | "fragmentos_ad" | "fragmentos_au"
+                );
             if !tolerated {
                 out.push(format!("trigger {name}"));
             }
         }
         for v in &self.views {
             out.push(format!("view {v}"));
+        }
+        let allowed: &[&str] = match flavor {
+            Some(Flavor::Legacy) => &["fragmentos_fts"],
+            _ => &["fragments_fts", "fragments_fts_trigram"],
+        };
+        for (name, sql) in &self.tables {
+            if is_virtual(sql) && (!allowed.contains(&name.as_str()) || !uses_fts5(sql)) {
+                out.push(format!("virtual table {name}"));
+            }
         }
         out
     }
@@ -140,6 +153,33 @@ impl SchemaInfo {
     }
 }
 
+/// `CREATE VIRTUAL TABLE…` statement?
+pub(crate) fn is_virtual(sql: &str) -> bool {
+    let words: Vec<&str> = sql.split_whitespace().take(3).collect();
+    words.len() == 3
+        && words[0].eq_ignore_ascii_case("create")
+        && words[1].eq_ignore_ascii_case("virtual")
+        && words[2].eq_ignore_ascii_case("table")
+}
+
+/// `… USING fts5(` (case-insensitive)?
+pub(crate) fn uses_fts5(sql: &str) -> bool {
+    let lower = sql.to_ascii_lowercase();
+    let mut rest = lower.as_str();
+    while let Some(i) = rest.find("using") {
+        let after = rest[i + 5..].trim_start();
+        if after.len() < rest[i + 5..].len() {
+            if let Some(tail) = after.strip_prefix("fts5") {
+                if tail.trim_start().starts_with('(') {
+                    return true;
+                }
+            }
+        }
+        rest = &rest[i + 5..];
+    }
+    false
+}
+
 /// Where a database comes from (for error messages and integrity tools).
 #[derive(Clone, Debug)]
 pub(crate) enum Origin {
@@ -151,7 +191,10 @@ pub(crate) enum Origin {
 
 /// Opens a connection read-only and hardened. Shared by [`Spdf`] and the
 /// validator. Returns the connection and whether the input was gzip.
-pub(crate) fn open_connection(path: &Path, opts: &OpenOptions) -> Result<(Connection, bool, Origin)> {
+pub(crate) fn open_connection(
+    path: &Path,
+    opts: &OpenOptions,
+) -> Result<(Connection, bool, Origin)> {
     let mut f = File::open(path)?;
     let mut head = [0u8; 100];
     let n = read_up_to(&mut f, &mut head)?;
@@ -218,14 +261,18 @@ pub(crate) fn connection_from_bytes(mut bytes: Vec<u8>, opts: &OpenOptions) -> R
         bytes = gunzip_bounded(&bytes[..], opts.max_decompressed_bytes)?;
     }
     if bytes.len() < 100 || &bytes[..16] != SQLITE_MAGIC {
-        return Err(Error::NotSqlite("data does not start with the SQLite header".into()));
+        return Err(Error::NotSqlite(
+            "data does not start with the SQLite header".into(),
+        ));
     }
     if bytes[18] == 2 || bytes[19] == 2 {
         bytes[18] = 1;
         bytes[19] = 1;
     }
     let mut conn = Connection::open_in_memory_with_flags(
-        OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_CREATE | OpenFlags::SQLITE_OPEN_NO_MUTEX,
+        OpenFlags::SQLITE_OPEN_READ_WRITE
+            | OpenFlags::SQLITE_OPEN_CREATE
+            | OpenFlags::SQLITE_OPEN_NO_MUTEX,
     )?;
     let len = bytes.len();
     conn.deserialize_read_exact(rusqlite::MAIN_DB, &bytes[..], len, true)?;
@@ -340,7 +387,12 @@ impl Spdf {
         Self::from_connection(conn, gzip, Origin::Memory, opts)
     }
 
-    pub(crate) fn from_connection(conn: Connection, gzip: bool, origin: Origin, opts: &OpenOptions) -> Result<Self> {
+    pub(crate) fn from_connection(
+        conn: Connection,
+        gzip: bool,
+        origin: Origin,
+        opts: &OpenOptions,
+    ) -> Result<Self> {
         let info = SchemaInfo::read(&conn).map_err(|e| match e {
             Error::Sqlite(e) => Error::NotSqlite(e.to_string()),
             other => other,
@@ -372,7 +424,13 @@ impl Spdf {
 
     /// Builds the reader without any safety or version check (the caller
     /// has already hardened the connection; used by the validator).
-    pub(crate) fn assemble(conn: Connection, gzip: bool, origin: Origin, info: SchemaInfo, flavor: Flavor) -> Result<Self> {
+    pub(crate) fn assemble(
+        conn: Connection,
+        gzip: bool,
+        origin: Origin,
+        info: SchemaInfo,
+        flavor: Flavor,
+    ) -> Result<Self> {
         let mut doc = Spdf {
             conn,
             flavor,
@@ -422,12 +480,13 @@ impl Spdf {
                 .get("spdf_version")
                 .cloned()
                 .unwrap_or_else(|| format!("{}.{}", uv / 100, (uv % 100) / 10)),
-            Flavor::Legacy => meta.get("spdf_version").cloned().unwrap_or_else(|| {
-                match uv {
+            Flavor::Legacy => meta
+                .get("spdf_version")
+                .cloned()
+                .unwrap_or_else(|| match uv {
                     400 => "4.0".to_string(),
                     _ => "4.1".to_string(),
-                }
-            }),
+                }),
         }
     }
 
@@ -444,7 +503,9 @@ impl Spdf {
                 }
                 let uv = self.info.user_version;
                 if !(500..=599).contains(&uv) {
-                    return Err(Error::UnsupportedVersion(format!("user_version {uv} is not 5.x")));
+                    return Err(Error::UnsupportedVersion(format!(
+                        "user_version {uv} is not 5.x"
+                    )));
                 }
                 Ok(())
             }
@@ -479,6 +540,15 @@ impl Spdf {
     pub fn path(&self) -> Option<&Path> {
         match &self.origin {
             Origin::Path(p) => Some(p.as_path()),
+            _ => None,
+        }
+    }
+
+    /// URL of a document opened with `remote::open_url` (feature `http`).
+    #[cfg(feature = "http")]
+    pub fn url(&self) -> Option<&str> {
+        match &self.origin {
+            Origin::Remote(u) => Some(u.as_str()),
             _ => None,
         }
     }
@@ -571,7 +641,10 @@ impl Spdf {
                 .map(|(i, m)| {
                     (
                         m.get("ord").and_then(Value::as_i64).unwrap_or(0),
-                        m.get("id").and_then(Value::as_str).unwrap_or("").to_string(),
+                        m.get("id")
+                            .and_then(Value::as_str)
+                            .unwrap_or("")
+                            .to_string(),
                         i,
                     )
                 })
@@ -646,7 +719,10 @@ impl Spdf {
                     .unwrap_or("")
                     .to_string();
                 if m.contains_key("kind") {
-                    m.insert("kind".into(), Value::from(schema::legacy_kind(&legacy_kind)));
+                    m.insert(
+                        "kind".into(),
+                        Value::from(schema::legacy_kind(&legacy_kind)),
+                    );
                 }
                 if let Some(md) = m.get("metadata") {
                     let mapped = legacy::map_metadata(md, &legacy_kind);
@@ -743,7 +819,10 @@ impl Spdf {
 
     pub(crate) fn document_row(&self) -> Result<Option<Map<String, Value>>> {
         let cols: Vec<&str> = schema::DOCUMENTS.columns.iter().map(|c| c.0).collect();
-        Ok(self.rows(&schema::DOCUMENTS, &cols, None, "rowid")?.into_iter().next())
+        Ok(self
+            .rows(&schema::DOCUMENTS, &cols, None, "rowid")?
+            .into_iter()
+            .next())
     }
 
     /// The document (the first row of `documents`).
@@ -783,7 +862,10 @@ impl Spdf {
 
     /// The first unit whose printed folio is `printed` ("go to page 145").
     pub fn unit_by_printed(&self, printed: &str) -> Result<Option<Unit>> {
-        Ok(self.units()?.into_iter().find(|u| u.printed.as_deref() == Some(printed)))
+        Ok(self
+            .units()?
+            .into_iter()
+            .find(|u| u.printed.as_deref() == Some(printed)))
     }
 
     /// Sections ordered by id.
@@ -816,7 +898,10 @@ impl Spdf {
         let nc = self.col_expr(&schema::FRAGMENTS, "n");
         let list: Vec<String> = ns.iter().map(|n| n.to_string()).collect();
         let w = format!("{nc} IN ({})", list.join(","));
-        for f in Self::typed::<Fragment>(self.rows(&schema::FRAGMENTS, &cols, Some((&w, &[])), "")?, "fragment")? {
+        for f in Self::typed::<Fragment>(
+            self.rows(&schema::FRAGMENTS, &cols, Some((&w, &[])), "")?,
+            "fragment",
+        )? {
             out.insert(f.n, f);
         }
         Ok(out)
@@ -840,7 +925,11 @@ impl Spdf {
     }
 
     /// Raw vector rows `(target, id, data)` of a space, ordered by target, id.
-    pub(crate) fn raw_vectors(&self, space: &str, target: Option<Target>) -> Result<Vec<(String, String, Vec<u8>)>> {
+    pub(crate) fn raw_vectors(
+        &self,
+        space: &str,
+        target: Option<Target>,
+    ) -> Result<Vec<(String, String, Vec<u8>)>> {
         let Some(table) = self.table_name("vectors") else {
             return Ok(Vec::new());
         };
@@ -1018,7 +1107,12 @@ impl Spdf {
     pub fn provenance(&self) -> Result<Vec<Provenance>> {
         let cols: Vec<&str> = schema::PROVENANCE.columns.iter().map(|c| c.0).collect();
         Self::typed(
-            self.rows(&schema::PROVENANCE, &cols, None, "at, stage, provider, model, detail, ms")?,
+            self.rows(
+                &schema::PROVENANCE,
+                &cols,
+                None,
+                "at, stage, provider, model, detail, ms",
+            )?,
             "provenance",
         )
     }
@@ -1029,7 +1123,12 @@ impl Spdf {
             return Ok(Vec::new());
         }
         Self::typed(
-            self.rows(&schema::EXTENSIONS, &["name", "version", "required"], None, "name")?,
+            self.rows(
+                &schema::EXTENSIONS,
+                &["name", "version", "required"],
+                None,
+                "name",
+            )?,
             "extension",
         )
     }

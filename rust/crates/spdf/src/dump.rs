@@ -31,7 +31,11 @@ impl Spdf {
         let mut out = Map::new();
         let meta = self.meta()?;
         let version = match self.flavor {
-            Flavor::V5 => meta.get("spdf_version").cloned().map(Value::from).unwrap_or(Value::Null),
+            Flavor::V5 => meta
+                .get("spdf_version")
+                .cloned()
+                .map(Value::from)
+                .unwrap_or(Value::Null),
             Flavor::Legacy => Value::from(self.version.clone()),
         };
         out.insert("spdf_version".into(), version);
@@ -132,7 +136,11 @@ impl Spdf {
         out.insert("provenance".into(), Value::Array(prov));
 
         let ext = if self.has_table("extensions") {
-            self.dump_rows(&schema::EXTENSIONS, &["name", "version", "required"], "name")?
+            self.dump_rows(
+                &schema::EXTENSIONS,
+                &["name", "version", "required"],
+                "name",
+            )?
         } else {
             Vec::new()
         };
@@ -163,13 +171,17 @@ impl Spdf {
             }
             let id: String = r.get::<_, Option<String>>(2)?.unwrap_or_default();
             let data = match r.get_ref(3)? {
-                rusqlite::types::ValueRef::Blob(b) | rusqlite::types::ValueRef::Text(b) => b.to_vec(),
+                rusqlite::types::ValueRef::Blob(b) | rusqlite::types::ValueRef::Text(b) => {
+                    b.to_vec()
+                }
                 _ => Vec::new(),
             };
             groups.entry(space).or_default().push((target, id, data));
         }
         for (space, mut v) in groups {
-            v.sort_by(|a, b| (a.0.as_bytes(), a.1.as_bytes()).cmp(&(b.0.as_bytes(), b.1.as_bytes())));
+            v.sort_by(|a, b| {
+                (a.0.as_bytes(), a.1.as_bytes()).cmp(&(b.0.as_bytes(), b.1.as_bytes()))
+            });
             let mut h = Sha256::new();
             for (_, _, d) in &v {
                 h.update(d);

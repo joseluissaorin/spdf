@@ -131,7 +131,11 @@ fn run_dump(dir: &Path, case: &Value) -> CaseResult {
     let doc = open(dir, s(input, "file")?)?;
     let ours = doc.dump().map_err(|e| format!("dump: {e}"))?;
     let exp = read_json(&dir.join(s(expect, "dump")?))?;
-    compare_dump(&ours, &exp, expect.get("content_sha256").and_then(Value::as_str))
+    compare_dump(
+        &ours,
+        &exp,
+        expect.get("content_sha256").and_then(Value::as_str),
+    )
 }
 
 fn run_roundtrip(dir: &Path, case: &Value) -> CaseResult {
@@ -161,7 +165,10 @@ fn run_validate(dir: &Path, case: &Value) -> CaseResult {
     });
     for k in ["errors", "warnings"] {
         if let Some(a) = exp[k].as_array() {
-            let mut v: Vec<String> = a.iter().filter_map(|x| x.as_str().map(str::to_string)).collect();
+            let mut v: Vec<String> = a
+                .iter()
+                .filter_map(|x| x.as_str().map(str::to_string))
+                .collect();
             v.sort();
             v.dedup();
             exp[k] = json!(v);
@@ -169,12 +176,14 @@ fn run_validate(dir: &Path, case: &Value) -> CaseResult {
     }
     match first_difference(&got, &exp, "report") {
         None => Ok(()),
-        Some(d) => Err(format!("{d}; messages: {}", r
-            .errors
-            .iter()
-            .map(|i| format!("{} {}", i.code, i.message))
-            .collect::<Vec<_>>()
-            .join(" | "))),
+        Some(d) => Err(format!(
+            "{d}; messages: {}",
+            r.errors
+                .iter()
+                .map(|i| format!("{} {}", i.code, i.message))
+                .collect::<Vec<_>>()
+                .join(" | ")
+        )),
     }
 }
 
@@ -184,23 +193,39 @@ fn compare_results(ours: &[SearchHit], expect: &Value, with_via: bool) -> CaseRe
         .and_then(Value::as_array)
         .ok_or("expect.results missing")?;
     let ids: Vec<&str> = ours.iter().map(|h| h.fragment_id.as_str()).collect();
-    let exp_ids: Vec<&str> = exp.iter().filter_map(|r| r["fragment_id"].as_str()).collect();
+    let exp_ids: Vec<&str> = exp
+        .iter()
+        .filter_map(|r| r["fragment_id"].as_str())
+        .collect();
     if ids != exp_ids {
         return Err(format!("ids {ids:?}, expected {exp_ids:?}"));
     }
     for (h, e) in ours.iter().zip(exp) {
         let es = e["score"].as_f64().unwrap_or(f64::NAN);
-        if !((h.score - es).abs() <= 1e-6) {
-            return Err(format!("{}: score {}, expected {es}", h.fragment_id, h.score));
+        let diff = (h.score - es).abs();
+        if diff.is_nan() || diff > 1e-6 {
+            return Err(format!(
+                "{}: score {}, expected {es}",
+                h.fragment_id, h.score
+            ));
         }
         let eu = e["anchor_uri"].as_str().unwrap_or("");
         if h.anchor_uri != eu {
-            return Err(format!("{}: anchor_uri {}, expected {eu}", h.fragment_id, h.anchor_uri));
+            return Err(format!(
+                "{}: anchor_uri {}, expected {eu}",
+                h.fragment_id, h.anchor_uri
+            ));
         }
         if with_via {
-            let ev: Vec<&str> = e["via"].as_array().map(|a| a.iter().filter_map(Value::as_str).collect()).unwrap_or_default();
+            let ev: Vec<&str> = e["via"]
+                .as_array()
+                .map(|a| a.iter().filter_map(Value::as_str).collect())
+                .unwrap_or_default();
             if h.via != ev {
-                return Err(format!("{}: via {:?}, expected {ev:?}", h.fragment_id, h.via));
+                return Err(format!(
+                    "{}: via {:?}, expected {ev:?}",
+                    h.fragment_id, h.via
+                ));
             }
         }
     }
@@ -217,7 +242,11 @@ fn vector_of(input: &Value) -> std::result::Result<Vec<f32>, String> {
         .and_then(Value::as_array)
         .ok_or("missing query_vector")?
         .iter()
-        .map(|x| x.as_f64().map(|f| f as f32).ok_or_else(|| "non-numeric component".to_string()))
+        .map(|x| {
+            x.as_f64()
+                .map(|f| f as f32)
+                .ok_or_else(|| "non-numeric component".to_string())
+        })
         .collect()
 }
 
@@ -254,7 +283,12 @@ fn run_search_vector(dir: &Path, case: &Value) -> CaseResult {
         .transpose()?
         .unwrap_or_default();
     let hits = doc
-        .search_vector(s(input, "space")?, &vector_of(input)?, target, limit_of(input))
+        .search_vector(
+            s(input, "space")?,
+            &vector_of(input)?,
+            target,
+            limit_of(input),
+        )
         .map_err(|e| format!("search: {e}"))?;
     compare_results(&hits, &case["expect"], false)
 }
@@ -263,7 +297,12 @@ fn run_search_hybrid(dir: &Path, case: &Value) -> CaseResult {
     let input = &case["input"];
     let doc = open(dir, s(input, "file")?)?;
     let hits = doc
-        .search_hybrid(s(input, "query")?, &vector_of(input)?, s(input, "space")?, limit_of(input))
+        .search_hybrid(
+            s(input, "query")?,
+            &vector_of(input)?,
+            s(input, "space")?,
+            limit_of(input),
+        )
         .map_err(|e| format!("search: {e}"))?;
     compare_results(&hits, &case["expect"], true)
 }
@@ -296,7 +335,8 @@ fn run_anchor_uri(case: &Value) -> CaseResult {
     }
     let docref = s(input, "docref")?;
     let end = input.get("anchor_end").filter(|v| !v.is_null());
-    let uri = crate::anchor::format_uri(docref, &input["anchor"], end).map_err(|e| format!("format: {e}"))?;
+    let uri = crate::anchor::format_uri(docref, &input["anchor"], end)
+        .map_err(|e| format!("format: {e}"))?;
     let want_uri = s(expect, "uri")?;
     if uri != want_uri {
         return Err(format!("uri {uri}, expected {want_uri}"));
@@ -307,7 +347,8 @@ fn run_anchor_uri(case: &Value) -> CaseResult {
         return Err(d);
     }
     // format(locator) from the expected locator, too.
-    let l: Locator = serde_json::from_value(expect["locator"].clone()).map_err(|e| format!("locator: {e}"))?;
+    let l: Locator =
+        serde_json::from_value(expect["locator"].clone()).map_err(|e| format!("locator: {e}"))?;
     let again = AnchorUri {
         docref: docref.to_string(),
         locator: l,
@@ -332,6 +373,33 @@ fn run_cite(case: &Value) -> CaseResult {
     }
 }
 
+fn run_quantize(case: &Value) -> CaseResult {
+    let input = &case["input"];
+    let dtype = s(input, "dtype")?;
+    let values: Vec<f64> = input["values"]
+        .as_array()
+        .ok_or("missing values")?
+        .iter()
+        .map(|x| x.as_f64().ok_or_else(|| "non-numeric value".to_string()))
+        .collect::<std::result::Result<_, _>>()?;
+    let got = crate::model::Dtype::parse(dtype)
+        .ok_or_else(|| crate::Error::Vector(format!("unknown dtype {dtype}")))
+        .and_then(|d| crate::vector::quantize(&values, d));
+    let expect = &case["expect"];
+    if expect.get("error").and_then(Value::as_bool) == Some(true) {
+        return match got {
+            Ok(b) => Err(format!("accepted, produced {}", crate::reader::hex(&b))),
+            Err(_) => Ok(()),
+        };
+    }
+    let want = s(expect, "hex")?;
+    match got {
+        Ok(b) if crate::reader::hex(&b) == want => Ok(()),
+        Ok(b) => Err(format!("hex {}, expected {want}", crate::reader::hex(&b))),
+        Err(e) => Err(format!("error: {e}")),
+    }
+}
+
 /// Runs one case (parsed JSON) against the conformance directory `dir`.
 pub fn run_case(dir: &Path, case: &Value) -> CaseResult {
     let kind = s(case, "kind")?;
@@ -344,6 +412,7 @@ pub fn run_case(dir: &Path, case: &Value) -> CaseResult {
         "search_hybrid" => run_search_hybrid(dir, case),
         "anchor_uri" => run_anchor_uri(case),
         "cite" => run_cite(case),
+        "quantize" => run_quantize(case),
         other => Err(format!("unknown case kind `{other}`")),
     }));
     r.unwrap_or_else(|_| Err("panicked".into()))
@@ -377,7 +446,10 @@ pub fn run_dir(dir: impl AsRef<Path>, filter: Option<&str>) -> Result<Report> {
         let case = match read_json(&path) {
             Ok(c) => c,
             Err(e) => {
-                report.failed.push(Failure { id: fallback, reason: e });
+                report.failed.push(Failure {
+                    id: fallback,
+                    reason: e,
+                });
                 continue;
             }
         };

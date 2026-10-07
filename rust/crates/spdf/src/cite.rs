@@ -91,7 +91,12 @@ fn names(md: &Value, es: bool) -> String {
     let authors: Vec<String> = md
         .get("author")
         .and_then(Value::as_array)
-        .map(|a| a.iter().map(person_name).filter(|n| !n.is_empty()).collect())
+        .map(|a| {
+            a.iter()
+                .map(person_name)
+                .filter(|n| !n.is_empty())
+                .collect()
+        })
         .unwrap_or_default();
     match authors.len() {
         0 => short_title(md),
@@ -162,7 +167,13 @@ fn printed_label(a: &Value) -> Option<String> {
     })
 }
 
-fn page_locator(anchor: &Value, end: Option<&Value>, es: bool, single: &str, plural: &str) -> String {
+fn page_locator(
+    anchor: &Value,
+    end: Option<&Value>,
+    es: bool,
+    single: &str,
+    plural: &str,
+) -> String {
     let Some(a) = printed_label(anchor) else {
         return if es { "s. p." } else { "n. pag." }.to_string();
     };
@@ -230,7 +241,11 @@ pub fn locator_value(anchor: &Value, end: Option<&Value>, locale: Locale) -> Opt
                 parts.push(format!("§ {}", last.as_str().unwrap_or("")));
             }
             if let Some(p) = anchor.get("paragraph").filter(|v| !v.is_null()) {
-                parts.push(format!("{} {}", if es { "párr." } else { "para." }, num_text(Some(p))));
+                parts.push(format!(
+                    "{} {}",
+                    if es { "párr." } else { "para." },
+                    num_text(Some(p))
+                ));
             }
             if parts.is_empty() {
                 None
@@ -282,7 +297,12 @@ pub fn cite_value(anchor: &Value, end: Option<&Value>, metadata: &Value, locale:
 }
 
 /// Short citation from CSL metadata: `(Names, Year[, locator])`.
-pub fn cite_metadata(anchor: &Anchor, end: Option<&Anchor>, metadata: &Value, locale: Locale) -> String {
+pub fn cite_metadata(
+    anchor: &Anchor,
+    end: Option<&Anchor>,
+    metadata: &Value,
+    locale: Locale,
+) -> String {
     let e = end.map(Anchor::to_value);
     cite_value(&anchor.to_value(), e.as_ref(), metadata, locale)
 }
@@ -293,7 +313,12 @@ pub fn cite(anchor: &Anchor, document: &Document, locale: Locale) -> String {
 }
 
 /// Short citation of a range (`anchor` to `end`) in `document`.
-pub fn cite_range(anchor: &Anchor, end: Option<&Anchor>, document: &Document, locale: Locale) -> String {
+pub fn cite_range(
+    anchor: &Anchor,
+    end: Option<&Anchor>,
+    document: &Document,
+    locale: Locale,
+) -> String {
     cite_metadata(anchor, end, &document.metadata, locale)
 }
 
@@ -310,28 +335,62 @@ mod tests {
     fn contract_examples() {
         let md2 = json!({"title":"X","author":[{"family":"Ramos"},{"family":"Iglesias"}],"issued":{"date-parts":[[2001]]}});
         let p = a(json!({"type":"page","physical":3,"printed":"xiv","roman":true}));
-        assert_eq!(cite_metadata(&p, None, &md2, Locale::Es), "(Ramos e Iglesias, 2001, p. xiv)");
-        assert_eq!(cite_metadata(&p, None, &md2, Locale::En), "(Ramos and Iglesias, 2001, p. xiv)");
+        assert_eq!(
+            cite_metadata(&p, None, &md2, Locale::Es),
+            "(Ramos e Iglesias, 2001, p. xiv)"
+        );
+        assert_eq!(
+            cite_metadata(&p, None, &md2, Locale::En),
+            "(Ramos and Iglesias, 2001, p. xiv)"
+        );
         let md3 = json!({"title":"Obra: subtítulo","author":[{"family":"A"},{"family":"B"},{"literal":"C"}]});
         let t = a(json!({"type":"time","t0":4160.4,"t1":4175.5}));
-        assert_eq!(cite_metadata(&t, None, &md3, Locale::Es), "(A et al., s. f., 1:09:20)");
+        assert_eq!(
+            cite_metadata(&t, None, &md3, Locale::Es),
+            "(A et al., s. f., 1:09:20)"
+        );
         let md0 = json!({"title":"Obra: subtítulo","issued":{"date-parts":[[-350]]}});
         let i = a(json!({"type":"page","physical":21,"printed":"21","source":"inferred"}));
         let ie = a(json!({"type":"page","physical":22,"printed":"22","source":"inferred"}));
-        assert_eq!(cite_metadata(&i, Some(&ie), &md0, Locale::En), "(Obra, 350 BC, pp. [21]-[22])");
+        assert_eq!(
+            cite_metadata(&i, Some(&ie), &md0, Locale::En),
+            "(Obra, 350 BC, pp. [21]-[22])"
+        );
         let leaf = a(json!({"type":"page","physical":5,"printed":"1r","foliation":"leaf"}));
         assert_eq!(locator(&leaf, None, Locale::Es).unwrap(), "fol. 1r");
         let none = a(json!({"type":"page","physical":5,"printed":null}));
         assert_eq!(locator(&none, None, Locale::Es).unwrap(), "s. p.");
         assert_eq!(locator(&none, None, Locale::En).unwrap(), "n. pag.");
         let sec = a(json!({"type":"section","path":["Cap. 3","3.2 El panóptico"],"paragraph":4}));
-        assert_eq!(locator(&sec, None, Locale::Es).unwrap(), "§ 3.2 El panóptico, párr. 4");
+        assert_eq!(
+            locator(&sec, None, Locale::Es).unwrap(),
+            "§ 3.2 El panóptico, párr. 4"
+        );
         let t0 = a(json!({"type":"time","t0":42.9,"t1":50.0}));
         let t1 = a(json!({"type":"time","t0":60.0,"t1":65.2}));
         assert_eq!(locator(&t0, Some(&t1), Locale::En).unwrap(), "0:42-1:05");
-        assert_eq!(locator(&a(json!({"type":"verse","line_from":1234,"line_to":1240})), None, Locale::Es).unwrap(), "vv. 1234-1240");
-        assert_eq!(locator(&a(json!({"type":"slide","n":3})), None, Locale::En).unwrap(), "slide 3");
-        assert_eq!(locator(&a(json!({"type":"sheet","sheet":"Data","row_from":4,"row_to":9})), None, Locale::Es).unwrap(), "Data, filas 4-9");
+        assert_eq!(
+            locator(
+                &a(json!({"type":"verse","line_from":1234,"line_to":1240})),
+                None,
+                Locale::Es
+            )
+            .unwrap(),
+            "vv. 1234-1240"
+        );
+        assert_eq!(
+            locator(&a(json!({"type":"slide","n":3})), None, Locale::En).unwrap(),
+            "slide 3"
+        );
+        assert_eq!(
+            locator(
+                &a(json!({"type":"sheet","sheet":"Data","row_from":4,"row_to":9})),
+                None,
+                Locale::Es
+            )
+            .unwrap(),
+            "Data, filas 4-9"
+        );
         assert!(starts_with_i_sound("Hidalgo"));
         assert!(!starts_with_i_sound("Hierro"));
         assert!(!starts_with_i_sound("Yuste"));

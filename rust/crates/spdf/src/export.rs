@@ -126,7 +126,10 @@ pub fn bibtex_from_metadata(fallback_id: &str, md: &Value) -> String {
         .and_then(|i| i.get("date-parts"))
         .and_then(|d| d.get(0))
         .and_then(|p| p.get(0))
-        .and_then(|y| y.as_i64().or_else(|| y.as_str().and_then(|s| s.parse().ok())));
+        .and_then(|y| {
+            y.as_i64()
+                .or_else(|| y.as_str().and_then(|s| s.parse().ok()))
+        });
     let first_family = md
         .get("author")
         .and_then(|a| a.get(0))
@@ -139,7 +142,12 @@ pub fn bibtex_from_metadata(fallback_id: &str, md: &Value) -> String {
             t.split_whitespace()
                 .map(ascii_key)
                 .find(|w| w.len() > 3)
-                .unwrap_or_else(|| t.split_whitespace().next().map(ascii_key).unwrap_or_default())
+                .unwrap_or_else(|| {
+                    t.split_whitespace()
+                        .next()
+                        .map(ascii_key)
+                        .unwrap_or_default()
+                })
         })
         .unwrap_or_default();
     let mut key = format!(
@@ -166,14 +174,27 @@ pub fn bibtex_from_metadata(fallback_id: &str, md: &Value) -> String {
         fields.push(("title", bib_escape(&t)));
     }
     if let Some(c) = get("container-title") {
-        let k = if et == "article" { "journal" } else { "booktitle" };
+        let k = if et == "article" {
+            "journal"
+        } else {
+            "booktitle"
+        };
         fields.push((k, bib_escape(&c)));
     }
     if let Some(y) = year {
         fields.push(("year", y.to_string()));
     }
     let simple: &[(&str, &str)] = &[
-        ("publisher", if et == "techreport" { "institution" } else if et == "phdthesis" { "school" } else { "publisher" }),
+        (
+            "publisher",
+            if et == "techreport" {
+                "institution"
+            } else if et == "phdthesis" {
+                "school"
+            } else {
+                "publisher"
+            },
+        ),
         ("publisher-place", "address"),
         ("collection-title", "series"),
         ("volume", "volume"),
@@ -187,8 +208,16 @@ pub fn bibtex_from_metadata(fallback_id: &str, md: &Value) -> String {
     ];
     for (csl, bib) in simple {
         if let Some(v) = get(csl) {
-            let v = if *csl == "page" { v.replace('-', "--") } else { v };
-            let v = if matches!(*csl, "URL" | "DOI") { v } else { bib_escape(&v) };
+            let v = if *csl == "page" {
+                v.replace('-', "--")
+            } else {
+                v
+            };
+            let v = if matches!(*csl, "URL" | "DOI") {
+                v
+            } else {
+                bib_escape(&v)
+            };
             fields.push((bib, v));
         }
     }

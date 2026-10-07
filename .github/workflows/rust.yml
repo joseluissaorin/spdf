@@ -1,0 +1,110 @@
+name: rust
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "rust/**"
+      - "conformance/**"
+      - ".github/workflows/rust.yml"
+  pull_request:
+    paths:
+      - "rust/**"
+      - "conformance/**"
+      - ".github/workflows/rust.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rust-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: "1"
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    defaults:
+      run:
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      - name: Format
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo fmt --all -- --check
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      - name: Tests (unit, properties, API, remote, conformance, doc)
+        run: cargo test --workspace --all-features
+      - name: Build the CLI
+        run: cargo build --release -p spdf-cli
+      - name: Conformance runner
+        shell: bash
+        run: |
+          set -o pipefail
+          ./target/release/spdf conformance ../conformance > conformance.json
+      - name: Upload conformance report
+        if: always() && matrix.os == 'ubuntu-latest' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: conformance-rust
+          path: rust/conformance.json
+          if-no-files-found: error
+      - name: C ABI smoke test (static library)
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: |
+          cargo build --release -p spdf-ffi
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            LIBS="-framework Security -framework CoreFoundation"
+          else
+            LIBS="-lpthread -ldl -lm"
+          fi
+          cc -std=c99 -Wall -Wextra -Werror -o smoke crates/spdf-ffi/tests/smoke.c target/release/libspdf_ffi.a $LIBS
+          ./smoke ../conformance
+
+  header:
+    name: C header is current
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rust/crates/spdf-ffi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cbindgen
+      - run: cbindgen --config cbindgen.toml --output /tmp/spdf.h
+      - run: diff -u include/spdf.h /tmp/spdf.h
+
+  msrv:
+    name: MSRV build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.85"
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      - run: cargo build --workspace --all-features

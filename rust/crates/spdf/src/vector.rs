@@ -63,8 +63,51 @@ pub fn decode_f64(data: &[u8], dtype: Dtype, dims: usize) -> Result<Vec<f64>> {
 
 /// Quantizes one component to i8: `clamp(round_half_away_from_zero(v × 127), −127, 127)`.
 pub fn quantize_i8(v: f32) -> i8 {
-    let q = (f64::from(v) * 127.0).round();
+    quantize_i8_f64(f64::from(v))
+}
+
+fn quantize_i8_f64(v: f64) -> i8 {
+    let x = v * 127.0;
+    let q = (x.abs() + 0.5).floor().copysign(x);
     q.clamp(-127.0, 127.0) as i8
+}
+
+/// Writer-side encoding of values given in f64 (contract §2): f32 and f16
+/// round to nearest even, and a finite value that overflows the format is an
+/// error; i8 = `clamp(round_half_away_from_zero(v × 127), −127, 127)`.
+///
+/// ```
+/// use spdf::{vector, Dtype};
+/// assert_eq!(vector::quantize(&[0.1, 0.333333], Dtype::F32).unwrap(), vec![0xcd, 0xcc, 0xcc, 0x3d, 0x9f, 0xaa, 0xaa, 0x3e]);
+/// assert!(vector::quantize(&[65520.0], Dtype::F16).is_err());
+/// ```
+pub fn quantize(values: &[f64], dtype: Dtype) -> Result<Vec<u8>> {
+    let mut out = Vec::with_capacity(values.len() * dtype.size());
+    for &v in values {
+        match dtype {
+            Dtype::F32 => {
+                let x = v as f32;
+                if x.is_infinite() && v.is_finite() {
+                    return Err(Error::Vector(format!("{v} is out of range for f32")));
+                }
+                out.extend_from_slice(&x.to_le_bytes());
+            }
+            Dtype::F16 => {
+                let x = f16::from_f64(v);
+                if x.is_infinite() && v.is_finite() {
+                    return Err(Error::Vector(format!("{v} is out of range for f16")));
+                }
+                out.extend_from_slice(&x.to_le_bytes());
+            }
+            Dtype::I8 => {
+                if v.is_nan() {
+                    return Err(Error::Vector("NaN cannot be quantized to i8".into()));
+                }
+                out.push(quantize_i8_f64(v) as u8);
+            }
+        }
+    }
+    Ok(out)
 }
 
 /// Encodes `f32` components in the given dtype (f16 round-to-nearest-even).

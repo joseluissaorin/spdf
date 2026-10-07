@@ -71,8 +71,8 @@ pub use cite::{cite, cite_range, Locale};
 pub use error::{Error, Result};
 pub use integrity::{IntegrityReport, KeyPair};
 pub use model::{
-    Blob, BlobInfo, Document, Dtype, Extension, Figure, Fragment, Provenance, SearchHit, Section, Space,
-    Target, Unit, Vector,
+    Blob, BlobInfo, Document, Dtype, Extension, Figure, Fragment, Provenance, SearchHit, Section,
+    Space, Target, Unit, Vector,
 };
 pub use reader::{Flavor, OpenOptions, Spdf, DEFAULT_MAX_BLOB, DEFAULT_MAX_DECOMPRESSED};
 pub use search::{HYBRID_MIN_DEPTH, RRF_K};

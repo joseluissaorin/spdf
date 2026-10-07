@@ -82,7 +82,13 @@ struct Collector {
 }
 
 impl Collector {
-    fn push(&mut self, warning: bool, code: &str, message: impl Into<String>, at: impl Into<String>) {
+    fn push(
+        &mut self,
+        warning: bool,
+        code: &str,
+        message: impl Into<String>,
+        at: impl Into<String>,
+    ) {
         let c = self.counts.entry(code.to_string()).or_insert(0);
         *c += 1;
         if *c > MAX_PER_CODE {
@@ -122,7 +128,11 @@ pub fn validate(path: impl AsRef<Path>) -> ValidationReport {
     match reader::open_connection(path, &opts) {
         Ok((conn, gzip, origin)) => validate_connection(conn, gzip, origin, c),
         Err(e) => {
-            c.err(code_or(&e, "E001"), e.to_string(), path.display().to_string());
+            c.err(
+                code_or(&e, "E001"),
+                e.to_string(),
+                path.display().to_string(),
+            );
             finish(c, None, Vec::new())
         }
     }
@@ -193,15 +203,27 @@ const REQUIRED_TABLES: &[&str] = &[
     "extensions",
 ];
 
+/// (id, metadata, rights, unit_count) of a `documents` row.
+type DocRow = (String, Option<String>, Option<String>, Option<i64>);
+
 fn json_ok(s: &str) -> bool {
     serde_json::from_str::<Value>(s).is_ok()
 }
 
-fn validate_connection(conn: Connection, gzip: bool, origin: Origin, mut c: Collector) -> ValidationReport {
+fn validate_connection(
+    conn: Connection,
+    gzip: bool,
+    origin: Origin,
+    mut c: Collector,
+) -> ValidationReport {
     let info = match SchemaInfo::read(&conn) {
         Ok(i) => i,
         Err(e) => {
-            c.err("E001", format!("cannot read the SQLite schema: {e}"), "sqlite_master");
+            c.err(
+                "E001",
+                format!("cannot read the SQLite schema: {e}"),
+                "sqlite_master",
+            );
             return finish(c, None, Vec::new());
         }
     };
@@ -229,8 +251,18 @@ fn validate_connection(conn: Connection, gzip: bool, origin: Origin, mut c: Coll
     }
     if flavor == Flavor::Legacy {
         let version = Some(doc.version.clone());
-        c.warn("W110", format!("legacy SPDF {} file", doc.version), "header");
-        for t in ["spdf", "documentos", "unidades", "fragmentos", "fragmentos_fts"] {
+        c.warn(
+            "W110",
+            format!("legacy SPDF {} file", doc.version),
+            "header",
+        );
+        for t in [
+            "spdf",
+            "documentos",
+            "unidades",
+            "fragmentos",
+            "fragmentos_fts",
+        ] {
             if !info.tables.contains_key(t) {
                 c.err("E010", format!("missing legacy table `{t}`"), t);
             }
@@ -246,7 +278,11 @@ fn validate_connection(conn: Connection, gzip: bool, origin: Origin, mut c: Coll
     let version_s = format!("{}.{}", uv / 100, (uv % 100) / 10);
     let version = Some(version_s.clone());
     if gzip {
-        c.warn("E003", "SPDF 5.0 files must not be gzip-wrapped", "container");
+        c.warn(
+            "E003",
+            "SPDF 5.0 files must not be gzip-wrapped",
+            "container",
+        );
     }
     if version_s != schema::SPDF_VERSION {
         c.warn("W105", format!("newer minor version {version_s}"), "header");
@@ -272,7 +308,11 @@ fn validate_connection(conn: Connection, gzip: bool, origin: Origin, mut c: Coll
             .unwrap_or_default();
         for col in required_columns(t) {
             if !have.iter().any(|h| h == col) {
-                c.err("E011", format!("missing column `{t}.{col}`"), format!("{t}.{col}"));
+                c.err(
+                    "E011",
+                    format!("missing column `{t}.{col}`"),
+                    format!("{t}.{col}"),
+                );
             }
         }
         present.insert(t, have);
@@ -310,7 +350,7 @@ fn validate_connection(conn: Connection, gzip: bool, origin: Origin, mut c: Coll
     }
 
     // E013 / E050 / E051
-    let mut docs: Vec<(String, Option<String>, Option<String>, Option<i64>)> = Vec::new();
+    let mut docs: Vec<DocRow> = Vec::new();
     if ok("documents", &["id", "metadata"]) {
         let full = ok("documents", &["rights", "unit_count"]);
         let sql = if full {
@@ -331,7 +371,11 @@ fn validate_connection(conn: Connection, gzip: bool, origin: Origin, mut c: Coll
             }
         }
         if docs.len() != 1 {
-            c.err("E013", format!("documents has {} rows, expected 1", docs.len()), "documents");
+            c.err(
+                "E013",
+                format!("documents has {} rows, expected 1", docs.len()),
+                "documents",
+            );
         }
         for (id, md, rights, _) in &docs {
             match md.as_deref().map(serde_json::from_str::<Value>) {
@@ -339,10 +383,18 @@ fn validate_connection(conn: Connection, gzip: bool, origin: Origin, mut c: Coll
                     let good = m.get("type").map(Value::is_string).unwrap_or(false)
                         && m.get("title").map(Value::is_string).unwrap_or(false);
                     if !good {
-                        c.err("E051", "metadata needs a string `type` and `title`", id.clone());
+                        c.err(
+                            "E051",
+                            "metadata needs a string `type` and `title`",
+                            id.clone(),
+                        );
                     }
                 }
-                Some(Ok(_)) => c.err("E051", "metadata needs a string `type` and `title`", id.clone()),
+                Some(Ok(_)) => c.err(
+                    "E051",
+                    "metadata needs a string `type` and `title`",
+                    id.clone(),
+                ),
                 _ => c.err("E050", "metadata is not valid JSON", id.clone()),
             }
             if let Some(r) = rights {
@@ -357,7 +409,11 @@ fn validate_connection(conn: Connection, gzip: bool, origin: Origin, mut c: Coll
     if ok("extensions", &["name", "required"]) {
         for e in doc.extensions().unwrap_or_default() {
             if e.required {
-                c.err("E060", format!("unknown required extension `{}`", e.name), e.name.clone());
+                c.err(
+                    "E060",
+                    format!("unknown required extension `{}`", e.name),
+                    e.name.clone(),
+                );
             }
         }
     }
@@ -373,9 +429,15 @@ fn validate_connection(conn: Connection, gzip: bool, origin: Origin, mut c: Coll
             if let Ok(it) = st.query_map([], |r| {
                 Ok((
                     r.get::<_, Option<String>>(0)?.unwrap_or_default(),
-                    r.get::<_, Option<i64>>(1).ok().flatten().unwrap_or(i64::MIN),
+                    r.get::<_, Option<i64>>(1)
+                        .ok()
+                        .flatten()
+                        .unwrap_or(i64::MIN),
                     r.get::<_, Option<String>>(2).ok().flatten(),
-                    r.get::<_, Option<String>>(3).ok().flatten().unwrap_or_default(),
+                    r.get::<_, Option<String>>(3)
+                        .ok()
+                        .flatten()
+                        .unwrap_or_default(),
                 ))
             }) {
                 rows.extend(it.flatten());
@@ -387,12 +449,21 @@ fn validate_connection(conn: Connection, gzip: bool, origin: Origin, mut c: Coll
         if docs.len() == 1 {
             if let Some(n) = docs[0].3 {
                 if n != rows.len() as i64 {
-                    c.warn("W102", format!("unit_count {n} but {} units", rows.len()), "documents.unit_count");
+                    c.warn(
+                        "W102",
+                        format!("unit_count {n} but {} units", rows.len()),
+                        "documents.unit_count",
+                    );
                 }
             }
         }
         for (id, _, anchor, text) in rows {
-            check_anchor_text(&mut c, anchor.as_deref(), Some(&text), &format!("units/{id}"));
+            check_anchor_text(
+                &mut c,
+                anchor.as_deref(),
+                Some(&text),
+                &format!("units/{id}"),
+            );
             texts.insert(id, text);
         }
     }
@@ -415,14 +486,22 @@ fn validate_connection(conn: Connection, gzip: bool, origin: Origin, mut c: Coll
                     let text = texts.get(&unit).map(String::as_str);
                     check_anchor_text(&mut c, anchor.as_deref(), text, &format!("fragments/{id}"));
                     if let Some(e) = end {
-                        check_anchor_text(&mut c, Some(&e), None, &format!("fragments/{id}/anchor_end"));
+                        check_anchor_text(
+                            &mut c,
+                            Some(&e),
+                            None,
+                            &format!("fragments/{id}/anchor_end"),
+                        );
                     }
                 }
             }
         }
     }
     if ok("figures", &["id", "unit", "anchor"]) {
-        if let Ok(mut st) = doc.conn.prepare("SELECT id, unit, anchor FROM figures ORDER BY id") {
+        if let Ok(mut st) = doc
+            .conn
+            .prepare("SELECT id, unit, anchor FROM figures ORDER BY id")
+        {
             if let Ok(it) = st.query_map([], |r| {
                 Ok((
                     r.get::<_, Option<String>>(0)?.unwrap_or_default(),
@@ -441,12 +520,18 @@ fn validate_connection(conn: Connection, gzip: bool, origin: Origin, mut c: Coll
     // E032 / E031 / E030
     let mut spaces: HashMap<String, (i64, String)> = HashMap::new();
     if ok("spaces", &["id", "dims", "dtype"]) {
-        if let Ok(mut st) = doc.conn.prepare("SELECT id, dims, dtype FROM spaces ORDER BY id") {
+        if let Ok(mut st) = doc
+            .conn
+            .prepare("SELECT id, dims, dtype FROM spaces ORDER BY id")
+        {
             if let Ok(it) = st.query_map([], |r| {
                 Ok((
                     r.get::<_, Option<String>>(0)?.unwrap_or_default(),
                     r.get::<_, Option<i64>>(1).ok().flatten().unwrap_or(0),
-                    r.get::<_, Option<String>>(2).ok().flatten().unwrap_or_default(),
+                    r.get::<_, Option<String>>(2)
+                        .ok()
+                        .flatten()
+                        .unwrap_or_default(),
                 ))
             }) {
                 for (id, dims, dtype) in it.flatten() {
@@ -478,9 +563,15 @@ fn validate_connection(conn: Connection, gzip: bool, origin: Origin, mut c: Coll
                         c.err("E031", format!("unknown space `{space}`"), at);
                         continue;
                     };
-                    let Some(dt) = Dtype::parse(dtype) else { continue };
+                    let Some(dt) = Dtype::parse(dtype) else {
+                        continue;
+                    };
                     if ty != "blob" || len != dims * dt.size() as i64 {
-                        c.err("E030", format!("vector length {len} != {dims} x {}", dt.size()), at);
+                        c.err(
+                            "E030",
+                            format!("vector length {len} != {dims} x {}", dt.size()),
+                            at,
+                        );
                     }
                 }
             }
@@ -494,7 +585,11 @@ fn validate_connection(conn: Connection, gzip: bool, origin: Origin, mut c: Coll
             tables.push("fragments_fts_trigram");
         }
         if let Err(msg) = fts_integrity(&doc, &tables) {
-            c.err("E070", format!("FTS index out of sync: {msg}"), "fragments_fts");
+            c.err(
+                "E070",
+                format!("FTS index out of sync: {msg}"),
+                "fragments_fts",
+            );
         }
     }
 
@@ -521,7 +616,11 @@ fn validate_connection(conn: Connection, gzip: bool, origin: Origin, mut c: Coll
                 .map(|d| content_sha256_of_dump(&d))
                 .unwrap_or_else(|e| format!("unavailable ({e})"));
             if &actual != stored {
-                c.err("E081", "content_sha256 does not match the canonical dump", "spdf_meta.content_sha256");
+                c.err(
+                    "E081",
+                    "content_sha256 does not match the canonical dump",
+                    "spdf_meta.content_sha256",
+                );
             } else if let Some(sig) = meta.get("signature") {
                 let signer = meta.get("signer").map(String::as_str).unwrap_or("");
                 if verify_signature(stored, sig, signer).is_err() {
@@ -533,7 +632,11 @@ fn validate_connection(conn: Connection, gzip: bool, origin: Origin, mut c: Coll
 
     // Warnings
     if profile.iter().any(|p| p == "semantic") && nvec == 0 {
-        c.warn("W100", "profile `semantic` without vectors", "spdf_meta.profile");
+        c.warn(
+            "W100",
+            "profile `semantic` without vectors",
+            "spdf_meta.profile",
+        );
     }
     if profile.iter().any(|p| p == "media") && ok("units", &["anchor"]) {
         let mut has_time = false;
@@ -548,7 +651,11 @@ fn validate_connection(conn: Connection, gzip: bool, origin: Origin, mut c: Coll
             }
         }
         if !has_time {
-            c.warn("W101", "profile `media` without time anchors", "spdf_meta.profile");
+            c.warn(
+                "W101",
+                "profile `media` without time anchors",
+                "spdf_meta.profile",
+            );
         }
     }
     finish(c, version, profile)
@@ -596,8 +703,11 @@ fn fts_integrity(doc: &Spdf, tables: &[&str]) -> std::result::Result<(), String>
     Ok(())
 }
 
+/// A JSON number with an integral value (`10` and `10.0` are the same value).
 fn is_int(v: Option<&Value>) -> bool {
-    v.map(|x| x.is_i64() || x.is_u64()).unwrap_or(false)
+    v.and_then(Value::as_f64)
+        .map(|f| f.is_finite() && f.fract() == 0.0)
+        .unwrap_or(false)
 }
 
 fn is_num(v: Option<&Value>) -> bool {
@@ -650,7 +760,10 @@ pub fn check_anchor_value(v: &Value, unit_len: Option<usize>) -> Option<(&'stati
         _ => true,
     };
     if !good {
-        return Some(("E040", format!("{t} anchor misses or mistypes a required member")));
+        return Some((
+            "E040",
+            format!("{t} anchor misses or mistypes a required member"),
+        ));
     }
     if let Some(r) = m.get("region") {
         let ok = r
@@ -664,17 +777,19 @@ pub fn check_anchor_value(v: &Value, unit_len: Option<usize>) -> Option<(&'stati
     if let Some(ch) = m.get("chars") {
         let pair = ch
             .as_array()
-            .filter(|a| a.len() == 2 && a.iter().all(|x| x.is_i64() || x.is_u64()))
+            .filter(|a| a.len() == 2 && a.iter().all(|x| is_int(Some(x))))
             .map(|a| (num(a.first()), num(a.get(1))));
         let Some((s, e)) = pair else {
             return Some(("E040", "bad chars".into()));
         };
         if let Some(len) = unit_len {
             if !(0.0 <= s && s <= e && e <= len as f64) {
-                return Some(("E042", format!("chars [{s},{e}] out of range (unit text has {len} code points)")));
+                return Some((
+                    "E042",
+                    format!("chars [{s},{e}] out of range (unit text has {len} code points)"),
+                ));
             }
         }
     }
     None
 }
-

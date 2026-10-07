@@ -55,7 +55,8 @@ impl Spdf {
         if q.cjk {
             let all_long = q.terms.iter().all(|t| t.chars().count() >= 3);
             if self.has_trigram() && all_long {
-                let sql = "SELECT rowid, bm25(fragments_fts_trigram) AS r FROM fragments_fts_trigram \
+                let sql =
+                    "SELECT rowid, bm25(fragments_fts_trigram) AS r FROM fragments_fts_trigram \
                            WHERE fragments_fts_trigram MATCH ?1 ORDER BY r, rowid LIMIT ?2";
                 let mut st = self.conn.prepare(sql)?;
                 let rows = st.query_map(rusqlite::params![m, limit], |r| {
@@ -97,7 +98,8 @@ impl Spdf {
              ORDER BY h DESC, n LIMIT {limit}"
         );
         let mut st = self.conn.prepare(&sql)?;
-        let params: Vec<&dyn rusqlite::ToSql> = q.terms.iter().map(|t| t as &dyn rusqlite::ToSql).collect();
+        let params: Vec<&dyn rusqlite::ToSql> =
+            q.terms.iter().map(|t| t as &dyn rusqlite::ToSql).collect();
         let rows = st.query_map(params.as_slice(), |r| {
             Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)? as f64))
         })?;
@@ -112,13 +114,22 @@ impl Spdf {
         let docref = self.docref();
         Ok(ns
             .iter()
-            .filter_map(|(n, s)| frags.get(n).map(|f| self.hit_for_fragment(f, &docref, *s, &["lexical"])))
+            .filter_map(|(n, s)| {
+                frags
+                    .get(n)
+                    .map(|f| self.hit_for_fragment(f, &docref, *s, &["lexical"]))
+            })
             .collect())
     }
 
     /// Scores of every vector of `space`/`target` against `query`, sorted by
     /// score desc then fragment `n` / unit `ord` / figure `id`.
-    pub(crate) fn vector_scores(&self, space: &str, query: &[f32], target: Target) -> Result<Vec<(String, f64)>> {
+    pub(crate) fn vector_scores(
+        &self,
+        space: &str,
+        query: &[f32],
+        target: Target,
+    ) -> Result<Vec<(String, f64)>> {
         let sp = self
             .space(space)?
             .ok_or_else(|| Error::Vector(format!("unknown space `{space}`")))?;
@@ -176,7 +187,9 @@ impl Spdf {
         };
         let nc = self.col_expr(&schema::FRAGMENTS, "n");
         let ic = self.col_expr(&schema::FRAGMENTS, "id");
-        let mut st = self.conn.prepare(&format!("SELECT {ic}, {nc} FROM \"{table}\""))?;
+        let mut st = self
+            .conn
+            .prepare(&format!("SELECT {ic}, {nc} FROM \"{table}\""))?;
         let rows = st.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)?)))?;
         Ok(rows.collect::<std::result::Result<_, _>>()?)
     }
@@ -184,7 +197,13 @@ impl Spdf {
     /// Vector search by brute force (dot product for normalized spaces,
     /// cosine otherwise). For `Target::Unit`/`Target::Figure`, hits carry the
     /// unit/figure id in `fragment_id`.
-    pub fn search_vector(&self, space: &str, query: &[f32], target: Target, limit: usize) -> Result<Vec<SearchHit>> {
+    pub fn search_vector(
+        &self,
+        space: &str,
+        query: &[f32],
+        target: Target,
+        limit: usize,
+    ) -> Result<Vec<SearchHit>> {
         let scored = self.vector_scores(space, query, target)?;
         let top: Vec<(String, f64)> = scored.into_iter().take(limit).collect();
         let docref = self.docref();
@@ -198,12 +217,19 @@ impl Spdf {
                     .collect();
                 Ok(top
                     .iter()
-                    .filter_map(|(id, s)| by_id.get(id).map(|f| self.hit_for_fragment(f, &docref, *s, &["vector"])))
+                    .filter_map(|(id, s)| {
+                        by_id
+                            .get(id)
+                            .map(|f| self.hit_for_fragment(f, &docref, *s, &["vector"]))
+                    })
                     .collect())
             }
             Target::Unit => {
-                let units: HashMap<String, crate::model::Unit> =
-                    self.units()?.into_iter().map(|u| (u.id.clone(), u)).collect();
+                let units: HashMap<String, crate::model::Unit> = self
+                    .units()?
+                    .into_iter()
+                    .map(|u| (u.id.clone(), u))
+                    .collect();
                 Ok(top
                     .iter()
                     .filter_map(|(id, s)| {
@@ -213,8 +239,11 @@ impl Spdf {
                     .collect())
             }
             Target::Figure => {
-                let figs: HashMap<String, crate::model::Figure> =
-                    self.figures()?.into_iter().map(|f| (f.id.clone(), f)).collect();
+                let figs: HashMap<String, crate::model::Figure> = self
+                    .figures()?
+                    .into_iter()
+                    .map(|f| (f.id.clone(), f))
+                    .collect();
                 Ok(top
                     .iter()
                     .filter_map(|(id, s)| {
@@ -241,7 +270,13 @@ impl Spdf {
 
     /// Hybrid search: lexical and vector lists (target fragment) to depth
     /// `max(limit, 50)`, fused with reciprocal rank fusion (k = 10).
-    pub fn search_hybrid(&self, query: &str, vector: &[f32], space: &str, limit: usize) -> Result<Vec<SearchHit>> {
+    pub fn search_hybrid(
+        &self,
+        query: &str,
+        vector: &[f32],
+        space: &str,
+        limit: usize,
+    ) -> Result<Vec<SearchHit>> {
         let depth = limit.max(HYBRID_MIN_DEPTH);
         let lex = self.lexical_ns(query, depth)?;
         let vec_ids: Vec<(String, f64)> = self
@@ -283,7 +318,9 @@ impl Spdf {
                 if *v {
                     via.push("vector");
                 }
-                frags.get(n).map(|f| self.hit_for_fragment(f, &docref, *s, &via))
+                frags
+                    .get(n)
+                    .map(|f| self.hit_for_fragment(f, &docref, *s, &via))
             })
             .collect())
     }

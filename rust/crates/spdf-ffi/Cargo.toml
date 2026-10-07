@@ -1,11 +1,21 @@
 [package]
 name = "spdf-ffi"
+description = "Stable C ABI for SPDF (Semantic Processed Document Format): opaque handles, UTF-8 strings and JSON."
+readme = "README.md"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories = ["external-ffi-bindings", "text-processing"]
 
 [lib]
+name = "spdf_ffi"
 crate-type = ["cdylib", "staticlib", "rlib"]
 
 [dependencies]
 spdf.workspace = true
+serde_json.workspace = true
