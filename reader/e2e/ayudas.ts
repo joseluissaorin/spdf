@@ -43,7 +43,7 @@ export async function importar(page: Page, rutas: string[]) {
 /** Importa uno y espera a que se abra (con un solo fichero, se abre solo). */
 export async function importarYAbrir(page: Page, ruta: string) {
   await importar(page, [ruta]);
-  await expect(page.locator('.hoja article, .transcripcion article').first()).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator('.hoja, .transcripcion article').first()).toBeVisible({ timeout: 30_000 });
 }
 
 export async function volverABiblioteca(page: Page) {

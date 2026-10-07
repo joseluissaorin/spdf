@@ -95,7 +95,9 @@ export async function ejecutarGuion(nucleo: Nucleo, pasos: Paso[], apuntar: (nom
         q<HTMLFormElement>('.panel form')!.requestSubmit();
         await esperar(() => q('.afirmacion, .panel [role=alert]') || [...panel.querySelectorAll('p')].find((x) => /no contiene nada|contains nothing/.test(x.textContent ?? '')), 1_800_000);
         const af = [...document.querySelectorAll('.afirmacion')].slice(0, 3).map((a) => `${a.querySelector('p')?.textContent} ${a.querySelector('blockquote')?.textContent} ${a.querySelector('.mono.rojo')?.textContent} ${a.querySelector('.mono.apagado')?.textContent}`);
-        fin('preguntar', `«${p.preguntar.pregunta}» → ${af.length ? af.join(' | ') : q('.panel [role=alert]')?.textContent ?? 'sin respuesta con respaldo'}`);
+        const desc = [...document.querySelectorAll('.descartadas p')].map((x) => x.textContent).join(' | ');
+        const bruto = q('[data-bruto]')?.textContent?.slice(0, 600) ?? '';
+        fin('preguntar', `«${p.preguntar.pregunta}» → ${af.length ? af.join(' | ') : q('.panel [role=alert]')?.textContent ?? 'sin respuesta con respaldo'}${desc ? ` · descartadas: ${desc}` : ''} · bruto: ${bruto}`);
       }
     } catch (e) {
       fin('error', `${JSON.stringify(p)}: ${e instanceof Error ? e.message : String(e)}`);

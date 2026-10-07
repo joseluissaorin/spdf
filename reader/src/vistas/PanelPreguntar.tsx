@@ -109,9 +109,10 @@ export function PanelPreguntar({ id, resumen, alCerrar, alIr }: { id: string; re
             {r.descartadas.length > 0 && (
               <details className="descartadas" style={{ marginTop: 12 }}>
                 <summary>{t('descartadas', { n: r.descartadas.length })}</summary>
-                {r.descartadas.map((a, i) => <p key={i} style={{ fontSize: 14 }}>{a.texto} <span className="sello">{a.motivo}</span></p>)}
+                {r.descartadas.map((a, i) => <p key={i} style={{ fontSize: 14 }}>{a.texto} <span className="sello">{a.motivo}{a.motivo === 'sin-respaldo' ? ` ${Math.round(a.apoyo * 100)} %` : ''}</span></p>)}
               </details>
             )}
+            {r.bruto && <pre hidden data-bruto="">{r.bruto}</pre>}
             <details style={{ marginTop: 12 }}>
               <summary>{t('pasajes')} ({r.pasajes.length})</summary>
               <ol className="resultados">

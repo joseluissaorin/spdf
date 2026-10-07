@@ -24,14 +24,14 @@ export interface Afirmacion {
   motivo?: 'sin-pasaje' | 'cita-inventada' | 'sin-respaldo';
 }
 
-export interface Respuesta { aceptadas: Afirmacion[]; descartadas: Afirmacion[]; pasajes: Acierto[] }
+export interface Respuesta { aceptadas: Afirmacion[]; descartadas: Afirmacion[]; pasajes: Acierto[]; bruto?: string }
 
 const UMBRAL = 0.5;
 
 function instrucciones(l: Lengua): string {
   return l === 'es'
-    ? 'Eres un asistente de lectura académica. Responde a la PREGUNTA usando SOLO los PASAJES numerados. Cada afirmación debe apoyarse en un único pasaje y copiar de él, LITERALMENTE y sin cambiar una letra, la frase que la respalda. No añadas nada que no esté en los pasajes. Devuelve SOLO JSON con esta forma: {"respuesta":[{"afirmacion":"…","pasaje":"P1","cita_literal":"…"}]}. Si los pasajes no responden a la pregunta, devuelve {"respuesta":[]}. Escribe las afirmaciones en español.'
-    : 'You are an academic reading assistant. Answer the QUESTION using ONLY the numbered PASSAGES. Each claim must rest on a single passage and copy from it, VERBATIM and without changing a letter, the sentence that supports it. Add nothing that is not in the passages. Return ONLY JSON shaped like: {"respuesta":[{"afirmacion":"…","pasaje":"P1","cita_literal":"…"}]}. If the passages do not answer the question, return {"respuesta":[]}. Write the claims in English.';
+    ? 'Eres un asistente de lectura académica. Responde a la PREGUNTA usando SOLO los PASAJES numerados. Cada afirmación debe apoyarse en un único pasaje y copiar de él, LITERALMENTE y sin cambiar una letra, la frase que la respalda. No añadas nada que no esté en los pasajes. Devuelve SOLO JSON con esta forma: {"respuesta":[{"afirmacion":"…","pasaje":"P1","cita_literal":"…"}]}. Si los pasajes no responden a la pregunta, devuelve {"respuesta":[]}. Escribe las afirmaciones en la misma lengua que la PREGUNTA.'
+    : 'You are an academic reading assistant. Answer the QUESTION using ONLY the numbered PASSAGES. Each claim must rest on a single passage and copy from it, VERBATIM and without changing a letter, the sentence that supports it. Add nothing that is not in the passages. Return ONLY JSON shaped like: {"respuesta":[{"afirmacion":"…","pasaje":"P1","cita_literal":"…"}]}. If the passages do not answer the question, return {"respuesta":[]}. Write the claims in the same language as the QUESTION.';
 }
 
 export function construirPrompt(pregunta: string, pasajes: Acierto[], l: Lengua): string {
@@ -102,5 +102,5 @@ export async function preguntar(nucleo: Nucleo, o: { ambito: string; pregunta: s
     const a: Afirmacion = { texto, pasaje, cita: f.frase, literal: f.literal, apoyo, etiqueta };
     if (apoyo >= UMBRAL) aceptadas.push(a); else descartadas.push({ ...a, motivo: 'sin-respaldo' });
   }
-  return { aceptadas, descartadas, pasajes };
+  return { aceptadas, descartadas, pasajes, bruto: salida };
 }

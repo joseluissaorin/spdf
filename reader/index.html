@@ -11,15 +11,8 @@
     <link rel="icon" href="./icono.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="./icono-192.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <script>
-      // Tema antes del primer pintado (sin destello de papel claro en modo oscuro).
-      try {
-        var p = JSON.parse(localStorage.getItem('spdf-lector:prefs') || '{}');
-        var o = p.tema === 'oscuro' || ((!p.tema || p.tema === 'sistema') && matchMedia('(prefers-color-scheme: dark)').matches);
-        if (o) document.documentElement.classList.add('oscuro');
-        if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('anima');
-      } catch (e) {}
-    </script>
+    <!-- Tema antes del primer pintado (fichero aparte: la CSP no admite scripts en línea). -->
+    <script src="./tema.js"></script>
   </head>
   <body>
     <div id="raiz"></div>
