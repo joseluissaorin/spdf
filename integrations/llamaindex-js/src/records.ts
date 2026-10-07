@@ -75,6 +75,11 @@ function anclaPlana(a: Anchor): SpdfMetadata {
   return m;
 }
 
+/** Sin nulos: algunos almacenes de vectores (Chroma, por ejemplo) rechazan los valores nulos. */
+function sinNulos(m: SpdfMetadata): SpdfMetadata {
+  return Object.fromEntries(Object.entries(m).filter(([, v]) => v !== null && v !== undefined)) as SpdfMetadata;
+}
+
 /** Los registros de un documento ya abierto. `source` es la ruta o el nombre con que se citará el fichero. */
 export async function* recordsOf(doc: SpdfDocument, source: string, o: SpdfLoadOptions = {}): AsyncGenerator<SpdfRecord> {
   const locale = o.locale ?? 'en';
@@ -84,7 +89,7 @@ export async function* recordsOf(doc: SpdfDocument, source: string, o: SpdfLoadO
   const comun: SpdfMetadata = {
     source,
     spdf_version: doc.legacy ? String(doc.version) : '5.0',
-    doc_id: d.id,
+    spdf_doc_id: d.id,
     docref: doc.docref,
     title: meta.title ?? d.title ?? null,
     authors: authors || d.authors || null,
@@ -103,7 +108,7 @@ export async function* recordsOf(doc: SpdfDocument, source: string, o: SpdfLoadO
       yield {
         id: `${doc.docref}:${u.id}`,
         text: u.text,
-        metadata: { ...comun, unit_id: u.id, ord: u.ord, ...anclaPlana(u.anchor), anchor: JSON.stringify(u.anchor), anchor_uri: doc.anchorUri(u.anchor), citation: doc.cite(u.anchor, locale), reader: u.reader, confidence: u.confidence },
+        metadata: sinNulos({ ...comun, unit_id: u.id, ord: u.ord, ...anclaPlana(u.anchor), anchor: JSON.stringify(u.anchor), anchor_uri: doc.anchorUri(u.anchor), citation: doc.cite(u.anchor, locale), reader: u.reader, confidence: u.confidence }),
         ...(v ? { embedding: Array.from(v) } : {}),
       };
     }
@@ -114,12 +119,12 @@ export async function* recordsOf(doc: SpdfDocument, source: string, o: SpdfLoadO
     yield {
       id: `${doc.docref}:${f.id}`,
       text: f.text,
-      metadata: {
+      metadata: sinNulos({
         ...comun, fragment_id: f.id, unit_id: f.unit, ord: f.ord, ...anclaPlana(f.anchor),
         section: (f.section ?? []).join(' / ') || null, context: f.context || null,
         anchor: JSON.stringify(f.anchor), anchor_end: f.anchor_end ? JSON.stringify(f.anchor_end) : null,
         anchor_uri: f.anchor_uri, citation: doc.cite(f.anchor, locale, f.anchor_end),
-      },
+      }),
       ...(v ? { embedding: Array.from(v) } : {}),
     };
   }

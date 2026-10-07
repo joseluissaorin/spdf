@@ -42,7 +42,7 @@ describe('SpdfLoader', () => {
     expect(d.id).toMatch(/^sha256-[0-9a-f]{64}:f2-1$/);
     const p = parseAnchorUri(String(d.metadata.anchor_uri));
     expect(p.locator).toMatchObject({ p: 2, f: '1' });
-    for (const x of docs) for (const v of Object.values(x.metadata)) expect(['string', 'number', 'boolean'].includes(typeof v) || v === null).toBe(true);
+    for (const x of docs) for (const v of Object.values(x.metadata)) expect(['string', 'number', 'boolean'].includes(typeof v)).toBe(true);
   });
 
   it('el folio deducido de la lámina va entre corchetes', async () => {

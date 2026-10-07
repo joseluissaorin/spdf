@@ -15,9 +15,9 @@ export type { SpdfLoadOptions, SpdfMetadata, Locale } from './records.js';
 export { records, recordsOf, spdfFiles } from './records.js';
 
 /** Metadatos que no deben pesar en los vectores (largos o sin significado para el sentido del texto). */
-export const EXCLUDED_EMBED_METADATA = ['source', 'doc_id', 'docref', 'anchor', 'anchor_end', 'anchor_uri', 'spdf_version', 'unit_id', 'fragment_id', 'ord', 'anchor_type', 'folio_inferred', 'physical_page', 'reader', 'confidence'];
+export const EXCLUDED_EMBED_METADATA = ['source', 'spdf_doc_id', 'docref', 'anchor', 'anchor_end', 'anchor_uri', 'spdf_version', 'unit_id', 'fragment_id', 'ord', 'anchor_type', 'folio_inferred', 'physical_page', 'reader', 'confidence'];
 /** Metadatos que el modelo no necesita ver al responder; la cita, el título y la sección sí los ve. */
-export const EXCLUDED_LLM_METADATA = ['source', 'doc_id', 'docref', 'anchor', 'anchor_end', 'spdf_version', 'unit_id', 'ord', 'anchor_type', 'reader', 'confidence'];
+export const EXCLUDED_LLM_METADATA = ['source', 'spdf_doc_id', 'docref', 'anchor', 'anchor_end', 'spdf_version', 'unit_id', 'ord', 'anchor_type', 'reader', 'confidence'];
 
 function aDocumento(r: SpdfRecord): Document {
   return new Document({

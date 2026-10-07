@@ -58,10 +58,10 @@ const docs = await new SpdfReader({ embeddingsFrom: 'all-MiniLM-L6-v2@384' }).lo
 
 ## Metadata
 
-Scalars only (string, number, boolean or null): `citation`, `anchor_uri`,
+Scalars only (string, number or boolean; keys with a null value are left out): `citation`, `anchor_uri`,
 `printed_folio`, `physical_page`, `folio_inferred`, `t0`/`t1`/`speaker`,
 `slide`, `line_from`/`line_to`, `title`, `authors`, `year`, `language`, `kind`,
-`section`, `context`, `fragment_id` or `unit_id`, `ord`, `doc_id`, `docref`,
+`section`, `context`, `fragment_id` or `unit_id`, `ord`, `spdf_doc_id`, `docref`,
 `source`, `spdf_version`, and the full `anchor`/`anchor_end` as JSON strings.
 See the table in [`spdf-langchain`](../langchain-js/README.md#metadata).
 

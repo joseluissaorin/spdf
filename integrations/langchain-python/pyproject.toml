@@ -1,0 +1,55 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "spdf-langchain"
+version = "0.1.0"
+description = "LangChain document loader for SPDF files: retrieval-augmented answers that cite the printed page"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT OR Apache-2.0"
+license-files = ["LICENSE-MIT", "LICENSE-APACHE"]
+authors = [{ name = "José Luis Saorín Ferrer", email = "jl@joseluissaorin.com" }]
+keywords = ["spdf", "langchain", "document-loader", "rag", "citation", "digital-humanities"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Indexing",
+    "Typing :: Typed",
+]
+dependencies = [
+    "spdf-format>=0.1.0",
+    "langchain-core>=0.3",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "numpy>=1.24"]  # numpy: InMemoryVectorStore and the fake embeddings
+
+[project.urls]
+Homepage = "https://spdf.joseluissaorin.com"
+Source = "https://github.com/joseluissaorin/spdf/tree/main/integrations/langchain-python"
+Issues = "https://github.com/joseluissaorin/spdf/issues"
+
+# Local development inside the monorepo: use the library next door.
+[tool.uv.sources]
+spdf-format = { path = "../../python", editable = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/spdf_langchain"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/spdf_langchain", "tests", "README.md", "LICENSE-MIT", "LICENSE-APACHE"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

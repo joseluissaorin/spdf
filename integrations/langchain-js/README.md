@@ -48,18 +48,18 @@ When you answer from retrieved documents, quote `pageContent` and cite with
 
 ## Metadata
 
-All values are scalars (string, number, boolean or null), so every vector store accepts them.
+All values are scalars (string, number or boolean) and keys whose value would be null are left out, so every vector store accepts them (Chroma, for one, rejects nulls). The keys match the Python loaders.
 
 | Key | Example |
 | --- | --- |
 | `citation` | `(Saorín Ferrer, 2026, p. 1)`; `p. [3]` when the folio was inferred; `n. pag.` (`s. p.`) when the page has none |
 | `anchor_uri` | `spdf:sha256-5428…#p=2&f=1&char=15,307` |
-| `printed_folio`, `physical_page`, `folio_inferred` | `'1'`, `2`, `false` (page anchors) |
+| `printed_folio`, `physical_page`, `folio_inferred` | `'1'`, `2`, `false` (page anchors; no `printed_folio` key when the page has none) |
 | `t0`, `t1`, `speaker` | seconds (time anchors) |
 | `slide`, `line_from`, `line_to` | slides and verses |
 | `title`, `authors`, `year`, `language`, `kind` | from the CSL record |
 | `section`, `context` | `'I. Anchors'`, one line situating the passage |
-| `fragment_id` or `unit_id`, `ord`, `doc_id`, `docref`, `source`, `spdf_version` | identifiers |
+| `fragment_id` or `unit_id`, `ord`, `spdf_doc_id`, `docref`, `source`, `spdf_version`, `anchor_type` | identifiers (`spdf_doc_id`, not `doc_id`: vector stores and parent-document retrievers overwrite `doc_id`) |
 | `anchor`, `anchor_end` | the full anchors as JSON strings |
 
 ## Tests
