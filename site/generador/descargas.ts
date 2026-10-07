@@ -16,15 +16,17 @@ interface Inventario { version: string | null; files: Fichero[] }
 /** Avisos honestos sobre la firma de cada plataforma (mientras no haya certificados de distribución). */
 const AVISOS: Record<string, Record<Lengua, string>> = {
   macos: { en: 'Signed ad hoc, not notarised: the first time, right-click the app and choose Open.', es: 'Firmado ad hoc, sin notarizar: la primera vez, clic derecho sobre la aplicación y Abrir.' },
-  android: { en: 'Debug-signed APK: allow installing apps from this source when Android asks.', es: 'APK con firma de depuración: permite instalar aplicaciones de este origen cuando Android lo pida.' },
+  windows: { en: 'Not signed with Authenticode: SmartScreen will warn; choose More info, then Run anyway.', es: 'Sin firma de Authenticode: SmartScreen avisará; «Más información» y «Ejecutar de todas formas».' },
+  linux: { en: 'Needs WebKitGTK 4.1 (Ubuntu 22.04 or later).', es: 'Necesita WebKitGTK 4.1 (Ubuntu 22.04 o posterior).' },
+  android: { en: 'Allow installing apps from this source when Android asks. No local models in this version: semantic search uses Gemini with your own key.', es: 'Permite instalar aplicaciones de este origen cuando Android lo pida. Sin modelos locales en esta versión: la búsqueda semántica usa Gemini con tu clave.' },
 };
 
 const PLATAFORMAS: { id: string; nombre: Record<Lengua, string>; detalle: Record<Lengua, string> }[] = [
   { id: 'macos', nombre: { en: 'macOS', es: 'macOS' }, detalle: { en: 'Apple silicon, .dmg', es: 'Apple silicon, .dmg' } },
-  { id: 'windows', nombre: { en: 'Windows', es: 'Windows' }, detalle: { en: 'Windows 10 and 11, .msi', es: 'Windows 10 y 11, .msi' } },
-  { id: 'linux', nombre: { en: 'Linux', es: 'Linux' }, detalle: { en: 'AppImage and .deb', es: 'AppImage y .deb' } },
-  { id: 'android', nombre: { en: 'Android', es: 'Android' }, detalle: { en: '.apk, Android 10 or later', es: '.apk, Android 10 o posterior' } },
-  { id: 'ios', nombre: { en: 'iOS and iPadOS', es: 'iOS y iPadOS' }, detalle: { en: 'App Store', es: 'App Store' } },
+  { id: 'windows', nombre: { en: 'Windows', es: 'Windows' }, detalle: { en: 'Windows 10 and 11, .exe installer or .msi', es: 'Windows 10 y 11, instalador .exe o .msi' } },
+  { id: 'linux', nombre: { en: 'Linux', es: 'Linux' }, detalle: { en: 'AppImage and .deb, x64', es: 'AppImage y .deb, x64' } },
+  { id: 'android', nombre: { en: 'Android', es: 'Android' }, detalle: { en: '.apk, Android 8.0 or later', es: '.apk, Android 8.0 o posterior' } },
+  { id: 'ios', nombre: { en: 'iOS and iPadOS', es: 'iOS y iPadOS' }, detalle: { en: 'TestFlight, not yet', es: 'TestFlight, todavía no' } },
 ];
 
 export function descargasBloque(l: Lengua, hayLector: boolean): Bloque {

@@ -4,9 +4,11 @@ short: Download
 description: SPDF Reader opens, searches and cites SPDF files on macOS, Windows, Linux, iOS, Android and the web, with local models, offline and without an account. Free.
 ---
 
-**SPDF Reader** is the free reader of the format: open a file, read it page by page or second by second, search it by words or by meaning, and copy a citation with the exact folio. It runs the same interface everywhere, built with Tauri 2 on a Rust core, and the models it uses for semantic search run on your device.
+**SPDF Reader** is the free reader of the format: open a file, read it page by page or second by second, search it by words or by meaning, and copy a citation with the exact folio. It runs the same interface everywhere, built with Tauri 2 on a Rust core, and the models it uses for semantic search run on your device (on Android, in this first version, semantic search goes through Gemini with your own key).
 
 <!-- descargas -->
+
+Step-by-step installation for each platform, including what to do with the unsigned builds, is in the [reader's README](https://github.com/joseluissaorin/spdf/blob/main/reader/README.md#instalar).
 
 ## In your browser
 
