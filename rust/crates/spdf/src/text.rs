@@ -122,70 +122,145 @@ pub fn is_letter_or_digit(c: char) -> bool {
     )
 }
 
-/// Reference query normalization (§6): NFKD, drop marks (category M), full
-/// Unicode case folding.
-///
-/// ```
-/// assert_eq!(spdf::text::normalize_query("Canción STRAẞE"), "cancion strasse");
-/// ```
-pub fn normalize_query(q: &str) -> String {
-    let stripped: String = q.nfkd().filter(|c| !is_mark(*c)).collect();
-    caseless::default_case_fold_str(&stripped)
+/// Key used to deduplicate query terms: `lower(remove_Mn(NFD(term)))`.
+pub fn dedup_key(term: &str) -> String {
+    let stripped: String = term
+        .nfd()
+        .filter(|c| get_general_category(*c) != G::NonspacingMark)
+        .collect();
+    stripped.to_lowercase()
 }
 
-fn fts_string(s: &str) -> String {
+/// True for code points that send a query through the CJK route (§6.7).
+pub fn is_cjk(c: char) -> bool {
+    matches!(c as u32,
+        0x2E80..=0x2FDF
+        | 0x3040..=0x30FF
+        | 0x3100..=0x312F
+        | 0x3130..=0x318F
+        | 0x31A0..=0x31FF
+        | 0x3400..=0x4DBF
+        | 0x4E00..=0x9FFF
+        | 0xA960..=0xA97F
+        | 0xAC00..=0xD7AF
+        | 0xF900..=0xFAFF
+        | 0xFF66..=0xFF9F
+        | 0x20000..=0x3FFFF)
+}
+
+/// True for characters of general category L, M or N (word characters of
+/// the reference query parser).
+pub fn is_word_char(c: char) -> bool {
+    is_letter_or_digit(c) || is_mark(c)
+}
+
+fn words(s: &str) -> Vec<String> {
+    s.split(|c: char| !is_word_char(c))
+        .filter(|w| !w.is_empty())
+        .map(str::to_string)
+        .collect()
+}
+
+/// A user query parsed with the reference algorithm (§6).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ParsedQuery {
+    /// The terms, deduplicated, as written (NFC).
+    pub terms: Vec<String>,
+    /// True if the terms are quoted phrases (joined with `AND`).
+    pub phrases: bool,
+    /// True if the query contains CJK code points.
+    pub cjk: bool,
+}
+
+impl ParsedQuery {
+    /// Parses a query: NFC, phrases between `"…"`, `“…”`, `«…»`, `„…“`/`„…”`
+    /// (an unmatched opening mark is a separator), words = runs of L/M/N; if
+    /// there are phrases only the phrases count. Duplicates are removed by
+    /// [`dedup_key`].
+    ///
+    /// ```
+    /// use spdf::text::ParsedQuery;
+    /// let q = ParsedQuery::parse("vigilar «la sociedad disciplinaria» y castigar");
+    /// assert_eq!(q.terms, vec!["la sociedad disciplinaria"]);
+    /// assert!(q.phrases);
+    /// let q = ParsedQuery::parse("Panóptico panoptico, VIGILAR");
+    /// assert_eq!(q.terms, vec!["Panóptico", "VIGILAR"]);
+    /// ```
+    pub fn parse(query: &str) -> Self {
+        let q = nfc(query);
+        let chars: Vec<char> = q.chars().collect();
+        let mut loose = String::new();
+        let mut phrases: Vec<String> = Vec::new();
+        let mut i = 0;
+        while i < chars.len() {
+            let c = chars[i];
+            let closers: &[char] = match c {
+                '"' => &['"'],
+                '\u{201C}' => &['\u{201D}'],
+                '\u{00AB}' => &['\u{00BB}'],
+                '\u{201E}' => &['\u{201C}', '\u{201D}'],
+                _ => &[],
+            };
+            if !closers.is_empty() {
+                if let Some(off) = chars[i + 1..].iter().position(|x| closers.contains(x)) {
+                    let inner: String = chars[i + 1..i + 1 + off].iter().collect();
+                    let w = words(&inner);
+                    if !w.is_empty() {
+                        phrases.push(w.join(" "));
+                    }
+                    i += off + 2;
+                    continue;
+                }
+                loose.push(' ');
+                i += 1;
+                continue;
+            }
+            loose.push(c);
+            i += 1;
+        }
+        let (raw, is_phrases) = if phrases.is_empty() {
+            (words(&loose), false)
+        } else {
+            (phrases, true)
+        };
+        let mut seen = std::collections::HashSet::new();
+        let terms = raw
+            .into_iter()
+            .filter(|t| seen.insert(dedup_key(t)))
+            .collect();
+        ParsedQuery {
+            terms,
+            phrases: is_phrases,
+            cjk: q.chars().any(is_cjk),
+        }
+    }
+
+    /// The FTS5 `MATCH` expression, or `None` if there are no terms.
+    pub fn fts_match(&self) -> Option<String> {
+        if self.terms.is_empty() {
+            return None;
+        }
+        let parts: Vec<String> = self.terms.iter().map(|t| fts_string(t)).collect();
+        Some(parts.join(if self.phrases { " AND " } else { " OR " }))
+    }
+}
+
+/// Quotes a string as an FTS5 string literal.
+pub fn fts_string(s: &str) -> String {
     format!("\"{}\"", s.replace('"', "\"\""))
 }
 
 /// Builds the reference FTS5 `MATCH` expression for a user query (§6), or
 /// `None` if the query has nothing to search for.
 ///
-/// Quoted phrases stay phrases and, when present, are used alone, joined with
-/// `AND`; otherwise every letter/digit run becomes a quoted term and terms are
-/// joined with `OR`. An unmatched quote is treated as a separator.
-///
 /// ```
 /// use spdf::text::fts_query;
-/// assert_eq!(fts_query("El Panóptico, vigilar").as_deref(), Some(r#""el" OR "panoptico" OR "vigilar""#));
+/// assert_eq!(fts_query("El Panóptico, vigilar").as_deref(), Some(r#""El" OR "Panóptico" OR "vigilar""#));
 /// assert_eq!(fts_query(r#"vigilar "la sociedad disciplinaria""#).as_deref(), Some(r#""la sociedad disciplinaria""#));
 /// assert_eq!(fts_query(" ,; "), None);
 /// ```
 pub fn fts_query(q: &str) -> Option<String> {
-    let norm = normalize_query(q);
-    let mut phrases = Vec::new();
-    let mut rest = String::new();
-    let mut chunks = norm.split('"').peekable();
-    let mut inside = false;
-    while let Some(chunk) = chunks.next() {
-        let closed = chunks.peek().is_some();
-        if inside && closed {
-            let words: Vec<&str> = chunk
-                .split(|c: char| !is_letter_or_digit(c))
-                .filter(|w| !w.is_empty())
-                .collect();
-            if !words.is_empty() {
-                phrases.push(words.join(" "));
-            }
-        } else {
-            rest.push(' ');
-            rest.push_str(chunk);
-        }
-        inside = !inside;
-    }
-    if !phrases.is_empty() {
-        let parts: Vec<String> = phrases.iter().map(|p| fts_string(p)).collect();
-        return Some(parts.join(" AND "));
-    }
-    let terms: Vec<String> = rest
-        .split(|c: char| !is_letter_or_digit(c))
-        .filter(|w| !w.is_empty())
-        .map(fts_string)
-        .collect();
-    if terms.is_empty() {
-        None
-    } else {
-        Some(terms.join(" OR "))
-    }
+    ParsedQuery::parse(q).fts_match()
 }
 
 #[cfg(test)]
@@ -206,11 +281,15 @@ mod tests {
     }
 
     #[test]
-    fn query_normalization() {
-        assert_eq!(normalize_query("ÁRBOL"), "arbol");
-        assert_eq!(normalize_query("ﬁn"), "fin");
+    fn query_parsing() {
         assert_eq!(fts_query("\"unclosed phrase"), Some("\"unclosed\" OR \"phrase\"".into()));
         assert_eq!(fts_query("a \"b c\" d \"e\""), Some("\"b c\" AND \"e\"".into()));
-        assert_eq!(fts_query("漢字"), Some("\"漢字\"".into()));
+        assert_eq!(fts_query("„uno dos“ x"), Some("\"uno dos\"".into()));
+        assert_eq!(fts_query("“” solo"), Some("\"solo\"".into()));
+        assert_eq!(fts_query("Straße ﬁn"), Some("\"Straße\" OR \"ﬁn\"".into()));
+        let q = ParsedQuery::parse("漢字");
+        assert!(q.cjk);
+        assert_eq!(q.fts_match(), Some("\"漢字\"".into()));
+        assert_eq!(dedup_key("Árbol"), "arbol");
     }
 }

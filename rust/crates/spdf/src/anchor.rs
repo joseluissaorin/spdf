@@ -9,7 +9,7 @@
 //! let a = Anchor::from_json(r#"{"type":"page","physical":29,"printed":"21","chars":[118,301]}"#).unwrap();
 //! assert!(matches!(a.kind, AnchorKind::Page { physical: 29, .. }));
 //! let uri = AnchorUri::from_anchor("sha256-3f2a", &a, None);
-//! assert_eq!(uri.to_string(), "spdf:sha256-3f2a#p=29&f=21&c=118-301");
+//! assert_eq!(uri.to_string(), "spdf:sha256-3f2a#p=29&f=21&char=118,301");
 //! assert_eq!(AnchorUri::parse(&uri.to_string()).unwrap(), uri);
 //! ```
 
@@ -501,8 +501,19 @@ fn fmt_num(x: f64) -> String {
     format_number(round6(x))
 }
 
+fn round_to(x: f64, decimals: usize) -> f64 {
+    let s = format!("{x:.decimals$}");
+    let v: f64 = s.parse().unwrap_or(x);
+    if v == 0.0 {
+        0.0
+    } else {
+        v
+    }
+}
+
 fn parse_f64(s: &str, what: &str) -> Result<f64> {
     let v: f64 = s
+        .trim()
         .parse()
         .map_err(|_| Error::InvalidUri(format!("`{what}` is not a number: `{s}`")))?;
     if v.is_finite() {
@@ -512,7 +523,8 @@ fn parse_f64(s: &str, what: &str) -> Result<f64> {
     }
 }
 
-fn parse_u32(s: &str, what: &str) -> Result<u32> {
+fn parse_int<T: FromStr>(s: &str, what: &str) -> Result<T> {
+    let s = s.trim();
     if s.is_empty() || !s.bytes().all(|b| b.is_ascii_digit()) {
         return Err(Error::InvalidUri(format!("`{what}` is not an integer: `{s}`")));
     }
@@ -520,114 +532,152 @@ fn parse_u32(s: &str, what: &str) -> Result<u32> {
         .map_err(|_| Error::InvalidUri(format!("`{what}` out of range: `{s}`")))
 }
 
-fn parse_u64(s: &str, what: &str) -> Result<u64> {
-    if s.is_empty() || !s.bytes().all(|b| b.is_ascii_digit()) {
-        return Err(Error::InvalidUri(format!("`{what}` is not an integer: `{s}`")));
-    }
-    s.parse()
-        .map_err(|_| Error::InvalidUri(format!("`{what}` out of range: `{s}`")))
+fn pair<'a>(raw: &'a str, sep: char, what: &str) -> Result<(&'a str, &'a str)> {
+    raw.split_once(sep)
+        .ok_or_else(|| Error::InvalidUri(format!("`{what}` must be <a>{sep}<b>")))
 }
 
-/// A parsed `spdf:` URI. Parameters are kept typed; [`fmt::Display`] writes
-/// them in the canonical order `p f t s para sl sh rows v ref c xywh fe`,
-/// followed by unknown parameters in their original order.
+/// A canonical reference inside a locator (`ref=<scheme>:<ref>`).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CanonicalRef {
+    /// Scheme (`stephanus`, `bekker`, `bible`, `cts`…).
+    pub scheme: String,
+    /// The reference.
+    #[serde(rename = "ref")]
+    pub reference: String,
+}
+
+/// The parameters of an anchor URI (contract §3). Serializes to the
+/// `locator` object of the conformance protocol (short keys, only the
+/// present ones).
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Locator {
+    /// `p`: physical page.
+    #[serde(rename = "p", skip_serializing_if = "Option::is_none", default)]
+    pub physical: Option<u64>,
+    /// `pe`: physical end page.
+    #[serde(rename = "pe", skip_serializing_if = "Option::is_none", default)]
+    pub physical_end: Option<u64>,
+    /// `f`: printed folio.
+    #[serde(rename = "f", skip_serializing_if = "Option::is_none", default)]
+    pub printed: Option<String>,
+    /// `fe`: printed end folio.
+    #[serde(rename = "fe", skip_serializing_if = "Option::is_none", default)]
+    pub printed_end: Option<String>,
+    /// `t`: `[t0]` or `[t0, t1]` in seconds.
+    #[serde(rename = "t", skip_serializing_if = "Option::is_none", default)]
+    pub time: Option<Vec<f64>>,
+    /// `s`: section path.
+    #[serde(rename = "s", skip_serializing_if = "Option::is_none", default)]
+    pub section: Option<Vec<String>>,
+    /// `para`: paragraph.
+    #[serde(rename = "para", skip_serializing_if = "Option::is_none", default)]
+    pub paragraph: Option<u64>,
+    /// `sl`: slide.
+    #[serde(rename = "sl", skip_serializing_if = "Option::is_none", default)]
+    pub slide: Option<u64>,
+    /// `sh`: sheet name.
+    #[serde(rename = "sh", skip_serializing_if = "Option::is_none", default)]
+    pub sheet: Option<String>,
+    /// `rows`: `[from, to]`.
+    #[serde(rename = "rows", skip_serializing_if = "Option::is_none", default)]
+    pub rows: Option<[u64; 2]>,
+    /// `v`: `[line]` or `[from, to]`.
+    #[serde(rename = "v", skip_serializing_if = "Option::is_none", default)]
+    pub verse: Option<Vec<u64>>,
+    /// `ref`: canonical reference.
+    #[serde(rename = "ref", skip_serializing_if = "Option::is_none", default)]
+    pub reference: Option<CanonicalRef>,
+    /// `char`: code-point range `[start, end]`.
+    #[serde(rename = "char", skip_serializing_if = "Option::is_none", default)]
+    pub chars: Option<[u64; 2]>,
+    /// `xywh`: region `[x, y, w, h]` as fractions 0–1.
+    #[serde(rename = "xywh", skip_serializing_if = "Option::is_none", default)]
+    pub region: Option<[f64; 4]>,
+}
+
+/// A parsed `spdf:` URI: document reference plus [`Locator`].
+///
+/// [`fmt::Display`] writes the canonical form (parameter order `p pe f fe t s
+/// para sl sh rows v ref char xywh`), so `parse` ∘ `to_string` reproduces any
+/// canonical URI byte for byte.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct AnchorUri {
     /// `sha256-<hex>` or a document id (decoded).
-    pub doc: String,
-    /// `p`: physical page.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub physical: Option<u32>,
-    /// `f`: printed folio.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub printed: Option<String>,
-    /// `t`: time span in seconds.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub time: Option<(f64, Option<f64>)>,
-    /// `s`: section path.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub section: Option<Vec<String>>,
-    /// `para`: paragraph.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub paragraph: Option<u32>,
-    /// `sl`: slide.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub slide: Option<u32>,
-    /// `sh`: sheet name.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub sheet: Option<String>,
-    /// `rows`: row range.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub rows: Option<(u32, u32)>,
-    /// `v`: verse line(s).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub verse: Option<(u32, Option<u32>)>,
-    /// `ref`: canonical reference `(scheme, ref)`.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub reference: Option<(String, String)>,
-    /// `c`: code-point range.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub chars: Option<(u64, u64)>,
-    /// `xywh`: region.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub region: Option<Region>,
-    /// `fe`: printed folio of the end.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub printed_end: Option<String>,
-    /// Unknown parameters `(name, decoded value)`, in order.
-    #[serde(skip_serializing_if = "Vec::is_empty", default)]
-    pub extra: Vec<(String, String)>,
+    pub docref: String,
+    /// The parameters.
+    pub locator: Locator,
 }
 
 impl AnchorUri {
-    /// Document reference from a source SHA-256 (hex).
+    /// Document reference for a source SHA-256 given in hex.
     pub fn docref_sha256(hex: &str) -> String {
         format!("sha256-{}", hex.to_ascii_lowercase())
     }
 
-    /// Builds the URI of `anchor` (and, for ranges, `end`) within `doc`.
-    pub fn from_anchor(doc: &str, anchor: &Anchor, end: Option<&Anchor>) -> Self {
-        let mut u = AnchorUri {
-            doc: doc.to_string(),
-            ..Default::default()
-        };
+    /// Builds the URI of `anchor` (and, for ranges, `end`) within `docref`.
+    pub fn from_anchor(docref: &str, anchor: &Anchor, end: Option<&Anchor>) -> Self {
+        let mut l = Locator::default();
         match &anchor.kind {
             AnchorKind::Page {
                 physical, printed, ..
             } => {
-                u.physical = Some(*physical);
-                u.printed = printed.clone();
+                l.physical = Some(u64::from(*physical));
+                l.printed = printed.clone();
+                if let Some(Anchor {
+                    kind: AnchorKind::Page { physical: pe, .. },
+                    ..
+                }) = end
+                {
+                    if pe != physical {
+                        l.physical_end = Some(u64::from(*pe));
+                    }
+                }
             }
-            AnchorKind::Time { t0, t1, .. } => u.time = Some((*t0, *t1)),
+            AnchorKind::Time { t0, t1, .. } => {
+                let mut t1 = *t1;
+                if let Some(Anchor {
+                    kind: AnchorKind::Time { t0: e0, t1: e1, .. },
+                    ..
+                }) = end
+                {
+                    t1 = Some(e1.unwrap_or(*e0));
+                }
+                l.time = Some(match t1 {
+                    Some(t1) => vec![*t0, t1],
+                    None => vec![*t0],
+                });
+            }
             AnchorKind::Section {
                 path,
                 paragraph,
                 printed,
             } => {
                 if !path.is_empty() {
-                    u.section = Some(path.clone());
+                    l.section = Some(path.clone());
                 }
-                u.paragraph = *paragraph;
-                u.printed = printed.clone();
+                l.paragraph = paragraph.map(u64::from);
+                l.printed = printed.clone();
             }
-            AnchorKind::Slide { n } => u.slide = Some(*n),
+            AnchorKind::Slide { n } => l.slide = Some(u64::from(*n)),
             AnchorKind::Sheet {
                 sheet,
                 row_from,
                 row_to,
             } => {
-                u.sheet = Some(sheet.clone());
+                l.sheet = Some(sheet.clone());
                 if let Some(a) = row_from {
-                    u.rows = Some((*a, row_to.unwrap_or(*a)));
+                    l.rows = Some([u64::from(*a), u64::from(row_to.unwrap_or(*a))]);
                 }
             }
             AnchorKind::Web {
                 path, paragraph, ..
             } => {
                 if !path.is_empty() {
-                    u.section = Some(path.clone());
+                    l.section = Some(path.clone());
                 }
-                u.paragraph = *paragraph;
+                l.paragraph = paragraph.map(u64::from);
             }
             AnchorKind::Image => {}
             AnchorKind::Verse {
@@ -635,26 +685,36 @@ impl AnchorUri {
                 line_to,
                 printed,
             } => {
-                u.verse = Some((*line_from, *line_to));
-                u.printed = printed.clone();
+                l.verse = Some(match line_to {
+                    Some(b) if b != line_from => vec![u64::from(*line_from), u64::from(*b)],
+                    _ => vec![u64::from(*line_from)],
+                });
+                l.printed = printed.clone();
             }
             AnchorKind::Canonical { scheme, reference } => {
-                u.reference = Some((scheme.clone(), reference.clone()));
+                l.reference = Some(CanonicalRef {
+                    scheme: scheme.clone(),
+                    reference: reference.clone(),
+                });
             }
         }
-        u.chars = anchor.chars;
-        u.region = anchor.region;
         if let Some(e) = end {
             if let Some(p) = e.printed() {
-                if u.printed.as_deref() != Some(p) {
-                    u.printed_end = Some(p.to_string());
+                if l.printed.as_deref() != Some(p) {
+                    l.printed_end = Some(p.to_string());
                 }
             }
         }
-        u
+        l.chars = anchor.chars.map(|(a, b)| [a, b]);
+        l.region = anchor.region.map(|r| [r.x, r.y, r.w, r.h]);
+        AnchorUri {
+            docref: docref.to_string(),
+            locator: l,
+        }
     }
 
-    /// Parses an `spdf:` URI.
+    /// Parses an `spdf:` URI. Unknown parameters are ignored; malformed
+    /// known parameters are errors.
     pub fn parse(s: &str) -> Result<Self> {
         let rest = s
             .strip_prefix("spdf:")
@@ -667,265 +727,222 @@ impl AnchorUri {
             return Err(Error::InvalidUri("empty document reference".into()));
         }
         let mut u = AnchorUri {
-            doc: percent_decode(doc)?,
-            ..Default::default()
+            docref: percent_decode(doc)?,
+            locator: Locator::default(),
         };
         let Some(frag) = frag else { return Ok(u) };
-        for pair in frag.split('&').filter(|p| !p.is_empty()) {
-            let (k, raw) = pair
+        let l = &mut u.locator;
+        for p in frag.split('&').filter(|p| !p.is_empty()) {
+            let (k, raw) = p
                 .split_once('=')
-                .ok_or_else(|| Error::InvalidUri(format!("parameter without value: `{pair}`")))?;
-            let dup = || Error::InvalidUri(format!("duplicate parameter `{k}`"));
+                .ok_or_else(|| Error::InvalidUri(format!("parameter without value: `{p}`")))?;
             match k {
-                "p" => {
-                    if u.physical.is_some() {
-                        return Err(dup());
-                    }
-                    u.physical = Some(parse_u32(raw, "p")?);
-                }
-                "f" => {
-                    if u.printed.is_some() {
-                        return Err(dup());
-                    }
-                    u.printed = Some(percent_decode(raw)?);
-                }
-                "fe" => {
-                    if u.printed_end.is_some() {
-                        return Err(dup());
-                    }
-                    u.printed_end = Some(percent_decode(raw)?);
-                }
+                "p" => l.physical = Some(parse_int(raw, "p")?),
+                "pe" => l.physical_end = Some(parse_int(raw, "pe")?),
+                "f" => l.printed = Some(percent_decode(raw)?),
+                "fe" => l.printed_end = Some(percent_decode(raw)?),
                 "t" => {
-                    if u.time.is_some() {
-                        return Err(dup());
+                    let raw = raw.strip_prefix("npt:").unwrap_or(raw);
+                    let mut v = Vec::new();
+                    for x in raw.split(',') {
+                        v.push(round6(parse_f64(x, "t")?));
                     }
-                    let (a, b) = match raw.split_once(',') {
-                        Some((a, b)) => (a, Some(b)),
-                        None => (raw, None),
-                    };
-                    let t0 = parse_f64(a, "t")?;
-                    let t1 = b.map(|b| parse_f64(b, "t")).transpose()?;
-                    u.time = Some((t0, t1));
+                    if v.len() > 2 {
+                        return Err(Error::InvalidUri("`t` takes at most two values".into()));
+                    }
+                    l.time = Some(v);
                 }
                 "s" => {
-                    if u.section.is_some() {
-                        return Err(dup());
-                    }
-                    u.section = Some(
+                    l.section = Some(
                         raw.split('/')
                             .map(percent_decode)
                             .collect::<Result<Vec<_>>>()?,
-                    );
+                    )
                 }
-                "para" => {
-                    if u.paragraph.is_some() {
-                        return Err(dup());
-                    }
-                    u.paragraph = Some(parse_u32(raw, "para")?);
-                }
-                "sl" => {
-                    if u.slide.is_some() {
-                        return Err(dup());
-                    }
-                    u.slide = Some(parse_u32(raw, "sl")?);
-                }
-                "sh" => {
-                    if u.sheet.is_some() {
-                        return Err(dup());
-                    }
-                    u.sheet = Some(percent_decode(raw)?);
-                }
+                "para" => l.paragraph = Some(parse_int(raw, "para")?),
+                "sl" => l.slide = Some(parse_int(raw, "sl")?),
+                "sh" => l.sheet = Some(percent_decode(raw)?),
                 "rows" => {
-                    if u.rows.is_some() {
-                        return Err(dup());
-                    }
-                    let (a, b) = raw
-                        .split_once('-')
-                        .ok_or_else(|| Error::InvalidUri("`rows` must be a-b".into()))?;
-                    u.rows = Some((parse_u32(a, "rows")?, parse_u32(b, "rows")?));
+                    let (a, b) = pair(raw, '-', "rows")?;
+                    l.rows = Some([parse_int(a, "rows")?, parse_int(b, "rows")?]);
                 }
                 "v" => {
-                    if u.verse.is_some() {
-                        return Err(dup());
-                    }
-                    let (a, b) = match raw.split_once('-') {
-                        Some((a, b)) => (a, Some(b)),
-                        None => (raw, None),
-                    };
-                    u.verse = Some((
-                        parse_u32(a, "v")?,
-                        b.map(|b| parse_u32(b, "v")).transpose()?,
-                    ));
+                    l.verse = Some(match raw.split_once('-') {
+                        Some((a, b)) => vec![parse_int(a, "v")?, parse_int(b, "v")?],
+                        None => vec![parse_int(raw, "v")?],
+                    })
                 }
                 "ref" => {
-                    if u.reference.is_some() {
-                        return Err(dup());
-                    }
-                    let d = percent_decode(raw)?;
-                    let (sch, r) = d
-                        .split_once(':')
-                        .ok_or_else(|| Error::InvalidUri("`ref` must be scheme:ref".into()))?;
-                    u.reference = Some((sch.to_string(), r.to_string()));
+                    let (sch, r) = pair(raw, ':', "ref")?;
+                    l.reference = Some(CanonicalRef {
+                        scheme: percent_decode(sch)?,
+                        reference: percent_decode(r)?,
+                    });
                 }
-                "c" => {
-                    if u.chars.is_some() {
-                        return Err(dup());
-                    }
-                    let (a, b) = raw
-                        .split_once('-')
-                        .ok_or_else(|| Error::InvalidUri("`c` must be start-end".into()))?;
-                    let (a, b) = (parse_u64(a, "c")?, parse_u64(b, "c")?);
+                "char" => {
+                    let (a, b) = pair(raw, ',', "char")?;
+                    let (a, b): (u64, u64) = (parse_int(a, "char")?, parse_int(b, "char")?);
                     if a > b {
-                        return Err(Error::InvalidUri("`c` start > end".into()));
+                        return Err(Error::InvalidUri("`char` start > end".into()));
                     }
-                    u.chars = Some((a, b));
+                    l.chars = Some([a, b]);
                 }
                 "xywh" => {
-                    if u.region.is_some() {
-                        return Err(dup());
-                    }
-                    let parts: Vec<&str> = raw.split(',').collect();
+                    let body = raw.strip_prefix("percent:").ok_or_else(|| {
+                        Error::InvalidUri("`xywh` must use `percent:` units".into())
+                    })?;
+                    let parts: Vec<&str> = body.split(',').collect();
                     if parts.len() != 4 {
                         return Err(Error::InvalidUri("`xywh` needs 4 numbers".into()));
                     }
-                    u.region = Some(Region {
-                        x: parse_f64(parts[0], "xywh")?,
-                        y: parse_f64(parts[1], "xywh")?,
-                        w: parse_f64(parts[2], "xywh")?,
-                        h: parse_f64(parts[3], "xywh")?,
-                    });
+                    let mut r = [0.0; 4];
+                    for (i, x) in parts.iter().enumerate() {
+                        r[i] = round6(parse_f64(x, "xywh")? / 100.0);
+                    }
+                    l.region = Some(r);
                 }
-                other => u
-                    .extra
-                    .push((percent_decode(other)?, percent_decode(raw)?)),
+                _ => {}
             }
         }
         Ok(u)
     }
 
     /// Best-effort anchor described by this URI. The type is inferred from
-    /// the parameters (`p`/`f` → page, `t` → time, `sl` → slide, `sh` →
-    /// sheet, `v` → verse, `ref` → canonical, `s`/`para` → section, only
-    /// `xywh` → image).
+    /// the parameters (`p` → page, `t` → time, `sl` → slide, `sh` → sheet,
+    /// `v` → verse, `ref` → canonical, `s`/`para`/`f` → section, only `xywh`
+    /// → image).
     pub fn to_anchor(&self) -> Option<Anchor> {
-        let kind = if let Some(p) = self.physical {
+        let l = &self.locator;
+        let u32_of = |x: u64| u32::try_from(x).ok();
+        let kind = if let Some(p) = l.physical {
             AnchorKind::Page {
-                physical: p,
-                printed: self.printed.clone(),
+                physical: u32_of(p)?,
+                printed: l.printed.clone(),
                 roman: None,
                 foliation: None,
                 source: None,
                 confidence: None,
             }
-        } else if let Some((t0, t1)) = self.time {
+        } else if let Some(t) = &l.time {
             AnchorKind::Time {
-                t0,
-                t1,
+                t0: *t.first()?,
+                t1: t.get(1).copied(),
                 speaker: None,
             }
-        } else if let Some(n) = self.slide {
-            AnchorKind::Slide { n }
-        } else if let Some(sheet) = &self.sheet {
+        } else if let Some(n) = l.slide {
+            AnchorKind::Slide { n: u32_of(n)? }
+        } else if let Some(sheet) = &l.sheet {
             AnchorKind::Sheet {
                 sheet: sheet.clone(),
-                row_from: self.rows.map(|r| r.0),
-                row_to: self.rows.map(|r| r.1),
+                row_from: l.rows.and_then(|r| u32_of(r[0])),
+                row_to: l.rows.and_then(|r| u32_of(r[1])),
             }
-        } else if let Some((a, b)) = self.verse {
+        } else if let Some(v) = &l.verse {
             AnchorKind::Verse {
-                line_from: a,
-                line_to: b,
-                printed: self.printed.clone(),
+                line_from: u32_of(*v.first()?)?,
+                line_to: v.get(1).and_then(|x| u32_of(*x)),
+                printed: l.printed.clone(),
             }
-        } else if let Some((s, r)) = &self.reference {
+        } else if let Some(r) = &l.reference {
             AnchorKind::Canonical {
-                scheme: s.clone(),
-                reference: r.clone(),
+                scheme: r.scheme.clone(),
+                reference: r.reference.clone(),
             }
-        } else if self.section.is_some() || self.paragraph.is_some() {
+        } else if l.section.is_some() || l.paragraph.is_some() || l.printed.is_some() {
             AnchorKind::Section {
-                path: self.section.clone().unwrap_or_default(),
-                paragraph: self.paragraph,
-                printed: self.printed.clone(),
+                path: l.section.clone().unwrap_or_default(),
+                paragraph: l.paragraph.and_then(u32_of),
+                printed: l.printed.clone(),
             }
-        } else if self.region.is_some() {
+        } else if l.region.is_some() {
             AnchorKind::Image
         } else {
             return None;
         };
         Some(Anchor {
             kind,
-            region: self.region,
-            chars: self.chars,
+            region: l.region.map(|r| Region {
+                x: r[0],
+                y: r[1],
+                w: r[2],
+                h: r[3],
+            }),
+            chars: l.chars.map(|c| (c[0], c[1])),
             extra: Map::new(),
         })
     }
 
     /// The URI without the fragment (`spdf:<docref>`).
     pub fn document_uri(&self) -> String {
-        format!("spdf:{}", percent_encode(&self.doc))
+        format!("spdf:{}", percent_encode(&self.docref))
     }
 }
 
 impl fmt::Display for AnchorUri {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let l = &self.locator;
         let mut params: Vec<String> = Vec::new();
-        if let Some(p) = self.physical {
+        if let Some(p) = l.physical {
             params.push(format!("p={p}"));
         }
-        if let Some(x) = &self.printed {
-            params.push(format!("f={}", percent_encode(x)));
-        }
-        if let Some((t0, t1)) = self.time {
-            match t1 {
-                Some(t1) => params.push(format!("t={},{}", fmt_num(t0), fmt_num(t1))),
-                None => params.push(format!("t={}", fmt_num(t0))),
+        if let Some(p) = l.physical_end {
+            if Some(p) != l.physical {
+                params.push(format!("pe={p}"));
             }
         }
-        if let Some(s) = &self.section {
+        if let Some(x) = &l.printed {
+            params.push(format!("f={}", percent_encode(x)));
+        }
+        if let Some(x) = &l.printed_end {
+            if Some(x) != l.printed.as_ref() {
+                params.push(format!("fe={}", percent_encode(x)));
+            }
+        }
+        if let Some(t) = &l.time {
+            let parts: Vec<String> = t.iter().map(|x| fmt_num(*x)).collect();
+            params.push(format!("t={}", parts.join(",")));
+        }
+        if let Some(s) = &l.section {
             let parts: Vec<String> = s.iter().map(|x| percent_encode(x)).collect();
             params.push(format!("s={}", parts.join("/")));
         }
-        if let Some(x) = self.paragraph {
+        if let Some(x) = l.paragraph {
             params.push(format!("para={x}"));
         }
-        if let Some(x) = self.slide {
+        if let Some(x) = l.slide {
             params.push(format!("sl={x}"));
         }
-        if let Some(x) = &self.sheet {
+        if let Some(x) = &l.sheet {
             params.push(format!("sh={}", percent_encode(x)));
         }
-        if let Some((a, b)) = self.rows {
+        if let Some([a, b]) = l.rows {
             params.push(format!("rows={a}-{b}"));
         }
-        if let Some((a, b)) = self.verse {
-            match b {
-                Some(b) => params.push(format!("v={a}-{b}")),
-                None => params.push(format!("v={a}")),
+        if let Some(v) = &l.verse {
+            match v.as_slice() {
+                [a, b] if a != b => params.push(format!("v={a}-{b}")),
+                [a, ..] => params.push(format!("v={a}")),
+                [] => {}
             }
         }
-        if let Some((s, r)) = &self.reference {
-            params.push(format!("ref={}:{}", percent_encode(s), percent_encode(r)));
-        }
-        if let Some((a, b)) = self.chars {
-            params.push(format!("c={a}-{b}"));
-        }
-        if let Some(r) = self.region {
+        if let Some(r) = &l.reference {
             params.push(format!(
-                "xywh={},{},{},{}",
-                fmt_num(r.x),
-                fmt_num(r.y),
-                fmt_num(r.w),
-                fmt_num(r.h)
+                "ref={}:{}",
+                percent_encode(&r.scheme),
+                percent_encode(&r.reference)
             ));
         }
-        if let Some(x) = &self.printed_end {
-            params.push(format!("fe={}", percent_encode(x)));
+        if let Some([a, b]) = l.chars {
+            params.push(format!("char={a},{b}"));
         }
-        for (k, v) in &self.extra {
-            params.push(format!("{}={}", percent_encode(k), percent_encode(v)));
+        if let Some(r) = l.region {
+            let parts: Vec<String> = r
+                .iter()
+                .map(|x| format_number(round_to(x * 100.0, 4)))
+                .collect();
+            params.push(format!("xywh=percent:{}", parts.join(",")));
         }
-        write!(f, "spdf:{}", percent_encode(&self.doc))?;
+        write!(f, "spdf:{}", percent_encode(&self.docref))?;
         if !params.is_empty() {
             write!(f, "#{}", params.join("&"))?;
         }
@@ -940,12 +957,12 @@ impl FromStr for AnchorUri {
     }
 }
 
-/// Formats the URI of an anchor given as JSON. `doc` is the document
-/// reference (`sha256-<hex>` or an id).
-pub fn format_uri(doc: &str, anchor: &Value, end: Option<&Value>) -> Result<String> {
+/// Formats the URI of an anchor given as JSON (5.0 names). `docref` is
+/// `sha256-<hex>` or a document id.
+pub fn format_uri(docref: &str, anchor: &Value, end: Option<&Value>) -> Result<String> {
     let a = Anchor::from_value(anchor)?;
     let e = end.map(Anchor::from_value).transpose()?;
-    Ok(AnchorUri::from_anchor(doc, &a, e.as_ref()).to_string())
+    Ok(AnchorUri::from_anchor(docref, &a, e.as_ref()).to_string())
 }
 
 /// Parses an anchor URI.
@@ -980,13 +997,22 @@ mod tests {
         let s = AnchorUri::from_anchor("d", &c, None).to_string();
         assert_eq!(s, "spdf:d#ref=bible:John%203%3A16");
         assert_eq!(AnchorUri::parse(&s).unwrap().to_anchor().unwrap(), c);
+
+        let p = Anchor::from_value(&json!({"type":"page","physical":29,"printed":"21","chars":[118,301],"region":{"x":0.125,"y":0.2,"w":0.5,"h":0.1}})).unwrap();
+        let e = Anchor::from_value(&json!({"type":"page","physical":30,"printed":"22"})).unwrap();
+        let s = AnchorUri::from_anchor("sha256-ab", &p, Some(&e)).to_string();
+        assert_eq!(s, "spdf:sha256-ab#p=29&pe=30&f=21&fe=22&char=118,301&xywh=percent:12.5,20,50,10");
+        let u = AnchorUri::parse(&s).unwrap();
+        assert_eq!(u.to_string(), s);
+        assert_eq!(serde_json::to_value(&u).unwrap(), json!({"docref":"sha256-ab","locator":{"p":29,"pe":30,"f":"21","fe":"22","char":[118,301],"xywh":[0.125,0.2,0.5,0.1]}}));
     }
 
     #[test]
     fn rejects_bad_uris() {
-        for bad in ["http://x", "spdf:", "spdf:d#p=x", "spdf:d#p=1&p=2", "spdf:d#c=5-2", "spdf:d#xywh=1,2", "spdf:d#f=%G1"] {
+        for bad in ["http://x", "spdf:", "spdf:d#p=x", "spdf:d#char=5,2", "spdf:d#xywh=percent:1,2", "spdf:d#f=%G1", "spdf:d#xywh=1,2,3,4"] {
             assert!(AnchorUri::parse(bad).is_err(), "{bad}");
         }
+        assert!(AnchorUri::parse("spdf:d#zz=1&p=3").is_ok());
     }
 
     #[test]
