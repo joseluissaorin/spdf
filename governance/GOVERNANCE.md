@@ -164,8 +164,8 @@ Everyone who takes part follows the [Contributor Covenant 2.1](../CODE_OF_CONDUC
   conformance suite, the website) is licensed under the MIT licence or the Apache
   License 2.0, at the user's choice (`MIT OR Apache-2.0`).
 - Contributions are accepted under the same licence as the part of the repository they
-  change, certified with a `Signed-off-by` line under the Developer Certificate of Origin
-  (see [`CONTRIBUTING.md`](../CONTRIBUTING.md)).
+  change (inbound = outbound), without a contributor licence agreement or a Developer
+  Certificate of Origin sign-off for now (see [`CONTRIBUTING.md`](../CONTRIBUTING.md)).
 - **Patent commitment.** José Luis Saorín Ferrer, as author and editor, commits not to
   assert any patent claim that he owns or controls, now or in the future, against
   anyone for making, using, selling, offering, importing or distributing an

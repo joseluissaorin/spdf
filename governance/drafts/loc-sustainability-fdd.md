@@ -18,7 +18,7 @@
 > 1. Una versión final, o al menos fechada, de la especificación. Hoy la web la sirve
 >    en `https://spdf.joseluissaorin.com/spec` como borrador de trabajo (comprobado el
 >    7-10-2026).
-> 2. Registro en IANA (`application/vnd.spdf`) y ficha en PRONOM, para poder citarlos
+> 2. Registro en IANA (`application/vnd.spdf+sqlite3`) y ficha en PRONOM, para poder citarlos
 >    aquí; hoy figuran como pendientes.
 > 3. Más adopción. La ficha es honesta: hoy el formato lo usa sobre todo el proyecto de
 >    su autor, y la Library of Congress puede decidir esperar. Conviene enviarla cuando
@@ -97,7 +97,7 @@
 | Tag | Value | Note |
 |---|---|---|
 | Filename extension | spdf | Also used by the legacy versions 4.0 and 4.1, which are gzip-compressed. |
-| Internet Media Type | application/vnd.spdf | Registration with IANA in preparation. |
+| Internet Media Type | application/vnd.spdf+sqlite3 | Registration with IANA in preparation. |
 | Magic numbers | Hex: `53 51 4C 69 74 65 20 66 6F 72 6D 61 74 20 33 00` at offset 0 (ASCII "SQLite format 3" and NUL); `53 50 44 46` at offset 68 (ASCII "SPDF", the SQLite `application_id` 0x53504446); `00 00 01 F4` at offset 60 (`user_version` 500, version 5.0) | Legacy 4.x files begin with `1F 8B` (gzip) and cannot be told from other gzip files without decompressing. |
 | Other | Uniform Type Identifier `com.joseluissaorin.spdf`, conforming to `public.data` and `public.database` | Proposed in the specification. |
 | Pronom PUID | none yet | Submission in preparation. |

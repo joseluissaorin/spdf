@@ -31,7 +31,7 @@
 >   `magic.txt` como pide la propuesta inicial; los demás valores del fichero usan
 >   nombres cortos.
 > - El tipo de medio: libmagic suele usar tipos registrados o `x-` y puede pedir que
->   `application/vnd.spdf` esté ya en IANA (ver `iana-application-vnd.spdf.md`); si no,
+>   `application/vnd.spdf+sqlite3` esté ya en IANA (ver `iana-media-type.md`); si no,
 >   la alternativa es dejar `application/vnd.sqlite3` y añadir solo el nombre. Por
 >   verificar con el mantenedor.
 >
@@ -132,7 +132,7 @@ rules that follow already print the user version, so no extra rule is needed for
 +# Note:		SPDF, Semantic Processed Document Format, with application id 53504446h "SPDF"
 +#		and the version as user version (500 for 5.0)
 +>>68 belong =0x53504446  database
-+!:mime	application/vnd.spdf
++!:mime	application/vnd.spdf+sqlite3
 +!:ext	spdf
  >>68 default x           database
  !:mime	application/vnd.sqlite3
@@ -153,7 +153,7 @@ rules that follow already print the user version, so no extra rule is needed for
 $ file darwin.spdf
 darwin.spdf: SQLite 3.x database (SPDF document), user version 500 (0x1f4), last written using SQLite version …
 $ file --mime-type darwin.spdf
-darwin.spdf: application/vnd.spdf
+darwin.spdf: application/vnd.spdf+sqlite3
 $ file --extension darwin.spdf
 darwin.spdf: spdf
 ```
@@ -164,7 +164,7 @@ darwin.spdf: spdf
 >
 > The attached patch to `magic/Magdir/sql` recognizes SPDF files (Semantic Processed
 > Document Format), SQLite 3 databases with `application_id` 0x53504446 ("SPDF"), and
-> gives them the media type `application/vnd.spdf` and the extension `spdf`. The format
+> gives them the media type `application/vnd.spdf+sqlite3` and the extension `spdf`. The format
 > keeps its version in `user_version`, which the existing rules already print.
 > Specification: https://spdf.joseluissaorin.com/spec. A public-domain sample is
 > attached; it can go into file-tests if useful.

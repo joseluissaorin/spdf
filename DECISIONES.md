@@ -27,6 +27,10 @@ trabaje en este repositorio las sigue; si una no se sostiene, se discute en
 - Contenedor: **SQLite 3 sin comprimir** (permite leer por rangos HTTP y mmap). Los
   lectores DEBEN aceptar también un SQLite envuelto en gzip (legado 4.x).
   `PRAGMA application_id = 1397769286` (0x53504446, «SPDF»), `PRAGMA user_version = 500`.
+- Tipo de medio: **`application/vnd.spdf+sqlite3`** (sufijo estructurado `+sqlite3`,
+  registrado en IANA; decidido el 7-10-2026). Extensión `.spdf`. Esquema de URI `spdf:`
+  para las anclas, con registro provisional según la RFC 7595 (borrador en
+  `governance/drafts/`).
 - Metadatos del documento = **un ítem CSL-JSON** más un objeto de extensión `spdf`
   (procedencia por campo, horquilla sin fecha, lengua original). Interoperabilidad directa
   con Zotero, citeproc y Pandoc.

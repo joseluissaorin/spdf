@@ -101,11 +101,11 @@ Each implementation lives in its own folder (`rust/`, `js/`, `python/`, `go/`, `
   summary is in English or Spanish, at most 72 characters, without a final period.
 - A body, separated by a blank line, says why the change is needed when that is not
   obvious.
-- Every commit ends with a `Signed-off-by` line (see below). Add `Co-authored-by` lines
-  for every co-author.
-- Contributions prepared with the help of AI tools are welcome. The person who signs off
-  is responsible for them, has reviewed them, and certifies the DCO for them; say in the
-  pull request which tools were used.
+- Add `Co-authored-by` lines for every co-author. A `Signed-off-by` line is welcome but
+  not required.
+- Contributions prepared with the help of AI tools are welcome. The person who submits
+  them is responsible for them and has reviewed them; say in the pull request which tools
+  were used.
 
 ## Licensing of contributions
 
@@ -116,10 +116,12 @@ Contributions are licensed under the licence of the part of the repository they 
 | Specification and documentation (`spec/`, `governance/`, prose in every folder) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
 | Code (implementations, producer, reader, conformance suite, website, integrations) | MIT OR Apache-2.0, at the user's choice ([`LICENSE-MIT`](LICENSE-MIT), [`LICENSE-APACHE`](LICENSE-APACHE)) |
 
-Every commit must carry a `Signed-off-by: Full Name <email>` line (`git commit -s`). With
-it you certify the [Developer Certificate of Origin 1.1](https://developercertificate.org/):
-that you wrote the contribution or otherwise have the right to submit it under the
-licence above. Contributors to the specification also make the patent commitment
+The rule is **inbound = outbound**: by submitting a contribution you license it under
+the same licence as the part of the repository it changes, and you confirm that you
+wrote it or otherwise have the right to submit it under that licence. No contributor
+licence agreement and no Developer Certificate of Origin sign-off are required for now;
+if the project adopts one later, it will be announced through the RFC process and will
+not apply retroactively. Contributors to the specification also make the patent commitment
 described in [`governance/GOVERNANCE.md`](governance/GOVERNANCE.md#licences-and-patents):
 they will not assert patents they own or control against implementations of SPDF.
 
@@ -148,6 +150,6 @@ marcado `editorial`; todo cambio normativo pasa por una RFC (`spec/rfcs/`, proce
 conformidad y se da por implementada cuando dos implementaciones independientes lo
 pasan. Los casos de la batería solo usan obras de dominio público comprobable. Cada
 implementación vive en su carpeta, con su propio flujo de CI, y un *pull request* toca
-una sola carpeta. Cada commit lleva la línea `Signed-off-by` del DCO; la especificación
+una sola carpeta. Las contribuciones se aceptan con la misma licencia con la que se publican (*inbound = outbound*), sin DCO ni acuerdo de contribución; la especificación
 y la documentación se publican con CC BY 4.0 y el código con MIT OR Apache-2.0. Los
 fallos de seguridad se comunican en privado, como explica `SECURITY.md`.

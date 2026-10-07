@@ -158,7 +158,7 @@ before `VACUUM`).
 
 ### 2.2 Name and type
 
-The file extension is `.spdf`. The media type is `application/vnd.spdf`
+The file extension is `.spdf`. The media type is `application/vnd.spdf+sqlite3`
 ([§24](#media-type)). One file holds one document; libraries of documents are described
 by a separate collection manifest ([§17](#annotations)).
 
@@ -574,7 +574,8 @@ and `para`, by `sl`, `sh`, `v` or `ref` (matching the units' and fragments' anch
 `char` and `xywh` then narrow the unit. When several units match (two pages printed
 "1"), `p` disambiguates; readers SHOULD prefer `p` over `f` when both are present.
 
-The `spdf` URI scheme is intended for provisional registration [RFC 7595].
+The `spdf` URI scheme is intended for provisional registration [RFC 7595]; the request is
+drafted in `governance/drafts/uri-scheme-spdf.md`.
 
 <a id="metadata"></a>
 ## 6. Metadata
@@ -1341,9 +1342,12 @@ Changes are proposed and decided through the RFC process in `spec/rfcs/` and
 <a id="media-type"></a>
 ## 24. Media type and file identification
 
-- Media type: `application/vnd.spdf` (registration with IANA in preparation; template in
-  `governance/drafts/`). OPTIONAL parameter `version` (`"5.0"`). Encoding: binary.
-- Fragment identifiers: for a resource of type `application/vnd.spdf`, the fragment
+- Media type: `application/vnd.spdf+sqlite3` (registration with IANA in preparation; template in
+  `governance/drafts/iana-media-type.md`). The structured syntax suffix `+sqlite3` tells
+  generic tools that the file is a SQLite 3 database. OPTIONAL parameter `version`
+  (`"5.0"`). Encoding: binary. Legacy 4.x files are gzip data and have no registered type
+  of their own.
+- Fragment identifiers: for a resource of type `application/vnd.spdf+sqlite3`, the fragment
   identifier is the `params` rule of [§5.1](#anchor-uri), with the meaning it has in an
   anchor URI for the document in that resource:
   `https://example.org/quijote.spdf#p=5&f=1r`.

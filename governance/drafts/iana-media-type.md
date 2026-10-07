@@ -1,11 +1,19 @@
-# Media type registration: application/vnd.spdf
+# Media type registration: application/vnd.spdf+sqlite3
 
-> **Borrador sin enviar.** Solicitud de registro del tipo de medio `application/vnd.spdf`
-> en el árbol de fabricante (`vnd.`) del registro de tipos de medio de IANA, según la
-> plantilla de la sección 5.6 de la RFC 6838. Va a IANA por su formulario web
+> **Borrador sin enviar.** Solicitud de registro del tipo de medio
+> `application/vnd.spdf+sqlite3` en el árbol de fabricante (`vnd.`) del registro de tipos
+> de medio de IANA, según la plantilla de la sección 5.6 de la RFC 6838, con el sufijo
+> estructurado `+sqlite3` (registrado en IANA). Va a IANA por su formulario web
 > (<https://www.iana.org/form/media-types>), donde la revisa un experto designado. La
 > RFC 6838 recomienda, sin exigirlo, enviarla antes a la lista media-types@iana.org
 > para que la comente la comunidad; conviene hacerlo.
+>
+> Decidido el 7-10-2026 por el orquestador del proyecto: el tipo es
+> `application/vnd.spdf+sqlite3` y no `application/vnd.spdf`. El sufijo permite que las
+> herramientas genéricas de SQLite reconozcan el fichero, y SPDF ya cumple lo que pide el
+> registro del sufijo (un `application_id` propio en el desplazamiento 68 y su entrada en
+> `magic.txt`, véase `sqlite-magic-entry.md`). `SPEC.md` §24 ya define los
+> identificadores de fragmento que se describen abajo.
 >
 > Falta antes de enviarla:
 >
@@ -13,17 +21,11 @@
 >    ya sirve `SPEC.md` (comprobado el 7-10-2026), pero es un borrador de trabajo que
 >    cambia; conviene enlazar una versión fechada que no cambie (la de la etiqueta
 >    `spec-v5.0.0`) y, a ser posible, enviarla cuando la 5.0 sea final.
-> 2. Decidir si se registra `application/vnd.spdf` (lo fijado en `DECISIONES.md`) o
->    `application/vnd.spdf+sqlite3`. El sufijo estructurado `+sqlite3` existe en IANA
->    desde 2018 y pide justo lo que SPDF ya hace (un `application_id` propio en el
->    desplazamiento 68 y su entrada en `magic.txt`); el experto puede preguntar por qué
->    no se usa. Este borrador mantiene `application/vnd.spdf`.
-> 3. Que `SPEC.md` diga como norma lo que aquí se dice de los identificadores de
->    fragmento: que los parámetros del URI de ancla valen también tras `#` en una URL
->    que apunta a un `.spdf` (`https://…/x.spdf#p=29`). Hoy la §5 solo los define dentro
->    de los URI `spdf:`; si no se añade, este apartado debe decir «None».
-> 4. Confirmar quién figura como responsable del cambio (José Luis o, si se crea, la
+> 2. Confirmar quién figura como responsable del cambio (José Luis o, si se crea, la
 >    organización `spdf-format` o el comité técnico).
+> 3. Por verificar: el texto exacto de las consideraciones de identificadores de
+>    fragmento del registro del sufijo `+sqlite3`, para citarlo en el apartado
+>    correspondiente.
 >
 > Comprobado el 7-10-2026: el nombre `vnd.spdf` no figura en el registro de IANA; la
 > plantilla sigue la RFC 6838; el registro de `application/vnd.sqlite3` sirvió de
@@ -34,7 +36,7 @@
 
 **Type name:** application
 
-**Subtype name:** vnd.spdf
+**Subtype name:** vnd.spdf+sqlite3
 
 **Required parameters:** N/A
 
@@ -47,6 +49,10 @@ informative only. The authoritative version is stored in the file itself (the SQ
 rely on the parameter instead of the file.
 
 **Encoding considerations:** binary
+
+**Structured syntax suffix:** `+sqlite3`. The considerations of the `+sqlite3` suffix
+registration apply; an SPDF file is a SQLite 3 database that any SQLite tool can open
+read-only. The SPDF-specific rules below add to them.
 
 **Security considerations:**
 
@@ -152,7 +158,9 @@ managers and document tools.
 
 **Fragment identifier considerations:**
 
-A fragment identifier on a URI that resolves to an `application/vnd.spdf` resource
+As RFC 6838 section 4.11 allows, this registration defines fragment identifier
+semantics specific to the type, in addition to those of the `+sqlite3` suffix.
+A fragment identifier on a URI that resolves to an `application/vnd.spdf+sqlite3` resource
 addresses a location in the single document the file holds. Its syntax is the parameter
 list of the SPDF anchor URI: `key=value` pairs joined by `&`, in the canonical order the
 specification defines, values percent-encoded as UTF-8. For example:

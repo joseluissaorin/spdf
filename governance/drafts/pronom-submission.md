@@ -17,7 +17,7 @@
 >
 > 1. **Tipo de medio.** PRONOM solo admite tipos de medio registrados en IANA o que
 >    figuren en la documentación oficial del formato. Lo ideal es enviar esto después
->    de registrar `application/vnd.spdf` (ver `iana-application-vnd.spdf.md`); si no,
+>    de registrar `application/vnd.spdf+sqlite3` (ver `iana-media-type.md`); si no,
 >    hay que citar `SPEC.md` publicada como documentación oficial.
 > 2. **Muestras.** Preparar ficheros de ejemplo descargables y de dominio público: los de
 >    `conformance/files/` sirven (Cervantes, Darwin, Hooke…), pero hay que publicarlos en
@@ -53,7 +53,7 @@
 | Format family | none |
 | Format type (classification) | Database (alternatively Text (Structured)) |
 | Extension(s) | spdf |
-| MIME / media type | application/vnd.spdf (registration with IANA pending; defined in the official specification) |
+| MIME / media type | application/vnd.spdf+sqlite3 (registration with IANA pending; defined in the official specification) |
 | Byte order | Big-endian (SQLite header integers); the format's own binary vector data is little-endian |
 | Disclosure | Open, fully documented; specification under CC BY 4.0 |
 | Developer | José Luis Saorín Ferrer, editor of the SPDF specification |

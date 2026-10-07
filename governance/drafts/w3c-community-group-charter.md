@@ -126,7 +126,7 @@ file for test suite contribution licensing information.
 - W3C *Media Fragments URI 1.0 (basic)* (Recommendation, 2012): time and spatial
   parameters of the anchor URI.
 - IETF: RFC 5147 (character ranges), RFC 8785 (JSON canonicalization), RFC 8032
-  (Ed25519), and IANA registrations for the media type `application/vnd.spdf` and the
+  (Ed25519), and IANA registrations for the media type `application/vnd.spdf+sqlite3` and the
   `spdf` URI scheme.
 - IIIF Consortium: Presentation API 3.0 and the region syntax of the Image API, for
   exports and mappings.

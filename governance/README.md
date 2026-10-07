@@ -42,7 +42,8 @@ Spanish) saying who it is for, through which channel, and what is still missing.
 
 | Body | Request | Draft |
 |---|---|---|
-| IANA | Media type `application/vnd.spdf` (RFC 6838, vendor tree) | [iana-application-vnd.spdf.md](drafts/iana-application-vnd.spdf.md) |
+| IANA | Media type `application/vnd.spdf+sqlite3` (RFC 6838, vendor tree) | [iana-media-type.md](drafts/iana-media-type.md) |
+| IANA | Provisional registration of the `spdf` URI scheme (RFC 7595) | [uri-scheme-spdf.md](drafts/uri-scheme-spdf.md) |
 | The National Archives (UK), PRONOM | Format record and DROID signature for SPDF 5.0 | [pronom-submission.md](drafts/pronom-submission.md) |
 | Library of Congress | Format description for *Sustainability of Digital Formats* | [loc-sustainability-fdd.md](drafts/loc-sustainability-fdd.md) |
 | SQLite and file(1) | `application_id` 0x53504446 in SQLite's `magic.txt` and in libmagic | [sqlite-magic-entry.md](drafts/sqlite-magic-entry.md) |

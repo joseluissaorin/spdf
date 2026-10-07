@@ -185,7 +185,7 @@ por sí mismos sincronizado el índice de texto completo (por ejemplo, con
 
 ### 2.2 Nombre y tipo
 
-La extensión de fichero es `.spdf`. El tipo de medio es `application/vnd.spdf`
+La extensión de fichero es `.spdf`. El tipo de medio es `application/vnd.spdf+sqlite3`
 ([§24](#media-type)). Un fichero contiene un documento; las bibliotecas de documentos se
 describen mediante un manifiesto de colección aparte ([§17](#annotations)).
 
@@ -627,7 +627,8 @@ anclas de las unidades y de los fragmentos). Después, `char` y `xywh` acotan la
 Cuando coinciden varias unidades (dos páginas con el folio impreso «1»), `p` deshace la
 ambigüedad; los lectores DEBERÍAN preferir `p` a `f` cuando están presentes ambos.
 
-Se prevé el registro provisional del esquema de URI `spdf` [RFC 7595].
+Se prevé el registro provisional del esquema de URI `spdf` [RFC 7595]; la solicitud está
+redactada en `governance/drafts/uri-scheme-spdf.md`.
 
 <a id="metadata"></a>
 ## 6. Metadatos
@@ -1455,10 +1456,12 @@ Los cambios se proponen y se deciden mediante el proceso de RFC de `spec/rfcs/` 
 <a id="media-type"></a>
 ## 24. Tipo de medio e identificación de ficheros
 
-- Tipo de medio: `application/vnd.spdf` (registro ante la IANA en preparación; plantilla
-  en `governance/drafts/`). Parámetro OPCIONAL `version` (`"5.0"`). Codificación:
-  binaria.
-- Identificadores de fragmento: en un recurso de tipo `application/vnd.spdf`, el
+- Tipo de medio: `application/vnd.spdf+sqlite3` (registro ante la IANA en preparación;
+  plantilla en `governance/drafts/iana-media-type.md`). El sufijo estructurado `+sqlite3`
+  indica a las herramientas genéricas que el fichero es una base de datos SQLite 3.
+  Parámetro OPCIONAL `version` (`"5.0"`). Codificación: binaria. Los ficheros de legado
+  4.x son datos gzip y no tienen un tipo registrado propio.
+- Identificadores de fragmento: en un recurso de tipo `application/vnd.spdf+sqlite3`, el
   identificador de fragmento es la regla `params` del [§5.1](#anchor-uri), con el
   significado que tiene en una URI de ancla para el documento de ese recurso:
   `https://example.org/quijote.spdf#p=5&f=1r`.

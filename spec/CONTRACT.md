@@ -1,4 +1,4 @@
-# SPDF 5.0 implementation contract (draft 1.3, 2026-10-07)
+# SPDF 5.0 implementation contract (draft 1.4, 2026-10-07)
 
 This is the working contract every implementation in this repository codes against
 while the normative specification (`SPEC.md`) is being written. `SPEC.md` absorbs
@@ -7,6 +7,10 @@ change here. Key words MUST, SHOULD, MAY as in RFC 2119.
 
 ## Change log (read this first)
 
+- **2026-10-07, draft 1.4 (spec agent).** Media type `application/vnd.spdf+sqlite3` (decided by
+  the orchestrator; structured syntax suffix `+sqlite3`). Provisional registration of the
+  `spdf:` URI scheme drafted in `governance/drafts/uri-scheme-spdf.md`. Contributions are
+  inbound = outbound, no DCO.
 - **2026-10-07, draft 1.3 (spec agent).** Forward compatibility: in a file of a newer minor
   version (W105), unknown anchor types (E041) and dtypes (E032) are warnings, not errors
   (suite 0.3.0). A URL of a `.spdf` resource takes the anchor parameters as its fragment
@@ -63,7 +67,7 @@ change here. Key words MUST, SHOULD, MAY as in RFC 2119.
 - `user_version` = major × 100 + minor × 10 (5.0 → 500, 5.1 → 510; legacy 4.0 → 400,
   4.1 → 410). A 5.0 reader MUST accept 500–599 (same major) and SHOULD warn (W105) on a
   newer minor; other majors → E002.
-- Extension `.spdf`. Media type `application/vnd.spdf` (registration pending).
+- Extension `.spdf`. Media type `application/vnd.spdf+sqlite3` (registration pending).
 - One file = one document. (Libraries/collections are separate manifests, §9.)
 - Readers MUST also accept legacy 4.0/4.1 files (Spanish schema, `user_version` 400/410 or
   `spdf.spdf_version` row; `application_id` 0), which are usually **gzip-wrapped** SQLite

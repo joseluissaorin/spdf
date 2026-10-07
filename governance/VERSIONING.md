@@ -58,7 +58,7 @@ PRAGMA user_version = MAJOR × 100 + MINOR × 10
 - Legacy 4.x files could not always set `user_version` (some have 0); their version is in
   the `spdf` table, and the legacy rules of the specification ([SPEC §20](../spec/SPEC.md#legacy))
   cover them.
-- The optional `version` parameter of the media type (`application/vnd.spdf;
+- The optional `version` parameter of the media type (`application/vnd.spdf+sqlite3;
   version=5.0`) is informative. The file header is authoritative.
 
 ## What readers do with versions
