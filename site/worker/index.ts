@@ -47,10 +47,12 @@ function quiereMarkdown(req: Request, url: URL): boolean {
   return AGENTES_DE_TERMINAL.test(ua) && !/text\/html/i.test(accept);
 }
 
+/** Cabeceras de seguridad comunes, sin pisar las que ya trae el fichero (el lector lleva las suyas). */
 function seguridad(h: Headers, ruta: string): void {
-  h.set('X-Content-Type-Options', 'nosniff');
-  h.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  if (!ruta.startsWith('/reader')) h.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  const poner = (k: string, v: string) => { if (!h.has(k)) h.set(k, v); };
+  poner('X-Content-Type-Options', 'nosniff');
+  poner('Referrer-Policy', 'strict-origin-when-cross-origin');
+  if (!ruta.startsWith('/reader')) poner('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 }
 
 /** Un fichero de R2, con soporte de Range e If-None-Match. */

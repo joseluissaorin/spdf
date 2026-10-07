@@ -144,9 +144,9 @@ export const VALIDADOR_CSS = `
 .buscador input{flex:1 1 16rem;font:inherit;padding:.6rem .8rem;border:1.5px solid var(--tinta);background:var(--hoja);border-radius:2px;color:var(--tinta)}
 .buscador input:focus{outline:2px solid var(--rojo);outline-offset:2px}
 .ayuda{font-size:.88rem;color:var(--apagado);margin:0 0 1rem}
-.figuras-r{display:grid;grid-template-columns:repeat(auto-fill,minmax(14rem,1fr));gap:1.2rem}
+.figuras-r{display:grid;grid-template-columns:repeat(auto-fill,minmax(20rem,1fr));gap:1.4rem}
 .figuras-r figure{margin:0;padding:.8rem;background:var(--hoja);border:1px solid var(--filete)}
-.figuras-r img{width:100%;height:auto;aspect-ratio:4/3;object-fit:contain;background:#fff}
+.figuras-r img{width:100%;height:auto;max-height:28rem;object-fit:contain;background:#fff;border:1px solid var(--filete)}
 .figuras-r figcaption{font-size:.88rem;margin-top:.6rem;color:var(--tinta-2)}
 .tira{display:block;width:100%;height:2.2rem;margin:.3rem 0 0;image-rendering:pixelated;border:1px solid var(--filete)}
 pre.json{max-height:34rem;overflow:auto;background:#2a1d16;color:#f3eadb;padding:1rem 1.1rem;font-size:.8rem;line-height:1.5;margin:0 0 1rem}

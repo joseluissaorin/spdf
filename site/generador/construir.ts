@@ -612,12 +612,8 @@ function llmsFull(): string {
 
 function cabeceras(): string {
   const agente = `  Access-Control-Allow-Origin: *\n  Cache-Control: public, max-age=600\n  X-Robots-Tag: index, follow`;
-  return `/*
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=()
-
-/*.md
+  // Las cabeceras de seguridad comunes las pone el Worker (solo si faltan), para no duplicar las del lector.
+  return `/*.md
   Content-Type: text/markdown; charset=utf-8
 ${agente}
 
@@ -652,9 +648,9 @@ ${agente}
 /assets/*
   Cache-Control: public, max-age=86400
 
-/reader/*
+${CABECERAS_LECTOR || `/reader/*
   Cross-Origin-Opener-Policy: same-origin
-  Cross-Origin-Embedder-Policy: require-corp
+  Cross-Origin-Embedder-Policy: require-corp`}
 `;
 }
 
@@ -671,7 +667,7 @@ async function cliente(): Promise<{ validador: boolean }> {
   try {
     await build({
       entryPoints: [resolve(SITIO, 'cliente/validador.ts')], bundle: true, format: 'esm', target: 'es2022', minify: true,
-      outfile: join(DIST, 'assets/validador.js'), platform: 'browser', legalComments: 'none',
+      splitting: true, outdir: join(DIST, 'assets'), chunkNames: 'inspector-[hash]', platform: 'browser', legalComments: 'none',
       nodePaths: [resolve(SITIO, 'node_modules')], logLevel: 'error', conditions: ['browser'],
       define: { 'process.env.NODE_ENV': '"production"' },
     });
@@ -693,10 +689,19 @@ async function cliente(): Promise<{ validador: boolean }> {
 // El lector web
 // ---------------------------------------------------------------------------
 
+/** Las cabeceras propias del lector (su _headers), con las rutas llevadas a /reader. */
+let CABECERAS_LECTOR = '';
+
 function lector(): boolean {
   const dir = resolve(RAIZ, 'reader/dist-web');
   if (existe(join(dir, 'index.html'))) {
     cpSync(dir, join(DIST, 'reader'), { recursive: true });
+    const h = join(DIST, 'reader/_headers');
+    if (existe(h)) {
+      // Cloudflare solo lee el _headers de la raíz: se trasladan sus reglas con el prefijo /reader.
+      CABECERAS_LECTOR = leer(h).split('\n').filter((l) => !l.startsWith('#')).map((l) => (l.startsWith('/') ? `/reader${l}` : l)).join('\n');
+      rmSync(h);
+    }
     return true;
   }
   return false;
