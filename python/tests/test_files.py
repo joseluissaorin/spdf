@@ -43,11 +43,21 @@ def test_read_document_and_records(quijote: Path) -> None:
         assert f.sections()[0].title == "Capítulo primero"
         assert f.provenance()[0].detail == {"pages": 3}
         assert f.docref == f"sha256-{SOURCE_SHA}"
-        assert f.locate(f"spdf:{f.docref}#p=2")[0].id == "u2"
-        assert f.locate(f"spdf:{f.docref}#f=24")[0].id == "u3"
-        assert f.locate("spdf:sha256-" + "0" * 64 + "#p=2") == []
-        assert f.locate("spdf:quijote#p=2")[0].id == "u2"
-        assert f.locate("https://example.org/quijote.spdf#p=3&f=24")[0].id == "u3"
+        assert f.locate(f"spdf:{f.docref}#p=2").units == ["u2"]
+        assert f.locate(f"spdf:{f.docref}#p=2").fragments == ["f2"]
+        assert f.locate(f"spdf:{f.docref}#f=24").units == ["u3"]
+        other = f.locate("spdf:sha256-" + "0" * 64 + "#p=2")
+        assert other.document is False and other.units == [] and other.fragments == []
+        assert f.locate("spdf:quijote#p=2").units == ["u2"]
+        loc = f.locate("https://example.org/quijote.spdf#p=3&f=24&char=0,5&xywh=percent:10,10,50,50")
+        assert loc.to_dict() == {
+            "document": True,
+            "units": ["u3"],
+            "fragments": ["f3"],
+            "char": [0, 5],
+            "xywh": [0.1, 0.1, 0.5, 0.5],
+        }
+        assert f.locate("https://example.org/quijote.spdf").to_dict()["units"] == []
         assert f.cite("https://example.org/quijote.spdf#p=3&f=24") == "(Cervantes Saavedra, 1605, p. 24)"
 
 
@@ -601,7 +611,7 @@ def test_iiif(quijote: Path) -> None:
     annos = canvases[0]["annotations"][0]["items"]
     assert annos[0]["motivation"] == "supplementing" and annos[0]["body"]["value"] == TEXTS[0]
     assert annos[1]["motivation"] == "describing" and annos[1]["target"].endswith("#xywh=percent:10,20,50,25")
-    assert canvases[0]["label"] == {"none": ["1"]} and canvases[1]["label"] == {"none": ["23"]}
+    assert "label" not in canvases[0] and canvases[1]["label"] == {"none": ["23"]}  # unnumbered page: no label
     assert m["structures"][0]["items"][0]["id"].endswith("/canvas/1")
 
 

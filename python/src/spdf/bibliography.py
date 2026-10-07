@@ -69,16 +69,21 @@ def _year(item: Mapping[str, Any]) -> str | None:
 
 
 def bibtex_key(item: Mapping[str, Any]) -> str:
-    """The base citation key of an item: ``cervantessaavedra1605``, ``lazarillo1554``, ``hookend``."""
+    """The base key of an item (SPEC §19.1): ``cervantessaavedra1605``, ``lazarillo1554``, ``anonnd``.
+
+    First author's family (else literal, else given) folded to ASCII letters; if empty,
+    the first word of ``title-short`` (else ``title``); if still empty, ``anon``. Then the
+    first year of ``issued`` (sign kept) or ``nd``.
+    """
     base = ""
     authors = item.get("author")
     if isinstance(authors, list) and authors and isinstance(authors[0], Mapping):
         a = authors[0]
         base = _ascii_letters(str(a.get("family") or a.get("literal") or a.get("given") or ""))
     if not base:
-        words = str(item.get("title") or "").split()
+        words = str(item.get("title-short") or item.get("title") or "").split()
         base = _ascii_letters(words[0]) if words else ""
-    return (base or "spdf") + (_year(item) or "nd")
+    return (base or "anon") + (_year(item) or "nd")
 
 
 _ESCAPES = {"\\": "\\textbackslash{}", "{": "\\{", "}": "\\}"}
@@ -93,7 +98,7 @@ def _protect_title(title: str) -> str:
     out = []
     for token in re.split(r"(\s+)", title):
         esc = _escape(token)
-        out.append("{" + esc + "}" if any(c.isupper() for c in token) else esc)
+        out.append("{" + esc + "}" if any(unicodedata.category(c) == "Lu" for c in token) else esc)
     return "".join(out)
 
 

@@ -36,6 +36,7 @@ from .model import (
     Figure,
     Fragment,
     LexicalSearch,
+    Location,
     Provenance,
     SearchResult,
     Section,
@@ -672,9 +673,12 @@ class SpdfFile:
         return _cite(anchor, self.document.metadata, locale, end)
 
     def _locator(self, target: str) -> dict[str, Any] | None:
-        """Locator of an anchor URI for this document, of a URL with an anchor fragment
-        (``https://…/x.spdf#p=5``, SPEC §24) or of a bare fragment; ``None`` if the URI
-        designates another document."""
+        """Locator of a reference (SPEC §5.4 step 1), or ``None`` if it designates another document.
+
+        An ``spdf:`` URI is checked against this document; any other reference (an
+        ``https:`` URL of the ``.spdf``, a path) designates this file, and the text after
+        its first ``#`` is parsed as the anchor parameters (SPEC §24).
+        """
         if target.startswith("spdf:"):
             parsed = parse_uri(target)
             doc = self.document
@@ -685,46 +689,54 @@ class SpdfFile:
             elif ref != doc.id:
                 return None
             return dict(parsed["locator"])
-        frag = target.split("#", 1)[1] if "#" in target else target
-        return parse_params(frag)
+        _, sep, frag = target.partition("#")
+        return parse_params(frag) if sep and frag else {}
 
-    def locate(self, uri: str) -> list[Unit]:
-        """Units an anchor URI points at (by physical page, printed folio, time, slide…).
+    def locate(self, reference: str) -> Location:
+        """Resolve an anchor URI or a ``.spdf`` URL with a fragment against this file (SPEC §5.4).
 
-        Returns ``[]`` when the URI designates another document (SPEC §5.4).
+        Returns a :class:`~spdf.Location` with the matching unit and fragment ids. The first
+        parameter present in the order ``p f t sl v ref s sh`` selects the rule; ``char``
+        keeps only the fragments whose ``chars`` overlap it. A reference to another
+        document gives ``document=False`` and empty lists.
         """
-        loc = self._locator(uri)
+        loc = self._locator(reference)
         if loc is None:
-            return []
-        out: list[Unit] = []
-        for u in self.iter_units():
-            a = u.anchor
-            if "p" in loc:
-                hit = a.physical is not None and loc["p"] <= a.physical <= loc.get("pe", loc["p"])
-            elif "f" in loc:
-                hit = u.printed == loc["f"] or a.printed == loc["f"]
-            elif "t" in loc:
-                t = loc["t"][0]
-                hit = a.t0 is not None and a.t1 is not None and a.t0 <= t < a.t1
-            elif "sl" in loc:
-                hit = a.n == loc["sl"]
-            elif "v" in loc:
-                hit = a.line_from is not None and a.line_from <= loc["v"][0] <= (a.line_to or a.line_from)
-            elif "ref" in loc:
-                hit = a.scheme == loc["ref"]["scheme"] and a.ref == loc["ref"]["ref"]
-            elif "s" in loc:
-                hit = a.path is not None and list(a.path[: len(loc["s"])]) == loc["s"]
-            else:
-                hit = False
-            if hit:
-                out.append(u)
-        return out
+            return Location(document=False, units=[], fragments=[])
+        char = list(loc["char"]) if "char" in loc else None
+        xywh = list(loc["xywh"]) if "xywh" in loc else None
+        rule = next((r for r in _RULE_ORDER if r in loc), None)
+        if rule is None:
+            return Location(document=True, units=[], fragments=[], char=char, xywh=xywh)
+        units = list(self.iter_units())
+        unit_ids = [u.id for u in units if _anchor_matches(rule, loc, u.anchor.to_dict(), u.printed)]
+        if rule == "t" and not unit_ids:
+            timed = [u for u in units if u.anchor.type == "time"]
+            if timed and timed[-1].anchor.t1 is not None and timed[-1].anchor.t1 == loc["t"][0]:
+                unit_ids = [timed[-1].id]
+        frags = [fr for fr in self.iter_fragments() if _anchor_matches(rule, loc, fr.anchor.to_dict(), None)]
+        if not unit_ids and frags:
+            order = {u.id: u.ord for u in units}
+            unit_ids = sorted({fr.unit for fr in frags}, key=lambda i: order.get(i, 0))
+        if char is not None:
+            c, d = int(char[0]), int(char[1])
+            selected = set(unit_ids)
+
+            def keep(fr: Fragment) -> bool:
+                ch = fr.anchor.chars
+                if fr.unit not in selected or ch is None:
+                    return False
+                a, b = ch
+                return (a < d and c < b) if c < d else (a <= c < b)
+
+            frags = [fr for fr in frags if keep(fr)]
+        return Location(document=True, units=unit_ids, fragments=[fr.id for fr in frags], char=char, xywh=xywh)
 
     # -- search --------------------------------------------------------------------------
 
     def _result(self, f: Fragment, score: float, via: tuple[str, ...]) -> SearchResult:
         return SearchResult(
-            fragment_id=f.id,
+            id=f.id,
             score=score,
             via=via,
             anchor=f.anchor,
@@ -849,7 +861,7 @@ class SpdfFile:
                 obj = self._make_figure(rows[0]) if rows else None
             if obj is None:
                 continue
-            out.append(SearchResult(i, s, ("vector",), obj.anchor, make_uri(self.docref, obj.anchor)))
+            out.append(SearchResult(i, s, ("vector",), obj.anchor, make_uri(self.docref, obj.anchor), target=target))
         return out
 
     def search_hybrid(
@@ -1025,6 +1037,56 @@ class SpdfFile:
         from .interop.frames import to_arrow
 
         return to_arrow(self, vectors=vectors)
+
+
+_RULE_ORDER = ("p", "f", "t", "sl", "v", "ref", "s", "sh")
+
+
+def _is_int(v: Any) -> bool:
+    return (isinstance(v, int) and not isinstance(v, bool)) or (isinstance(v, float) and v.is_integer())
+
+
+def _is_num(v: Any) -> bool:
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+
+def _anchor_matches(rule: str, loc: Mapping[str, Any], a: Mapping[str, Any], printed: str | None) -> bool:
+    """The predicate of SPEC §5.4 step 3 (members absent from the anchor never match)."""
+    t = a.get("type")
+    if rule == "p":
+        p = a.get("physical")
+        return t == "page" and _is_int(p) and loc["p"] <= p <= loc.get("pe", loc["p"])
+    if rule == "f":
+        return bool((printed if printed is not None else a.get("printed")) == loc["f"])
+    if rule == "t":
+        x = loc["t"][0]
+        t0, t1 = a.get("t0"), a.get("t1")
+        return t == "time" and _is_num(t0) and _is_num(t1) and t0 <= x < t1
+    if rule == "sl":
+        return t == "slide" and a.get("n") == loc["sl"]
+    if rule == "v":
+        x = loc["v"][0]
+        lf = a.get("line_from")
+        lt = a.get("line_to") if a.get("line_to") is not None else lf
+        return t == "verse" and _is_int(lf) and _is_num(lt) and lf <= x <= lt
+    if rule == "ref":
+        return t == "canonical" and a.get("scheme") == loc["ref"]["scheme"] and a.get("ref") == loc["ref"]["ref"]
+    if rule == "s":
+        path = a.get("path")
+        if t not in ("section", "web") or not isinstance(path, list):
+            return False
+        if "para" in loc:
+            return bool(path == loc["s"] and a.get("paragraph") == loc["para"])
+        return bool(path[: len(loc["s"])] == loc["s"])
+    if rule == "sh":
+        if t != "sheet" or a.get("sheet") != loc["sh"]:
+            return False
+        if "rows" in loc:
+            x = loc["rows"][0]
+            rf, rt = a.get("row_from"), a.get("row_to")
+            return _is_int(rf) and _is_int(rt) and rf <= x <= rt
+        return True
+    return False
 
 
 def _sort_provenance(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:

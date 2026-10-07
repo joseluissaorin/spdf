@@ -118,7 +118,7 @@ def _unit(u: Unit) -> list[str]:
     out: list[str] = []
     if a.type == "page":
         attrs = ""
-        printed = u.printed if u.printed is not None else a.printed
+        printed = a.printed
         if printed is not None:
             attrs += f" n={quoteattr(f'[{printed}]' if a.source == 'inferred' else printed)}"
         if u.image:

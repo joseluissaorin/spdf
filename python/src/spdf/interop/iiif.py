@@ -205,7 +205,10 @@ def to_iiif(
                 size = image_size(data) if data else None
                 mime = f.blob_mime(u.image)
             w, h = size or DEFAULT_SIZE
-            canvas = {"id": cid, "type": "Canvas", "label": {"none": [label]}, "width": w, "height": h}
+            canvas = {"id": cid, "type": "Canvas"}
+            if label is not None:
+                canvas["label"] = {"none": [label]}
+            canvas.update({"width": w, "height": h})
             page_items = []
             if img_url:
                 body: dict[str, Any] = {"id": img_url, "type": "Image", "width": w, "height": h}
@@ -260,14 +263,16 @@ def to_iiif(
     return manifest
 
 
-def _canvas_label(u: Unit, locale: str) -> str:
-    """The printed folio (``[21]`` if inferred) or, for other units, their locator."""
+def _canvas_label(u: Unit, locale: str) -> str | None:
+    """Page canvases: the folio as in TEI ``pb/@n`` (``[iv]`` if inferred), none when unnumbered.
+
+    Other units: their locator (``1:09:20``, ``diap. 3``…).
+    """
     a = u.anchor
-    printed = u.printed if u.printed is not None else a.printed
     if a.type == "page":
-        if printed is None:
-            return str(a.physical if a.physical is not None else u.ord)
-        return f"[{printed}]" if a.source == "inferred" else printed
+        if a.printed is None:
+            return None
+        return f"[{a.printed}]" if a.source == "inferred" else a.printed
     return locator_label(a, None, locale) or str(u.ord)
 
 

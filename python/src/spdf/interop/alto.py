@@ -62,8 +62,9 @@ def _page(f: SpdfFile, u: Unit) -> list[str]:
     physical = u.anchor.physical if u.anchor.physical is not None else u.ord
     pid = f"P{physical}"
     attrs = [f'ID="{pid}"', f'PHYSICAL_IMG_NR="{physical}"']
-    printed = u.printed if u.printed is not None else u.anchor.printed
-    if printed:
+    # ALTO records printed numbers: an inferred folio was not printed (SPEC §19.4).
+    printed = u.anchor.printed
+    if printed is not None and u.anchor.source != "inferred":
         attrs.append(f"PRINTED_IMG_NR={quoteattr(printed)}")
     if u.image and u.image.startswith("blob:"):
         data = f.blob(u.image)

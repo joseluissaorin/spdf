@@ -14,7 +14,7 @@ and 4.1 formats. It is installed as `spdf-format` and imported as `spdf`.
 - Python 3.10 or newer, **standard library only** (`sqlite3`).
 - Optional extras: `numpy` (fast vector search), `crypto` (Ed25519 through
   `cryptography`; a pure-Python fallback is included), `pandas`, `arrow`.
-- Passes the whole SPDF conformance suite (0.3.0, 229 cases): reader, semantic reader, writer and validator,
+- Passes the whole SPDF conformance suite (0.4.0, 309 cases): reader, semantic reader, writer and validator,
   profiles `core`, `semantic` and `media`.
 
 ```sh
@@ -50,7 +50,11 @@ with spdf.open("darwin.spdf") as f:
     qvec = my_model.encode(space.task_prefixes["query"] + "natural selection")
     f.search_vector(qvec, space=space.id, limit=5)
     f.search_hybrid("natural selection", qvec, space=space.id)   # RRF, k = 10
+    f.search_vector(qvec, space=space.id, target="unit")          # hits carry unit_id
 ```
+
+Every hit has `id`, `target` (`fragment`, `unit` or `figure`), `score`, `via`, `anchor`
+and `anchor_uri`; `fragment_id`, `unit_id` and `figure_id` give the id for each target.
 
 ## Validate
 
@@ -111,6 +115,14 @@ spdf.cite({"type": "page", "physical": 9, "printed": "1r", "foliation": "leaf"},
 # '(Cervantes Saavedra, 1605, fol. 1r)'
 spdf.cite({"type": "time", "t0": 4160.0, "t1": 4175.5}, doc, locale="en")
 # '(Cortázar, 1959, 1:09:20)'
+```
+
+`f.locate(reference)` resolves an anchor URI, or the URL of a `.spdf` with an anchor
+fragment, against the file (SPEC §5.4):
+
+```python
+f.locate("https://example.org/quijote.spdf#p=5&pe=6&char=101,278").to_dict()
+# {"document": True, "units": ["p5", "p6"], "fragments": ["q4"], "char": [101, 278], "xywh": None}
 ```
 
 Citations print only what the anchor says: inferred folios in brackets (`p. [21]`),
@@ -213,8 +225,9 @@ spdf conformance path/to/conformance        # prints {"impl", "version", "passed
 ```
 
 This implementation claims every kind of case: `dump`, `legacy_dump`, `roundtrip`,
-`validate`, `search_lexical`, `search_vector`, `search_hybrid`, `anchor_uri`, `cite` and
-`quantize`. CI publishes its report as the `conformance-python` artifact.
+`validate`, `search_lexical`, `search_vector`, `search_hybrid`, `anchor_uri`, `cite`,
+`quantize`, `locate`, `export_csl`, `export_bibtex` and `export_structure` (checked on
+its own ALTO, TEI and IIIF output). CI publishes its report as the `conformance-python` artifact.
 
 ## Development
 

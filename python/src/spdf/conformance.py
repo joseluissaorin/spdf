@@ -22,8 +22,9 @@ from typing import Any
 
 from ._version import __version__
 from .anchors import format_uri, make_uri, parse_uri
+from .bibliography import csl_citation_item, to_bibtex, to_csl_json
 from .cite import cite
-from .model import SearchResult
+from .model import Document, SearchResult
 from .reader import content_hash, open_spdf
 from .validate import validate
 from .vectors import quantize
@@ -139,21 +140,27 @@ def _case_validate(case: Mapping[str, Any], root: Path) -> None:
     _check(warnings == set(e["warnings"]), f"warnings {sorted(warnings)} != {sorted(e['warnings'])}")
 
 
+def _expected_id(x: Mapping[str, Any]) -> str:
+    for key in ("fragment_id", "unit_id", "figure_id"):
+        if key in x:
+            return str(x[key])
+    raise CaseFailure(f"result item without an id: {x}")
+
+
 def _compare_results(got: list[SearchResult], expected: list[Mapping[str, Any]], *, with_via: bool) -> None:
-    ids = [h.fragment_id for h in got]
-    exp_ids = [x["fragment_id"] for x in expected]
+    ids = [h.id for h in got]
+    exp_ids = [_expected_id(x) for x in expected]
     _check(ids == exp_ids, f"result ids {ids} != {exp_ids}")
     for h, x in zip(got, expected, strict=True):
+        key = next(k for k in ("fragment_id", "unit_id", "figure_id") if k in x)
+        _check(key == f"{h.target}_id", f"{h.id}: result is a {h.target}, expected {key}")
         _check(
             math.isclose(h.score, float(x["score"]), rel_tol=0.0, abs_tol=SCORE_TOLERANCE),
-            f"score of {h.fragment_id}: {h.score} != {x['score']}",
+            f"score of {h.id}: {h.score} != {x['score']}",
         )
-        _check(
-            h.anchor_uri == x["anchor_uri"],
-            f"anchor_uri of {h.fragment_id}: {h.anchor_uri} != {x['anchor_uri']}",
-        )
+        _check(h.anchor_uri == x["anchor_uri"], f"anchor_uri of {h.id}: {h.anchor_uri} != {x['anchor_uri']}")
         if with_via and "via" in x:
-            _check(list(h.via) == list(x["via"]), f"via of {h.fragment_id}: {list(h.via)} != {x['via']}")
+            _check(list(h.via) == list(x["via"]), f"via of {h.id}: {list(h.via)} != {x['via']}")
 
 
 def _case_search_lexical(case: Mapping[str, Any], root: Path) -> None:
@@ -229,6 +236,78 @@ def _case_quantize(case: Mapping[str, Any], root: Path) -> None:
     _check(got == e["hex"], f"quantize gave {got} != {e['hex']}")
 
 
+def _case_locate(case: Mapping[str, Any], root: Path) -> None:
+    i, e = case["input"], case["expect"]
+    with open_spdf(root / i["file"]) as f:
+        got = f.locate(i["reference"]).to_dict()
+    diff = json_diff(got, dict(e))
+    _check(diff is None, f"locate differs at {diff}")
+
+
+def _documents(root: Path, files: Iterable[str]) -> list[Document]:
+    docs = []
+    for rel in files:
+        with open_spdf(root / rel) as f:
+            docs.append(f.document)
+    return docs
+
+
+def _case_export_csl(case: Mapping[str, Any], root: Path) -> None:
+    i, e = case["input"], case["expect"]
+    docs = _documents(root, i["files"])
+    if i.get("anchor") is not None and len(docs) == 1:
+        items = [csl_citation_item(docs[0], i["anchor"], i.get("anchor_end"))]
+    else:
+        items = to_csl_json(docs)
+    diff = json_diff(items, e["items"])
+    _check(diff is None, f"CSL-JSON differs at {diff}")
+
+
+def _bib_lines(text: str) -> list[str]:
+    return [line.strip() for line in text.replace("\r\n", "\n").split("\n") if line.strip()]
+
+
+def _case_export_bibtex(case: Mapping[str, Any], root: Path) -> None:
+    i, e = case["input"], case["expect"]
+    got, exp = _bib_lines(to_bibtex(_documents(root, i["files"]))), _bib_lines(e["text"])
+    if got != exp:
+        first = next((k for k, (a, b) in enumerate(zip(got, exp, strict=False)) if a != b), min(len(got), len(exp)))
+        raise CaseFailure(
+            f"BibTeX line {first + 1}: {got[first] if first < len(got) else None!r} != "
+            f"{exp[first] if first < len(exp) else None!r}"
+        )
+
+
+def _case_export_structure(case: Mapping[str, Any], root: Path) -> None:
+    import xml.etree.ElementTree as ET
+
+    i, e = case["input"], case["expect"]
+    fmt = i["format"]
+    with open_spdf(root / i["file"]) as f:
+        pages: list[dict[str, Any]] = []
+        if fmt == "alto":
+            tree = ET.fromstring(f.to_alto())
+            for page in tree.iter("{http://www.loc.gov/standards/alto/ns-v4#}Page"):
+                pages.append({"physical": int(page.get("PHYSICAL_IMG_NR") or 0), "printed": page.get("PRINTED_IMG_NR")})
+        elif fmt == "tei":
+            tree = ET.fromstring(f.to_tei())
+            body = tree.find("{http://www.tei-c.org/ns/1.0}text/{http://www.tei-c.org/ns/1.0}body")
+            for pb in body.iter("{http://www.tei-c.org/ns/1.0}pb") if body is not None else []:
+                pages.append({"n": pb.get("n")})
+        elif fmt == "iiif":
+            base = "https://example.org/iiif"
+            manifest = f.to_iiif(base)
+            page_canvases = {f"{base}/canvas/{u.ord}" for u in f.iter_units() if u.anchor.type == "page"}
+            for canvas in manifest["items"]:
+                if canvas["id"] in page_canvases:
+                    label = canvas.get("label")
+                    pages.append({"label": next(iter(label.values()))[0] if label else None})
+        else:
+            raise CaseFailure(f"unknown format {fmt!r}")
+    diff = json_diff(pages, e["pages"])
+    _check(diff is None, f"{fmt} page sequence differs at {diff}")
+
+
 HANDLERS: dict[str, Callable[[Mapping[str, Any], Path], None]] = {
     "dump": _case_dump,
     "legacy_dump": _case_dump,
@@ -240,6 +319,10 @@ HANDLERS: dict[str, Callable[[Mapping[str, Any], Path], None]] = {
     "anchor_uri": _case_anchor_uri,
     "cite": _case_cite,
     "quantize": _case_quantize,
+    "locate": _case_locate,
+    "export_csl": _case_export_csl,
+    "export_bibtex": _case_export_bibtex,
+    "export_structure": _case_export_structure,
 }
 
 

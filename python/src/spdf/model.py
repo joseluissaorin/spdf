@@ -15,6 +15,7 @@ __all__ = [
     "Fragment",
     "Issue",
     "LexicalSearch",
+    "Location",
     "Provenance",
     "SearchResult",
     "Section",
@@ -209,25 +210,66 @@ class Extension:
 class SearchResult:
     """One search hit.
 
+    :attr:`target` is ``"fragment"`` (lexical, hybrid and most vector searches), ``"unit"``
+    or ``"figure"`` (vector searches over those targets); :attr:`id` is the id of that
+    record, also available as :attr:`fragment_id`, :attr:`unit_id` or :attr:`figure_id`.
     :attr:`via` tells which lists produced it (``"lexical"``, ``"vector"`` or both, in
-    that order). :attr:`fragment` is the full fragment, for convenience.
+    that order). :attr:`fragment` is the full fragment for fragment hits.
     """
 
-    fragment_id: str
+    id: str
     score: float
     via: tuple[str, ...]
     anchor: Anchor
     anchor_uri: str
+    target: str = "fragment"
     fragment: Fragment | None = field(default=None, compare=False, repr=False)
 
+    @property
+    def fragment_id(self) -> str | None:
+        return self.id if self.target == "fragment" else None
+
+    @property
+    def unit_id(self) -> str | None:
+        return self.id if self.target == "unit" else None
+
+    @property
+    def figure_id(self) -> str | None:
+        return self.id if self.target == "figure" else None
+
     def to_dict(self) -> dict[str, Any]:
-        """The result item of the reference search (contract §6)."""
+        """The result item of the reference search (``fragment_id``, ``unit_id`` or ``figure_id``)."""
         return {
-            "fragment_id": self.fragment_id,
+            f"{self.target}_id": self.id,
             "score": self.score,
             "via": list(self.via),
             "anchor": self.anchor.to_dict(),
             "anchor_uri": self.anchor_uri,
+        }
+
+
+@dataclass(frozen=True)
+class Location:
+    """Result of :meth:`SpdfFile.locate` (SPEC §5.4).
+
+    ``document`` is false when the reference designates another document. ``units`` and
+    ``fragments`` are ids (in ``ord`` and ``n`` order); ``char`` and ``xywh`` are copied
+    from the reference, or ``None``.
+    """
+
+    document: bool
+    units: list[str]
+    fragments: list[str]
+    char: list[int] | None = None
+    xywh: list[float] | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "document": self.document,
+            "units": list(self.units),
+            "fragments": list(self.fragments),
+            "char": self.char,
+            "xywh": self.xywh,
         }
 
 

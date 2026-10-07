@@ -28,6 +28,13 @@ except ImportError:  # pragma: no cover
 _FMT = {"f32": "f", "f16": "e", "i8": "b"}
 
 
+def _quantize_i8(v: float) -> int:
+    x = v * 127.0
+    if abs(x) >= 127:  # also when v × 127 overflows to infinity
+        return 127 if x > 0 else -127
+    return max(-127, min(127, _round_half_away(x)))
+
+
 def _round_half_away(x: float) -> int:
     return math.floor(abs(x) + 0.5) * (1 if x >= 0 else -1)
 
@@ -58,7 +65,7 @@ def quantize(values: Any, dtype: str = "f32") -> bytes:
     if any(not math.isfinite(v) for v in vals):
         raise ValueError("vector values must be finite numbers")
     if dtype == "i8":
-        q = [max(-127, min(127, _round_half_away(v * 127.0))) for v in vals]
+        q = [_quantize_i8(v) for v in vals]
         return struct.pack(f"<{len(q)}b", *q)
     try:
         return struct.pack(f"<{len(vals)}{_FMT[dtype]}", *vals)
