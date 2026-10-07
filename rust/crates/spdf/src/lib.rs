@@ -47,6 +47,7 @@
 pub mod anchor;
 pub mod canon;
 pub mod cite;
+pub mod conformance;
 mod dump;
 mod error;
 pub mod export;

@@ -524,12 +524,55 @@ fn parse_f64(s: &str, what: &str) -> Result<f64> {
 }
 
 fn parse_int<T: FromStr>(s: &str, what: &str) -> Result<T> {
-    let s = s.trim();
-    if s.is_empty() || !s.bytes().all(|b| b.is_ascii_digit()) {
-        return Err(Error::InvalidUri(format!("`{what}` is not an integer: `{s}`")));
+    let ok = !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit()) && (s == "0" || !s.starts_with('0'));
+    if !ok {
+        return Err(Error::InvalidUri(format!("`{what}` is not a canonical integer: `{s}`")));
     }
     s.parse()
         .map_err(|_| Error::InvalidUri(format!("`{what}` out of range: `{s}`")))
+}
+
+/// `^[0-9]+(\.[0-9]+)?$`
+fn is_decimal(s: &str) -> bool {
+    let (a, b) = match s.split_once('.') {
+        Some((a, b)) => (a, Some(b)),
+        None => (s, None),
+    };
+    !a.is_empty()
+        && a.bytes().all(|c| c.is_ascii_digit())
+        && b.map(|b| !b.is_empty() && b.bytes().all(|c| c.is_ascii_digit())).unwrap_or(true)
+}
+
+/// A Media Fragments NPT value: seconds (`4160.5`) or clock (`1:09:20.5`, `9:20`).
+fn parse_npt(s: &str) -> Result<f64> {
+    if is_decimal(s) {
+        return parse_f64(s, "t").map(round6);
+    }
+    let parts: Vec<&str> = s.split(':').collect();
+    let bad = || Error::InvalidUri(format!("bad time `{s}`"));
+    let (h, m, sec) = match parts.as_slice() {
+        [m, sec] => ("0", *m, *sec),
+        [h, m, sec] => (*h, *m, *sec),
+        _ => return Err(bad()),
+    };
+    let digits = |x: &str| !x.is_empty() && x.bytes().all(|c| c.is_ascii_digit());
+    if !digits(h) || !digits(m) || m.len() > 2 {
+        return Err(bad());
+    }
+    let (si, sf) = match sec.split_once('.') {
+        Some((a, b)) => (a, Some(b)),
+        None => (sec, None),
+    };
+    if si.len() != 2 || !digits(si) || sf.map(|f| !digits(f)).unwrap_or(false) {
+        return Err(bad());
+    }
+    let mi: f64 = m.parse().map_err(|_| bad())?;
+    let se: f64 = sec.parse().map_err(|_| bad())?;
+    if mi >= 60.0 || se >= 60.0 {
+        return Err(bad());
+    }
+    let hi: f64 = h.parse().map_err(|_| bad())?;
+    Ok(round6(hi * 3600.0 + mi * 60.0 + se))
 }
 
 fn pair<'a>(raw: &'a str, sep: char, what: &str) -> Result<(&'a str, &'a str)> {
@@ -597,6 +640,108 @@ pub struct Locator {
     pub region: Option<[f64; 4]>,
 }
 
+fn json_u64(v: Option<&Value>) -> Option<u64> {
+    v.and_then(|x| x.as_u64().or_else(|| x.as_f64().filter(|f| *f >= 0.0 && f.fract() == 0.0).map(|f| f as u64)))
+}
+
+fn json_string(v: Option<&Value>) -> Option<String> {
+    match v {
+        Some(Value::String(s)) => Some(s.clone()),
+        Some(Value::Number(n)) => Some(n.to_string()),
+        _ => None,
+    }
+}
+
+impl Locator {
+    /// The locator of an anchor (and optional end anchor) given as JSON,
+    /// exactly as the reference builds it (§3).
+    pub fn from_anchor_value(anchor: &Value, end: Option<&Value>) -> Self {
+        let mut l = Locator::default();
+        let t = anchor.get("type").and_then(Value::as_str).unwrap_or("");
+        let end_type = end.and_then(|e| e.get("type")).and_then(Value::as_str);
+        let printed = json_string(anchor.get("printed"));
+        match t {
+            "page" => {
+                l.physical = json_u64(anchor.get("physical"));
+                l.printed = printed.clone();
+                if let (Some(e), Some("page")) = (end, end_type) {
+                    let pe = json_u64(e.get("physical"));
+                    if pe.is_some() && pe != l.physical {
+                        l.physical_end = pe;
+                    }
+                    let fe = json_string(e.get("printed"));
+                    if fe.is_some() && fe != printed {
+                        l.printed_end = fe;
+                    }
+                }
+            }
+            "time" => {
+                let t0 = anchor.get("t0").and_then(Value::as_f64).unwrap_or(0.0);
+                let t1 = if end_type == Some("time") {
+                    end.and_then(|e| e.get("t1")).and_then(Value::as_f64)
+                } else {
+                    anchor.get("t1").and_then(Value::as_f64)
+                };
+                l.time = Some(match t1 {
+                    Some(t1) => vec![t0, t1],
+                    None => vec![t0],
+                });
+            }
+            "section" | "web" => {
+                if let Some(p) = anchor.get("path").and_then(Value::as_array) {
+                    if !p.is_empty() {
+                        l.section = Some(p.iter().map(|x| x.as_str().unwrap_or("").to_string()).collect());
+                    }
+                }
+                l.paragraph = json_u64(anchor.get("paragraph"));
+                if printed.is_some() {
+                    l.printed = printed.clone();
+                    let fe = end.and_then(|e| json_string(e.get("printed")));
+                    if fe.is_some() && fe != printed {
+                        l.printed_end = fe;
+                    }
+                }
+            }
+            "slide" => l.slide = json_u64(anchor.get("n")),
+            "sheet" => {
+                l.sheet = json_string(anchor.get("sheet"));
+                if let (Some(a), Some(b)) = (json_u64(anchor.get("row_from")), json_u64(anchor.get("row_to"))) {
+                    l.rows = Some([a, b]);
+                }
+            }
+            "verse" => {
+                if let Some(a) = json_u64(anchor.get("line_from")) {
+                    let b = json_u64(anchor.get("line_to"));
+                    l.verse = Some(match b {
+                        Some(b) if b != a => vec![a, b],
+                        _ => vec![a],
+                    });
+                }
+                l.printed = printed;
+            }
+            "canonical" => {
+                if let (Some(sc), Some(r)) = (json_string(anchor.get("scheme")), json_string(anchor.get("ref"))) {
+                    l.reference = Some(CanonicalRef {
+                        scheme: sc,
+                        reference: r,
+                    });
+                }
+            }
+            _ => {}
+        }
+        if let Some(c) = anchor.get("chars").and_then(Value::as_array) {
+            if let (Some(a), Some(b)) = (json_u64(c.first()), json_u64(c.get(1))) {
+                l.chars = Some([a, b]);
+            }
+        }
+        if let Some(r) = anchor.get("region").filter(|r| r.is_object()) {
+            let g = |k: &str| r.get(k).and_then(Value::as_f64).unwrap_or(0.0);
+            l.region = Some([g("x"), g("y"), g("w"), g("h")]);
+        }
+        l
+    }
+}
+
 /// A parsed `spdf:` URI: document reference plus [`Locator`].
 ///
 /// [`fmt::Display`] writes the canonical form (parameter order `p pe f fe t s
@@ -618,103 +763,20 @@ impl AnchorUri {
 
     /// Builds the URI of `anchor` (and, for ranges, `end`) within `docref`.
     pub fn from_anchor(docref: &str, anchor: &Anchor, end: Option<&Anchor>) -> Self {
-        let mut l = Locator::default();
-        match &anchor.kind {
-            AnchorKind::Page {
-                physical, printed, ..
-            } => {
-                l.physical = Some(u64::from(*physical));
-                l.printed = printed.clone();
-                if let Some(Anchor {
-                    kind: AnchorKind::Page { physical: pe, .. },
-                    ..
-                }) = end
-                {
-                    if pe != physical {
-                        l.physical_end = Some(u64::from(*pe));
-                    }
-                }
-            }
-            AnchorKind::Time { t0, t1, .. } => {
-                let mut t1 = *t1;
-                if let Some(Anchor {
-                    kind: AnchorKind::Time { t0: e0, t1: e1, .. },
-                    ..
-                }) = end
-                {
-                    t1 = Some(e1.unwrap_or(*e0));
-                }
-                l.time = Some(match t1 {
-                    Some(t1) => vec![*t0, t1],
-                    None => vec![*t0],
-                });
-            }
-            AnchorKind::Section {
-                path,
-                paragraph,
-                printed,
-            } => {
-                if !path.is_empty() {
-                    l.section = Some(path.clone());
-                }
-                l.paragraph = paragraph.map(u64::from);
-                l.printed = printed.clone();
-            }
-            AnchorKind::Slide { n } => l.slide = Some(u64::from(*n)),
-            AnchorKind::Sheet {
-                sheet,
-                row_from,
-                row_to,
-            } => {
-                l.sheet = Some(sheet.clone());
-                if let Some(a) = row_from {
-                    l.rows = Some([u64::from(*a), u64::from(row_to.unwrap_or(*a))]);
-                }
-            }
-            AnchorKind::Web {
-                path, paragraph, ..
-            } => {
-                if !path.is_empty() {
-                    l.section = Some(path.clone());
-                }
-                l.paragraph = paragraph.map(u64::from);
-            }
-            AnchorKind::Image => {}
-            AnchorKind::Verse {
-                line_from,
-                line_to,
-                printed,
-            } => {
-                l.verse = Some(match line_to {
-                    Some(b) if b != line_from => vec![u64::from(*line_from), u64::from(*b)],
-                    _ => vec![u64::from(*line_from)],
-                });
-                l.printed = printed.clone();
-            }
-            AnchorKind::Canonical { scheme, reference } => {
-                l.reference = Some(CanonicalRef {
-                    scheme: scheme.clone(),
-                    reference: reference.clone(),
-                });
-            }
-        }
-        if let Some(e) = end {
-            if let Some(p) = e.printed() {
-                if l.printed.as_deref() != Some(p) {
-                    l.printed_end = Some(p.to_string());
-                }
-            }
-        }
-        l.chars = anchor.chars.map(|(a, b)| [a, b]);
-        l.region = anchor.region.map(|r| [r.x, r.y, r.w, r.h]);
+        let e = end.map(Anchor::to_value);
+        Self::from_anchor_value(docref, &anchor.to_value(), e.as_ref())
+    }
+
+    /// Builds the URI of an anchor given as JSON (5.0 names).
+    pub fn from_anchor_value(docref: &str, anchor: &Value, end: Option<&Value>) -> Self {
         AnchorUri {
             docref: docref.to_string(),
-            locator: l,
+            locator: Locator::from_anchor_value(anchor, end.filter(|e| !e.is_null())),
         }
     }
 
-    /// Parses an `spdf:` URI. Unknown parameters are ignored; malformed
-    /// known parameters are errors.
+    /// Parses an `spdf:` URI (strictly for known parameters: canonical
+    /// integers, no duplicates, pages from 1). Unknown parameters are ignored.
     pub fn parse(s: &str) -> Result<Self> {
         let rest = s
             .strip_prefix("spdf:")
@@ -732,23 +794,38 @@ impl AnchorUri {
         };
         let Some(frag) = frag else { return Ok(u) };
         let l = &mut u.locator;
+        let mut seen = std::collections::HashSet::new();
         for p in frag.split('&').filter(|p| !p.is_empty()) {
             let (k, raw) = p
                 .split_once('=')
                 .ok_or_else(|| Error::InvalidUri(format!("parameter without value: `{p}`")))?;
+            if !seen.insert(k.to_string()) {
+                return Err(Error::InvalidUri(format!("duplicate parameter `{k}`")));
+            }
             match k {
-                "p" => l.physical = Some(parse_int(raw, "p")?),
-                "pe" => l.physical_end = Some(parse_int(raw, "pe")?),
+                "p" | "pe" | "sl" | "para" => {
+                    let n: u64 = parse_int(raw, k)?;
+                    if k != "para" && n < 1 {
+                        return Err(Error::InvalidUri(format!("`{k}` starts at 1")));
+                    }
+                    match k {
+                        "p" => l.physical = Some(n),
+                        "pe" => l.physical_end = Some(n),
+                        "sl" => l.slide = Some(n),
+                        _ => l.paragraph = Some(n),
+                    }
+                }
                 "f" => l.printed = Some(percent_decode(raw)?),
                 "fe" => l.printed_end = Some(percent_decode(raw)?),
+                "sh" => l.sheet = Some(percent_decode(raw)?),
                 "t" => {
                     let raw = raw.strip_prefix("npt:").unwrap_or(raw);
                     let mut v = Vec::new();
                     for x in raw.split(',') {
-                        v.push(round6(parse_f64(x, "t")?));
+                        v.push(parse_npt(x)?);
                     }
-                    if v.len() > 2 {
-                        return Err(Error::InvalidUri("`t` takes at most two values".into()));
+                    if v.len() > 2 || (v.len() == 2 && v[1] < v[0]) {
+                        return Err(Error::InvalidUri("bad `t`".into()));
                     }
                     l.time = Some(v);
                 }
@@ -759,31 +836,40 @@ impl AnchorUri {
                             .collect::<Result<Vec<_>>>()?,
                     )
                 }
-                "para" => l.paragraph = Some(parse_int(raw, "para")?),
-                "sl" => l.slide = Some(parse_int(raw, "sl")?),
-                "sh" => l.sheet = Some(percent_decode(raw)?),
                 "rows" => {
                     let (a, b) = pair(raw, '-', "rows")?;
                     l.rows = Some([parse_int(a, "rows")?, parse_int(b, "rows")?]);
                 }
                 "v" => {
-                    l.verse = Some(match raw.split_once('-') {
-                        Some((a, b)) => vec![parse_int(a, "v")?, parse_int(b, "v")?],
-                        None => vec![parse_int(raw, "v")?],
-                    })
+                    let parts: Vec<&str> = raw.split('-').collect();
+                    if parts.len() > 2 {
+                        return Err(Error::InvalidUri("bad `v`".into()));
+                    }
+                    l.verse = Some(
+                        parts
+                            .iter()
+                            .map(|x| parse_int(x, "v"))
+                            .collect::<Result<Vec<u64>>>()?,
+                    );
                 }
                 "ref" => {
                     let (sch, r) = pair(raw, ':', "ref")?;
+                    if sch.is_empty() {
+                        return Err(Error::InvalidUri("`ref` needs scheme:ref".into()));
+                    }
                     l.reference = Some(CanonicalRef {
                         scheme: percent_decode(sch)?,
                         reference: percent_decode(r)?,
                     });
                 }
                 "char" => {
-                    let (a, b) = pair(raw, ',', "char")?;
-                    let (a, b): (u64, u64) = (parse_int(a, "char")?, parse_int(b, "char")?);
-                    if a > b {
-                        return Err(Error::InvalidUri("`char` start > end".into()));
+                    let parts: Vec<&str> = raw.split(',').collect();
+                    if parts.len() != 2 {
+                        return Err(Error::InvalidUri("`char` needs start,end".into()));
+                    }
+                    let (a, b): (u64, u64) = (parse_int(parts[0], "char")?, parse_int(parts[1], "char")?);
+                    if b < a {
+                        return Err(Error::InvalidUri("`char` end before start".into()));
                     }
                     l.chars = Some([a, b]);
                 }
@@ -792,8 +878,8 @@ impl AnchorUri {
                         Error::InvalidUri("`xywh` must use `percent:` units".into())
                     })?;
                     let parts: Vec<&str> = body.split(',').collect();
-                    if parts.len() != 4 {
-                        return Err(Error::InvalidUri("`xywh` needs 4 numbers".into()));
+                    if parts.len() != 4 || !parts.iter().all(|x| is_decimal(x)) {
+                        return Err(Error::InvalidUri("bad `xywh`".into()));
                     }
                     let mut r = [0.0; 4];
                     for (i, x) in parts.iter().enumerate() {
@@ -886,17 +972,13 @@ impl fmt::Display for AnchorUri {
             params.push(format!("p={p}"));
         }
         if let Some(p) = l.physical_end {
-            if Some(p) != l.physical {
-                params.push(format!("pe={p}"));
-            }
+            params.push(format!("pe={p}"));
         }
         if let Some(x) = &l.printed {
             params.push(format!("f={}", percent_encode(x)));
         }
         if let Some(x) = &l.printed_end {
-            if Some(x) != l.printed.as_ref() {
-                params.push(format!("fe={}", percent_encode(x)));
-            }
+            params.push(format!("fe={}", percent_encode(x)));
         }
         if let Some(t) = &l.time {
             let parts: Vec<String> = t.iter().map(|x| fmt_num(*x)).collect();
@@ -919,11 +1001,8 @@ impl fmt::Display for AnchorUri {
             params.push(format!("rows={a}-{b}"));
         }
         if let Some(v) = &l.verse {
-            match v.as_slice() {
-                [a, b] if a != b => params.push(format!("v={a}-{b}")),
-                [a, ..] => params.push(format!("v={a}")),
-                [] => {}
-            }
+            let parts: Vec<String> = v.iter().map(u64::to_string).collect();
+            params.push(format!("v={}", parts.join("-")));
         }
         if let Some(r) = &l.reference {
             params.push(format!(
@@ -960,9 +1039,10 @@ impl FromStr for AnchorUri {
 /// Formats the URI of an anchor given as JSON (5.0 names). `docref` is
 /// `sha256-<hex>` or a document id.
 pub fn format_uri(docref: &str, anchor: &Value, end: Option<&Value>) -> Result<String> {
-    let a = Anchor::from_value(anchor)?;
-    let e = end.map(Anchor::from_value).transpose()?;
-    Ok(AnchorUri::from_anchor(docref, &a, e.as_ref()).to_string())
+    if !anchor.is_object() {
+        return Err(Error::InvalidAnchor("anchor must be a JSON object".into()));
+    }
+    Ok(AnchorUri::from_anchor_value(docref, anchor, end).to_string())
 }
 
 /// Parses an anchor URI.

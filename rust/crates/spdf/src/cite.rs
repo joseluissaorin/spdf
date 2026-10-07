@@ -12,7 +12,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::anchor::{Anchor, AnchorKind};
+use crate::anchor::Anchor;
 use crate::model::Document;
 
 /// Citation language.
@@ -27,9 +27,10 @@ pub enum Locale {
 }
 
 impl Locale {
-    /// `es*` → Spanish, anything else → English.
+    /// BCP 47 tag → locale: `es`, `es-ES`… → Spanish; anything else → English.
     pub fn parse(s: &str) -> Self {
-        if s.to_ascii_lowercase().starts_with("es") {
+        let primary = s.split(['-', '_']).next().unwrap_or("");
+        if primary.eq_ignore_ascii_case("es") {
             Locale::Es
         } else {
             Locale::En
@@ -37,35 +38,30 @@ impl Locale {
     }
 }
 
-fn person_name(p: &Value) -> Option<String> {
-    if let Some(l) = p.get("literal").and_then(Value::as_str) {
-        if !l.trim().is_empty() {
-            return Some(l.trim().to_string());
-        }
+fn s<'a>(v: &'a Value, k: &str) -> Option<&'a str> {
+    v.get(k).and_then(Value::as_str)
+}
+
+fn truthy_str<'a>(v: &'a Value, k: &str) -> Option<&'a str> {
+    s(v, k).filter(|x| !x.is_empty())
+}
+
+fn person_name(p: &Value) -> String {
+    if let Some(l) = truthy_str(p, "literal") {
+        return l.to_string();
     }
-    if let Some(f) = p.get("family").and_then(Value::as_str) {
-        if !f.trim().is_empty() {
-            let particle = p
-                .get("non-dropping-particle")
-                .and_then(Value::as_str)
-                .map(str::trim)
-                .filter(|s| !s.is_empty());
-            return Some(match particle {
-                Some(np) => format!("{np} {}", f.trim()),
-                None => f.trim().to_string(),
-            });
-        }
+    if let Some(f) = truthy_str(p, "family") {
+        return match truthy_str(p, "non-dropping-particle") {
+            Some(np) => format!("{np} {f}"),
+            None => f.to_string(),
+        };
     }
-    p.get("given")
-        .and_then(Value::as_str)
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
-        .map(str::to_string)
+    s(p, "given").unwrap_or("").to_string()
 }
 
 /// True if a Spanish word starts with the sound /i/ (`i`, `í`, `hi`, `hí`
 /// not followed by a vowel), which turns `y` into `e`.
-fn starts_with_i_sound(word: &str) -> bool {
+pub fn starts_with_i_sound(word: &str) -> bool {
     let lower: Vec<char> = word.to_lowercase().chars().collect();
     let rest = match lower.as_slice() {
         ['h', 'i' | 'í', rest @ ..] => rest,
@@ -78,55 +74,63 @@ fn starts_with_i_sound(word: &str) -> bool {
     )
 }
 
-fn names(md: &Value, locale: Locale) -> String {
+fn short_title(md: &Value) -> String {
+    if let Some(t) = truthy_str(md, "title-short") {
+        return t.to_string();
+    }
+    s(md, "title")
+        .unwrap_or("")
+        .split(':')
+        .next()
+        .unwrap_or("")
+        .trim()
+        .to_string()
+}
+
+fn names(md: &Value, es: bool) -> String {
     let authors: Vec<String> = md
         .get("author")
         .and_then(Value::as_array)
-        .map(|a| a.iter().filter_map(person_name).collect())
+        .map(|a| a.iter().map(person_name).filter(|n| !n.is_empty()).collect())
         .unwrap_or_default();
     match authors.len() {
-        0 => {
-            if let Some(s) = md.get("title-short").and_then(Value::as_str) {
-                if !s.trim().is_empty() {
-                    return s.trim().to_string();
-                }
-            }
-            let t = md.get("title").and_then(Value::as_str).unwrap_or("");
-            t.split(':').next().unwrap_or("").trim().to_string()
-        }
+        0 => short_title(md),
         1 => authors[0].clone(),
-        2 => match locale {
-            Locale::Es => {
-                let conj = if starts_with_i_sound(&authors[1]) { "e" } else { "y" };
-                format!("{} {conj} {}", authors[0], authors[1])
-            }
-            Locale::En => format!("{} and {}", authors[0], authors[1]),
-        },
+        2 => {
+            let conj = if !es {
+                "and"
+            } else if starts_with_i_sound(&authors[1]) {
+                "e"
+            } else {
+                "y"
+            };
+            format!("{} {conj} {}", authors[0], authors[1])
+        }
         _ => format!("{} et al.", authors[0]),
     }
 }
 
-fn year(md: &Value, locale: Locale) -> String {
+fn year(md: &Value, es: bool) -> String {
     let y = md
         .get("issued")
         .and_then(|i| i.get("date-parts"))
         .and_then(|dp| dp.get(0))
         .and_then(|p| p.get(0))
         .and_then(|y| match y {
-            Value::Number(n) => n.as_i64().or_else(|| n.as_f64().map(|f| f as i64)),
+            Value::Number(n) => n.as_i64().or_else(|| n.as_f64().map(|f| f.trunc() as i64)),
             Value::String(s) => s.trim().parse().ok(),
             _ => None,
         });
     match y {
-        Some(y) if y < 0 => match locale {
-            Locale::Es => format!("{} a. C.", -y),
-            Locale::En => format!("{} BC", -y),
-        },
-        Some(y) => y.to_string(),
-        None => match locale {
-            Locale::Es => "s. f.".to_string(),
-            Locale::En => "n.d.".to_string(),
-        },
+        Some(y) if y > 0 => y.to_string(),
+        Some(y) => {
+            if es {
+                format!("{} a. C.", -y)
+            } else {
+                format!("{} BC", -y)
+            }
+        }
+        None => if es { "s. f." } else { "n.d." }.to_string(),
     }
 }
 
@@ -145,141 +149,142 @@ pub fn format_time(seconds: f64) -> String {
     }
 }
 
-fn folio(printed: &str, source: Option<&str>) -> String {
-    if source == Some("inferred") {
-        format!("[{printed}]")
+fn printed_label(a: &Value) -> Option<String> {
+    let p = match a.get("printed") {
+        Some(Value::String(p)) => p.clone(),
+        Some(Value::Number(n)) => n.to_string(),
+        _ => return None,
+    };
+    Some(if s(a, "source") == Some("inferred") {
+        format!("[{p}]")
     } else {
-        printed.to_string()
-    }
-}
-
-fn page_locator(
-    printed: Option<&str>,
-    source: Option<&str>,
-    foliation: Option<&str>,
-    end: Option<(Option<&str>, Option<&str>)>,
-    locale: Locale,
-) -> String {
-    let Some(p) = printed else {
-        return match locale {
-            Locale::Es => "s. p.".into(),
-            Locale::En => "n. pag.".into(),
-        };
-    };
-    let (one, many) = match foliation {
-        Some("leaf") => ("fol.", "fols."),
-        Some("column") => ("col.", "cols."),
-        _ => ("p.", "pp."),
-    };
-    let a = folio(p, source);
-    if let Some((Some(ep), es)) = end {
-        if ep != p {
-            return format!("{many} {a}-{}", folio(ep, es));
-        }
-    }
-    format!("{one} {a}")
-}
-
-/// The locator part of a citation (`p. 145`, `1:09:20`, `diap. 3`…), or
-/// `None` for anchors without one (images).
-pub fn locator(anchor: &Anchor, end: Option<&Anchor>, locale: Locale) -> Option<String> {
-    let para = |n: u32| match locale {
-        Locale::Es => format!("párr. {n}"),
-        Locale::En => format!("para. {n}"),
-    };
-    Some(match &anchor.kind {
-        AnchorKind::Page {
-            printed,
-            source,
-            foliation,
-            ..
-        } => {
-            let e = end.and_then(|e| match &e.kind {
-                AnchorKind::Page {
-                    printed, source, ..
-                } => Some((printed.as_deref(), source.as_deref())),
-                _ => None,
-            });
-            page_locator(printed.as_deref(), source.as_deref(), foliation.as_deref(), e, locale)
-        }
-        AnchorKind::Time { t0, .. } => {
-            let mut s = format_time(*t0);
-            if let Some(Anchor {
-                kind: AnchorKind::Time { t0: e0, t1: e1, .. },
-                ..
-            }) = end
-            {
-                s.push('-');
-                s.push_str(&format_time(e1.unwrap_or(*e0)));
-            }
-            s
-        }
-        AnchorKind::Section {
-            path,
-            paragraph,
-            printed,
-        } => section_locator(path, *paragraph, printed.as_deref(), end, locale, &para)?,
-        AnchorKind::Web {
-            path, paragraph, ..
-        } => section_locator(path, *paragraph, None, end, locale, &para)?,
-        AnchorKind::Slide { n } => match locale {
-            Locale::Es => format!("diap. {n}"),
-            Locale::En => format!("slide {n}"),
-        },
-        AnchorKind::Sheet {
-            sheet,
-            row_from,
-            row_to,
-        } => {
-            let word = match locale {
-                Locale::Es => "filas",
-                Locale::En => "rows",
-            };
-            match (row_from, row_to) {
-                (Some(a), Some(b)) => format!("{sheet}, {word} {a}-{b}"),
-                (Some(a), None) => format!("{sheet}, {word} {a}-{a}"),
-                _ => sheet.clone(),
-            }
-        }
-        AnchorKind::Verse {
-            line_from, line_to, ..
-        } => match line_to {
-            Some(b) if b != line_from => format!("vv. {line_from}-{b}"),
-            _ => format!("v. {line_from}"),
-        },
-        AnchorKind::Canonical { reference, .. } => reference.clone(),
-        AnchorKind::Image => return None,
+        p
     })
 }
 
-fn section_locator(
-    path: &[String],
-    paragraph: Option<u32>,
-    printed: Option<&str>,
-    end: Option<&Anchor>,
-    locale: Locale,
-    para: &dyn Fn(u32) -> String,
-) -> Option<String> {
-    if let Some(p) = printed {
-        let e = end.and_then(|e| e.printed()).map(|ep| (Some(ep), None));
-        return Some(page_locator(Some(p), None, None, e, locale));
+fn page_locator(anchor: &Value, end: Option<&Value>, es: bool, single: &str, plural: &str) -> String {
+    let Some(a) = printed_label(anchor) else {
+        return if es { "s. p." } else { "n. pag." }.to_string();
+    };
+    if let Some(e) = end {
+        if e.get("type") == anchor.get("type") {
+            if let Some(b) = printed_label(e) {
+                if e.get("printed") != anchor.get("printed") {
+                    return format!("{plural} {a}-{b}");
+                }
+            }
+        }
     }
-    let last = path.last().map(|s| s.trim()).filter(|s| !s.is_empty());
-    match (last, paragraph) {
-        (Some(l), Some(n)) => Some(format!("§ {l}, {}", para(n))),
-        (Some(l), None) => Some(format!("§ {l}")),
-        (None, Some(n)) => Some(para(n)),
-        (None, None) => None,
+    format!("{single} {a}")
+}
+
+fn num_text(v: Option<&Value>) -> String {
+    match v {
+        Some(Value::Number(n)) => match n.as_i64() {
+            Some(i) => i.to_string(),
+            None => crate::canon::format_number(n.as_f64().unwrap_or(0.0)),
+        },
+        Some(Value::String(s)) => s.clone(),
+        _ => String::new(),
     }
+}
+
+/// The locator of an anchor given as JSON (`p. 145`, `1:09:20`, `diap. 3`…),
+/// or `None` (images, empty sections).
+pub fn locator_value(anchor: &Value, end: Option<&Value>, locale: Locale) -> Option<String> {
+    let es = locale == Locale::Es;
+    let t = s(anchor, "type")?;
+    match t {
+        "page" => {
+            let (single, plural) = match s(anchor, "foliation").unwrap_or("page") {
+                "leaf" => ("fol.", "fols."),
+                "column" => ("col.", "cols."),
+                _ => ("p.", "pp."),
+            };
+            Some(page_locator(anchor, end, es, single, plural))
+        }
+        "time" => {
+            let t0 = anchor.get("t0").and_then(Value::as_f64).unwrap_or(0.0);
+            let mut out = format_time(t0);
+            if let Some(e) = end.filter(|e| s(e, "type") == Some("time")) {
+                let t1 = e
+                    .get("t1")
+                    .and_then(Value::as_f64)
+                    .or_else(|| e.get("t0").and_then(Value::as_f64))
+                    .unwrap_or(0.0);
+                out.push('-');
+                out.push_str(&format_time(t1));
+            }
+            Some(out)
+        }
+        "section" | "web" => {
+            if anchor.get("printed").map(|p| !p.is_null()).unwrap_or(false) {
+                return Some(page_locator(anchor, end, es, "p.", "pp."));
+            }
+            let mut parts = Vec::new();
+            if let Some(last) = anchor
+                .get("path")
+                .and_then(Value::as_array)
+                .and_then(|p| p.last())
+            {
+                parts.push(format!("§ {}", last.as_str().unwrap_or("")));
+            }
+            if let Some(p) = anchor.get("paragraph").filter(|v| !v.is_null()) {
+                parts.push(format!("{} {}", if es { "párr." } else { "para." }, num_text(Some(p))));
+            }
+            if parts.is_empty() {
+                None
+            } else {
+                Some(parts.join(", "))
+            }
+        }
+        "slide" => Some(format!(
+            "{} {}",
+            if es { "diap." } else { "slide" },
+            num_text(anchor.get("n"))
+        )),
+        "sheet" => {
+            let sheet = s(anchor, "sheet").unwrap_or("");
+            let a = num_text(anchor.get("row_from"));
+            let b = num_text(anchor.get("row_to"));
+            Some(if a == b {
+                format!("{sheet}, {} {a}", if es { "fila" } else { "row" })
+            } else {
+                format!("{sheet}, {} {a}-{b}", if es { "filas" } else { "rows" })
+            })
+        }
+        "verse" => {
+            let a = num_text(anchor.get("line_from"));
+            match anchor.get("line_to").filter(|v| !v.is_null()) {
+                Some(b) if num_text(Some(b)) != a => Some(format!("vv. {a}-{}", num_text(Some(b)))),
+                _ => Some(format!("v. {a}")),
+            }
+        }
+        "canonical" => Some(s(anchor, "ref").unwrap_or("").to_string()),
+        _ => None,
+    }
+}
+
+/// The locator part of a citation for a typed anchor.
+pub fn locator(anchor: &Anchor, end: Option<&Anchor>, locale: Locale) -> Option<String> {
+    let e = end.map(Anchor::to_value);
+    locator_value(&anchor.to_value(), e.as_ref(), locale)
+}
+
+/// Short citation from CSL metadata and anchors given as JSON.
+pub fn cite_value(anchor: &Value, end: Option<&Value>, metadata: &Value, locale: Locale) -> String {
+    let es = locale == Locale::Es;
+    let mut parts = vec![names(metadata, es), year(metadata, es)];
+    if let Some(l) = locator_value(anchor, end.filter(|e| !e.is_null()), locale) {
+        parts.push(l);
+    }
+    format!("({})", parts.join(", "))
 }
 
 /// Short citation from CSL metadata: `(Names, Year[, locator])`.
 pub fn cite_metadata(anchor: &Anchor, end: Option<&Anchor>, metadata: &Value, locale: Locale) -> String {
-    let mut parts = vec![names(metadata, locale), year(metadata, locale)];
-    if let Some(l) = locator(anchor, end, locale) {
-        parts.push(l);
-    }
-    format!("({})", parts.join(", "))
+    let e = end.map(Anchor::to_value);
+    cite_value(&anchor.to_value(), e.as_ref(), metadata, locale)
 }
 
 /// Short citation of `anchor` in `document`.
@@ -330,5 +335,7 @@ mod tests {
         assert!(starts_with_i_sound("Hidalgo"));
         assert!(!starts_with_i_sound("Hierro"));
         assert!(!starts_with_i_sound("Yuste"));
+        assert_eq!(Locale::parse("es-ES"), Locale::Es);
+        assert_eq!(Locale::parse("est"), Locale::En);
     }
 }

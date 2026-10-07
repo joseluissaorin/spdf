@@ -31,13 +31,10 @@ impl Spdf {
         let mut out = Map::new();
         let meta = self.meta()?;
         let version = match self.flavor {
-            Flavor::V5 => meta
-                .get("spdf_version")
-                .cloned()
-                .unwrap_or_else(|| self.version.clone()),
-            Flavor::Legacy => self.version.clone(),
+            Flavor::V5 => meta.get("spdf_version").cloned().map(Value::from).unwrap_or(Value::Null),
+            Flavor::Legacy => Value::from(self.version.clone()),
         };
-        out.insert("spdf_version".into(), Value::from(version));
+        out.insert("spdf_version".into(), version);
         if self.flavor == Flavor::Legacy {
             out.insert("legacy".into(), Value::Bool(true));
         }
@@ -121,16 +118,17 @@ impl Spdf {
         out.insert("blobs".into(), Value::Array(blobs));
 
         let prov_cols: Vec<&str> = schema::PROVENANCE.columns.iter().map(|c| c.0).collect();
-        let prov: Vec<Value> = self
-            .rows(
-                &schema::PROVENANCE,
-                &prov_cols,
-                None,
-                "at, stage, provider, model, detail, ms",
-            )?
+        // Sorted by the UTF-8 bytes of each entry's JCS form (draft 1.1).
+        let mut prov: Vec<(String, Value)> = self
+            .rows(&schema::PROVENANCE, &prov_cols, None, "")?
             .into_iter()
-            .map(|m| without(m, "document"))
+            .map(|m| {
+                let v = canon::normalize(&without(m, "document"));
+                (canon::to_string(&v), v)
+            })
             .collect();
+        prov.sort_by(|a, b| a.0.as_bytes().cmp(b.0.as_bytes()));
+        let prov: Vec<Value> = prov.into_iter().map(|(_, v)| v).collect();
         out.insert("provenance".into(), Value::Array(prov));
 
         let ext = if self.has_table("extensions") {

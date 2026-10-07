@@ -25,6 +25,19 @@ fn with_document(row: &Value, doc_id: &str) -> Result<Map<String, Value>> {
     Ok(m)
 }
 
+fn items_value(v: &[Value]) -> Value {
+    Value::Array(v.to_vec())
+}
+
+fn space_dtype(dump: &Value, space: &str) -> crate::model::Dtype {
+    arr(dump.get("spaces"))
+        .iter()
+        .find(|s| s.get("id").and_then(Value::as_str) == Some(space))
+        .and_then(|s| s.get("dtype").and_then(Value::as_str))
+        .and_then(crate::model::Dtype::parse)
+        .unwrap_or(crate::model::Dtype::F32)
+}
+
 fn values_of(v: &Value) -> Option<Vec<f32>> {
     v.as_array()?
         .iter()
@@ -106,8 +119,22 @@ pub(crate) fn writer_from_dump(src: &Value) -> Result<Writer> {
                     .decode(b64)
                     .map_err(|e| Error::invalid(format!("bad vector base64: {e}")))?;
                 w.add_vector_raw(target, id, &space, &data)?;
-            } else if let Some(vals) = it.get("values").and_then(values_of) {
-                w.add_vector(target, id, &space, &vals)?;
+            } else if let Some(vals) = it.get("values").and_then(Value::as_array) {
+                // Sources carry the stored values: i8 as integers q, f32/f16 as numbers.
+                let dtype = space_dtype(dump, &space);
+                let data = match dtype {
+                    crate::model::Dtype::I8 => vals
+                        .iter()
+                        .map(|v| {
+                            v.as_i64()
+                                .filter(|q| (-127..=127).contains(q))
+                                .map(|q| q as i8 as u8)
+                                .ok_or_else(|| Error::invalid(format!("i8 values are integers in [-127, 127], got {v}")))
+                        })
+                        .collect::<Result<Vec<u8>>>()?,
+                    d => crate::vector::encode(&values_of(&items_value(vals)).unwrap_or_default(), d),
+                };
+                w.add_vector_raw(target, id, &space, &data)?;
             } else {
                 return Err(Error::invalid(format!("vector `{id}` has no values")));
             }

@@ -122,19 +122,21 @@ impl SchemaInfo {
         out
     }
 
-    /// Tokenizer declared by the FTS table's `CREATE` statement.
+    /// Tokenizer declared by the FTS table's `CREATE` statement
+    /// (`unicode61`, the FTS5 default, if there is no `tokenize` option).
     pub fn fts_tokenizer(&self, table: &str) -> Option<String> {
         let sql = self.tables.get(table)?;
-        let i = sql.find("tokenize")?;
+        let Some(i) = sql.find("tokenize") else {
+            return Some("unicode61".into());
+        };
         let rest = &sql[i + "tokenize".len()..];
-        let rest = rest.trim_start().strip_prefix('=')?.trim_start();
-        let quote = rest.chars().next()?;
-        if quote != '\'' && quote != '"' {
-            return None;
-        }
-        let body = &rest[1..];
-        let end = body.find(quote)?;
-        Some(body[..end].to_string())
+        let parsed = (|| {
+            let rest = rest.trim_start().strip_prefix('=')?.trim_start();
+            let body = rest.strip_prefix('\'')?;
+            let end = body.find('\'')?;
+            Some(body[..end].to_string())
+        })();
+        Some(parsed.unwrap_or_else(|| "unicode61".into()))
     }
 }
 
@@ -1012,7 +1014,7 @@ impl Spdf {
         }
     }
 
-    /// Provenance rows in dump order.
+    /// Provenance rows, ordered by time (`at`, then stage).
     pub fn provenance(&self) -> Result<Vec<Provenance>> {
         let cols: Vec<&str> = schema::PROVENANCE.columns.iter().map(|c| c.0).collect();
         Self::typed(

@@ -166,6 +166,37 @@ fn finish(c: Collector, version: Option<String>, profile: Vec<String>) -> Valida
     }
 }
 
+/// Columns required in each 5.0 table (§2); `fragments_fts` only has to exist.
+fn required_columns(t: &str) -> Vec<&'static str> {
+    if t == "fragments_fts" {
+        return Vec::new();
+    }
+    schema::TABLES
+        .iter()
+        .find(|d| d.name == t)
+        .map(|d| d.columns.iter().map(|c| c.0).collect())
+        .unwrap_or_default()
+}
+
+const REQUIRED_TABLES: &[&str] = &[
+    "spdf_meta",
+    "documents",
+    "units",
+    "sections",
+    "fragments",
+    "fragments_fts",
+    "figures",
+    "spaces",
+    "vectors",
+    "blobs",
+    "provenance",
+    "extensions",
+];
+
+fn json_ok(s: &str) -> bool {
+    serde_json::from_str::<Value>(s).is_ok()
+}
+
 fn validate_connection(conn: Connection, gzip: bool, origin: Origin, mut c: Collector) -> ValidationReport {
     let info = match SchemaInfo::read(&conn) {
         Ok(i) => i,
@@ -185,9 +216,6 @@ fn validate_connection(conn: Connection, gzip: bool, origin: Origin, mut c: Coll
         );
         return finish(c, None, Vec::new());
     };
-    if gzip && flavor == Flavor::V5 {
-        c.warn("E003", "SPDF 5.0 files must not be gzip-wrapped", "container");
-    }
     let doc = match Spdf::assemble(conn, gzip, origin, info.clone(), flavor) {
         Ok(d) => d,
         Err(e) => {
@@ -197,243 +225,262 @@ fn validate_connection(conn: Connection, gzip: bool, origin: Origin, mut c: Coll
     };
     if let Err(e) = doc.check_version() {
         c.err("E002", e.to_string(), "header");
-        return finish(c, Some(doc.version.clone()), Vec::new());
-    }
-    let version = Some(doc.version.clone());
-    if flavor == Flavor::V5 && info.user_version > schema::USER_VERSION {
-        c.warn(
-            "W105",
-            format!("newer minor version (user_version {})", info.user_version),
-            "header",
-        );
+        return finish(c, None, Vec::new());
     }
     if flavor == Flavor::Legacy {
+        let version = Some(doc.version.clone());
         c.warn("W110", format!("legacy SPDF {} file", doc.version), "header");
+        for t in ["spdf", "documentos", "unidades", "fragmentos", "fragmentos_fts"] {
+            if !info.tables.contains_key(t) {
+                c.err("E010", format!("missing legacy table `{t}`"), t);
+            }
+        }
+        for obj in info.forbidden_objects(Some(flavor)) {
+            c.err("E020", format!("{obj} is not allowed"), obj.clone());
+        }
+        return finish(c, version, Vec::new());
     }
 
-    // E020
+    // 5.x
+    let uv = info.user_version;
+    let version_s = format!("{}.{}", uv / 100, (uv % 100) / 10);
+    let version = Some(version_s.clone());
+    if gzip {
+        c.warn("E003", "SPDF 5.0 files must not be gzip-wrapped", "container");
+    }
+    if version_s != schema::SPDF_VERSION {
+        c.warn("W105", format!("newer minor version {version_s}"), "header");
+    }
     for obj in info.forbidden_objects(Some(flavor)) {
         c.err("E020", format!("{obj} is not allowed"), obj.clone());
     }
 
     // E010 / E011
-    let required_tables: Vec<&schema::TableDef> = schema::TABLES
-        .iter()
-        .copied()
-        .filter(|t| flavor == Flavor::V5 || !t.legacy.is_empty())
-        .collect();
-    for t in &required_tables {
-        let name = if flavor == Flavor::V5 { t.name } else { t.legacy };
-        if !info.tables.contains_key(name) {
-            c.err("E010", format!("missing table `{name}`"), name);
-        }
-    }
-    let fts_name = doc.fts_table();
-    if !info.tables.contains_key(fts_name) {
-        c.err("E010", format!("missing table `{fts_name}`"), fts_name);
-    }
-    for t in &required_tables {
-        let Some(res) = doc.resolved.get(t.name) else {
+    let mut present: HashMap<&str, Vec<String>> = HashMap::new();
+    for t in REQUIRED_TABLES {
+        if !info.tables.contains_key(*t) {
+            c.err("E010", format!("missing table `{t}`"), *t);
             continue;
-        };
-        for (col5, col4) in t.columns {
-            let actual = if flavor == Flavor::V5 { *col5 } else { *col4 };
-            if actual.is_empty() {
-                continue;
-            }
-            // 4.0 lacks the 4.1 additions.
-            if flavor == Flavor::Legacy
-                && doc.version == "4.0"
-                && matches!(actual, "palabras" | "texto_busqueda")
-            {
-                continue;
-            }
-            if !res.columns.contains(actual) {
-                c.err(
-                    "E011",
-                    format!("missing column `{}.{actual}`", res.table),
-                    format!("{}.{actual}", res.table),
-                );
-            }
         }
-    }
-    if flavor == Flavor::V5 && info.tables.contains_key("fragments_fts") {
-        let cols: Vec<String> = doc
+        let have: Vec<String> = doc
             .conn
-            .prepare("SELECT name FROM pragma_table_info('fragments_fts')")
+            .prepare("SELECT name FROM pragma_table_info(?1)")
             .and_then(|mut st| {
-                st.query_map([], |r| r.get::<_, String>(0))?
+                st.query_map([*t], |r| r.get::<_, String>(0))?
                     .collect::<rusqlite::Result<Vec<_>>>()
             })
             .unwrap_or_default();
-        for col in ["text", "context", "section", "search_text"] {
-            if !cols.iter().any(|x| x == col) {
-                c.err(
-                    "E011",
-                    format!("missing column `fragments_fts.{col}`"),
-                    format!("fragments_fts.{col}"),
-                );
+        for col in required_columns(t) {
+            if !have.iter().any(|h| h == col) {
+                c.err("E011", format!("missing column `{t}.{col}`"), format!("{t}.{col}"));
             }
         }
+        present.insert(t, have);
     }
+    let ok = |t: &str, cols: &[&str]| {
+        present
+            .get(t)
+            .map(|have| cols.iter().all(|c| have.iter().any(|h| h == c)))
+            .unwrap_or(false)
+    };
 
     // E012
-    let meta = doc.meta().unwrap_or_default();
-    if flavor == Flavor::V5 {
-        for k in schema::REQUIRED_META {
-            if !meta.contains_key(*k) {
-                c.err("E012", format!("missing spdf_meta key `{k}`"), format!("spdf_meta.{k}"));
-            }
-        }
-    }
-    let profile: Vec<String> = meta
-        .get("profile")
-        .map(|p| p.split_whitespace().map(str::to_string).collect())
-        .unwrap_or_default();
-
-    // E013
-    let doc_rows = doc
-        .table_name("documents")
-        .and_then(|t| {
-            doc.conn
-                .query_row(&format!("SELECT count(*) FROM \"{t}\""), [], |r| r.get::<_, i64>(0))
-                .ok()
-        })
-        .unwrap_or(0);
-    if doc.has_table("documents") && doc_rows != 1 {
-        c.err("E013", format!("documents has {doc_rows} rows, expected 1"), "documents");
-    }
-
-    // E050 / E051
-    let doc_row = doc.document_row().ok().flatten();
-    if let Some(row) = &doc_row {
-        match row.get("metadata") {
-            Some(Value::Object(m)) => {
-                let has_type = m.get("type").map(Value::is_string).unwrap_or(false);
-                let has_title = m.get("title").map(Value::is_string).unwrap_or(false);
-                if !has_type || !has_title {
-                    c.err("E051", "metadata needs string `type` and `title`", "documents.metadata");
-                }
-            }
-            _ => c.err("E050", "metadata is not a JSON object", "documents.metadata"),
-        }
-        match row.get("rights") {
-            None | Some(Value::Null) | Some(Value::Object(_)) => {}
-            Some(_) => c.err("E050", "rights is not a JSON object", "documents.rights"),
-        }
-    }
-
-    // E060
-    if flavor == Flavor::V5 {
-        for e in doc.extensions().unwrap_or_default() {
-            if e.required {
-                c.err(
-                    "E060",
-                    format!("unknown required extension `{}`", e.name),
-                    format!("extensions.{}", e.name),
-                );
-            }
-        }
-    }
-
-    // E090
-    let units = doc.units().unwrap_or_default();
-    if doc.has_table("units") {
-        let mut ords: Vec<i64> = units.iter().map(|u| u.ord).collect();
-        ords.sort_unstable();
-        if ords.iter().enumerate().any(|(i, o)| *o != i as i64 + 1) {
-            c.err("E090", "units.ord is not contiguous from 1", "units.ord");
-        }
-    }
-
-    // E040 / E041 / E042
-    let unit_len: HashMap<String, usize> = units
-        .iter()
-        .map(|u| (u.id.clone(), text::cp_len(&text::nfc(&u.text))))
-        .collect();
-    let mut physical_unit: HashMap<i64, String> = HashMap::new();
-    for u in &units {
-        if let Some(p) = u.anchor.get("physical").and_then(Value::as_i64) {
-            physical_unit.entry(p).or_insert_with(|| u.id.clone());
-        }
-    }
-    for u in &units {
-        check_anchor(&mut c, &u.anchor, &format!("units[{}].anchor", u.id), unit_len.get(&u.id).copied());
-    }
-    if let Some(t) = doc.table_name("fragments") {
-        let _ = t;
-        let cols: Vec<&str> = schema::FRAGMENTS.columns.iter().map(|c| c.0).collect();
-        for f in doc.rows(&schema::FRAGMENTS, &cols, None, "n").unwrap_or_default() {
-            let id = f.get("id").and_then(Value::as_str).unwrap_or("?").to_string();
-            let unit = f.get("unit").and_then(Value::as_str).unwrap_or("");
-            let a = f.get("anchor").cloned().unwrap_or(Value::Null);
-            check_anchor(&mut c, &a, &format!("fragments[{id}].anchor"), unit_len.get(unit).copied());
-            match f.get("anchor_end") {
-                None | Some(Value::Null) => {}
-                Some(e) => {
-                    let end_unit = e
-                        .get("physical")
-                        .and_then(Value::as_i64)
-                        .and_then(|p| physical_unit.get(&p))
-                        .and_then(|u| unit_len.get(u))
-                        .copied();
-                    check_anchor(&mut c, e, &format!("fragments[{id}].anchor_end"), end_unit);
-                }
-            }
-        }
-    }
-    if doc.has_table("figures") {
-        let cols: Vec<&str> = schema::FIGURES.columns.iter().map(|c| c.0).collect();
-        for f in doc.rows(&schema::FIGURES, &cols, None, "id").unwrap_or_default() {
-            let id = f.get("id").and_then(Value::as_str).unwrap_or("?").to_string();
-            let unit = f.get("unit").and_then(Value::as_str).unwrap_or("");
-            let a = f.get("anchor").cloned().unwrap_or(Value::Null);
-            check_anchor(&mut c, &a, &format!("figures[{id}].anchor"), unit_len.get(unit).copied());
-        }
-    }
-
-    // E031 / E032 / E030
-    let spaces = doc.spaces().unwrap_or_default();
-    let mut shapes: HashMap<String, Option<(Dtype, usize)>> = HashMap::new();
-    for s in &spaces {
-        match s.dtype() {
-            Some(d) => {
-                shapes.insert(s.id.clone(), Some((d, usize::try_from(s.dims).unwrap_or(0))));
-            }
-            None => {
-                c.err("E032", format!("unknown dtype `{}`", s.dtype), format!("spaces[{}]", s.id));
-                shapes.insert(s.id.clone(), None);
-            }
-        }
-    }
-    let mut vector_count = 0usize;
-    if let Some(t) = doc.table_name("vectors") {
-        let tc = doc.col_expr(&schema::VECTORS, "target");
-        let ic = doc.col_expr(&schema::VECTORS, "id");
-        let sc = doc.col_expr(&schema::VECTORS, "space");
-        let dc = doc.col_expr(&schema::VECTORS, "data");
-        let sql = format!("SELECT {tc}, {ic}, {sc}, length({dc}) FROM \"{t}\" ORDER BY {sc}, {tc}, {ic}");
-        if let Ok(mut st) = doc.conn.prepare(&sql) {
+    let mut meta: HashMap<String, String> = HashMap::new();
+    let mut profile: Vec<String> = Vec::new();
+    if ok("spdf_meta", &["key", "value"]) {
+        if let Ok(mut st) = doc.conn.prepare("SELECT key, value FROM spdf_meta") {
             if let Ok(rows) = st.query_map([], |r| {
                 Ok((
                     r.get::<_, Option<String>>(0)?.unwrap_or_default(),
                     r.get::<_, Option<String>>(1)?.unwrap_or_default(),
-                    r.get::<_, Option<String>>(2)?.unwrap_or_default(),
-                    r.get::<_, Option<i64>>(3)?.unwrap_or(0),
                 ))
             }) {
-                for (target, id, space, len) in rows.flatten() {
-                    vector_count += 1;
-                    let at = format!("vectors[{target}/{id}/{space}]");
-                    match shapes.get(&space) {
-                        None => c.err("E031", format!("vector space `{space}` is not declared"), at),
-                        Some(None) => {}
-                        Some(Some((dt, dims))) => {
-                            let want = (dims * dt.size()) as i64;
-                            if len != want {
-                                c.err("E030", format!("vector has {len} bytes, expected {want}"), at);
-                            }
-                        }
+                meta.extend(rows.flatten());
+            }
+        }
+        for k in schema::REQUIRED_META {
+            if !meta.contains_key(*k) {
+                c.err("E012", format!("missing spdf_meta key `{k}`"), *k);
+            }
+        }
+        profile = meta
+            .get("profile")
+            .map(|p| p.split_whitespace().map(str::to_string).collect())
+            .unwrap_or_default();
+    }
+
+    // E013 / E050 / E051
+    let mut docs: Vec<(String, Option<String>, Option<String>, Option<i64>)> = Vec::new();
+    if ok("documents", &["id", "metadata"]) {
+        let full = ok("documents", &["rights", "unit_count"]);
+        let sql = if full {
+            "SELECT id, metadata, rights, unit_count FROM documents"
+        } else {
+            "SELECT id, metadata, NULL, NULL FROM documents"
+        };
+        if let Ok(mut st) = doc.conn.prepare(sql) {
+            if let Ok(rows) = st.query_map([], |r| {
+                Ok((
+                    r.get::<_, Option<String>>(0)?.unwrap_or_default(),
+                    r.get::<_, Option<String>>(1).ok().flatten(),
+                    r.get::<_, Option<String>>(2).ok().flatten(),
+                    r.get::<_, Option<i64>>(3).ok().flatten(),
+                ))
+            }) {
+                docs.extend(rows.flatten());
+            }
+        }
+        if docs.len() != 1 {
+            c.err("E013", format!("documents has {} rows, expected 1", docs.len()), "documents");
+        }
+        for (id, md, rights, _) in &docs {
+            match md.as_deref().map(serde_json::from_str::<Value>) {
+                Some(Ok(Value::Object(m))) => {
+                    let good = m.get("type").map(Value::is_string).unwrap_or(false)
+                        && m.get("title").map(Value::is_string).unwrap_or(false);
+                    if !good {
+                        c.err("E051", "metadata needs a string `type` and `title`", id.clone());
+                    }
+                }
+                Some(Ok(_)) => c.err("E051", "metadata needs a string `type` and `title`", id.clone()),
+                _ => c.err("E050", "metadata is not valid JSON", id.clone()),
+            }
+            if let Some(r) = rights {
+                if !json_ok(r) {
+                    c.err("E050", "rights is not valid JSON", id.clone());
+                }
+            }
+        }
+    }
+
+    // E060
+    if ok("extensions", &["name", "required"]) {
+        for e in doc.extensions().unwrap_or_default() {
+            if e.required {
+                c.err("E060", format!("unknown required extension `{}`", e.name), e.name.clone());
+            }
+        }
+    }
+
+    // E090, W102, anchors
+    let mut texts: HashMap<String, String> = HashMap::new();
+    if ok("units", &["id", "ord", "anchor", "text"]) {
+        let mut rows: Vec<(String, i64, Option<String>, String)> = Vec::new();
+        if let Ok(mut st) = doc
+            .conn
+            .prepare("SELECT id, ord, anchor, text FROM units ORDER BY ord, id")
+        {
+            if let Ok(it) = st.query_map([], |r| {
+                Ok((
+                    r.get::<_, Option<String>>(0)?.unwrap_or_default(),
+                    r.get::<_, Option<i64>>(1).ok().flatten().unwrap_or(i64::MIN),
+                    r.get::<_, Option<String>>(2).ok().flatten(),
+                    r.get::<_, Option<String>>(3).ok().flatten().unwrap_or_default(),
+                ))
+            }) {
+                rows.extend(it.flatten());
+            }
+        }
+        if rows.iter().enumerate().any(|(i, r)| r.1 != i as i64 + 1) {
+            c.err("E090", "units.ord is not 1..N", "units");
+        }
+        if docs.len() == 1 {
+            if let Some(n) = docs[0].3 {
+                if n != rows.len() as i64 {
+                    c.warn("W102", format!("unit_count {n} but {} units", rows.len()), "documents.unit_count");
+                }
+            }
+        }
+        for (id, _, anchor, text) in rows {
+            check_anchor_text(&mut c, anchor.as_deref(), Some(&text), &format!("units/{id}"));
+            texts.insert(id, text);
+        }
+    }
+    if ok("fragments", &["id", "unit", "anchor"]) {
+        let has_end = ok("fragments", &["anchor_end"]);
+        let sql = format!(
+            "SELECT id, unit, anchor, {} FROM fragments ORDER BY n",
+            if has_end { "anchor_end" } else { "NULL" }
+        );
+        if let Ok(mut st) = doc.conn.prepare(&sql) {
+            if let Ok(it) = st.query_map([], |r| {
+                Ok((
+                    r.get::<_, Option<String>>(0)?.unwrap_or_default(),
+                    r.get::<_, Option<String>>(1)?.unwrap_or_default(),
+                    r.get::<_, Option<String>>(2).ok().flatten(),
+                    r.get::<_, Option<String>>(3).ok().flatten(),
+                ))
+            }) {
+                for (id, unit, anchor, end) in it.flatten() {
+                    let text = texts.get(&unit).map(String::as_str);
+                    check_anchor_text(&mut c, anchor.as_deref(), text, &format!("fragments/{id}"));
+                    if let Some(e) = end {
+                        check_anchor_text(&mut c, Some(&e), None, &format!("fragments/{id}/anchor_end"));
+                    }
+                }
+            }
+        }
+    }
+    if ok("figures", &["id", "unit", "anchor"]) {
+        if let Ok(mut st) = doc.conn.prepare("SELECT id, unit, anchor FROM figures ORDER BY id") {
+            if let Ok(it) = st.query_map([], |r| {
+                Ok((
+                    r.get::<_, Option<String>>(0)?.unwrap_or_default(),
+                    r.get::<_, Option<String>>(1)?.unwrap_or_default(),
+                    r.get::<_, Option<String>>(2).ok().flatten(),
+                ))
+            }) {
+                for (id, unit, anchor) in it.flatten() {
+                    let text = texts.get(&unit).map(String::as_str);
+                    check_anchor_text(&mut c, anchor.as_deref(), text, &format!("figures/{id}"));
+                }
+            }
+        }
+    }
+
+    // E032 / E031 / E030
+    let mut spaces: HashMap<String, (i64, String)> = HashMap::new();
+    if ok("spaces", &["id", "dims", "dtype"]) {
+        if let Ok(mut st) = doc.conn.prepare("SELECT id, dims, dtype FROM spaces ORDER BY id") {
+            if let Ok(it) = st.query_map([], |r| {
+                Ok((
+                    r.get::<_, Option<String>>(0)?.unwrap_or_default(),
+                    r.get::<_, Option<i64>>(1).ok().flatten().unwrap_or(0),
+                    r.get::<_, Option<String>>(2).ok().flatten().unwrap_or_default(),
+                ))
+            }) {
+                for (id, dims, dtype) in it.flatten() {
+                    if Dtype::parse(&dtype).is_none() {
+                        c.err("E032", format!("unknown dtype `{dtype}`"), id.clone());
+                    }
+                    spaces.insert(id, (dims, dtype));
+                }
+            }
+        }
+    }
+    let mut nvec = 0usize;
+    if ok("vectors", &["target", "id", "space", "data"]) {
+        let sql = "SELECT target, id, space, typeof(data), length(data) FROM vectors ORDER BY space, target, id";
+        if let Ok(mut st) = doc.conn.prepare(sql) {
+            if let Ok(it) = st.query_map([], |r| {
+                Ok((
+                    r.get::<_, Option<String>>(0)?.unwrap_or_default(),
+                    r.get::<_, Option<String>>(1)?.unwrap_or_default(),
+                    r.get::<_, Option<String>>(2)?.unwrap_or_default(),
+                    r.get::<_, String>(3)?,
+                    r.get::<_, Option<i64>>(4)?.unwrap_or(0),
+                ))
+            }) {
+                for (target, id, space, ty, len) in it.flatten() {
+                    nvec += 1;
+                    let at = format!("vectors/{space}/{target}/{id}");
+                    let Some((dims, dtype)) = spaces.get(&space) else {
+                        c.err("E031", format!("unknown space `{space}`"), at);
+                        continue;
+                    };
+                    let Some(dt) = Dtype::parse(dtype) else { continue };
+                    if ty != "blob" || len != dims * dt.size() as i64 {
+                        c.err("E030", format!("vector length {len} != {dims} x {}", dt.size()), at);
                     }
                 }
             }
@@ -441,77 +488,87 @@ fn validate_connection(conn: Connection, gzip: bool, origin: Origin, mut c: Coll
     }
 
     // E070
-    if info.tables.contains_key(fts_name) {
-        if let Err(msg) = fts_integrity(&doc, fts_name) {
-            c.err("E070", format!("FTS index out of sync: {msg}"), fts_name);
+    if info.tables.contains_key("fragments_fts") {
+        let mut tables = vec!["fragments_fts"];
+        if info.tables.contains_key("fragments_fts_trigram") {
+            tables.push("fragments_fts_trigram");
+        }
+        if let Err(msg) = fts_integrity(&doc, &tables) {
+            c.err("E070", format!("FTS index out of sync: {msg}"), "fragments_fts");
         }
     }
 
     // E080
-    if flavor == Flavor::V5 {
+    if ok("blobs", &["key", "sha256", "data"]) {
         let stored: HashMap<String, String> = doc
             .blobs()
             .unwrap_or_default()
             .into_iter()
-            .map(|b| (b.key, b.sha256.to_ascii_lowercase()))
+            .map(|b| (b.key, b.sha256))
             .collect();
         for (key, _, _, computed) in doc.computed_blob_hashes().unwrap_or_default() {
-            if stored.get(&key).map(String::as_str) != Some(computed.as_str()) {
-                c.err("E080", "blob sha256 does not match its data", format!("blobs[{key}]"));
+            if stored.get(&key) != Some(&computed) {
+                c.err("E080", "blob sha256 mismatch", key);
             }
         }
     }
 
-    // E081 / E082
-    if flavor == Flavor::V5 && (meta.contains_key("content_sha256") || meta.contains_key("signature")) {
-        match doc.dump() {
-            Ok(d) => {
-                let h = content_sha256_of_dump(&d);
-                if let Some(stored) = meta.get("content_sha256") {
-                    if stored.to_ascii_lowercase() != h {
-                        c.err("E081", "content_sha256 does not match the content", "spdf_meta.content_sha256");
-                    }
-                }
-                if let Some(sig) = meta.get("signature") {
-                    let ok = match meta.get("signer") {
-                        Some(s) => verify_signature(&h, sig, s).is_ok(),
-                        None => false,
-                    };
-                    if !ok {
-                        c.err("E082", "signature does not verify", "spdf_meta.signature");
-                    }
+    // E081 / E082 (only on an otherwise valid file)
+    if let Some(stored) = meta.get("content_sha256") {
+        if c.errors.is_empty() {
+            let actual = doc
+                .dump()
+                .map(|d| content_sha256_of_dump(&d))
+                .unwrap_or_else(|e| format!("unavailable ({e})"));
+            if &actual != stored {
+                c.err("E081", "content_sha256 does not match the canonical dump", "spdf_meta.content_sha256");
+            } else if let Some(sig) = meta.get("signature") {
+                let signer = meta.get("signer").map(String::as_str).unwrap_or("");
+                if verify_signature(stored, sig, signer).is_err() {
+                    c.err("E082", "signature does not verify", "spdf_meta.signature");
                 }
             }
-            Err(e) => c.err("E081", format!("cannot compute content_sha256: {e}"), "spdf_meta"),
         }
     }
 
     // Warnings
-    if profile.iter().any(|p| p == "semantic") && vector_count == 0 {
+    if profile.iter().any(|p| p == "semantic") && nvec == 0 {
         c.warn("W100", "profile `semantic` without vectors", "spdf_meta.profile");
     }
-    if profile.iter().any(|p| p == "media")
-        && !units
-            .iter()
-            .any(|u| u.anchor.get("type").and_then(Value::as_str) == Some("time"))
-    {
-        c.warn("W101", "profile `media` without time anchors", "spdf_meta.profile");
-    }
-    if let Some(row) = &doc_row {
-        if let Some(n) = row.get("unit_count").and_then(Value::as_i64) {
-            if doc.has_table("units") && n != units.len() as i64 {
-                c.warn(
-                    "W102",
-                    format!("unit_count is {n} but there are {} units", units.len()),
-                    "documents.unit_count",
-                );
+    if profile.iter().any(|p| p == "media") && ok("units", &["anchor"]) {
+        let mut has_time = false;
+        if let Ok(mut st) = doc.conn.prepare("SELECT anchor FROM units") {
+            if let Ok(it) = st.query_map([], |r| r.get::<_, Option<String>>(0)) {
+                has_time = it.flatten().flatten().any(|a| {
+                    serde_json::from_str::<Value>(&a)
+                        .ok()
+                        .and_then(|v| v.get("type").and_then(Value::as_str).map(|t| t == "time"))
+                        .unwrap_or(false)
+                });
             }
+        }
+        if !has_time {
+            c.warn("W101", "profile `media` without time anchors", "spdf_meta.profile");
         }
     }
     finish(c, version, profile)
 }
 
-fn fts_integrity(doc: &Spdf, fts: &str) -> std::result::Result<(), String> {
+fn check_anchor_text(c: &mut Collector, raw: Option<&str>, unit_text: Option<&str>, at: &str) {
+    let v = match raw.map(serde_json::from_str::<Value>) {
+        Some(Ok(v)) => v,
+        _ => {
+            c.err("E040", "anchor is not valid JSON", at);
+            return;
+        }
+    };
+    let len = unit_text.map(|t| text::cp_len(&text::nfc(t)));
+    if let Some((code, msg)) = check_anchor_value(&v, len) {
+        c.err(code, msg, at);
+    }
+}
+
+fn fts_integrity(doc: &Spdf, tables: &[&str]) -> std::result::Result<(), String> {
     let data = doc
         .conn
         .serialize(rusqlite::MAIN_DB)
@@ -529,16 +586,18 @@ fn fts_integrity(doc: &Spdf, fts: &str) -> std::result::Result<(), String> {
     ] {
         copy.set_db_config(cfg, on).map_err(|e| e.to_string())?;
     }
-    copy.execute(
-        &format!("INSERT INTO \"{fts}\"(\"{fts}\", rank) VALUES('integrity-check', 1)"),
-        [],
-    )
-    .map(|_| ())
-    .map_err(|e| e.to_string())
+    for fts in tables {
+        copy.execute(
+            &format!("INSERT INTO \"{fts}\"(\"{fts}\", rank) VALUES('integrity-check', 1)"),
+            [],
+        )
+        .map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }
 
 fn is_int(v: Option<&Value>) -> bool {
-    v.and_then(Value::as_f64).map(|f| f.fract() == 0.0).unwrap_or(false)
+    v.map(|x| x.is_i64() || x.is_u64()).unwrap_or(false)
 }
 
 fn is_num(v: Option<&Value>) -> bool {
@@ -549,72 +608,49 @@ fn is_str(v: Option<&Value>) -> bool {
     v.map(Value::is_string).unwrap_or(false)
 }
 
-/// Strict anchor check (§3 required members). Returns `(code, message)`.
+fn num(v: Option<&Value>) -> f64 {
+    v.and_then(Value::as_f64).unwrap_or(f64::NAN)
+}
+
+/// Strict anchor check (§3 required members, `region`, `chars`). `unit_len`
+/// is the length in code points of the NFC text of the anchor's unit, when
+/// known. Returns `(code, message)` for the first problem.
 pub fn check_anchor_value(v: &Value, unit_len: Option<usize>) -> Option<(&'static str, String)> {
-    let m = match v {
-        Value::Object(m) => m,
-        Value::String(_) => return Some(("E040", "anchor is not valid JSON".into())),
-        _ => return Some(("E040", "anchor is not a JSON object".into())),
+    let Value::Object(m) = v else {
+        return Some(("E040", "anchor is not an object".into()));
     };
     let Some(t) = m.get("type").and_then(Value::as_str) else {
-        return Some(("E040", "anchor has no string `type`".into()));
+        return Some(("E040", "anchor without type".into()));
     };
     if !ANCHOR_TYPES.contains(&t) {
         return Some(("E041", format!("unknown anchor type `{t}`")));
     }
-    let bad = |msg: &str| Some(("E040", format!("`{t}` anchor: {msg}")));
-    match t {
+    let good = match t {
         "page" => {
-            let ok = is_int(m.get("physical")) && m.get("physical").and_then(Value::as_f64).unwrap_or(0.0) >= 1.0;
-            if !ok {
-                return bad("`physical` must be an integer >= 1");
-            }
-            match m.get("printed") {
-                Some(Value::String(_)) | Some(Value::Null) => {}
-                _ => return bad("`printed` must be a string or null"),
-            }
+            is_int(m.get("physical"))
+                && num(m.get("physical")) >= 1.0
+                && matches!(m.get("printed"), Some(Value::Null) | Some(Value::String(_)))
         }
         "time" => {
-            if !is_num(m.get("t0")) || !is_num(m.get("t1")) {
-                return bad("`t0` and `t1` must be numbers");
-            }
+            is_num(m.get("t0"))
+                && is_num(m.get("t1"))
+                && 0.0 <= num(m.get("t0"))
+                && num(m.get("t0")) <= num(m.get("t1"))
         }
-        "section" => {
-            let ok = m
-                .get("path")
-                .and_then(Value::as_array)
-                .map(|a| a.iter().all(Value::is_string))
-                .unwrap_or(false);
-            if !ok {
-                return bad("`path` must be an array of strings");
-            }
-        }
-        "slide" => {
-            if !is_int(m.get("n")) {
-                return bad("`n` must be an integer");
-            }
-        }
-        "sheet" => {
-            if !is_str(m.get("sheet")) || !is_int(m.get("row_from")) || !is_int(m.get("row_to")) {
-                return bad("`sheet`, `row_from` and `row_to` are required");
-            }
-        }
-        "web" => {
-            if !is_str(m.get("url")) {
-                return bad("`url` must be a string");
-            }
-        }
-        "verse" => {
-            if !is_int(m.get("line_from")) {
-                return bad("`line_from` must be an integer");
-            }
-        }
-        "canonical" => {
-            if !is_str(m.get("scheme")) || !is_str(m.get("ref")) {
-                return bad("`scheme` and `ref` must be strings");
-            }
-        }
-        _ => {}
+        "section" => m
+            .get("path")
+            .and_then(Value::as_array)
+            .map(|a| a.iter().all(Value::is_string))
+            .unwrap_or(false),
+        "slide" => is_int(m.get("n")) && num(m.get("n")) >= 1.0,
+        "sheet" => is_str(m.get("sheet")) && is_int(m.get("row_from")) && is_int(m.get("row_to")),
+        "web" => is_str(m.get("url")),
+        "verse" => is_int(m.get("line_from")),
+        "canonical" => is_str(m.get("scheme")) && is_str(m.get("ref")),
+        _ => true,
+    };
+    if !good {
+        return Some(("E040", format!("{t} anchor misses or mistypes a required member")));
     }
     if let Some(r) = m.get("region") {
         let ok = r
@@ -622,32 +658,23 @@ pub fn check_anchor_value(v: &Value, unit_len: Option<usize>) -> Option<(&'stati
             .map(|o| ["x", "y", "w", "h"].iter().all(|k| is_num(o.get(*k))))
             .unwrap_or(false);
         if !ok {
-            return bad("`region` must be {x,y,w,h}");
+            return Some(("E040", "bad region".into()));
         }
     }
     if let Some(ch) = m.get("chars") {
-        let pair = ch.as_array().filter(|a| a.len() == 2).and_then(|a| {
-            Some((a[0].as_u64()?, a[1].as_u64()?))
-        });
-        match pair {
-            None => return bad("`chars` must be [start, end]"),
-            Some((s, e)) => {
-                if s > e {
-                    return Some(("E042", format!("chars [{s},{e}] start > end")));
-                }
-                if let Some(len) = unit_len {
-                    if e as usize > len {
-                        return Some(("E042", format!("chars [{s},{e}] beyond unit text ({len} code points)")));
-                    }
-                }
+        let pair = ch
+            .as_array()
+            .filter(|a| a.len() == 2 && a.iter().all(|x| x.is_i64() || x.is_u64()))
+            .map(|a| (num(a.first()), num(a.get(1))));
+        let Some((s, e)) = pair else {
+            return Some(("E040", "bad chars".into()));
+        };
+        if let Some(len) = unit_len {
+            if !(0.0 <= s && s <= e && e <= len as f64) {
+                return Some(("E042", format!("chars [{s},{e}] out of range (unit text has {len} code points)")));
             }
         }
     }
     None
 }
 
-fn check_anchor(c: &mut Collector, v: &Value, at: &str, unit_len: Option<usize>) {
-    if let Some((code, msg)) = check_anchor_value(v, unit_len) {
-        c.err(code, msg, at);
-    }
-}

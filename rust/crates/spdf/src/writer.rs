@@ -406,7 +406,8 @@ impl Writer {
             .query_row("SELECT id FROM documents LIMIT 1", [], |r| r.get(0))
             .ok();
         self.meta
-            .insert("spdf_version".into(), schema::SPDF_VERSION.into());
+            .entry("spdf_version".into())
+            .or_insert_with(|| schema::SPDF_VERSION.into());
         if !self.meta.contains_key("profile") {
             let p = self.default_profile()?;
             self.meta.insert("profile".into(), p);
@@ -416,7 +417,7 @@ impl Writer {
             .entry("generator".into())
             .or_insert_with(|| GENERATOR.to_string());
         if let Some(id) = doc_id {
-            self.meta.insert("document_id".into(), id);
+            self.meta.entry("document_id".into()).or_insert(id);
         }
         self.conn.execute("DELETE FROM spdf_meta", [])?;
         for (k, v) in &self.meta {

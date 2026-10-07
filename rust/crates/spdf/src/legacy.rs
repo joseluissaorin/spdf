@@ -3,14 +3,11 @@
 use serde_json::{json, Map, Value};
 
 /// Maps a legacy anchor (`{"tipo":"pagina","fisica":10,…}`) to 5.0 names.
-/// Unknown members are kept verbatim. 5.0 anchors pass through unchanged.
+/// Unknown members are kept verbatim.
 pub fn map_anchor(v: &Value) -> Value {
     let Value::Object(m) = v else {
         return v.clone();
     };
-    if !m.contains_key("tipo") {
-        return v.clone();
-    }
     let mut out = Map::new();
     for (k, val) in m {
         let (nk, nv) = match k.as_str() {
@@ -63,162 +60,224 @@ pub fn map_anchor_text(s: &str) -> Value {
     }
 }
 
-fn non_empty_str(v: Option<&Value>) -> Option<String> {
+/// `has(k)` of the reference: present, not null, not `""`, not `[]`.
+fn has(m: &Map<String, Value>, k: &str) -> bool {
+    match m.get(k) {
+        None | Some(Value::Null) => false,
+        Some(Value::String(s)) => !s.is_empty(),
+        Some(Value::Array(a)) => !a.is_empty(),
+        Some(_) => true,
+    }
+}
+
+fn truthy(v: Option<&Value>) -> bool {
     match v {
-        Some(Value::String(s)) if !s.trim().is_empty() => Some(s.clone()),
-        Some(Value::Number(n)) => Some(n.to_string()),
-        _ => None,
+        None | Some(Value::Null) | Some(Value::Bool(false)) => false,
+        Some(Value::String(s)) => !s.is_empty(),
+        Some(Value::Array(a)) => !a.is_empty(),
+        Some(Value::Object(o)) => !o.is_empty(),
+        Some(Value::Number(n)) => n.as_f64().map(|f| f != 0.0).unwrap_or(true),
+        Some(Value::Bool(true)) => true,
     }
 }
 
-fn person(p: &Value) -> Option<Value> {
-    let m = p.as_object()?;
-    let mut o = Map::new();
-    if let Some(f) = non_empty_str(m.get("apellidos")) {
-        o.insert("family".into(), Value::from(f));
-    }
-    if let Some(g) = non_empty_str(m.get("nombre")) {
-        o.insert("given".into(), Value::from(g));
-    }
-    if o.is_empty() {
-        None
-    } else {
-        Some(Value::Object(o))
-    }
+fn names(v: Option<&Value>) -> Vec<Value> {
+    let Some(arr) = v.and_then(Value::as_array) else {
+        return Vec::new();
+    };
+    arr.iter()
+        .filter_map(|a| {
+            let mut n = Map::new();
+            if truthy(a.get("apellidos")) {
+                n.insert("family".into(), a["apellidos"].clone());
+            }
+            if truthy(a.get("nombre")) {
+                n.insert("given".into(), a["nombre"].clone());
+            }
+            if n.is_empty() {
+                None
+            } else {
+                Some(Value::Object(n))
+            }
+        })
+        .collect()
 }
 
-fn people(v: Option<&Value>) -> Option<Vec<Value>> {
-    let a = v?.as_array()?;
-    let out: Vec<Value> = a.iter().filter_map(person).collect();
-    if out.is_empty() {
-        None
-    } else {
-        Some(out)
-    }
-}
-
-fn year_of(v: Option<&Value>) -> Option<i64> {
-    match v? {
-        Value::Number(n) => n.as_i64().or_else(|| n.as_f64().map(|f| f as i64)),
-        Value::String(s) => s.trim().parse().ok(),
-        _ => None,
-    }
-}
-
+/// `^(-?\d{1,4})(?:-(\d{1,2})(?:-(\d{1,2}))?)?` on the trimmed string.
 fn date_parts(iso: &str) -> Option<Vec<i64>> {
-    let parts: Vec<i64> = iso
-        .split('T')
-        .next()?
-        .split('-')
-        .filter(|p| !p.is_empty())
-        .map(|p| p.parse::<i64>())
-        .collect::<Result<_, _>>()
-        .ok()?;
-    if parts.is_empty() || parts.len() > 3 {
-        None
-    } else {
-        Some(parts)
+    let s = iso.trim();
+    let b = s.as_bytes();
+    let mut i = 0;
+    let neg = b.first() == Some(&b'-');
+    if neg {
+        i = 1;
     }
+    let digits = |from: usize, max: usize| -> usize {
+        let mut k = from;
+        while k < b.len() && k - from < max && b[k].is_ascii_digit() {
+            k += 1;
+        }
+        k
+    };
+    let e = digits(i, 4);
+    if e == i {
+        return None;
+    }
+    let mut y: i64 = s[i..e].parse().ok()?;
+    if neg {
+        y = -y;
+    }
+    let mut out = vec![y];
+    if b.get(e) == Some(&b'-') {
+        let e2 = digits(e + 1, 2);
+        if e2 > e + 1 {
+            out.push(s[e + 1..e2].parse().ok()?);
+            if b.get(e2) == Some(&b'-') {
+                let e3 = digits(e2 + 1, 2);
+                if e3 > e2 + 1 {
+                    out.push(s[e2 + 1..e3].parse().ok()?);
+                }
+            }
+        }
+    }
+    Some(out)
 }
 
-/// Default CSL `type` for a legacy document kind (`tipo`).
-pub fn default_csl_type(legacy_kind: &str, has_journal: bool) -> &'static str {
-    match legacy_kind {
-        "audio" | "presentacion" | "slides" => "speech",
+/// Default CSL `type` of a legacy document: `tipoCSL`, else `article-journal`
+/// if there is a journal, else by `tipo`, else `book`.
+pub fn default_csl_type(legacy_kind: &str, m: &Map<String, Value>) -> Value {
+    if truthy(m.get("tipoCSL")) {
+        return m["tipoCSL"].clone();
+    }
+    if truthy(m.get("revista")) {
+        return Value::from("article-journal");
+    }
+    Value::from(match legacy_kind {
+        "audio" | "presentacion" => "speech",
         "video" => "motion_picture",
         "web" => "webpage",
-        "hoja" | "sheet" => "dataset",
-        "imagen" | "fotos" | "image" | "photos" => "graphic",
-        _ if has_journal => "article-journal",
+        "hoja" => "dataset",
+        "imagen" | "fotos" => "graphic",
         _ => "book",
+    })
+}
+
+/// Legacy metadata field → CSL (or `spdf.`) name, for `procedencia` keys.
+pub fn legacy_field(k: &str) -> &str {
+    match k {
+        "titulo" => "title",
+        "subtitulo" => "subtitle",
+        "tituloOriginal" => "original-title",
+        "autores" => "author",
+        "editores" => "editor",
+        "traductores" => "translator",
+        "entrevistadores" => "interviewer",
+        "anio" | "fecha" => "issued",
+        "anioOriginal" => "original-date",
+        "editorial" => "publisher",
+        "lugar" => "publisher-place",
+        "revista" | "contenedor" => "container-title",
+        "coleccion" => "collection-title",
+        "volumen" => "volume",
+        "numero" => "issue",
+        "paginas" => "page",
+        "edicion" => "edition",
+        "doi" => "DOI",
+        "isbn" => "ISBN",
+        "url" => "URL",
+        "idioma" => "language",
+        "tipoCSL" => "type",
+        "resumen" => "abstract",
+        "idiomaOriginal" => "original_language",
+        "sinFecha" => "undated",
+        other => other,
+    }
+}
+
+fn provenance_source(v: &Value) -> Value {
+    match v.as_str() {
+        Some("lectura") => Value::from("reading"),
+        Some("usuario") => Value::from("user"),
+        Some("colofon") => Value::from("colophon"),
+        Some("impresores") => Value::from("printers"),
+        _ => v.clone(),
     }
 }
 
 /// Maps legacy `metadatos` (MetadatosDocumento) to a CSL-JSON item with the
-/// `spdf` extension object. `legacy_kind` is the `documentos.tipo` value.
+/// `spdf` extension object (§7). `legacy_kind` is the `documentos.tipo` value.
 pub fn map_metadata(v: &Value, legacy_kind: &str) -> Value {
     let Some(m) = v.as_object() else {
         return v.clone();
     };
-    // Already CSL? (a 5.0 item has `type` and no Spanish keys)
-    if !m.contains_key("titulo") && m.contains_key("title") {
-        return v.clone();
-    }
-    let mut o = Map::new();
+    let mut item = Map::new();
     let mut ext = Map::new();
-    let str_field = |k: &str| non_empty_str(m.get(k));
-
-    let titulo = str_field("titulo");
-    let subtitulo = str_field("subtitulo");
-    match (&titulo, &subtitulo) {
-        (Some(t), Some(s)) => {
-            o.insert("title".into(), Value::from(format!("{t}: {s}")));
-            o.insert("title-short".into(), Value::from(t.clone()));
-            ext.insert("subtitle".into(), Value::from(s.clone()));
-        }
-        (Some(t), None) => {
-            o.insert("title".into(), Value::from(t.clone()));
-        }
-        (None, Some(s)) => {
-            o.insert("title".into(), Value::from(s.clone()));
-            ext.insert("subtitle".into(), Value::from(s.clone()));
-        }
-        (None, None) => {}
+    item.insert("type".into(), default_csl_type(legacy_kind, m));
+    let title = match m.get("titulo") {
+        Some(t) if truthy(Some(t)) => t.as_str().map(str::to_string).unwrap_or_else(|| t.to_string()),
+        _ => String::new(),
+    };
+    if has(m, "subtitulo") {
+        let sub = &m["subtitulo"];
+        let sub_s = sub.as_str().map(str::to_string).unwrap_or_else(|| sub.to_string());
+        item.insert("title".into(), Value::from(format!("{title}: {sub_s}")));
+        item.insert("title-short".into(), Value::from(title));
+        ext.insert("subtitle".into(), sub.clone());
+    } else {
+        item.insert("title".into(), Value::from(title));
     }
-    if let Some(x) = str_field("tituloOriginal") {
-        o.insert("original-title".into(), Value::from(x));
-    }
-    if let Some(a) = people(m.get("autores")) {
-        o.insert("author".into(), Value::Array(a));
+    if has(m, "tituloOriginal") {
+        item.insert("original-title".into(), m["tituloOriginal"].clone());
     }
     let mut orcid = Map::new();
-    if let Some(arr) = m.get("autores").and_then(Value::as_array) {
-        for p in arr {
-            if let Some(id) = non_empty_str(p.get("orcid")) {
-                let fam = non_empty_str(p.get("apellidos")).unwrap_or_default();
-                let giv = non_empty_str(p.get("nombre")).unwrap_or_default();
-                let key = if giv.is_empty() {
-                    fam
-                } else if fam.is_empty() {
-                    giv
-                } else {
-                    format!("{fam}, {giv}")
-                };
-                orcid.insert(key, Value::from(id));
-            }
-        }
-    }
     for (src, dst) in [
+        ("autores", "author"),
         ("editores", "editor"),
         ("traductores", "translator"),
         ("entrevistadores", "interviewer"),
     ] {
-        if let Some(a) = people(m.get(src)) {
-            o.insert(dst.into(), Value::Array(a));
+        let n = names(m.get(src));
+        if !n.is_empty() {
+            item.insert(dst.into(), Value::Array(n));
+        }
+        if let Some(arr) = m.get(src).and_then(Value::as_array) {
+            for a in arr {
+                if truthy(a.get("orcid")) {
+                    let fam = a.get("apellidos").and_then(Value::as_str).unwrap_or("");
+                    let key = if truthy(a.get("nombre")) {
+                        format!("{fam}, {}", a.get("nombre").and_then(Value::as_str).unwrap_or(""))
+                    } else {
+                        fam.to_string()
+                    };
+                    orcid.insert(key, a["orcid"].clone());
+                }
+            }
         }
     }
-    let anio = year_of(m.get("anio"));
-    let fecha = str_field("fecha").and_then(|f| date_parts(&f));
-    match (&fecha, anio) {
-        (Some(parts), Some(y)) if parts[0] == y => {
-            o.insert("issued".into(), json!({"date-parts": [parts]}));
+    let fecha = if has(m, "fecha") {
+        m["fecha"].as_str().and_then(date_parts)
+    } else {
+        None
+    };
+    let anio_matches = |parts: &Vec<i64>| match m.get("anio") {
+        Some(Value::Number(n)) => n.as_f64() == Some(parts[0] as f64),
+        _ => false,
+    };
+    match fecha {
+        Some(parts) if !has(m, "anio") || anio_matches(&parts) => {
+            item.insert("issued".into(), json!({"date-parts": [parts]}));
         }
-        (Some(parts), None) => {
-            o.insert("issued".into(), json!({"date-parts": [parts]}));
-        }
-        (_, Some(y)) => {
-            o.insert("issued".into(), json!({"date-parts": [[y]]}));
+        _ if has(m, "anio") => {
+            item.insert("issued".into(), json!({"date-parts": [[m["anio"].clone()]]}));
         }
         _ => {}
     }
-    if let Some(y) = year_of(m.get("anioOriginal")) {
-        o.insert("original-date".into(), json!({"date-parts": [[y]]}));
+    if has(m, "anioOriginal") {
+        item.insert("original-date".into(), json!({"date-parts": [[m["anioOriginal"].clone()]]}));
     }
-    let revista = str_field("revista");
     for (src, dst) in [
         ("editorial", "publisher"),
         ("lugar", "publisher-place"),
-        ("revista", "container-title"),
         ("coleccion", "collection-title"),
         ("volumen", "volume"),
         ("numero", "issue"),
@@ -230,22 +289,20 @@ pub fn map_metadata(v: &Value, legacy_kind: &str) -> Value {
         ("idioma", "language"),
         ("resumen", "abstract"),
     ] {
-        if let Some(x) = str_field(src) {
-            o.insert(dst.into(), Value::from(x));
+        if has(m, src) {
+            item.insert(dst.into(), m[src].clone());
         }
     }
-    if revista.is_none() {
-        if let Some(x) = str_field("contenedor") {
-            o.insert("container-title".into(), Value::from(x));
-        }
+    if has(m, "revista") {
+        item.insert("container-title".into(), m["revista"].clone());
+    } else if has(m, "contenedor") {
+        item.insert("container-title".into(), m["contenedor"].clone());
     }
-    let csl_type = str_field("tipoCSL")
-        .unwrap_or_else(|| default_csl_type(legacy_kind, revista.is_some()).to_string());
-    o.insert("type".into(), Value::from(csl_type));
-    if let Some(x) = str_field("idiomaOriginal") {
-        ext.insert("original_language".into(), Value::from(x));
+    if has(m, "idiomaOriginal") {
+        ext.insert("original_language".into(), m["idiomaOriginal"].clone());
     }
-    if let Some(sf) = m.get("sinFecha").and_then(Value::as_object) {
+    if has(m, "sinFecha") {
+        let sf = &m["sinFecha"];
         let mut u = Map::new();
         if let Some(d) = sf.get("desde").filter(|v| !v.is_null()) {
             u.insert("from".into(), d.clone());
@@ -253,44 +310,36 @@ pub fn map_metadata(v: &Value, legacy_kind: &str) -> Value {
         if let Some(h) = sf.get("hasta").filter(|v| !v.is_null()) {
             u.insert("to".into(), h.clone());
         }
-        if let Some(f) = non_empty_str(sf.get("fundamento")) {
-            u.insert("basis".into(), Value::from(f));
+        if truthy(sf.get("fundamento")) {
+            u.insert("basis".into(), sf["fundamento"].clone());
         }
-        if !u.is_empty() {
-            ext.insert("undated".into(), Value::Object(u));
-        }
+        ext.insert("undated".into(), Value::Object(u));
     }
-    if let Some(pr) = m.get("procedencia").and_then(Value::as_object) {
-        let mut out = Map::new();
-        for (field, entry) in pr {
-            let mapped = match entry.as_object() {
-                Some(e) => {
-                    let mut x = Map::new();
-                    for (k, v) in e {
-                        let nk = match k.as_str() {
-                            "fuente" => "source",
-                            "confianza" => "confidence",
-                            other => other,
-                        };
-                        x.insert(nk.to_string(), v.clone());
-                    }
-                    Value::Object(x)
-                }
-                None => entry.clone(),
-            };
-            out.insert(field.clone(), mapped);
+    if has(m, "procedencia") {
+        let mut prov = Map::new();
+        if let Some(p) = m["procedencia"].as_object() {
+            for (campo, v) in p {
+                let mut x = Map::new();
+                x.insert(
+                    "source".into(),
+                    provenance_source(v.get("fuente").unwrap_or(&Value::Null)),
+                );
+                x.insert(
+                    "confidence".into(),
+                    v.get("confianza").cloned().unwrap_or(Value::Null),
+                );
+                prov.insert(legacy_field(campo).to_string(), Value::Object(x));
+            }
         }
-        if !out.is_empty() {
-            ext.insert("provenance".into(), Value::Object(out));
-        }
+        ext.insert("provenance".into(), Value::Object(prov));
     }
     if !orcid.is_empty() {
         ext.insert("orcid".into(), Value::Object(orcid));
     }
     if !ext.is_empty() {
-        o.insert("spdf".into(), Value::Object(ext));
+        item.insert("spdf".into(), Value::Object(ext));
     }
-    Value::Object(o)
+    Value::Object(item)
 }
 
 /// Maps legacy modality names (`texto`, `imagen`) to 5.0 (`text`, `image`).
@@ -333,7 +382,7 @@ mod tests {
                    "author":[{"family":"Foucault","given":"Michel"}],"issued":{"date-parts":[[1975]]},
                    "publisher":"Siglo XXI","type":"book",
                    "spdf":{"subtitle":"Nacimiento de la prisión","undated":{"from":1600,"to":1610,"basis":"impresor"},
-                           "provenance":{"titulo":{"source":"colofon","confidence":0.9}},"orcid":{"Foucault, Michel":"0000-1"}}})
+                           "provenance":{"title":{"source":"colophon","confidence":0.9}},"orcid":{"Foucault, Michel":"0000-1"}}})
         );
     }
 }

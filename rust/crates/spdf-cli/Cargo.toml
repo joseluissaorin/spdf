@@ -1,12 +1,26 @@
 [package]
 name = "spdf-cli"
+description = "Command-line tool for SPDF files: validate, dump, search, cite, export, convert, sign and run the conformance suite."
+readme = "README.md"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories = ["command-line-utilities", "text-processing"]
 
 [[bin]]
 name = "spdf"
 path = "src/main.rs"
 
+[features]
+default = []
+http = ["spdf/http"]
+
 [dependencies]
 spdf.workspace = true
+serde_json.workspace = true
+clap = { version = "4", features = ["derive"] }
