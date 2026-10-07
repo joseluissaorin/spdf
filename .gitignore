@@ -13,3 +13,6 @@ build/
 *.litertlm
 models/cache/
 .env
+/.build/
+/.swiftpm/
+/Package.resolved
