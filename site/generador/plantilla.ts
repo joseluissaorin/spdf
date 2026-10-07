@@ -80,7 +80,7 @@ function sitioWeb(l: Lengua) {
 /** El formato en sí, como obra definida (el «qué» de toda la web). */
 export function formato(l: Lengua) {
   return {
-    '@type': 'DefinedTerm', '@id': ID.formato, name: 'SPDF', alternateName: ['Semantic Processed Document Format', '.spdf', 'application/vnd.spdf'],
+    '@type': 'DefinedTerm', '@id': ID.formato, name: 'SPDF', alternateName: ['Semantic Processed Document Format', '.spdf', 'application/vnd.spdf+sqlite3'],
     description: l === 'es'
       ? 'Formato de fichero abierto (SQLite 3) para documentos ya leídos: cada pasaje lleva su ancla exacta (página impresa, folio, segundo, diapositiva, verso) para que una cita solo pueda imprimir lo que dice la fuente.'
       : 'An open file format (SQLite 3) for documents that have already been read: every passage carries its exact anchor (printed page, folio, second, slide, verse) so a citation can only print what the source says.',

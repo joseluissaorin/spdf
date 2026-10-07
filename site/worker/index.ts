@@ -68,7 +68,7 @@ async function desdeR2(env: Env, req: Request, clave: string, nombre: string): P
   h.set('Access-Control-Allow-Origin', '*');
   h.set('Access-Control-Expose-Headers', 'Content-Range, Content-Length, ETag, Accept-Ranges');
   h.set('Cache-Control', 'public, max-age=86400');
-  if (!h.has('Content-Type')) h.set('Content-Type', nombre.endsWith('.spdf') ? 'application/vnd.spdf' : 'application/octet-stream');
+  if (!h.has('Content-Type')) h.set('Content-Type', nombre.endsWith('.spdf') ? 'application/vnd.spdf+sqlite3' : 'application/octet-stream');
   h.set('Content-Disposition', `attachment; filename="${nombre.replace(/"/g, '')}"`);
   if (!('body' in obj)) return new Response(null, { status: 304, headers: h });
   const cuerpo = (obj as R2ObjectBody).body;

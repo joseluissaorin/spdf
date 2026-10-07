@@ -33,7 +33,7 @@ Las correcciones editoriales (erratas, redacción más clara, ejemplos) no neces
 - La especificación y esta documentación se publican con licencia **CC BY 4.0**.
 - Todo el código del repositorio (bibliotecas, productor, lector, batería de conformidad, esta web) tiene licencia **MIT o Apache-2.0**, a elegir.
 - El autor se compromete públicamente a **no hacer valer ninguna patente** contra las implementaciones de SPDF.
-- El tipo de medio `application/vnd.spdf` se registrará en la IANA cuando la especificación sea estable.
+- El tipo de medio `application/vnd.spdf+sqlite3` se registrará en la IANA cuando la especificación sea estable.
 
 ## El repositorio
 

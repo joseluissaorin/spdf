@@ -701,7 +701,7 @@ ${agente}
   Cache-Control: public, max-age=3600
 
 /muestras/*.spdf
-  Content-Type: application/vnd.spdf
+  Content-Type: application/vnd.spdf+sqlite3
   Access-Control-Allow-Origin: *
   Access-Control-Expose-Headers: Content-Range, Content-Length, Accept-Ranges
 

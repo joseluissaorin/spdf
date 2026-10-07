@@ -33,7 +33,7 @@ Editorial fixes (typos, clearer wording, examples) do not need an RFC. Anything 
 - The specification and this documentation are published under **CC BY 4.0**.
 - All the code in the repository (libraries, producer, reader, conformance suite, this site) is **MIT OR Apache-2.0**, at your choice.
 - The author makes a public commitment **not to assert any patent** against implementations of SPDF.
-- The media type `application/vnd.spdf` will be registered with IANA once the specification is stable.
+- The media type `application/vnd.spdf+sqlite3` will be registered with IANA once the specification is stable.
 
 ## The repository
 

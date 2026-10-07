@@ -99,7 +99,7 @@ export function cargarCommons() {
         keywords: ['SPDF', 'public domain', 'digital humanities', 'citation', 'OCR', 'transcription', 'embeddings'],
         distribution: [
           { '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: `${ORIGEN}/commons/commons.spdfl.json`, name: 'commons.spdfl.json' },
-          ...items.map((o) => ({ '@type': 'DataDownload', encodingFormat: 'application/vnd.spdf', contentUrl: url(o), name: o.title, contentSize: `${o.bytes} B` })),
+          ...items.map((o) => ({ '@type': 'DataDownload', encodingFormat: 'application/vnd.spdf+sqlite3', contentUrl: url(o), name: o.title, contentSize: `${o.bytes} B` })),
         ],
         variableMeasured: ['text', 'anchor', 'section', 'figure', 'vector'],
         citation: `${AUTOR.nombre}. SPDF Commons. ${ORIGEN}/commons`,

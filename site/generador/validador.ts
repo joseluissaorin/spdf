@@ -68,7 +68,7 @@ export function validadorBloque(l: Lengua, activo: boolean, commons: Commons): B
 <div class="soltar-dibujo" aria-hidden="true">${aSvg(bilingue(maniculaSuelta), { lengua: l, decorativo: true, espera: 0.1 })}</div>
 <div class="soltar-texto">
 <p class="soltar-titulo">${t.soltar}</p>
-<p>${t.o} <label class="boton tinta" for="fichero">${t.elegir}</label><input type="file" id="fichero" accept=".spdf,application/vnd.spdf,application/x-sqlite3,application/vnd.sqlite3,application/gzip" class="solo-lector" ${activo ? '' : 'disabled'}></p>
+<p>${t.o} <label class="boton tinta" for="fichero">${t.elegir}</label><input type="file" id="fichero" accept=".spdf,application/vnd.spdf+sqlite3,application/x-sqlite3,application/vnd.sqlite3,application/gzip" class="solo-lector" ${activo ? '' : 'disabled'}></p>
 <p class="rotulo">${t.nada}</p>
 </div>
 </div>

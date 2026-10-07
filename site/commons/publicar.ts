@@ -38,7 +38,7 @@ for (const o of cat.items) {
   bytes += datos.length;
   console.log(`${o.fichero}: válido${r.warnings.length ? ` (${r.warnings.map((w) => w.code).join(', ')})` : ''}, ${(datos.length / 1048576).toFixed(1)} MB`);
   if (!sinSubir) {
-    execFileSync('npx', ['wrangler', 'r2', 'object', 'put', `spdf-web/commons/${o.fichero}`, '--file', f, '--content-type', 'application/vnd.spdf', '--remote'], {
+    execFileSync('npx', ['wrangler', 'r2', 'object', 'put', `spdf-web/commons/${o.fichero}`, '--file', f, '--content-type', 'application/vnd.spdf+sqlite3', '--remote'], {
       cwd: resolve(aqui, '..'), stdio: ['ignore', 'ignore', 'inherit'], env: { ...process.env, CLOUDFLARE_ACCOUNT_ID: CUENTA },
     });
     console.log('   subido a R2');
