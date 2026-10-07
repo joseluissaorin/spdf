@@ -72,9 +72,16 @@ func codes(l []Issue) []string {
 
 type validator struct {
 	res ValidationResult
+	// newerMinor: a 5.x file newer than 5.0; codes a later minor may define
+	// (E041, E032) become warnings (forward compatibility).
+	newerMinor bool
 }
 
 func (v *validator) err(code, where, format string, a ...any) {
+	if v.newerMinor && (code == "E041" || code == "E032") {
+		v.warn(code, where, format, a...)
+		return
+	}
 	v.res.Errors = append(v.res.Errors, Issue{code, fmt.Sprintf(format, a...), where})
 }
 
@@ -148,6 +155,7 @@ func (v *validator) run(f *File) {
 	}
 	if f.version != "5.0" {
 		v.warn("W105", "user_version", "newer minor version %s", f.version)
+		v.newerMinor = true
 	}
 	for _, o := range f.schemaObjects("trigger", "view") {
 		v.err("E020", o[0], "%s %s present", o[1], o[0])

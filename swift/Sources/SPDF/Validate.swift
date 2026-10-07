@@ -136,8 +136,15 @@ public enum SPDFValidator {
         var warnings: [ValidationIssue] = []
         var version: String?
         var profile: [String] = []
+        /// A 5.x file newer than 5.0: codes a later minor may define (E041,
+        /// E032) become warnings (forward compatibility).
+        var newerMinor = false
 
         mutating func err(_ code: String, _ location: String, _ message: String) {
+            if newerMinor && (code == "E041" || code == "E032") {
+                warn(code, location, message)
+                return
+            }
             errors.append(ValidationIssue(code: code, message: message, location: location))
         }
 
@@ -172,7 +179,10 @@ public enum SPDFValidator {
                 return
             }
             if f.isGzipped { warn("E003", f.path, "SPDF 5.x files should not be gzip-wrapped") }
-            if f.version != "5.0" { warn("W105", "user_version", "newer minor version \(f.version)") }
+            if f.version != "5.0" {
+                warn("W105", "user_version", "newer minor version \(f.version)")
+                newerMinor = true
+            }
             for (name, type) in objects { err("E020", name, "\(type) \(name) present") }
             for name in f.foreignVirtualTables() { err("E020", name, "virtual table \(name) present") }
             var present: [String: Set<String>] = [:]
