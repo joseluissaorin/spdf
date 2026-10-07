@@ -670,8 +670,19 @@ class SpdfFile:
         return _cite(anchor, self.document.metadata, locale, end)
 
     def locate(self, uri: str) -> list[Unit]:
-        """Units an anchor URI points at (by physical page, printed folio, time, slide…)."""
-        loc = parse_uri(uri)["locator"]
+        """Units an anchor URI points at (by physical page, printed folio, time, slide…).
+
+        Returns ``[]`` when the URI designates another document (SPEC §5.4).
+        """
+        parsed = parse_uri(uri)
+        doc = self.document
+        ref = parsed["docref"]
+        if ref.startswith("sha256-"):
+            if ref[7:] != (doc.source_sha256 or "").lower():
+                return []
+        elif ref != doc.id:
+            return []
+        loc = parsed["locator"]
         out: list[Unit] = []
         for u in self.iter_units():
             a = u.anchor

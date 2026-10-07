@@ -45,6 +45,8 @@ def test_read_document_and_records(quijote: Path) -> None:
         assert f.docref == f"sha256-{SOURCE_SHA}"
         assert f.locate(f"spdf:{f.docref}#p=2")[0].id == "u2"
         assert f.locate(f"spdf:{f.docref}#f=24")[0].id == "u3"
+        assert f.locate("spdf:sha256-" + "0" * 64 + "#p=2") == []
+        assert f.locate("spdf:quijote#p=2")[0].id == "u2"
 
 
 def test_dump_shape(quijote: Path) -> None:
