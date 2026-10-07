@@ -56,19 +56,22 @@ jobs:
   zotero:
     name: Complemento de Zotero
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('integrations/zotero/package.json') != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
+        if: ${{ hashFiles('integrations/zotero/package.json') != '' }}
         with:
           node-version: 24
       - name: spdf-format (js)
+        if: ${{ hashFiles('integrations/zotero/package.json') != '' }}
         working-directory: js
         run: npm ci && npm run build
       - name: Pruebas y .xpi
+        if: ${{ hashFiles('integrations/zotero/package.json') != '' }}
         working-directory: integrations/zotero
         run: npm ci && npm test && npm run build
       - uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('integrations/zotero/package.json') != '' }}
         with:
           name: spdf-zotero-xpi
           path: integrations/zotero/dist/*.xpi
@@ -77,15 +80,16 @@ jobs:
   pandoc:
     name: Filtro de Pandoc
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('integrations/pandoc/spdf.lua') != '' }}
     steps:
       - uses: actions/checkout@v4
       - name: Pandoc y sqlite3
+        if: ${{ hashFiles('integrations/pandoc/spdf.lua') != '' }}
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq sqlite3
           curl -sL https://github.com/jgm/pandoc/releases/download/3.9.0.2/pandoc-3.9.0.2-1-amd64.deb -o /tmp/pandoc.deb
           sudo dpkg -i /tmp/pandoc.deb
           pandoc --version | head -1
       - name: Pruebas
+        if: ${{ hashFiles('integrations/pandoc/spdf.lua') != '' }}
         working-directory: integrations/pandoc
         run: test/run.sh
