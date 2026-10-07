@@ -10,6 +10,12 @@ The table is rebuilt from the continuous integration of the repository every tim
 
 <!-- estado -->
 
+## Product classes
+
+What each implementation claims, by the product classes of the [specification](/spec#conformance) (reader, semantic reader, writer, validator), as recorded in the repository README by the specification's editor. The CI column above is what the machines check today; this table is what is declared.
+
+<!-- clases -->
+
 ## What every implementation does
 
 Every implementation, in every language, does the same eight things, and the conformance suite checks all of them:

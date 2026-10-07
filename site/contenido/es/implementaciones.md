@@ -10,6 +10,12 @@ La tabla se rehace a partir de la integración continua del repositorio cada vez
 
 <!-- estado -->
 
+## Clases de producto
+
+Lo que declara cada implementación, según las clases de producto de la [especificación](/es/especificacion#conformance) (lector, lector semántico, escritor, validador), tal como lo registra el editor de la especificación en el README del repositorio. La columna de CI de arriba es lo que comprueban hoy las máquinas; esta tabla es lo declarado.
+
+<!-- clases -->
+
 ## Lo que hace cada implementación
 
 Todas las implementaciones, en todos los lenguajes, hacen las mismas ocho cosas, y la batería de conformidad las comprueba todas:

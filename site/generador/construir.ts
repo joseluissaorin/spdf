@@ -112,6 +112,25 @@ function estadoBloque(l: Lengua, e: Record<string, Estado>): Bloque {
   return { html: htmlT, md };
 }
 
+/** La tabla de clases de producto del README raíz (entre <!-- product-status:start --> y :end), traducida al castellano si hace falta. */
+function clasesBloque(l: Lengua): Bloque {
+  const readme = resolve(RAIZ, 'README.md');
+  const m = existe(readme) ? /<!-- product-status:start -->\s*([\s\S]*?)\s*<!-- product-status:end -->/.exec(leer(readme)) : null;
+  if (!m) return { html: '', md: '' };
+  let tabla = m[1]!.trim();
+  if (l === 'es') {
+    const T: [RegExp, string][] = [
+      [/\bImplementation\b/, 'Implementación'], [/\bFolder\b/, 'Carpeta'], [/\bSemantic reader\b/, 'Lector semántico'], [/\| Reader \|/, '| Lector |'],
+      [/\bWriter\b/, 'Escritor'], [/\bValidator\b/, 'Validador'], [/Suite (\d)/g, 'Batería $1'], [/\| yes \|/g, '| sí |'], [/\| untested \|/g, '| sin probar |'],
+      [/\| pending \|/g, '| pendiente |'], [/\(reference\)/, '(referencia)'], [/outputs validate/, 'lo que produce valida'], [/own checks/, 'pruebas propias'], [/Producer/, 'Productor'],
+    ];
+    for (const [a, b] of T) tabla = tabla.replace(a, b);
+    // Dos pasadas para las celdas contiguas («| yes | yes |»).
+    tabla = tabla.replace(/\| yes \|/g, '| sí |').replace(/\| untested \|/g, '| sin probar |').replace(/\| pending \|/g, '| pendiente |');
+  }
+  return { html: aHtml(tabla, { enlace: () => null }).html, md: tabla };
+}
+
 function docsBloque(l: Lengua, e: Record<string, Estado>): Bloque {
   const li = IMPLEMENTACIONES.map((im) => `<li><a href="${RUTAS.docs[l]}/${im.id}"><strong>${esc(im.nombre)}</strong><span><code>${esc(im.instalar)}</code></span><span>${esc(im.nota[l])}</span>${etiquetaEstado(estadoDe(e, im.carpeta), l)}</a></li>`).join('');
   const md = IMPLEMENTACIONES.map((im) => `- [${im.nombre}](${ORIGEN}${rutaMd(`${RUTAS.docs[l]}/${im.id}`)}): \`${im.instalar}\`. ${im.nota[l]}`).join('\n');
@@ -840,7 +859,7 @@ async function principal(): Promise<void> {
       hoja({ clave, seccion: clave, l, ruta: RUTAS[clave][l], alterna: RUTAS[clave][OTRA[l]], titulo: c.titulo, descripcion: c.descripcion, md: c.cuerpo, fecha: fechaContenido(clave), vineta: VINETAS[clave], ...extra });
     };
     simple('implementaciones', {
-      bloques: { estado: estadoBloque(l, e) },
+      bloques: { estado: estadoBloque(l, e), clases: clasesBloque(l) },
       ld: IMPLEMENTACIONES.map((im) => ({ '@type': 'SoftwareSourceCode', '@id': `${ORIGEN}${RUTAS.docs.en}/${im.id}#codigo`, name: `SPDF for ${im.nombre}`, programmingLanguage: im.nombre, url: `${ORIGEN}${RUTAS.docs[l]}/${im.id}` })),
     });
     simple('docs', { bloques: { docs: docsBloque(l, e) } });
