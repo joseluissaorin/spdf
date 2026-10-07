@@ -1,4 +1,54 @@
 {
-  "version": null,
-  "files": []
+  "version": "0.1.0",
+  "files": [
+    {
+      "plataforma": "macos",
+      "nombre": "Lector.SPDF_0.1.0_aarch64.dmg",
+      "bytes": 9410543,
+      "sha256": "f7f7cc937532fac9f48c31df58b7e20d5c8ad54abb765ff9de708e0c6b8d3520",
+      "clave": "0.1.0/Lector.SPDF_0.1.0_aarch64.dmg"
+    },
+    {
+      "plataforma": "linux",
+      "nombre": "Lector.SPDF_0.1.0_amd64.AppImage",
+      "bytes": 85965304,
+      "sha256": "a2edaa59550ec306a36c6d1517a5d9699a677f74c4b08f32bbc3f0bfd325d3d1",
+      "clave": "0.1.0/Lector.SPDF_0.1.0_amd64.AppImage"
+    },
+    {
+      "plataforma": "linux",
+      "nombre": "Lector.SPDF_0.1.0_amd64.deb",
+      "bytes": 7958028,
+      "sha256": "4ba70cbb20c8fc88c7f0a853813a4f0a0e808ec785a0186ac7329dc2af9093bd",
+      "clave": "0.1.0/Lector.SPDF_0.1.0_amd64.deb"
+    },
+    {
+      "plataforma": "windows",
+      "nombre": "Lector.SPDF_0.1.0_x64-setup.exe",
+      "bytes": 5602119,
+      "sha256": "5247b2bf36b53a5859f7c3e4711ca53f20fd957db055683b496d26bbc986501d",
+      "clave": "0.1.0/Lector.SPDF_0.1.0_x64-setup.exe"
+    },
+    {
+      "plataforma": "windows",
+      "nombre": "Lector.SPDF_0.1.0_x64_en-US.msi",
+      "bytes": 7704576,
+      "sha256": "815d73c70114580c44c9c4a3404094fc1c53f1176fe03056f978784e3d3914bc",
+      "clave": "0.1.0/Lector.SPDF_0.1.0_x64_en-US.msi"
+    },
+    {
+      "plataforma": "windows",
+      "nombre": "Lector.SPDF_0.1.0_x64_es-ES.msi",
+      "bytes": 7708672,
+      "sha256": "36617ebb8d316d3b64f103c3c2f547ae46ba04e34b578104b49b22effd20e6f3",
+      "clave": "0.1.0/Lector.SPDF_0.1.0_x64_es-ES.msi"
+    },
+    {
+      "plataforma": "android",
+      "nombre": "lector-spdf-0.1.0-universal.apk",
+      "bytes": 42552569,
+      "sha256": "29e52a7481e61303f83a0e7b89bfe5c93abb4f93b394633ec220f151dc38c325",
+      "clave": "0.1.0/lector-spdf-0.1.0-universal.apk"
+    }
+  ]
 }

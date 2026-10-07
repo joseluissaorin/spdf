@@ -1,7 +1,7 @@
 ---
 title: Descargar el Lector SPDF
 short: Descargas
-description: El Lector SPDF abre, busca y cita ficheros SPDF en macOS, Windows, Linux, iOS, Android y la web, con modelos locales, sin conexión y sin cuenta. Gratis.
+description: El Lector SPDF abre, busca y cita ficheros SPDF en macOS, Windows, Linux, Android y la web (iOS llegará pronto), sin conexión y sin cuenta. Gratis.
 ---
 
 El **Lector SPDF** es el lector gratuito del formato: abre un fichero, léelo página a página o segundo a segundo, búscalo por palabras o por sentido y copia una cita con el folio exacto. Tiene la misma interfaz en todas partes, hecha con Tauri 2 sobre un núcleo de Rust, y los modelos que usa para la búsqueda semántica funcionan en tu propio dispositivo (en Android, en esta primera versión, la búsqueda semántica pasa por Gemini con tu propia clave).

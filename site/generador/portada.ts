@@ -104,7 +104,7 @@ export const TEXTOS = {
     empezar: 'Where to start',
     caminos: [
       ['Validate', 'Drop a .spdf on the validator: it checks the file against the specification and shows what is inside, in your browser, without uploading anything.', 'validador', 'Open the validator'],
-      ['Read', 'SPDF Reader opens, searches and cites SPDF files on macOS, Windows, Linux, iOS, Android and the web, with local models and no account.', 'descargas', 'Download the reader'],
+      ['Read', 'SPDF Reader opens, searches and cites SPDF files on macOS, Windows, Linux, Android and the web, offline and with no account.', 'descargas', 'Download the reader'],
       ['Build', 'spdf build turns a PDF, a scan, an EPUB or a recording into an SPDF with local models, or with your own API key. Or start from SPDF Commons, a small collection of public-domain works.', 'commons', 'Browse SPDF Commons'],
     ] as const,
     agentes: 'For agents',
@@ -159,7 +159,7 @@ export const TEXTOS = {
     empezar: 'Por dónde empezar',
     caminos: [
       ['Validar', 'Suelta un .spdf en el validador: lo comprueba contra la especificación y te enseña lo que hay dentro, en tu navegador, sin subir nada.', 'validador', 'Abrir el validador'],
-      ['Leer', 'El Lector SPDF abre, busca y cita ficheros SPDF en macOS, Windows, Linux, iOS, Android y la web, con modelos locales y sin cuenta.', 'descargas', 'Descargar el lector'],
+      ['Leer', 'El Lector SPDF abre, busca y cita ficheros SPDF en macOS, Windows, Linux, Android y la web, sin conexión y sin cuenta.', 'descargas', 'Descargar el lector'],
       ['Construir', 'spdf build convierte un PDF, un escaneado, un EPUB o una grabación en un SPDF con modelos locales o con tu propia clave. O empieza por SPDF Commons, una pequeña colección de obras de dominio público.', 'commons', 'Ver SPDF Commons'],
     ] as const,
     agentes: 'Para agentes',
