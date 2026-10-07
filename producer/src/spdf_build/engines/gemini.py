@@ -156,12 +156,23 @@ class GeminiTranscriber:
         prompt = ("Transcribe this recording verbatim, in its original language, with no summarizing or translating. Split it into "
                   "segments of one or two sentences, each with start and end time as MM:SS.s (or H:MM:SS.s), and a speaker "
                   "label: the person's name if it is said in the recording or obvious, else «Speaker 1», «Speaker 2»… "
-                  "consistently. language = BCP-47 code.")
+                  "consistently. Speakers are the real people whose voices are heard, never the characters of a story or "
+                  "play read aloud: an audiobook read by one person has a single speaker, even in the dialogues. "
+                  "language = BCP-47 code.")
         r = parse_json_loose(self.llm._generate([part, {"text": prompt}], None, schema, 65536, 0.0, timeout=900))
         segs = []
+        last_spk = None
         for s in r.get("segments") or []:
             t0, t1 = _clock(s.get("start")), _clock(s.get("end"))
             text = str(s.get("text") or "").strip()
+            spk = str(s.get("speaker") or "").strip()
+            if len(spk.split()) > 5 or len(spk) > 50:
+                # a sentence slipped into the speaker field: it is text, and the voice is the previous one
+                if spk not in text:
+                    text = f"{spk} {text}".strip()
+                spk = last_spk or ""
+            s["speaker"] = spk or None
+            last_spk = spk or last_spk
             if t0 is None or not text:
                 continue
             t1 = t1 if t1 is not None and t1 > t0 else t0 + max(1.0, len(text) / 15)

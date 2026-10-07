@@ -77,8 +77,18 @@ def name_speakers(units, llm, hints: dict) -> dict:
             return {"mode": "single", "speaker": name, "evidence": (r.get("evidence") or "")[:200]}
         return {"mode": "none", "reason": "no diarization and not a single named voice"}
     generic = [l for l in labels if GENERIC.match(l)]
+    cat = hints.get("catalogue_readers")
+    fixed = {l: _from_catalogue(l, cat) for l in labels if not GENERIC.match(l)}
+    fixed = {a: b for a, b in fixed.items() if a != b}
+    if fixed:  # the transcriber heard «Eva Foulk»; the catalogue says «evafolch»
+        for u in units:
+            if u.speaker in fixed:
+                u.speaker = fixed[u.speaker]
+                u.anchor["speaker"] = u.speaker
+            for a, b in fixed.items():
+                u.text = u.text.replace(f"**{a}:**", f"**{b}:**")
     if not generic:
-        return {"mode": "labels", "speakers": labels}
+        return {"mode": "labels", "speakers": sorted({fixed.get(l, l) for l in labels}), "spelling_from_catalogue": fixed}
     r = llm.json("You give names to the speaker labels of a transcript, only when the recording says them.",
                  f"Recording metadata: {hints}\n\nTranscript:\n{transcript[:12000]}\n\nFor each label in {generic}, its real name if "
                  "the transcript makes it clear (introductions, «gracias, Joaquín»); otherwise name = \"\".", MAP_SCHEMA,
