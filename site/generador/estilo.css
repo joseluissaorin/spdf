@@ -293,8 +293,11 @@ p, li { text-wrap: pretty; }
 .hojas span { display: block; font-size: 0.92rem; color: var(--apagado); line-height: 1.45; }
 
 /* La tabla de estado de las implementaciones */
-.cuerpo table.estado-impl td:first-child { white-space: nowrap; }
 .cuerpo table.estado-impl small { display: block; color: var(--apagado); font-size: 0.82rem; }
+.cuerpo table.estado-impl td:first-child { white-space: normal; }
+.cuerpo table.estado-impl td:nth-child(2), .cuerpo table.estado-impl td:nth-child(3) { white-space: nowrap; }
+.cuerpo table.estado-impl .paquete { font-size: 0.74rem; color: var(--apagado); background: none; padding: 0; margin-left: 0.3rem; overflow-wrap: anywhere; }
+.estado-impl .barra { display: block; margin: 0.35rem 0 0.3rem; }
 .barra { display: inline-block; width: 6rem; height: 0.42rem; background: var(--papel-2); border: 1px solid var(--filete-2); vertical-align: middle; margin-right: 0.4rem; }
 .barra i { display: block; height: 100%; background: var(--tinta); }
 

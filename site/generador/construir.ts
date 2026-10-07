@@ -83,24 +83,22 @@ function estadoBloque(l: Lengua, e: Record<string, Estado>): Bloque {
   const cab = l === 'es'
     ? ['Implementación', 'Paquete', 'Nivel', 'CI en main', 'Último run']
     : ['Implementation', 'Package', 'Tier', 'CI on main', 'Last run'];
-  const nivel = (n: 1 | 2) => (n === 1 ? (l === 'es' ? 'primero' : 'first') : (l === 'es' ? 'segundo' : 'second'));
-  const cuando = (s: Estado) => (s.fecha ? `<time datetime="${s.fecha}">${fechaLegible(s.fecha.slice(0, 10), l)}</time>${s.commit ? ` · <code>${s.commit}</code>` : ''}` : NADA);
+  const nivel = (n: 1 | 2) => (n === 1 ? (l === 'es' ? 'primer nivel' : 'first tier') : (l === 'es' ? 'segundo nivel' : 'second tier'));
+  const cuando = (s: Estado) => (s.fecha ? `<time datetime="${s.fecha}">${fechaLegible(s.fecha.slice(0, 10), l)}</time>${s.commit ? `<small><code>${s.commit}</code></small>` : ''}` : NADA);
   const filas = IMPLEMENTACIONES.map((im) => {
     const s = estadoDe(e, im.carpeta);
     const c = s.conformidad;
     const barra = c && c.pasados + c.fallidos > 0 ? `<span class="barra" aria-hidden="true"><i style="width:${Math.round((100 * c.pasados) / (c.pasados + c.fallidos))}%"></i></span>` : '';
-    const enlaceRun = s.url && false ? s.url : '';
-    void enlaceRun;
-    return `<tr><td><a href="${RUTAS.docs[l]}/${im.id}">${esc(im.nombre)}</a><small>${esc(im.nota[l])}</small></td><td><code>${esc(im.paquete)}</code></td><td>${nivel(im.nivel)}</td><td>${barra}${etiquetaEstado(s, l)}</td><td>${cuando(s)}</td></tr>`;
+    return `<tr><td><a href="${RUTAS.docs[l]}/${im.id}">${esc(im.nombre)}</a> <code class="paquete">${esc(im.paquete)}</code><small>${esc(im.nota[l])} · ${nivel(im.nivel)}</small></td><td>${barra}${etiquetaEstado(s, l)}</td><td>${cuando(s)}</td></tr>`;
   }).join('');
   const otras = OTRAS_PIEZAS.map((o) => {
     const s = estadoDe(e, o.carpeta);
-    return `<tr><td>${esc(o.nombre[l])}</td><td><code>${o.carpeta}/</code></td><td>${NADA}</td><td>${etiquetaEstado(s, l)}</td><td>${cuando(s)}</td></tr>`;
+    return `<tr><td>${esc(o.nombre[l])} <code class="paquete">${o.carpeta}/</code></td><td>${etiquetaEstado(s, l)}</td><td>${cuando(s)}</td></tr>`;
   }).join('');
   const nota = l === 'es'
     ? `<p class="rotulo">Comprobado al construir esta web, el ${fechaLegible(HOY, l)}. También en <a href="/status.json">/status.json</a>.</p>`
     : `<p class="rotulo">Checked when this site was built, on ${fechaLegible(HOY, l)}. Also as <a href="/status.json">/status.json</a>.</p>`;
-  const htmlT = `<div class="tabla" tabindex="0"><table class="estado-impl"><thead><tr>${cab.map((c) => `<th scope="col">${c}</th>`).join('')}</tr></thead><tbody>${filas}${otras}</tbody></table></div>${nota}`;
+  const htmlT = `<div class="tabla" tabindex="0"><table class="estado-impl"><thead><tr><th scope="col">${cab[0]}</th><th scope="col">${cab[3]}</th><th scope="col">${cab[4]}</th></tr></thead><tbody>${filas}${otras}</tbody></table></div>${nota}`;
   const md = [
     `| ${cab.join(' | ')} |`, '| --- | --- | --- | --- | --- |',
     ...IMPLEMENTACIONES.map((im) => {
