@@ -34,6 +34,7 @@ export const es = {
   soltarAqui: 'Suelta aquí tus ficheros .spdf',
   bibliotecaVacia: 'La biblioteca está vacía',
   bibliotecaVaciaTexto: 'Importa un fichero .spdf (5.0 o 4.x) o arrástralo a esta ventana. Se lee aquí mismo: nada sale de este equipo.',
+  bibliotecaVaciaTextoTactil: 'Importa un fichero .spdf (5.0 o 4.x), o ábrelo desde Archivos o desde otra app con «Abrir con». Se lee aquí mismo: nada sale de este equipo.',
   coleccionVacia: 'Esta colección está vacía. Añade documentos desde su ficha en la biblioteca.',
   quitarDocumento: 'Quitar de la biblioteca',
   confirmarQuitar: '¿Quitar «{titulo}» de la biblioteca? El fichero original no se borra.',

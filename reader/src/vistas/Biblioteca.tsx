@@ -87,7 +87,7 @@ export function Biblioteca() {
         <b>{t('app')}</b>
       </a>
       <span className="separa" />
-      <button className="boton tinta" onClick={elegir}><Importar />{t('importar')}</button>
+      <button className="boton tinta" onClick={elegir} aria-label={t('importar')}><Importar /><span className="solo-escritorio">{t('importar')}</span></button>
       <button className="icono" aria-label={t('ajustes')} onClick={() => ir({ vista: 'ajustes' })}><IconoAjustes /></button>
       <input ref={entrada} type="file" accept=".spdf,.gz,application/vnd.spdf,application/x-sqlite3,application/gzip" multiple hidden
         onChange={(e) => { const fs = [...(e.target.files ?? [])]; e.target.value = ''; if (fs.length) void importar(fs); }} />
@@ -249,7 +249,7 @@ function Bienvenida({ alImportar }: { alImportar: () => void }) {
       <div className="letra">
         <h1 id="bienvenida-titulo">{lengua === 'es' ? <>Lector<span>SPDF</span></> : <>SPDF<span>Reader</span></>}</h1>
         <p className="lema">{t('lema')}</p>
-        <p className="texto-vacio">{t('bibliotecaVaciaTexto')}</p>
+        <p className="texto-vacio">{matchMedia('(pointer: coarse)').matches ? t('bibliotecaVaciaTextoTactil') : t('bibliotecaVaciaTexto')}</p>
         <button className="boton tinta" onClick={alImportar}><Importar />{t('importar')}</button>
       </div>
       <div className="dibujo-mano">

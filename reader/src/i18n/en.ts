@@ -35,6 +35,7 @@ export const en: Record<Claves, string> = {
   soltarAqui: 'Drop your .spdf files here',
   bibliotecaVacia: 'The library is empty',
   bibliotecaVaciaTexto: 'Import a .spdf file (5.0 or 4.x) or drag it onto this window. It is read right here: nothing leaves this device.',
+  bibliotecaVaciaTextoTactil: 'Import a .spdf file (5.0 or 4.x), or open it from Files or another app with “Open with”. It is read right here: nothing leaves this device.',
   coleccionVacia: 'This collection is empty. Add documents from their card in the library.',
   quitarDocumento: 'Remove from the library',
   confirmarQuitar: 'Remove “{titulo}” from the library? The original file is not deleted.',

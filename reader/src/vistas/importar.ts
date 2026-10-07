@@ -7,7 +7,8 @@ export function useImportar() {
   const { nucleo, refrescar, avisar, ir } = useApp();
   const { t } = useIdioma();
   return useCallback(async (origen: (File | string)[], o: { abrir?: boolean } = {}) => {
-    const spdf = origen.filter((f) => (typeof f === 'string' ? f : f.name).toLowerCase().match(/\.spdf(\.gz)?$|\.db$/) || typeof f !== 'string');
+    // Rutas de .spdf, URI content:// (Android) y cualquier File elegido a mano.
+    const spdf = origen.filter((f) => typeof f !== 'string' || /\.spdf(\.gz)?$|\.db$/i.test(f) || f.startsWith('content://'));
     if (!spdf.length) return [];
     if (spdf.length > 1) avisar(t('importando', { n: 0, total: spdf.length }));
     const r = await nucleo.importar(spdf);

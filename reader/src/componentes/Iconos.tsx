@@ -10,7 +10,7 @@ const P = (p: SVGProps<SVGSVGElement>) => ({
   strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true, focusable: false, ...p,
 });
 
-export const Atras = (p: SVGProps<SVGSVGElement>) => <svg {...P(p)}><path d="M15 5l-7 7 7 7" /></svg>;
+export const Atras = (p: SVGProps<SVGSVGElement>) => <svg {...P(p)}><path d="M19 12H5.5M11 6l-6 6 6 6" /></svg>;
 export const Izq = (p: SVGProps<SVGSVGElement>) => <svg {...P(p)}><path d="M14.5 6l-6 6 6 6" /></svg>;
 export const Der = (p: SVGProps<SVGSVGElement>) => <svg {...P(p)}><path d="M9.5 6l6 6-6 6" /></svg>;
 export const Lupa = (p: SVGProps<SVGSVGElement>) => <svg {...P(p)}><circle cx="10.5" cy="10.5" r="6" /><path d="M15 15l5.5 5.5" /></svg>;

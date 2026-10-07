@@ -42,8 +42,10 @@ fn entregar(app: &tauri::AppHandle, rutas: Vec<String>) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let app = tauri::Builder::default()
-        .plugin(tauri_plugin_dialog::init())
+    let constructor = tauri::Builder::default().plugin(tauri_plugin_dialog::init());
+    #[cfg(target_os = "android")]
+    let constructor = constructor.plugin(tauri_plugin_fs::init());
+    let app = constructor
         .register_asynchronous_uri_scheme_protocol("spdf", |ctx, req, responder| {
             let app = ctx.app_handle().clone();
             std::thread::spawn(move || responder.respond(comandos::servir_blob(&app, &req)));

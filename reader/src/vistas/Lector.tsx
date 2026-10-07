@@ -52,6 +52,7 @@ export function Lector() {
   const cache = useRef(new Map<number, Unidad>());
   const inputFolio = useRef<HTMLInputElement>(null);
   const capa = useRef<HTMLDivElement>(null);
+  const toque = useRef<{ x: number; y: number; t: number } | null>(null);
   const entrada = entradas?.find((e) => e.id === id);
   const an = useAnotaciones(id, resumen);
 
@@ -239,7 +240,7 @@ export function Lector() {
                 title={t('irAPagina')} inputMode="text" autoComplete="off" />
             </form>
             <button className="icono" onClick={() => irA(actual + 1)} disabled={actual >= total} aria-label={t('paginaSiguiente')}><Der /></button>
-            <span className="total" aria-label={t('paginaFisica', { n: actual, total })}>{actual}/{total}</span>
+            <span className="total solo-escritorio" aria-label={t('paginaFisica', { n: actual, total })}>{actual}/{total}</span>
           </nav>
         )}
 
@@ -252,20 +253,27 @@ export function Lector() {
         )}
 
         {!esMedio && (
-          <div className="segmentado ocultable" role="group" aria-label={t('vista')}>
+          <div className="segmentado solo-escritorio" role="group" aria-label={t('vista')}>
             <button aria-pressed={vista === 'facsimil'} onClick={() => cambiarPrefs({ vista: 'facsimil' })} title={t('facsimil')} aria-label={t('facsimil')}><IconoFacsimil /></button>
             <button aria-pressed={vista === 'ambos'} onClick={() => cambiarPrefs({ vista: 'ambos' })} title={t('ambos')} aria-label={t('ambos')}><Ambos /></button>
             <button aria-pressed={vista === 'texto'} onClick={() => cambiarPrefs({ vista: 'texto' })} title={t('texto')} aria-label={t('texto')}><IconoTexto /></button>
           </div>
         )}
         <button className="icono" aria-pressed={panel === 'buscar'} onClick={() => setPanel(panel === 'buscar' ? null : 'buscar')} aria-label={t('buscar')} title={`${t('buscar')} (/)`}><Lupa /></button>
-        <button className="boton minio chico" onClick={citaPagina} title={`${t('copiarCita')} (c)`}><Comillas />{t('citar')}</button>
-        <button className="icono" aria-pressed={panel === 'preguntar'} onClick={() => setPanel(panel === 'preguntar' ? null : 'preguntar')} aria-label={t('preguntar')} title={t('preguntar')}><Pregunta /></button>
-        <button className="icono" aria-pressed={!!panel && ['indice', 'figuras', 'anotaciones', 'ficha'].includes(panel)} onClick={() => setPanel(panel && ['indice', 'figuras', 'anotaciones', 'ficha'].includes(panel) ? null : 'ficha')} aria-label={t('ficha')} title={`${t('ficha')} (f)`}><Ficha /></button>
+        <button className="boton minio chico" onClick={citaPagina} title={`${t('copiarCita')} (c)`} aria-label={t('copiarCita')}><Comillas /><span className="solo-escritorio">{t('citar')}</span></button>
+        <button className="icono solo-escritorio" aria-pressed={panel === 'preguntar'} onClick={() => setPanel(panel === 'preguntar' ? null : 'preguntar')} aria-label={t('preguntar')} title={t('preguntar')}><Pregunta /></button>
+        <button className="icono solo-escritorio" aria-pressed={!!panel && ['indice', 'figuras', 'anotaciones', 'ficha'].includes(panel)} onClick={() => setPanel(panel && ['indice', 'figuras', 'anotaciones', 'ficha'].includes(panel) ? null : 'ficha')} aria-label={t('ficha')} title={`${t('ficha')} (f)`}><Ficha /></button>
         <div style={{ position: 'relative' }}>
           <button className="icono" aria-expanded={menu} aria-haspopup="menu" onClick={() => setMenu(!menu)} aria-label={t('exportar')} title={t('exportar')}><IconoMas /></button>
           {menu && (
             <ul role="menu" className="menu-flotante" onClick={() => setMenu(false)}>
+              {!esMedio && (
+                <li role="none" className="solo-movil"><button role="menuitem" onClick={() => cambiarPrefs({ vista: vista === 'facsimil' ? 'texto' : 'facsimil' })}>
+                  {vista === 'facsimil' ? <IconoTexto /> : <IconoFacsimil />}{vista === 'facsimil' ? t('texto') : t('facsimil')}</button></li>
+              )}
+              <li role="none" className="solo-movil"><button role="menuitem" onClick={() => setPanel('ficha')}><Ficha />{t('ficha')}</button></li>
+              <li role="none" className="solo-movil"><button role="menuitem" onClick={() => setPanel('indice')}><Ficha />{t('indice')}</button></li>
+              <li role="none" className="solo-movil"><button role="menuitem" onClick={() => setPanel('preguntar')}><Pregunta />{t('preguntar')}</button></li>
               <li role="none"><button role="menuitem" onClick={() => setCitar(true)}><Comillas />{t('referencia')}</button></li>
               <li role="none"><button role="menuitem" onClick={() => setRevectorizar(true)}><Vectores />{t('revectorizar')}</button></li>
               <li role="none"><button role="menuitem" onClick={() => void an.exportarMarkdown()}><Exportar />{t('exportarMarkdown')}</button></li>
@@ -292,7 +300,16 @@ export function Lector() {
             <div className={`mesa${vista === 'texto' ? ' solo-texto' : vista === 'facsimil' ? ' solo-facsimil' : ''}`}>
               {vista !== 'texto' && <Facsimil id={id} unidad={unidad} region={region} />}
               {vista !== 'facsimil' && (
-                <div className="capa-texto" ref={capa} onMouseUp={leerSeleccion} onKeyUp={(e) => { if (e.shiftKey) leerSeleccion(); }} onScroll={() => seleccion && setSeleccion(null)}>
+                <div className="capa-texto" ref={capa} onMouseUp={leerSeleccion}
+                  onTouchStart={(e) => { const t0 = e.touches[0]; toque.current = t0 ? { x: t0.clientX, y: t0.clientY, t: Date.now() } : null; }}
+                  onTouchEnd={(e) => {
+                    // Deslizar en horizontal pasa de página (sin estorbar la selección ni el desplazamiento vertical).
+                    const a = toque.current, b = e.changedTouches[0];
+                    toque.current = null;
+                    if (!a || !b || Date.now() - a.t > 600 || getSelection()?.toString()) return;
+                    const dx = b.clientX - a.x, dy = b.clientY - a.y;
+                    if (Math.abs(dx) > 70 && Math.abs(dx) > 2 * Math.abs(dy)) irA(actualRef.current + (dx < 0 ? 1 : -1));
+                  }} onKeyUp={(e) => { if (e.shiftKey) leerSeleccion(); }} onScroll={() => seleccion && setSeleccion(null)}>
                   {unidad && (
                     <div className="hoja" key={unidad.id}>
                       <div className="margen" aria-hidden="true">

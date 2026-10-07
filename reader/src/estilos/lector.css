@@ -277,7 +277,7 @@ h1, h2, h3, h4 { font-weight: normal; margin: 0; }
 .bienvenida h1 span { display: block; font-style: italic; }
 .bienvenida p.lema { font-size: 21px; font-style: italic; color: var(--tinta-2); margin: 0 0 22px; max-width: 30ch; }
 .bienvenida .texto-vacio { max-width: 46ch; margin: 0 0 22px; }
-.bienvenida .dibujo-mano { position: relative; z-index: 1; }
+.bienvenida .dibujo-mano { position: relative; z-index: 1; isolation: isolate; }
 .bienvenida .susurro { position: absolute; left: 0; bottom: 4px; z-index: 1; }
 .susurro { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; color: var(--tinta-2); text-transform: uppercase; }
 .rotulo-borde {
@@ -514,7 +514,17 @@ kbd { font-family: var(--mono); font-size: 11.5px; padding: 1px 6px; border: 1px
 /* ------------------------------------------------------------------ */
 /* Pantallas estrechas (móvil)                                         */
 /* ------------------------------------------------------------------ */
+.solo-movil { display: none; }
 @media (max-width: 860px) {
+  .solo-escritorio { display: none !important; }
+  .solo-movil { display: revert; }
+  .barra { gap: 4px; padding-left: 8px; padding-right: 8px; }
+  .barra .titulo-doc { display: none; }
+  .folio-nav { margin-right: auto; }
+  .folio-nav input { width: 56px; }
+  .bienvenida .susurro { position: static; grid-column: 1 / -1; margin-top: 12px; }
+  .bienvenida .rotulo-borde { display: none; }
+  .marca-app b { white-space: nowrap; }
   .biblioteca { grid-template-columns: 1fr; }
   .rail { display: none; }
   .mesa { grid-template-columns: 1fr; }

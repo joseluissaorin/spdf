@@ -106,13 +106,49 @@ fn importar_uno(st: &Estado, ruta: &Path, nombre: &str, temporal: bool) -> Resul
     }
 }
 
+/// Android: un URI content:// (el «Abrir con» de otra app) se lee con el plugin fs y se copia a la app.
+#[cfg(target_os = "android")]
+fn importar_contenido(app: &AppHandle, st: &Estado, uri: &str) -> ResultadoImport {
+    use std::io::Read;
+    use tauri_plugin_fs::FsExt;
+    let leido = (|| -> R<Vec<u8>> {
+        let url = tauri::Url::parse(uri).map_err(err)?;
+        let mut f = app.fs().open(tauri_plugin_fs::FilePath::Url(url), tauri_plugin_fs::OpenOptions::new().read(true).to_owned()).map_err(err)?;
+        let mut v = Vec::new();
+        f.read_to_end(&mut v).map_err(err)?;
+        Ok(v)
+    })();
+    match leido {
+        Ok(datos) => {
+            let tmp = st.dir.join(format!(".import-{}.spdf", std::process::id()));
+            if let Err(e) = std::fs::write(&tmp, &datos) {
+                return ResultadoImport { nombre: uri.into(), ok: false, entrada: None, repetido: false, error: Some(e.to_string()) };
+            }
+            let r = importar_uno(st, &tmp, "documento.spdf", true);
+            let _ = std::fs::remove_file(&tmp);
+            r
+        }
+        Err(e) => ResultadoImport { nombre: uri.into(), ok: false, entrada: None, repetido: false, error: Some(e) },
+    }
+}
+#[cfg(not(target_os = "android"))]
+fn importar_contenido(_app: &AppHandle, _st: &Estado, uri: &str) -> ResultadoImport {
+    ResultadoImport { nombre: uri.into(), ok: false, entrada: None, repetido: false, error: Some("URI de contenido no admitido en esta plataforma".into()) }
+}
+
 #[tauri::command]
 pub async fn importar(app: AppHandle, rutas: Vec<String>, canal: Channel<Progreso>) -> R<Vec<ResultadoImport>> {
+    let app_ = app.clone();
     bloq(app, move |st| {
         let total = rutas.len() as u64;
         let mut out = Vec::new();
         for (i, r) in rutas.iter().enumerate() {
-            let p = PathBuf::from(r.strip_prefix("file://").unwrap_or(r));
+            if r.starts_with("content://") {
+                let _ = canal.send(Progreso { fase: "importar".into(), hecho: i as u64, total, detalle: None });
+                out.push(importar_contenido(&app_, st, r));
+                continue;
+            }
+            let p = PathBuf::from(percent_encoding::percent_decode_str(r.strip_prefix("file://").unwrap_or(r)).decode_utf8_lossy().into_owned());
             let nombre = p.file_name().and_then(|n| n.to_str()).unwrap_or("documento.spdf").to_string();
             let _ = canal.send(Progreso { fase: "importar".into(), hecho: i as u64, total, detalle: Some(nombre.clone()) });
             out.push(importar_uno(st, &p, &nombre, false));
