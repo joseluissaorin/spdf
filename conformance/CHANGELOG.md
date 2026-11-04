@@ -2,6 +2,25 @@
 
 Newest first. Implementers: read this before updating your runner.
 
+## 0.4.3 (2026-11-04)
+
+Cases that RFC 0004 (the `understanding` profile, draft) relies on, all of existing kinds and
+all about 5.0 behaviour. 354 cases; no expectation of 0.4.2 changed.
+
+- Four `anchor_uri` cases: an instant (`t0 = t1`) with a region (`uri-time-instant-region`),
+  the same with an unknown member `span` that takes no part in the URI
+  (`uri-time-instant-span`), `chars` and `region` together (`uri-page-chars-region`), and an
+  unordered URI with a clock time (`uri-parse-time-region-clock`).
+- `invalid/OK-optional-extension.spdf`: `minimo` with an understanding layer as the optional
+  extension `x_scholaris_comprension`. It validates without errors or warnings
+  (`validate-OK-optional-extension`), and its dump is `minimo`'s plus the row in `extensions`
+  (`dump-OK-optional-extension`): extension tables are not part of the dump (SPEC §11).
+- `invalid/W105-newer-minor-understanding.spdf`: a 5.1 file with the six tables of the profile,
+  `understanding_sha256` and a vector with target `card`. A 5.0 validator reports only W105.
+- The layer is hand-written in `tools/manual/understanding.json`; the generator checks every
+  text quotation against the unit text, writes it into both files and reads it back.
+  `spec/json-schema/understanding.schema.json` describes it, and `verificar.py` checks it.
+
 ## 0.4.2 (2026-10-07)
 
 - SPEC §18.1, gap reported by site: in a range where only one end has a printed folio,

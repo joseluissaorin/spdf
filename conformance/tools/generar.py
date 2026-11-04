@@ -40,7 +40,7 @@ import spdfref as R  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 CONF = HERE.parent
-SUITE_VERSION = "0.4.2"
+SUITE_VERSION = "0.4.3"
 # Public test key. NEVER use it for anything but this suite.
 TEST_SECRET = hashlib.sha256(b"SPDF conformance test key: public, never use it for real signatures").digest()
 SIGNED = {"quijote"}
@@ -123,6 +123,94 @@ def _mutate(path: Path, *sql: str, params=()) -> None:
     con.commit()
     con.execute("VACUUM")
     con.close()
+
+
+# ---------------------------------------------------------------------------
+# The `understanding` profile proposed for 5.1 (spec/rfcs/0004-understanding-profile.md)
+# ---------------------------------------------------------------------------
+
+# Columns in table order; `document` is dropped from the dump of segments and appearances
+# (always the document id) and kept in cards (NULL marks a card about something beyond the
+# document). The x_scholaris_* prototype under 5.0 has the same columns and its own
+# x_scholaris_vectors table; 5.1 stores card vectors in `vectors` with target `card`.
+UNDERSTANDING_DDL = """
+CREATE TABLE {p}segments (
+  id TEXT PRIMARY KEY, document TEXT NOT NULL, parent TEXT, level INTEGER NOT NULL, ord INTEGER NOT NULL,
+  kind TEXT NOT NULL, title TEXT NOT NULL, anchor TEXT NOT NULL, anchor_end TEXT, unit_from TEXT NOT NULL,
+  unit_to TEXT NOT NULL, summary TEXT, origin TEXT NOT NULL, confidence REAL NOT NULL DEFAULT 1, t0 REAL, t1 REAL);
+CREATE INDEX {p}segments_ord ON {p}segments(document, ord);
+CREATE TABLE {p}cards (
+  n INTEGER PRIMARY KEY, id TEXT NOT NULL UNIQUE, document TEXT, target TEXT NOT NULL, target_id TEXT NOT NULL,
+  lens TEXT NOT NULL, class TEXT NOT NULL, language TEXT, text TEXT NOT NULL, data TEXT NOT NULL DEFAULT '{{}}',
+  evidence TEXT NOT NULL DEFAULT '[]', model TEXT NOT NULL, version TEXT NOT NULL, created TEXT NOT NULL);
+CREATE INDEX {p}cards_target ON {p}cards(target, target_id);
+CREATE TABLE {p}entities (
+  id TEXT PRIMARY KEY, kind TEXT NOT NULL, name TEXT NOT NULL, aliases TEXT NOT NULL DEFAULT '[]',
+  wikidata TEXT, description TEXT, fictional INTEGER);
+CREATE TABLE {p}appearances (
+  id TEXT PRIMARY KEY, entity TEXT NOT NULL, document TEXT NOT NULL, segment TEXT, anchor TEXT NOT NULL,
+  anchor_end TEXT, form TEXT NOT NULL, role TEXT NOT NULL, confidence REAL NOT NULL DEFAULT 1, t0 REAL, physical INTEGER);
+CREATE INDEX {p}appearances_entity ON {p}appearances(entity);
+CREATE TABLE {p}relations (
+  id TEXT PRIMARY KEY, source TEXT NOT NULL, target TEXT NOT NULL, kind TEXT NOT NULL, note TEXT,
+  evidence TEXT NOT NULL DEFAULT '[]', confidence REAL NOT NULL DEFAULT 1, origin TEXT NOT NULL, created TEXT NOT NULL);
+CREATE TABLE {p}alignments (
+  id TEXT PRIMARY KEY, relation TEXT NOT NULL, ord INTEGER NOT NULL, kind TEXT NOT NULL,
+  doc_a TEXT, anchor_a TEXT, anchor_end_a TEXT, segment_a TEXT, doc_b TEXT, anchor_b TEXT, anchor_end_b TEXT, segment_b TEXT,
+  note TEXT NOT NULL DEFAULT '', confidence REAL NOT NULL DEFAULT 1);
+CREATE INDEX {p}alignments_relation ON {p}alignments(relation, ord);
+"""
+UNDERSTANDING_COLUMNS = {
+    "segments": ("id", "document", "parent", "level", "ord", "kind", "title", "anchor", "anchor_end", "unit_from", "unit_to",
+                 "summary", "origin", "confidence", "t0", "t1"),
+    "cards": ("n", "id", "document", "target", "target_id", "lens", "class", "language", "text", "data", "evidence", "model",
+              "version", "created"),
+    "entities": ("id", "kind", "name", "aliases", "wikidata", "description", "fictional"),
+    "appearances": ("id", "entity", "document", "segment", "anchor", "anchor_end", "form", "role", "confidence", "t0", "physical"),
+    "relations": ("id", "source", "target", "kind", "note", "evidence", "confidence", "origin", "created"),
+    "alignments": ("id", "relation", "ord", "kind", "doc_a", "anchor_a", "anchor_end_a", "segment_a", "doc_b", "anchor_b",
+                   "anchor_end_b", "segment_b", "note", "confidence"),
+}
+UNDERSTANDING_ORDER = {"segments": "ord, id", "cards": "n", "entities": "id", "appearances": "id", "relations": "id",
+                       "alignments": "relation, ord, id"}
+UNDERSTANDING_JSON = {"anchor", "anchor_end", "anchor_a", "anchor_end_a", "anchor_b", "anchor_end_b", "data", "evidence", "aliases"}
+UNDERSTANDING_NO_DOCUMENT = {"segments", "appearances"}
+
+
+def write_understanding(path: Path, u: dict, prefix: str, document: str, *extra) -> None:
+    """Writes an understanding layer (in its dump form) into the tables `<prefix>segments`…"""
+    con = sqlite3.connect(str(path))
+    con.executescript(UNDERSTANDING_DDL.format(p=prefix))
+    for table, cols in UNDERSTANDING_COLUMNS.items():
+        for row in u[table]:
+            vals = []
+            for c in cols:
+                v = document if c == "document" and table in UNDERSTANDING_NO_DOCUMENT else row[c]
+                vals.append(json.dumps(v, ensure_ascii=False, separators=(",", ":")) if c in UNDERSTANDING_JSON and v is not None else v)
+            con.execute(f"INSERT INTO {prefix}{table} ({', '.join(cols)}) VALUES ({', '.join('?' * len(cols))})", vals)
+    for sql, params in extra:
+        con.execute(sql, params)
+    con.commit()
+    con.execute("VACUUM")
+    con.close()
+
+
+def understanding_dump(path: Path, prefix: str = "") -> dict:
+    """The understanding dump of RFC 0004: every column, JSON parsed, numbers canonical, fixed order."""
+    o = R.open_file(path)
+    try:
+        out = {}
+        for table, cols in UNDERSTANDING_COLUMNS.items():
+            keep = [c for c in cols if not (c == "document" and table in UNDERSTANDING_NO_DOCUMENT)]
+            rows = o.con.execute(f"SELECT {', '.join(keep)} FROM {prefix}{table} ORDER BY {UNDERSTANDING_ORDER[table]}").fetchall()
+            out[table] = [{c: (json.loads(v) if c in UNDERSTANDING_JSON and v is not None else v) for c, v in zip(keep, r)} for r in rows]
+        return R.canon(out)
+    finally:
+        o.close()
+
+
+def understanding_sha256(u: dict) -> str:
+    return hashlib.sha256(R.jcs(R.canon(u)).encode("utf-8")).hexdigest()
 
 
 def build_invalid(out: Path, sources: dict) -> list[tuple[str, dict]]:
@@ -220,6 +308,35 @@ def build_invalid(out: Path, sources: dict) -> list[tuple[str, dict]]:
     _mutate(fresh("OK-integral-number"), "UPDATE units SET anchor = '{\"paragraph\":1.0,\"path\":[\"XXI\"],\"type\":\"section\"}' WHERE id = 'u1'",
             "UPDATE fragments SET anchor = '{\"chars\":[0.0,111],\"line_from\":1.0,\"line_to\":4,\"type\":\"verse\"}' WHERE id = 'f1'")
     expect("OK-integral-number")
+    # The understanding layer of `minimo` (RFC 0004), hand-written in its dump form. As an
+    # optional 5.0 extension (the x_scholaris_comprension prototype) it must not change
+    # validity; in a 5.1 file a 5.0 validator only reports the newer minor (W105).
+    und = R.read_json(HERE / "manual" / "understanding.json")
+    texts = {u["id"]: u["text"] for u in base["units"]}
+    for c in und["cards"] + und["relations"]:
+        for e in c["evidence"]:  # RFC 0004 §2 rule 2: a text quotation is the unit text at its chars
+            if e["mode"] == "text" and "unit" in e and "chars" in e["anchor"]:
+                a, b = e["anchor"]["chars"]
+                check(texts[e["unit"]][a:b] == e["quote"], f"understanding.json: {c['id']} quotes {e['quote']!r}, the unit says {texts[e['unit']][a:b]!r}")
+    p = fresh("OK-optional-extension")
+    write_understanding(p, und, "x_scholaris_", "minimo",
+                        ("CREATE TABLE x_scholaris_vectors (target TEXT NOT NULL, id TEXT NOT NULL, space TEXT NOT NULL, data BLOB NOT NULL, "
+                         "PRIMARY KEY (target, id, space))", ()),
+                        ("INSERT INTO extensions (name, version, required) VALUES ('x_scholaris_comprension', '1.0', 0)", ()))
+    check(same(understanding_dump(p, "x_scholaris_"), und), "OK-optional-extension: the understanding tables do not read back")
+    expect("OK-optional-extension")
+    p = fresh("W105-newer-minor-understanding")
+    write_understanding(p, und, "", "minimo",
+                        ("PRAGMA user_version = 510", ()),
+                        ("UPDATE spdf_meta SET value = '5.1' WHERE key = 'spdf_version'", ()),
+                        ("UPDATE spdf_meta SET value = 'core understanding' WHERE key = 'profile'", ()),
+                        ("INSERT INTO spdf_meta (key, value) VALUES ('understanding_sha256', ?)", (understanding_sha256(und),)),
+                        ("INSERT INTO spaces (id, provider, model, version, dims, dtype, normalized, truncated_from, modalities, task_prefixes, created) "
+                         "VALUES ('toy@4', 'spdf-conformance', 'toy', '1', 4, 'f32', 1, NULL, '[\"text\"]', NULL, NULL)", ()),
+                        ("INSERT INTO vectors (target, id, space, document, data) VALUES ('card', 'c-xxi', 'toy@4', 'minimo', ?)",
+                         (R.pack_vector([0.5, 0.5, 0.5, 0.5], "f32"),)))
+    check(same(understanding_dump(p), und), "W105-newer-minor-understanding: the understanding tables do not read back")
+    expect("W105-newer-minor-understanding", warnings=["W105"], version="5.1")
     # W103: fragments that cross from a page with a folio into a plate without one, and back
     mic = json.loads(json.dumps(sources["micrographia"]))
     units = {u["id"]: u for u in mic["units"]}
@@ -309,6 +426,15 @@ def build_cases(out: Path, dumps: dict, legacy: dict, invalid: list) -> list[dic
                "warnings": sorted({w["code"] for w in v["warnings"]})}
         check(got == exp, f"{rel}: reference validator says {got}, expected {exp}")
         add(f"validate-{Path(rel).stem}", "validate", {"file": rel}, exp)
+
+    # Extension tables are not part of the dump (SPEC §11): the dump of `minimo` with the
+    # optional extension is the dump of `minimo` plus its row in `extensions`.
+    exp = json.loads(json.dumps(dumps["minimo"]))
+    exp["extensions"] = [{"name": "x_scholaris_comprension", "version": "1.0", "required": 0}]
+    check(same(R.dump_file(out / "invalid" / "OK-optional-extension.spdf"), exp), "OK-optional-extension: extension tables leaked into the dump")
+    R.write_json(out / "expected" / "OK-optional-extension.dump.json", exp)
+    add("dump-OK-optional-extension", "dump", {"file": "invalid/OK-optional-extension.spdf"},
+        {"dump": "expected/OK-optional-extension.dump.json", "content_sha256": R.content_sha256(exp)})
 
     q = R.read_json(HERE / "manual" / "busquedas.json")
     limit = q["lexical_limit"]

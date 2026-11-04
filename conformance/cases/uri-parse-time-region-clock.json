@@ -1,0 +1,15 @@
+{
+  "expect": {
+    "canonical": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#t=3723.5,3723.5&xywh=percent:25,10,30,60",
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "locator": {
+      "t": [3723.5, 3723.5],
+      "xywh": [0.25, 0.1, 0.3, 0.6]
+    }
+  },
+  "id": "uri-parse-time-region-clock",
+  "input": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#xywh=percent:25,10,30,60&t=npt:1:02:03.5,1:02:03.5"
+  },
+  "kind": "anchor_uri"
+}

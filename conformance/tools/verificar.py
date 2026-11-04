@@ -242,9 +242,27 @@ def schema_problems() -> list[str]:
         chk(R.read_json(p), "annotation.schema.json", f"spec/examples/{p.name}")
     for p in sorted(ex.glob("*.spdfl.json")):
         chk(R.read_json(p), "collection.schema.json", f"spec/examples/{p.name}")
+    # the understanding layer proposed for 5.1 (spec/rfcs/0004-understanding-profile.md)
+    und = R.read_json(HERE / "manual" / "understanding.json")
+    chk(und, "understanding.schema.json", "tools/manual/understanding.json")
+    # an alignment between two placeholder documents (no claim about any real work)
+    a, b = "sha256-" + "0" * 64, "sha256-" + "1" * 64
+    con_alineacion = json.loads(json.dumps(und))
+    con_alineacion["relations"].append({"id": "r-x", "source": a, "target": b, "kind": "translation_of", "note": None, "evidence": [],
+                                        "confidence": 0.9, "origin": "model", "created": "2026-11-04T00:00:00Z"})
+    con_alineacion["alignments"].append({"id": "al-x", "relation": "r-x", "ord": 1, "kind": "omitted", "doc_a": None, "anchor_a": None,
+                                         "anchor_end_a": None, "segment_a": None, "doc_b": b,
+                                         "anchor_b": {"type": "time", "t0": 62.5, "t1": 62.5, "span": [60, 68], "region": {"x": 0.25, "y": 0.1, "w": 0.3, "h": 0.6}},
+                                         "anchor_end_b": None, "segment_b": None, "note": "", "confidence": 0.5})
+    chk(con_alineacion, "understanding.schema.json", "understanding with an alignment")
+    sin_doc = json.loads(json.dumps(und))
+    del sin_doc["cards"][0]["evidence"][0]["doc"]
+    qid = json.loads(json.dumps(und))
+    qid["entities"][1]["wikidata"] = "poesia"
     # negative checks: the schemas must reject what the specification forbids
     bad = [({"type": "chapter"}, "anchor.schema.json"), ({"type": "page", "printed": "3"}, "anchor.schema.json"),
-           ({"type": "book"}, "metadata.schema.json"), ({"valid": True}, "validation-result.schema.json")]
+           ({"type": "book"}, "metadata.schema.json"), ({"valid": True}, "validation-result.schema.json"),
+           (sin_doc, "understanding.schema.json"), (qid, "understanding.schema.json")]
     for inst, name in bad:
         if not S.errors(inst, S.get(name)):
             out.append(f"{name} accepts {inst}")
