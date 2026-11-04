@@ -17,7 +17,7 @@
     "validate": 47
   },
   "cases": 354,
-  "cases_sha256": "0087edc694fcaa7cc95dd70f855f50989bf6f4bf9dd99ad24c416043230a95d8",
+  "cases_sha256": "ba4a669a788b84597994af8d652629bb14aa7469389d2ae284083c179430b2c5",
   "spdf_version": "5.0",
   "suite": "spdf-conformance",
   "suite_version": "0.4.3",

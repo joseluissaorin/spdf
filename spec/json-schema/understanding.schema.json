@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://spdf.joseluissaorin.com/schema/5.1/understanding.schema.json",
   "title": "SPDF understanding layer (proposed for 5.1)",
-  "description": "The understanding dump of a file with the profile `understanding` (spec/rfcs/0004-understanding-profile.md, draft): segments, cards, entities, appearances, relations and alignments, every column present, JSON columns parsed. The same objects describe the rows of the `x_scholaris_comprension` prototype under 5.0.",
+  "description": "The understanding dump of a file with the profile `understanding` (spec/rfcs/0004-understanding-profile.md, draft): segments, cards, entities, appearances, relations and alignments, every column present, JSON columns parsed. The same objects describe the rows of the `scholaris_comprension` prototype under 5.0.",
   "type": "object",
   "required": [
     "segments",

@@ -57,7 +57,7 @@
   },
   "extensions": [
     {
-      "name": "x_scholaris_comprension",
+      "name": "scholaris_comprension",
       "required": 0,
       "version": "1.0"
     }

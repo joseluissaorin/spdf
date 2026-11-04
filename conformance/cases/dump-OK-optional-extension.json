@@ -1,6 +1,6 @@
 {
   "expect": {
-    "content_sha256": "e387e5b46ae38bd3f7371e031ee457a6aa0b5142aba68199792025f7149bd354",
+    "content_sha256": "d39d0a1e6af5287473380936db71846eb6d58dca3c34846c14f595edce0a1baa",
     "dump": "expected/OK-optional-extension.dump.json"
   },
   "id": "dump-OK-optional-extension",

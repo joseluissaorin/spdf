@@ -309,7 +309,7 @@ def build_invalid(out: Path, sources: dict) -> list[tuple[str, dict]]:
             "UPDATE fragments SET anchor = '{\"chars\":[0.0,111],\"line_from\":1.0,\"line_to\":4,\"type\":\"verse\"}' WHERE id = 'f1'")
     expect("OK-integral-number")
     # The understanding layer of `minimo` (RFC 0004), hand-written in its dump form. As an
-    # optional 5.0 extension (the x_scholaris_comprension prototype) it must not change
+    # optional 5.0 extension (the scholaris_comprension prototype) it must not change
     # validity; in a 5.1 file a 5.0 validator only reports the newer minor (W105).
     und = R.read_json(HERE / "manual" / "understanding.json")
     texts = {u["id"]: u["text"] for u in base["units"]}
@@ -322,7 +322,7 @@ def build_invalid(out: Path, sources: dict) -> list[tuple[str, dict]]:
     write_understanding(p, und, "x_scholaris_", "minimo",
                         ("CREATE TABLE x_scholaris_vectors (target TEXT NOT NULL, id TEXT NOT NULL, space TEXT NOT NULL, data BLOB NOT NULL, "
                          "PRIMARY KEY (target, id, space))", ()),
-                        ("INSERT INTO extensions (name, version, required) VALUES ('x_scholaris_comprension', '1.0', 0)", ()))
+                        ("INSERT INTO extensions (name, version, required) VALUES ('scholaris_comprension', '1.0', 0)", ()))
     check(same(understanding_dump(p, "x_scholaris_"), und), "OK-optional-extension: the understanding tables do not read back")
     expect("OK-optional-extension")
     p = fresh("W105-newer-minor-understanding")
@@ -430,7 +430,7 @@ def build_cases(out: Path, dumps: dict, legacy: dict, invalid: list) -> list[dic
     # Extension tables are not part of the dump (SPEC §11): the dump of `minimo` with the
     # optional extension is the dump of `minimo` plus its row in `extensions`.
     exp = json.loads(json.dumps(dumps["minimo"]))
-    exp["extensions"] = [{"name": "x_scholaris_comprension", "version": "1.0", "required": 0}]
+    exp["extensions"] = [{"name": "scholaris_comprension", "version": "1.0", "required": 0}]
     check(same(R.dump_file(out / "invalid" / "OK-optional-extension.spdf"), exp), "OK-optional-extension: extension tables leaked into the dump")
     R.write_json(out / "expected" / "OK-optional-extension.dump.json", exp)
     add("dump-OK-optional-extension", "dump", {"file": "invalid/OK-optional-extension.spdf"},

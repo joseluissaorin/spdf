@@ -40,7 +40,7 @@ is seen or heard. The layer is declared by a new profile, `understanding`, and r
 
 Scholaris, one of the two SPDF producers, already computes this layer for every document of
 a library (its documentation calls it *comprensión*), and stores it in its internal schema
-and, under 5.0, as the optional extension `x_scholaris_comprension`. Three things make a
+and, under 5.0, as the optional extension `scholaris_comprension`. Three things make a
 standard place for it worth having.
 
 **It is expensive and durable.** Reading a feature film or a novel with a frontier model,
@@ -171,7 +171,7 @@ Readers search cards as they search fragments. The file holds no full-text index
 builds it on a private copy or in memory, with the same tokenizer as `fragments_fts`.
 
 **Before 5.1.** Producers carry the layer as an optional 5.0 extension with the same columns
-under their vendor prefix. Scholaris writes `x_scholaris_comprension` version 1.0
+under their vendor prefix. Scholaris writes `scholaris_comprension` version 1.0
 (`x_scholaris_segments`, …, plus `x_scholaris_vectors` for card vectors, because 5.0 does not
 allow the target `card`). Moving to 5.1 is renaming the tables, moving the card vectors to
 `vectors` and declaring the profile. A file MUST NOT carry both.
@@ -411,7 +411,7 @@ behaviour this profile relies on:
 | `uri-time-instant-span` | `anchor_uri` | the member `span` takes no part in the URI | hand-written, checked by the reference |
 | `uri-page-chars-region` | `anchor_uri` | `chars` and `region` together, in canonical order | hand-written, checked by the reference |
 | `uri-parse-time-region-clock` | `anchor_uri` | an unordered URI with a clock time parses to the instant and the region | hand-written, checked by the reference |
-| `validate-OK-optional-extension` | `validate` | `minimo` with the layer as the optional extension `x_scholaris_comprension`: valid, no warnings | the reference validator |
+| `validate-OK-optional-extension` | `validate` | `minimo` with the layer as the optional extension `scholaris_comprension`: valid, no warnings | the reference validator |
 | `dump-OK-optional-extension` | `dump` | the same file dumps as `minimo` plus its row in `extensions` (extension tables are not in the dump, §11) | `minimo`'s source plus the row, not the dumper |
 | `validate-W105-newer-minor-understanding` | `validate` | a 5.1 file with the six tables, `understanding_sha256` and a `card` vector: a 5.0 validator reports only W105 | the reference validator |
 
@@ -532,6 +532,6 @@ seven cases.
 
 | Implementation | Status | Version or commit | Cases passed |
 |---|---|---|---|
-| Scholaris (TypeScript): writes and reads the prototype `x_scholaris_comprension` 1.0 under 5.0, and annotations 1.1 | prototype | `9d4a54b` (branch `ola2/spdf5`) | n/a (extension) |
+| Scholaris (TypeScript): writes and reads the prototype `scholaris_comprension` 1.0 under 5.0, and annotations 1.1 | prototype | `9d4a54b` (branch `ola2/spdf5`) | n/a (extension) |
 | Reference (`conformance/tools`, Python): writes the layer and its understanding dump | prototype | this branch | the seven cases of 0.4.3 |
 | `spdf-format` (TypeScript) 0.1.0 | reader of 5.0 | `74e7ff6` | the seven cases of 0.4.3 |

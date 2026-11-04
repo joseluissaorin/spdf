@@ -12,7 +12,7 @@ all about 5.0 behaviour. 354 cases; no expectation of 0.4.2 changed.
   (`uri-time-instant-span`), `chars` and `region` together (`uri-page-chars-region`), and an
   unordered URI with a clock time (`uri-parse-time-region-clock`).
 - `invalid/OK-optional-extension.spdf`: `minimo` with an understanding layer as the optional
-  extension `x_scholaris_comprension`. It validates without errors or warnings
+  extension `scholaris_comprension`. It validates without errors or warnings
   (`validate-OK-optional-extension`), and its dump is `minimo`'s plus the row in `extensions`
   (`dump-OK-optional-extension`): extension tables are not part of the dump (SPEC §11).
 - `invalid/W105-newer-minor-understanding.spdf`: a 5.1 file with the six tables of the profile,
