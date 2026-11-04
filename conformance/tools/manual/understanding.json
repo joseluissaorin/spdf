@@ -1,0 +1,345 @@
+{
+ "segments": [
+  {
+   "id": "s-xxi",
+   "parent": null,
+   "level": 1,
+   "ord": 1,
+   "kind": "poem",
+   "title": "XXI",
+   "anchor": {
+    "paragraph": 1,
+    "path": [
+     "XXI"
+    ],
+    "printed": "159",
+    "type": "section"
+   },
+   "anchor_end": null,
+   "unit_from": "u1",
+   "unit_to": "u1",
+   "summary": "La pregunta por la poesía se contesta señalando a quien pregunta.",
+   "origin": "read",
+   "confidence": 1,
+   "t0": null,
+   "t1": null
+  },
+  {
+   "id": "s-liii",
+   "parent": null,
+   "level": 1,
+   "ord": 2,
+   "kind": "stanza",
+   "title": "LIII, primera estrofa",
+   "anchor": {
+    "paragraph": 1,
+    "path": [
+     "LIII"
+    ],
+    "printed": "184",
+    "type": "section"
+   },
+   "anchor_end": null,
+   "unit_from": "u2",
+   "unit_to": "u2",
+   "summary": null,
+   "origin": "read",
+   "confidence": 1,
+   "t0": null,
+   "t1": null
+  }
+ ],
+ "cards": [
+  {
+   "n": 1,
+   "id": "c-xxi",
+   "document": "minimo",
+   "target": "segment",
+   "target_id": "s-xxi",
+   "lens": "poetry",
+   "class": "poem",
+   "language": "es",
+   "text": "Cuatro versos. La pregunta de la amada abre el primero y vuelve al comienzo del tercero (anáfora); el último verso la contesta sin definir la poesía: la identifica con quien pregunta.",
+   "data": {
+    "verses": 4,
+    "figures": [
+     "anaphora"
+    ]
+   },
+   "evidence": [
+    {
+     "doc": "sha256-cfc8a2dcf65ec4eee72e3980eb2a4d0e5ec76fb016a8381a580f525ca3b862cc",
+     "anchor": {
+      "paragraph": 1,
+      "path": [
+       "XXI"
+      ],
+      "printed": "159",
+      "type": "section",
+      "chars": [
+       0,
+       15
+      ]
+     },
+     "quote": "¿Qué es poesía?",
+     "mode": "text",
+     "unit": "u1"
+    },
+    {
+     "doc": "sha256-cfc8a2dcf65ec4eee72e3980eb2a4d0e5ec76fb016a8381a580f525ca3b862cc",
+     "anchor": {
+      "paragraph": 1,
+      "path": [
+       "XXI"
+      ],
+      "printed": "159",
+      "type": "section",
+      "chars": [
+       67,
+       82
+      ]
+     },
+     "quote": "¿Qué es poesía?",
+     "mode": "text",
+     "unit": "u1"
+    },
+    {
+     "doc": "sha256-cfc8a2dcf65ec4eee72e3980eb2a4d0e5ec76fb016a8381a580f525ca3b862cc",
+     "anchor": {
+      "paragraph": 1,
+      "path": [
+       "XXI"
+      ],
+      "printed": "159",
+      "type": "section",
+      "chars": [
+       106,
+       124
+      ]
+     },
+     "quote": "Poesía... eres tú.",
+     "mode": "text",
+     "unit": "u1"
+    }
+   ],
+   "model": "hand-written",
+   "version": "rfc-0004",
+   "created": "2026-11-04T00:00:00Z"
+  },
+  {
+   "n": 2,
+   "id": "c-amada",
+   "document": "minimo",
+   "target": "entity",
+   "target_id": "e-amada",
+   "lens": "poetry",
+   "class": "character",
+   "language": "es",
+   "text": "La interlocutora del yo lírico: hace la pregunta de la rima XXI y es el «tú» al que se dirige la LIII.",
+   "data": {},
+   "evidence": [
+    {
+     "doc": "sha256-cfc8a2dcf65ec4eee72e3980eb2a4d0e5ec76fb016a8381a580f525ca3b862cc",
+     "anchor": {
+      "paragraph": 1,
+      "path": [
+       "XXI"
+      ],
+      "printed": "159",
+      "type": "section",
+      "chars": [
+       16,
+       21
+      ]
+     },
+     "quote": "dices",
+     "mode": "text",
+     "unit": "u1"
+    },
+    {
+     "doc": "sha256-cfc8a2dcf65ec4eee72e3980eb2a4d0e5ec76fb016a8381a580f525ca3b862cc",
+     "anchor": {
+      "paragraph": 1,
+      "path": [
+       "LIII"
+      ],
+      "printed": "184",
+      "type": "section",
+      "chars": [
+       36,
+       45
+      ]
+     },
+     "quote": "tu balcón",
+     "mode": "text",
+     "unit": "u2"
+    }
+   ],
+   "model": "hand-written",
+   "version": "rfc-0004",
+   "created": "2026-11-04T00:00:00Z"
+  }
+ ],
+ "entities": [
+  {
+   "id": "e-amada",
+   "kind": "person",
+   "name": "la amada",
+   "aliases": [
+    "tú"
+   ],
+   "wikidata": null,
+   "description": "interlocutora del yo lírico",
+   "fictional": 1
+  },
+  {
+   "id": "e-poesia",
+   "kind": "concept",
+   "name": "poesía",
+   "aliases": [],
+   "wikidata": "Q482",
+   "description": null,
+   "fictional": null
+  },
+  {
+   "id": "e-rimas",
+   "kind": "work",
+   "name": "Rimas",
+   "aliases": [],
+   "wikidata": "Q24052928",
+   "description": "libro de Gustavo Adolfo Bécquer",
+   "fictional": null
+  }
+ ],
+ "appearances": [
+  {
+   "id": "a1",
+   "entity": "e-poesia",
+   "segment": "s-xxi",
+   "anchor": {
+    "paragraph": 1,
+    "path": [
+     "XXI"
+    ],
+    "printed": "159",
+    "type": "section",
+    "chars": [
+     8,
+     14
+    ]
+   },
+   "anchor_end": null,
+   "form": "poesía",
+   "role": "named",
+   "confidence": 1,
+   "t0": null,
+   "physical": null
+  },
+  {
+   "id": "a2",
+   "entity": "e-amada",
+   "segment": "s-xxi",
+   "anchor": {
+    "paragraph": 1,
+    "path": [
+     "XXI"
+    ],
+    "printed": "159",
+    "type": "section",
+    "chars": [
+     0,
+     15
+    ]
+   },
+   "anchor_end": null,
+   "form": "¿Qué es poesía?",
+   "role": "speaks",
+   "confidence": 1,
+   "t0": null,
+   "physical": null
+  },
+  {
+   "id": "a3",
+   "entity": "e-poesia",
+   "segment": "s-xxi",
+   "anchor": {
+    "paragraph": 1,
+    "path": [
+     "XXI"
+    ],
+    "printed": "159",
+    "type": "section",
+    "chars": [
+     106,
+     124
+    ]
+   },
+   "anchor_end": null,
+   "form": "Poesía... eres tú.",
+   "role": "defined",
+   "confidence": 1,
+   "t0": null,
+   "physical": null
+  },
+  {
+   "id": "a4",
+   "entity": "e-amada",
+   "segment": "s-xxi",
+   "anchor": {
+    "paragraph": 1,
+    "path": [
+     "XXI"
+    ],
+    "printed": "159",
+    "type": "section",
+    "chars": [
+     121,
+     123
+    ]
+   },
+   "anchor_end": null,
+   "form": "tú",
+   "role": "alluded",
+   "confidence": 1,
+   "t0": null,
+   "physical": null
+  },
+  {
+   "id": "a5",
+   "entity": "e-amada",
+   "segment": "s-liii",
+   "anchor": {
+    "paragraph": 1,
+    "path": [
+     "LIII"
+    ],
+    "printed": "184",
+    "type": "section",
+    "chars": [
+     36,
+     38
+    ]
+   },
+   "anchor_end": null,
+   "form": "tu",
+   "role": "alluded",
+   "confidence": 1,
+   "t0": null,
+   "physical": null
+  }
+ ],
+ "relations": [
+  {
+   "id": "r-rimas",
+   "source": "sha256-cfc8a2dcf65ec4eee72e3980eb2a4d0e5ec76fb016a8381a580f525ca3b862cc",
+   "target": "entity:e-rimas",
+   "kind": "part_of",
+   "note": "Las dos rimas pertenecen al libro de las Rimas.",
+   "evidence": [],
+   "confidence": 1,
+   "origin": "user",
+   "created": "2026-11-04T00:00:00Z"
+  }
+ ],
+ "alignments": []
+}

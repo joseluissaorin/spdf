@@ -1,0 +1,11 @@
+{
+  "expect": {
+    "content_sha256": "d39d0a1e6af5287473380936db71846eb6d58dca3c34846c14f595edce0a1baa",
+    "dump": "expected/OK-optional-extension.dump.json"
+  },
+  "id": "dump-OK-optional-extension",
+  "input": {
+    "file": "invalid/OK-optional-extension.spdf"
+  },
+  "kind": "dump"
+}

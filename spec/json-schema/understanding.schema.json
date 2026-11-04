@@ -1,0 +1,600 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spdf.joseluissaorin.com/schema/5.1/understanding.schema.json",
+  "title": "SPDF understanding layer (proposed for 5.1)",
+  "description": "The understanding dump of a file with the profile `understanding` (spec/rfcs/0004-understanding-profile.md, draft): segments, cards, entities, appearances, relations and alignments, every column present, JSON columns parsed. The same objects describe the rows of the `scholaris_comprension` prototype under 5.0.",
+  "type": "object",
+  "required": [
+    "segments",
+    "cards",
+    "entities",
+    "appearances",
+    "relations",
+    "alignments"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "segments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/segment"
+      }
+    },
+    "cards": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/card"
+      }
+    },
+    "entities": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/entity"
+      }
+    },
+    "appearances": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/appearance"
+      }
+    },
+    "relations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/relation"
+      }
+    },
+    "alignments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/alignment"
+      }
+    }
+  },
+  "$defs": {
+    "anchor": {
+      "$ref": "https://spdf.joseluissaorin.com/schema/5.0/anchor.schema.json"
+    },
+    "anchorOrNull": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/anchor"
+        }
+      ]
+    },
+    "docref": {
+      "description": "A document as in anchor URIs (SPEC §5.1): `sha256-` and the source hash, or the document id.",
+      "type": "string",
+      "pattern": "^(sha256-[0-9a-f]{64}|[^\\s#]+)$"
+    },
+    "docrefOrNull": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/docref"
+        }
+      ]
+    },
+    "entityRef": {
+      "description": "An entity of this file, as an end of a relation.",
+      "type": "string",
+      "pattern": "^entity:[^\\s]+$"
+    },
+    "token": {
+      "description": "An open vocabulary value: lowercase ASCII letters, digits and underscores.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^\\S"
+    },
+    "idOrNull": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/id"
+        }
+      ]
+    },
+    "stringOrNull": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "numberOrNull": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "timestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?Z$"
+    },
+    "evidence": {
+      "description": "A piece of evidence: where in which document, and what it says, shows or sounds. `quote` is literal text in the original when `mode` is `text`, and a description otherwise.",
+      "type": "object",
+      "required": [
+        "doc",
+        "anchor",
+        "mode"
+      ],
+      "properties": {
+        "doc": {
+          "$ref": "#/$defs/docref"
+        },
+        "anchor": {
+          "$ref": "#/$defs/anchor"
+        },
+        "anchor_end": {
+          "$ref": "#/$defs/anchor"
+        },
+        "quote": {
+          "type": "string"
+        },
+        "mode": {
+          "enum": [
+            "text",
+            "image",
+            "video",
+            "audio",
+            "data"
+          ]
+        },
+        "unit": {
+          "$ref": "#/$defs/id"
+        },
+        "fragment": {
+          "$ref": "#/$defs/id"
+        },
+        "figure": {
+          "$ref": "#/$defs/id"
+        }
+      }
+    },
+    "evidenceList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidence"
+      }
+    },
+    "segment": {
+      "type": "object",
+      "required": [
+        "id",
+        "parent",
+        "level",
+        "ord",
+        "kind",
+        "title",
+        "anchor",
+        "anchor_end",
+        "unit_from",
+        "unit_to",
+        "summary",
+        "origin",
+        "confidence",
+        "t0",
+        "t1"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "parent": {
+          "$ref": "#/$defs/idOrNull"
+        },
+        "level": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "ord": {
+          "type": "integer"
+        },
+        "kind": {
+          "description": "Open vocabulary; RECOMMENDED values: work, part, chapter, section, sequence, scene, shot, act, tableau, poem, stanza, topic, block, turn, slide, table, folio, article, other.",
+          "$ref": "#/$defs/token"
+        },
+        "title": {
+          "type": "string"
+        },
+        "anchor": {
+          "$ref": "#/$defs/anchor"
+        },
+        "anchor_end": {
+          "$ref": "#/$defs/anchorOrNull"
+        },
+        "unit_from": {
+          "$ref": "#/$defs/id"
+        },
+        "unit_to": {
+          "$ref": "#/$defs/id"
+        },
+        "summary": {
+          "$ref": "#/$defs/stringOrNull"
+        },
+        "origin": {
+          "enum": [
+            "read",
+            "inferred",
+            "model"
+          ]
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "t0": {
+          "$ref": "#/$defs/numberOrNull"
+        },
+        "t1": {
+          "$ref": "#/$defs/numberOrNull"
+        }
+      }
+    },
+    "card": {
+      "type": "object",
+      "required": [
+        "n",
+        "id",
+        "document",
+        "target",
+        "target_id",
+        "lens",
+        "class",
+        "language",
+        "text",
+        "data",
+        "evidence",
+        "model",
+        "version",
+        "created"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "n": {
+          "type": "integer"
+        },
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "document": {
+          "description": "The document id, or null for a card about something beyond this document (a relation, an entity across works).",
+          "$ref": "#/$defs/idOrNull"
+        },
+        "target": {
+          "enum": [
+            "document",
+            "segment",
+            "entity",
+            "figure",
+            "relation"
+          ]
+        },
+        "target_id": {
+          "$ref": "#/$defs/id"
+        },
+        "lens": {
+          "description": "Open vocabulary; RECOMMENDED values: narrative, poetry, drama, film, documentary, journalism, interview, podcast, lecture, essay, scientific, archival, legal, data, presentation, general.",
+          "$ref": "#/$defs/token"
+        },
+        "class": {
+          "description": "What kind of card: global, chapter, scene, shot, poem, character, argument… (open vocabulary).",
+          "$ref": "#/$defs/token"
+        },
+        "language": {
+          "$ref": "#/$defs/stringOrNull"
+        },
+        "text": {
+          "type": "string"
+        },
+        "data": {
+          "type": "object"
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidenceList"
+        },
+        "model": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "created": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "entity": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "name",
+        "aliases",
+        "wikidata",
+        "description",
+        "fictional"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "person",
+            "work",
+            "place",
+            "organization",
+            "concept",
+            "event",
+            "date",
+            "object",
+            "other"
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "wikidata": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^Q[1-9][0-9]*$"
+            }
+          ]
+        },
+        "description": {
+          "$ref": "#/$defs/stringOrNull"
+        },
+        "fictional": {
+          "enum": [
+            0,
+            1,
+            null
+          ]
+        }
+      }
+    },
+    "appearance": {
+      "type": "object",
+      "required": [
+        "id",
+        "entity",
+        "segment",
+        "anchor",
+        "anchor_end",
+        "form",
+        "role",
+        "confidence",
+        "t0",
+        "physical"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "entity": {
+          "$ref": "#/$defs/id"
+        },
+        "segment": {
+          "$ref": "#/$defs/idOrNull"
+        },
+        "anchor": {
+          "$ref": "#/$defs/anchor"
+        },
+        "anchor_end": {
+          "$ref": "#/$defs/anchorOrNull"
+        },
+        "form": {
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "named",
+            "alluded",
+            "present",
+            "speaks",
+            "visible",
+            "audible",
+            "quoted",
+            "defined",
+            "other"
+          ]
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "t0": {
+          "$ref": "#/$defs/numberOrNull"
+        },
+        "physical": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 1
+            }
+          ]
+        }
+      }
+    },
+    "relation": {
+      "type": "object",
+      "required": [
+        "id",
+        "source",
+        "target",
+        "kind",
+        "note",
+        "evidence",
+        "confidence",
+        "origin",
+        "created"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/docref"
+            },
+            {
+              "$ref": "#/$defs/entityRef"
+            }
+          ]
+        },
+        "target": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/docref"
+            },
+            {
+              "$ref": "#/$defs/entityRef"
+            }
+          ]
+        },
+        "kind": {
+          "enum": [
+            "adaptation_of",
+            "translation_of",
+            "edition_of",
+            "version_of",
+            "cites",
+            "comments_on",
+            "responds_to",
+            "part_of",
+            "same_work",
+            "portrays",
+            "related"
+          ]
+        },
+        "note": {
+          "$ref": "#/$defs/stringOrNull"
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidenceList"
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "origin": {
+          "enum": [
+            "metadata",
+            "wikidata",
+            "model",
+            "user"
+          ]
+        },
+        "created": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "alignment": {
+      "description": "A fine correspondence inside a relation: side `a` belongs to the relation's source, side `b` to its target. `added` has only side a, `omitted` only side b, every other kind both.",
+      "type": "object",
+      "required": [
+        "id",
+        "relation",
+        "ord",
+        "kind",
+        "doc_a",
+        "anchor_a",
+        "anchor_end_a",
+        "segment_a",
+        "doc_b",
+        "anchor_b",
+        "anchor_end_b",
+        "segment_b",
+        "note",
+        "confidence"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "relation": {
+          "$ref": "#/$defs/id"
+        },
+        "ord": {
+          "type": "integer"
+        },
+        "kind": {
+          "enum": [
+            "equivalent",
+            "translated",
+            "condensed",
+            "expanded",
+            "transformed",
+            "reordered",
+            "added",
+            "omitted",
+            "allusion"
+          ]
+        },
+        "doc_a": {
+          "$ref": "#/$defs/docrefOrNull"
+        },
+        "anchor_a": {
+          "$ref": "#/$defs/anchorOrNull"
+        },
+        "anchor_end_a": {
+          "$ref": "#/$defs/anchorOrNull"
+        },
+        "segment_a": {
+          "$ref": "#/$defs/idOrNull"
+        },
+        "doc_b": {
+          "$ref": "#/$defs/docrefOrNull"
+        },
+        "anchor_b": {
+          "$ref": "#/$defs/anchorOrNull"
+        },
+        "anchor_end_b": {
+          "$ref": "#/$defs/anchorOrNull"
+        },
+        "segment_b": {
+          "$ref": "#/$defs/idOrNull"
+        },
+        "note": {
+          "type": "string"
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        }
+      }
+    }
+  }
+}

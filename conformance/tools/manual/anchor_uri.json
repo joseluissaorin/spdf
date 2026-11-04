@@ -598,6 +598,118 @@
     "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
     "locator": {}
    }
+  },
+  {
+   "id": "uri-time-instant-region",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "time",
+     "t0": 3723.5,
+     "t1": 3723.5,
+     "region": {
+      "x": 0.25,
+      "y": 0.1,
+      "w": 0.3,
+      "h": 0.6
+     }
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#t=3723.5,3723.5&xywh=percent:25,10,30,60",
+    "locator": {
+     "t": [
+      3723.5,
+      3723.5
+     ],
+     "xywh": [
+      0.25,
+      0.1,
+      0.3,
+      0.6
+     ]
+    }
+   }
+  },
+  {
+   "id": "uri-time-instant-span",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "time",
+     "t0": 3723.5,
+     "t1": 3723.5,
+     "span": [
+      3720,
+      3731
+     ],
+     "region": {
+      "x": 0.25,
+      "y": 0.1,
+      "w": 0.3,
+      "h": 0.6
+     }
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#t=3723.5,3723.5&xywh=percent:25,10,30,60",
+    "locator": {
+     "t": [
+      3723.5,
+      3723.5
+     ],
+     "xywh": [
+      0.25,
+      0.1,
+      0.3,
+      0.6
+     ]
+    }
+   }
+  },
+  {
+   "id": "uri-page-chars-region",
+   "input": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "anchor": {
+     "type": "page",
+     "physical": 29,
+     "printed": "21",
+     "roman": false,
+     "source": "read",
+     "confidence": 0.97,
+     "chars": [
+      118,
+      301
+     ],
+     "region": {
+      "x": 0.12,
+      "y": 0.4,
+      "w": 0.76,
+      "h": 0.08
+     }
+    },
+    "anchor_end": null
+   },
+   "expect": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#p=29&f=21&char=118,301&xywh=percent:12,40,76,8",
+    "locator": {
+     "p": 29,
+     "f": "21",
+     "char": [
+      118,
+      301
+     ],
+     "xywh": [
+      0.12,
+      0.4,
+      0.76,
+      0.08
+     ]
+    }
+   }
   }
  ],
  "parse": [
@@ -689,6 +801,28 @@
      "f": "1r"
     },
     "canonical": "spdf:quijote-1605#p=5&f=1r"
+   }
+  },
+  {
+   "id": "uri-parse-time-region-clock",
+   "input": {
+    "uri": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#xywh=percent:25,10,30,60&t=npt:1:02:03.5,1:02:03.5"
+   },
+   "expect": {
+    "docref": "sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "locator": {
+     "t": [
+      3723.5,
+      3723.5
+     ],
+     "xywh": [
+      0.25,
+      0.1,
+      0.3,
+      0.6
+     ]
+    },
+    "canonical": "spdf:sha256-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08#t=3723.5,3723.5&xywh=percent:25,10,30,60"
    }
   }
  ],

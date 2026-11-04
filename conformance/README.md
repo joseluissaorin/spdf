@@ -21,7 +21,7 @@ Normative text: [`spec/SPEC.md`](../spec/SPEC.md) (while it is written,
 | `cases/*.json` | one case per file | `tools/generar.py` |
 | `manifest.json` | suite version, case count per kind, hash of all cases, public test key | `tools/generar.py` |
 | `tools/spdfref.py` | the reference oracle (Python standard library only) | hand |
-| `tools/manual/*.json` | hand-written anchor URI and citation cases, search queries | hand |
+| `tools/manual/*.json` | hand-written anchor URI and citation cases, search queries, and the understanding layer of `minimo` (RFC 0004) | hand |
 
 ### Where the texts come from
 
